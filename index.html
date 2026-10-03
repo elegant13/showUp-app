@@ -35,9 +35,10 @@
         }
     </script>
     
-    <!-- FontAwesome & Google Fonts -->
+    <!-- FontAwesome, Google Fonts & Google Identity Services SDK -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains-Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <!-- Inline Dynamic PWA Manifest -->
     <link rel="manifest" id="pwaManifestLink">
@@ -126,8 +127,14 @@
                 </div>
             </div>
 
-            <!-- Header Heart Rate & Install Actions -->
+            <!-- Header Actions: HR Badge, Drive Sync, Audio & Install -->
             <div class="flex items-center space-x-2">
+                <!-- Google Drive Cloud Sync Button -->
+                <button onclick="handleDriveSyncClick()" id="gdriveBtn" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition flex items-center gap-1.5" title="Google Drive Cloud Sync">
+                    <i class="fa-brands fa-google-drive text-blue-400 text-sm"></i>
+                    <span class="hidden sm:inline" id="gdriveStatusText">Connect Drive</span>
+                </button>
+
                 <!-- HR Quick Badge -->
                 <div id="headerHrBadge" onclick="switchTab('tracker')" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-semibold">
                     <i class="fa-solid fa-heart pulse-heart text-rose-500 text-xs"></i>
@@ -138,6 +145,11 @@
                 <!-- Sound FX Mute Toggle -->
                 <button onclick="toggleAudioFx()" id="audioToggleBtn" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white text-xs" title="Toggle Audio FX">
                     <i class="fa-solid fa-volume-high" id="audioIcon"></i>
+                </button>
+
+                <!-- Settings Cog for Google Client ID -->
+                <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white text-xs" title="Google Drive Settings">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
 
                 <!-- Install PWA Trigger Button -->
@@ -242,6 +254,7 @@
                 </div>
             </div>
 
+            <!-- EXERCISE LOGGER CARD -->
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
                     <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
@@ -467,54 +480,44 @@
 
         </section>
 
-        <!-- ================= SECTION: LOOP HABIT CALENDAR MODULE ================= -->
+        <!-- ================= SECTION 2: LOOP HABIT CALENDAR MODULE ================= -->
         <section id="view-calendar" class="hidden space-y-5">
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-6">
-                <!-- Loop Header Bar -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-5">
+                
+                <!-- Loop Title & Analytics Metric Cards -->
+                <div class="space-y-4">
                     <div>
                         <h2 class="text-lg font-black text-white flex items-center gap-2">
                             <i class="fa-solid fa-calendar-check text-showup-400"></i> Loop Habit Matrix
                         </h2>
                         <p class="text-xs text-slate-400">High contrast workout progress tracking & streak telemetry.</p>
                     </div>
-                    
-                    <div class="flex items-center gap-2 self-start sm:self-auto">
-                        <button onclick="changeHabitMonth(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition">
-                            <i class="fa-solid fa-chevron-left"></i>
-                        </button>
-                        <span id="calendarMonthLabel" class="text-xs font-mono font-bold text-white px-2">October 2026</span>
-                        <button onclick="changeHabitMonth(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition">
-                            <i class="fa-solid fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Loop Analytics Metric Cards -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                            <i class="fa-solid fa-fire text-amber-500"></i> Current Streak
-                        </span>
-                        <div id="statCurrentStreak" class="text-2xl font-black font-mono text-amber-400 mt-1">0 Days</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                            <i class="fa-solid fa-trophy text-amber-300"></i> Best Streak
-                        </span>
-                        <div id="statBestStreak" class="text-2xl font-black font-mono text-white mt-1">0 Days</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                            <i class="fa-solid fa-dumbbell text-showup-400"></i> Active Days
-                        </span>
-                        <div id="statTotalActive" class="text-2xl font-black font-mono text-showup-400 mt-1">0</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                            <i class="fa-solid fa-chart-pie text-garmin-blue"></i> Consistency
-                        </span>
-                        <div id="statConsistencyRate" class="text-2xl font-black font-mono text-garmin-blue mt-1">0%</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <i class="fa-solid fa-fire text-amber-500"></i> Current Streak
+                            </span>
+                            <div id="statCurrentStreak" class="text-2xl font-black font-mono text-amber-400 mt-1">0 Days</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <i class="fa-solid fa-trophy text-amber-300"></i> Best Streak
+                            </span>
+                            <div id="statBestStreak" class="text-2xl font-black font-mono text-white mt-1">0 Days</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <i class="fa-solid fa-dumbbell text-showup-400"></i> Active Days
+                            </span>
+                            <div id="statTotalActive" class="text-2xl font-black font-mono text-showup-400 mt-1">0</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <i class="fa-solid fa-chart-pie text-garmin-blue"></i> Consistency
+                            </span>
+                            <div id="statConsistencyRate" class="text-2xl font-black font-mono text-garmin-blue mt-1">0%</div>
+                        </div>
                     </div>
                 </div>
 
@@ -531,8 +534,26 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 overflow-x-auto">
-                    <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono font-bold text-slate-500 uppercase">
+                <!-- CALENDAR NAVIGATOR PLACED DIRECTLY ABOVE TILES -->
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                    
+                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-showup-400"></i> Calendar Navigation
+                        </span>
+
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeHabitMonth(-1)" class="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold border border-slate-800 transition">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="calendarMonthLabel" class="text-xs font-mono font-bold text-white px-3 py-1 bg-slate-900 rounded-lg border border-slate-800">October 2026</span>
+                            <button onclick="changeHabitMonth(1)" class="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold border border-slate-800 transition">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono font-bold text-slate-500 uppercase pt-1">
                         <div>Sun</div>
                         <div>Mon</div>
                         <div>Tue</div>
@@ -549,7 +570,7 @@
             </div>
         </section>
 
-        <!-- ================= SECTION 2: SUMMARY & GARMIN EVALUATION ================= -->
+        <!-- ================= SECTION 3: SUMMARY & GARMIN EVALUATION ================= -->
         <section id="view-summary" class="hidden space-y-6">
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-6">
                 <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
@@ -634,7 +655,7 @@
             </div>
         </section>
 
-        <!-- ================= SECTION 3: WORKOUT HISTORY ================= -->
+        <!-- ================= SECTION 4: WORKOUT HISTORY ================= -->
         <section id="view-history" class="hidden space-y-4">
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -655,6 +676,7 @@
 
     </main>
 
+    <!-- FIXED BOTTOM NAVIGATION BAR -->
     <nav style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;" class="bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 shadow-2xl px-4 pt-2.5 bottom-nav-safe">
         <div class="max-w-md mx-auto flex justify-around items-center">
             <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition">
@@ -767,6 +789,39 @@
         </div>
     </div>
 
+    <!-- Google Drive Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-brands fa-google-drive text-blue-400"></i> Google Drive Integration
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <p class="text-xs text-slate-400">
+                    To connect your Google Drive account, enter your Google Cloud OAuth Client ID below.
+                </p>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Google OAuth Client ID</label>
+                    <input type="text" id="gdriveClientIdInput" placeholder="e.g. 12345-abcde.apps.googleusercontent.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-showup-500">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeSettingsModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
+                    Cancel
+                </button>
+                <button onclick="saveGoogleClientId()" class="flex-1 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-black text-xs transition shadow-md">
+                    Save Client ID
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Habit Day Inspection Modal -->
     <div id="habitDayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
@@ -803,6 +858,8 @@
         };
 
         let currentScrubberVariant = 'dial'; // 'dial' or 'spring'
+        let gdriveAccessToken = null;
+        let tokenClient = null;
 
         const BUILTIN_EXERCISES = [
             // Gymnastics Rings
@@ -881,6 +938,122 @@
         });
 
         /* =========================================================================
+           GOOGLE DRIVE API CONNECTIVITY & CLOUD SYNC
+           ========================================================================= */
+        function openSettingsModal() {
+            const savedId = localStorage.getItem('showup_gdrive_client_id') || '';
+            document.getElementById('gdriveClientIdInput').value = savedId;
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function saveGoogleClientId() {
+            const val = document.getElementById('gdriveClientIdInput').value.trim();
+            if (val) {
+                localStorage.setItem('showup_gdrive_client_id', val);
+                showToast('Google Client ID saved', 'success');
+            }
+            closeSettingsModal();
+        }
+
+        function handleDriveSyncClick() {
+            const clientId = localStorage.getItem('showup_gdrive_client_id');
+            if (!clientId) {
+                showToast('Please set your Google Client ID in settings first', 'info');
+                openSettingsModal();
+                return;
+            }
+
+            if (!gdriveAccessToken) {
+                initiateGoogleDriveAuth(clientId);
+            } else {
+                syncDataToGoogleDrive();
+            }
+        }
+
+        function initiateGoogleDriveAuth(clientId) {
+            if (typeof google === 'undefined' || !google.accounts) {
+                showToast('Google Identity Services SDK loading...', 'info');
+                return;
+            }
+
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (response) => {
+                    if (response.error) {
+                        showToast(`Auth error: ${response.error}`, 'error');
+                        return;
+                    }
+                    gdriveAccessToken = response.access_token;
+                    document.getElementById('gdriveStatusText').textContent = 'Syncing...';
+                    syncDataToGoogleDrive();
+                },
+            });
+
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        async function syncDataToGoogleDrive() {
+            if (!gdriveAccessToken) return;
+
+            showToast('Syncing data to Google Drive...', 'info');
+
+            const payload = {
+                version: "1.0",
+                exportedAt: new Date().toISOString(),
+                workouts: JSON.parse(localStorage.getItem('showup_workouts') || '[]'),
+                customExercises: JSON.parse(localStorage.getItem('showup_custom_exercises') || '[]')
+            };
+
+            const fileContent = JSON.stringify(payload, null, 2);
+
+            try {
+                // Check if file exists
+                const searchRes = await fetch("https://www.googleapis.com/drive/v3/files?q=name='showUp_workout_data.json' and trashed=false", {
+                    headers: { 'Authorization': `Bearer ${gdriveAccessToken}` }
+                });
+                const searchData = await searchRes.json();
+
+                if (searchData.files && searchData.files.length > 0) {
+                    const fileId = searchData.files[0].id;
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${gdriveAccessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: fileContent
+                    });
+                } else {
+                    const metadata = {
+                        name: 'showUp_workout_data.json',
+                        mimeType: 'application/json'
+                    };
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', new Blob([fileContent], { type: 'application/json' }));
+
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${gdriveAccessToken}` },
+                        body: form
+                    });
+                }
+
+                document.getElementById('gdriveStatusText').textContent = 'Synced';
+                showToast('Successfully backed up to Google Drive!', 'success');
+
+            } catch (err) {
+                showToast(`Drive Sync failed: ${err.message}`, 'error');
+                document.getElementById('gdriveStatusText').textContent = 'Connect Drive';
+            }
+        }
+
+        /* =========================================================================
            DUAL-VARIANT SCRUBBER ENGINE (JOG DIAL & SPRING JOYSTICK)
            ========================================================================= */
         function setScrubberVariant(variant) {
@@ -908,14 +1081,12 @@
             playBeep(950, 0.05);
         }
 
-        // VARIANT A: Jog Dial Rotation & Drag Engine
         function setupJogDial(type) {
             const dial = document.getElementById(`${type}JogDial`);
             const knob = document.getElementById(`${type}JogKnob`);
             const ticksContainer = document.getElementById(`${type}JogTicks`);
             if (!dial || !knob) return;
 
-            // Render radial ticks
             let ticksHtml = '';
             for (let i = 0; i < 12; i++) {
                 const deg = i * 30;
@@ -975,7 +1146,6 @@
             dial.addEventListener('pointercancel', onPointerUp);
         }
 
-        // VARIANT B: Spring-Loaded Joystick Slider with Velocity Multipliers
         function setupSpringJoystick(type) {
             const track = document.getElementById(`${type}SpringTrack`);
             const handle = document.getElementById(`${type}SpringHandle`);
@@ -1092,7 +1262,6 @@
             triggerVibration([10]);
         }
 
-        // Strict ±5 lb & ±2.5 lb Weight adjustments
         function adjustWeight(delta) {
             const input = document.getElementById('exWeightInput');
             let current = parseFloat(input.value) || 0;
@@ -1918,6 +2087,9 @@
 
             history.unshift(record);
             localStorage.setItem('showup_workouts', JSON.stringify(history));
+
+            // Auto sync to Google Drive if token available
+            if (gdriveAccessToken) syncDataToGoogleDrive();
 
             workoutState = { isActive: false, startTime: null, elapsedSeconds: 0, timerInterval: null, sets: [], hrLog: [], peakHr: 0 };
             document.getElementById('workoutTimerDisplay').textContent = "00:00:00";
