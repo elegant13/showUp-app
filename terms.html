@@ -1,55 +1,121 @@
-Here is a comprehensive, production-ready Terms of Service tailored specifically for showUp.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service - showUp</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen py-10 px-4 sm:px-6">
 
-Like the Privacy Policy, these Terms reflect the client-side nature of showUp—highlighting user ownership, health/fitness liability disclaimers, and clear terms regarding Google Drive integration.
+  <main class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 shadow-2xl space-y-8">
+    
+    <!-- HEADER -->
+    <header class="border-b border-slate-800 pb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="bg-emerald-500 text-slate-950 p-2 rounded-xl font-black tracking-wider flex items-center justify-center w-10 h-10 shadow-lg shadow-emerald-500/20">
+          sU
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white">showUp</h1>
+          <p class="text-xs font-semibold text-emerald-400">Compound your progress</p>
+        </div>
+      </div>
+      <h2 class="text-xl font-bold text-slate-200 mt-4">Terms of Service</h2>
+      <p class="text-xs text-slate-400 mt-1">Last Updated: October 3, 2026</p>
+    </header>
 
-Terms of Service for showUp
-Last Updated: October 3, 2026
+    <!-- SECTION 1 -->
+    <section class="space-y-3">
+      <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+        <i class="fa-solid fa-file-contract"></i>
+        1. Acceptance of Terms
+      </h3>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        By accessing or using <strong class="text-white">showUp</strong> ("the App," "we," "us," or "our"), available at <code class="bg-slate-950 px-2 py-0.5 rounded text-xs text-emerald-400 border border-slate-800">https://elegant13.github.io/showUp-app/</code> or through authorized deployments, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the App.
+      </p>
+    </section>
 
-1. Acceptance of Terms
-By accessing or using showUp ("the App," "we," "us," or "our"), available at [https://elegant13.github.io/showUp-app/](https://elegant13.github.io/showUp-app/) or through authorized forks/deployments, you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the App.
+    <!-- SECTION 2 -->
+    <section class="space-y-3 bg-slate-950/60 p-5 rounded-xl border border-rose-500/20">
+      <h3 class="text-base font-bold text-rose-400 flex items-center gap-2">
+        <i class="fa-solid fa-heart-pulse"></i>
+        2. Health & Fitness Disclaimer
+      </h3>
+      <div class="text-sm text-slate-300 space-y-2 leading-relaxed">
+        <p><strong class="text-white">Not Medical Advice:</strong> showUp is an educational and personal workout tracking tool designed to record exercise logs, heart rate telemetry, and physiological load estimates. The App does not provide medical, clinical, or professional healthcare advice.</p>
+        <p><strong class="text-white">Assumption of Risk:</strong> Exercise, weight training, and physical activity carry inherent risks of injury or health complications. You voluntarily assume all risk associated with any exercises, movements, or routines logged or tracked within the App.</p>
+        <p><strong class="text-white">Consultation with Professionals:</strong> Always consult a qualified physician or healthcare professional before starting any new exercise program, particularly if you have pre-existing health conditions or cardiovascular issues.</p>
+        <p><strong class="text-white">Telemetry Limitations:</strong> Heart rate monitor readings, training effect scores (aerobic/anaerobic load), and muscle group statistics provided by the App are mathematical estimations intended for general fitness tracking only and should not be relied upon for medical diagnostics.</p>
+      </div>
+    </section>
 
-2. Health & Fitness Disclaimer
-PLEASE READ THIS SECTION CAREFULLY.
+    <!-- SECTION 3 -->
+    <section class="space-y-3">
+      <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+        <i class="fa-solid fa-database"></i>
+        3. User Data & Ownership
+      </h3>
+      <div class="text-sm text-slate-300 space-y-2 leading-relaxed">
+        <p><strong class="text-white">Local-First Storage:</strong> All exercise logs, workout histories, set telemetry, and custom exercise definitions are stored locally on your device via browser APIs (<code class="bg-slate-950 px-1.5 py-0.5 rounded text-xs">localStorage</code> and <code class="bg-slate-950 px-1.5 py-0.5 rounded text-xs">IndexedDB</code>).</p>
+        <p><strong class="text-white">Data Ownership:</strong> You retain 100% ownership of all workout data you enter into showUp. We do not claim any intellectual property or operational ownership over your personal fitness records.</p>
+        <p><strong class="text-white">Data Responsibility:</strong> Because data is stored on your local device, you are solely responsible for maintaining backups using the built-in JSON Export/Backup feature or the optional Google Drive Sync. We are not responsible for lost data resulting from cleared browser caches or factory resets.</p>
+      </div>
+    </section>
 
-Not Medical Advice: showUp is an educational and personal workout tracking tool designed to record exercise logs, heart rate telemetry, and physiological load estimates. The App does not provide medical, clinical, or professional healthcare advice.
+    <!-- SECTION 4 -->
+    <section class="space-y-3">
+      <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+        <i class="fa-brands fa-google"></i>
+        4. Optional Google Drive Integration
+      </h3>
+      <div class="text-sm text-slate-300 space-y-2 leading-relaxed">
+        <p><strong class="text-white">User Authorization:</strong> If you choose to connect your Google account, showUp uses Google Identity Services to sync a single file (<code class="bg-slate-950 px-1.5 py-0.5 rounded text-xs">showUp_workout_data.json</code>) directly to your personal Google Drive account.</p>
+        <p><strong class="text-white">No External Server Storage:</strong> All sync operations occur directly between your client browser and Google’s official APIs over HTTPS. No data or authentication tokens are routed through or stored on external intermediate servers operated by us.</p>
+      </div>
+    </section>
 
-Assumption of Risk: Exercise, weight training, and physical activity carry inherent risks of injury or health complications. You voluntarily assume all risk associated with any exercises, movements, or routines logged or tracked within the App.
+    <!-- SECTION 5 -->
+    <section class="space-y-3">
+      <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i>
+        5. Disclaimer of Warranties & Limitation of Liability
+      </h3>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        SHOWUP IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS WITHOUT WARRANTIES OF ANY KIND. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE CREATORS OR MAINTAINERS OF SHOWUP BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES—INCLUDING PERSONAL INJURY OR LOSS OF DATA—ARISING OUT OF YOUR USE OF THE APP.
+      </p>
+    </section>
 
-Consultation with Professionals: Always consult a qualified physician or healthcare professional before starting any new exercise program, particularly if you have pre-existing health conditions, cardiovascular issues, or physical injuries.
+    <!-- SECTION 6 -->
+    <section class="space-y-3 border-t border-slate-800 pt-6">
+      <h3 class="text-base font-bold text-emerald-400 flex items-center gap-2">
+        <i class="fa-solid fa-envelope"></i>
+        6. Contact & Support
+      </h3>
+      <p class="text-sm text-slate-300 leading-relaxed">
+        If you have questions, feedback, or need to report an issue regarding these Terms or the showUp application, please submit an issue on the official project repository:
+      </p>
+      <a href="https://github.com/elegant13/showUp-app" target="_blank" class="inline-flex items-center gap-2 bg-slate-950 hover:bg-slate-800 text-emerald-400 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition">
+        <i class="fa-brands fa-github"></i>
+        <span>github.com/elegant13/showUp-app</span>
+      </a>
+    </section>
 
-Heart Rate & Telemetry Limitations: Heart rate monitor readings, training effect scores (aerobic/anaerobic load), and muscle group statistics provided by the App are mathematical estimations intended for general fitness tracking only and should not be relied upon for medical diagnostics.
+    <!-- FOOTER NAV -->
+    <footer class="border-t border-slate-800 pt-4 flex items-center justify-between text-xs text-slate-500">
+      <span>&copy; 2026 showUp App</span>
+      <a href="index.html" class="text-emerald-400 hover:underline flex items-center gap-1">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Back to Application</span>
+      </a>
+    </footer>
 
-3. User Data & Ownership
-Local-First Privacy: All exercise logs, workout histories, set telemetry, and custom exercise definitions are stored locally on your device via browser APIs (localStorage and IndexedDB).
+  </main>
 
-Data Ownership: You retain 100% ownership of all workout data you enter into showUp. We do not claim any intellectual property or operational ownership over your personal fitness records.
-
-Data Responsibility: Because data is stored on your local device, you are solely responsible for maintaining backups of your information using the built-in JSON Export/Backup feature or the optional Google Drive Sync. We are not responsible for lost data resulting from cleared browser caches, factory resets, or lost devices.
-
-4. Optional Google Drive Integration
-User Authorization: If you choose to connect your Google account, showUp uses Google Identity Services to sync a single file (showUp_workout_data.json) directly to your personal Google Drive account.
-
-Third-Party Terms: Your use of Google Drive sync is subject to Google's standard terms of service and privacy policies.
-
-No External Server Storage: All sync operations occur directly between your client browser and Google’s official APIs over HTTPS. No data or authentication tokens are routed through or stored on external intermediate servers operated by us.
-
-5. Software License & Acceptable Use
-Open-Source / Static Application: showUp is provided as a static web application hosted on GitHub Pages.
-
-Acceptable Use: You agree not to misuse the App, attempt to inject malicious code, or use the application in any manner that violates applicable local, national, or international laws.
-
-6. Disclaimer of Warranties
-SHOWUP IS PROVIDED ON AN "AS IS" AND "AS AVAILABLE" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
-
-WE DO NOT WARRANT THAT THE APP WILL BE UNINTERRUPTED, ERROR-FREE, FREE OF VIRUSES OR OTHER HARMFUL COMPONENTS, OR THAT YOUR WORKOUT DATA WILL REMAIN UNCORRUPTED OR PERMANENTLY RETRIEVABLE.
-
-7. Limitation of Liability
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT SHALL THE CREATORS, MAINTAINERS, OR CONTRIBUTORS OF SHOWUP BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES—INCLUDING BUT NOT LIMITED TO PERSONAL INJURY, WRONGFUL DEATH, LOSS OF DATA, OR PROPERTY DAMAGE—ARISING OUT OF OR IN CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE APP.
-
-8. Changes to These Terms
-We reserve the right to modify or replace these Terms at any time. Changes will be effective immediately upon updating the "Last Updated" date at the top of this document. Your continued use of the App following any changes constitutes acceptance of the revised Terms.
-
-9. Contact & Support
-If you have questions, feedback, or need to report an issue regarding these Terms or the showUp application, please submit an issue on the project repository:
-
-GitHub Repository: https://github.com/elegant13/showUp-app
+</body>
+</html>
