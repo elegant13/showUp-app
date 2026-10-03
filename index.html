@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>showUp - Personal Workout Tracker & Telemetry</title>
+  <title>showUp - Compound your progress</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -45,9 +45,9 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v2.4</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v2.5</span>
         </h1>
-        <p class="text-xs text-slate-400">Personal Exercise & Telemetry Tracker</p>
+        <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
@@ -399,7 +399,7 @@
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
     // HARDCODED GOOGLE OAUTH CLIENT ID (Replace with your Google Cloud Web Client ID)
-    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 
     // APPLICATION STATE
     let currentSessionSets = [];
@@ -548,7 +548,7 @@
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const isWorkedOut = (day % 3 === 0); // Visual demonstration toggle
+        const isWorkedOut = (day % 3 === 0);
         grid.innerHTML += `
           <div class="aspect-square flex items-center justify-center rounded-lg text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
             ${day}
@@ -612,7 +612,7 @@
     // GOOGLE OAUTH SIGN-IN
     function handleGoogleSignIn() {
       if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-        alert("Please replace 'YOUR_GOOGLE_CLIENT_ID' in line 18 of index.html with your actual Google Cloud OAuth Client ID.");
+        alert("Please replace 'YOUR_GOOGLE_CLIENT_ID' in line 316 of index.html with your actual Google Cloud OAuth Client ID.");
         return;
       }
 
