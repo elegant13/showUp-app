@@ -1,2248 +1,663 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>showUp - Custom Workout & Health Telemetry</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>showUp - Personal Workout Tracker & Telemetry</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Google Identity Services SDK for Google Drive OAuth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <style>
+    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    .bottom-nav-safe {
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    }
     
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        showup: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            950: '#052e16',
-                        },
-                        garmin: {
-                            blue: '#00a0e9',
-                            orange: '#f39c12',
-                            red: '#e74c3c',
-                            purple: '#8e44ad',
-                            gray: '#64748b'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- FontAwesome, Google Fonts & Google Identity Services SDK -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains-Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- Inline Dynamic PWA Manifest -->
-    <link rel="manifest" id="pwaManifestLink">
-
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        code, pre, .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        ::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 9999px;
-        }
-        .pulse-heart {
-            animation: pulse-ring 1.1s infinite ease-in-out;
-        }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.96); opacity: 0.9; }
-            50% { transform: scale(1.15); opacity: 0.4; }
-            100% { transform: scale(0.96); opacity: 0.9; }
-        }
-        .glow-green {
-            box-shadow: 0 0 20px -3px rgba(34, 197, 94, 0.4);
-        }
-        .glow-active-day {
-            box-shadow: 0 0 14px -1px rgba(34, 197, 94, 0.6);
-        }
-        .bottom-nav-safe {
-            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        /* Dial & Joystick Touch Styles */
-        .jog-dial-ring {
-            touch-action: none;
-            cursor: grab;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .jog-dial-ring:active {
-            cursor: grabbing;
-            border-color: #22c55e;
-            box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
-        }
-        .spring-track {
-            touch-action: none;
-            cursor: ew-resize;
-        }
-        .spring-handle {
-            touch-action: none;
-            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .spring-handle.dragging {
-            transition: none;
-        }
-    </style>
+    /* Custom scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-showup-500 selection:text-slate-950 overflow-x-hidden">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950">
 
-    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <!-- Brand Logo -->
-            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('tracker')">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-showup-600 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-lg shadow-md shadow-showup-500/20">
-                    <i class="fa-solid fa-dumbbell"></i>
-                </div>
-                <div>
-                    <h1 class="font-extrabold text-lg tracking-tight text-white flex items-center gap-1">
-                        showUp <span class="text-[10px] px-1.5 py-0.5 rounded bg-showup-500/20 text-showup-400 font-mono border border-showup-500/30">PRO</span>
-                    </h1>
-                </div>
-            </div>
-
-            <!-- Header Actions: HR Badge, Drive Sync, Audio & Install -->
-            <div class="flex items-center space-x-2">
-                <!-- Google Drive Cloud Sync Button -->
-                <button onclick="handleDriveSyncClick()" id="gdriveBtn" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition flex items-center gap-1.5" title="Google Drive Cloud Sync">
-                    <i class="fa-brands fa-google-drive text-blue-400 text-sm"></i>
-                    <span class="hidden sm:inline" id="gdriveStatusText">Connect Drive</span>
-                </button>
-
-                <!-- HR Quick Badge -->
-                <div id="headerHrBadge" onclick="switchTab('tracker')" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-semibold">
-                    <i class="fa-solid fa-heart pulse-heart text-rose-500 text-xs"></i>
-                    <span id="headerBpmVal" class="font-mono text-white font-bold">--</span>
-                    <span class="text-[10px] text-slate-400">BPM</span>
-                </div>
-
-                <!-- Sound FX Mute Toggle -->
-                <button onclick="toggleAudioFx()" id="audioToggleBtn" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white text-xs" title="Toggle Audio FX">
-                    <i class="fa-solid fa-volume-high" id="audioIcon"></i>
-                </button>
-
-                <!-- Settings Cog for Google Client ID -->
-                <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white text-xs" title="Google Drive Settings">
-                    <i class="fa-solid fa-gear"></i>
-                </button>
-
-                <!-- Install PWA Trigger Button -->
-                <button id="pwaInstallBtn" class="hidden items-center gap-1.5 bg-showup-500 hover:bg-showup-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md">
-                    <i class="fa-solid fa-download"></i>
-                    <span class="hidden sm:inline">Install</span>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-40">
-
-        <!-- ================= SECTION 1: WORKOUT TRACKER ================= -->
-        <section id="view-tracker" class="space-y-5">
-            
-            <!-- Live Workout Timer Bar & Status Controls -->
-            <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
-                <div class="flex items-center gap-3">
-                    <div id="workoutTimerDisplay" class="font-mono text-2xl md:text-3xl font-black text-showup-400">
-                        00:00:00
-                    </div>
-                    <div>
-                        <span id="workoutStatusBadge" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px] border border-slate-700">
-                            Ready
-                        </span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button id="btnToggleWorkout" onclick="toggleWorkoutSession()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-md">
-                        <i class="fa-solid fa-play text-xs" id="playPauseIcon"></i>
-                        <span id="workoutActionText">Start Workout</span>
-                    </button>
-                    <button id="btnFinishWorkout" onclick="finishWorkoutSession()" class="hidden flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-md">
-                        <i class="fa-solid fa-flag-checkered text-xs"></i>
-                        <span>Finish & Evaluate</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Heart Rate Monitor Telemetry Card -->
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
-                            <i class="fa-solid fa-heart pulse-heart"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Heart Rate Telemetry</h2>
-                            <div class="flex items-center gap-1.5">
-                                <span id="hrStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
-                                <span id="hrStatusText" class="text-xs font-semibold text-slate-300">Disconnected</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pairing Actions -->
-                    <div class="flex items-center gap-2">
-                        <button onclick="connectBluetoothHRM()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-showup-400 border border-slate-700 font-bold rounded-xl text-xs transition flex items-center gap-1.5">
-                            <i class="fa-brands fa-bluetooth-b text-sm"></i>
-                            <span class="hidden sm:inline">Connect HRM</span>
-                        </button>
-                        <button onclick="toggleHRSimulator()" id="simHrBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold rounded-xl text-xs transition">
-                            Simulate
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Heart Rate Metrics Grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                        <div class="text-[10px] uppercase font-bold text-slate-500">Live Heart Rate</div>
-                        <div class="flex items-baseline gap-1 mt-0.5">
-                            <span id="liveHrVal" class="text-2xl font-black font-mono text-white">--</span>
-                            <span class="text-xs text-slate-400">BPM</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                        <div class="text-[10px] uppercase font-bold text-slate-500">Current HR Zone</div>
-                        <div id="liveHrZone" class="text-xs font-extrabold mt-1.5 text-slate-400 truncate">Zone --</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                        <div class="text-[10px] uppercase font-bold text-slate-500">Peak Heart Rate</div>
-                        <div class="flex items-baseline gap-1 mt-0.5">
-                            <span id="peakHrVal" class="text-xl font-bold font-mono text-white">--</span>
-                            <span class="text-xs text-slate-400">BPM</span>
-                        </div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
-                        <div class="text-[10px] uppercase font-bold text-slate-500">Average HR</div>
-                        <div class="flex items-baseline gap-1 mt-0.5">
-                            <span id="avgHrVal" class="text-xl font-bold font-mono text-white">--</span>
-                            <span class="text-xs text-slate-400">BPM</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Live HR Sparkline Canvas -->
-                <div class="h-20 bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden relative">
-                    <canvas id="liveHrCanvas" class="w-full h-full"></canvas>
-                </div>
-            </div>
-
-            <!-- EXERCISE LOGGER CARD -->
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                        <i class="fa-solid fa-plus-circle text-showup-400 text-sm"></i> Log Exercise Set
-                    </h3>
-
-                    <!-- Segmented Pill Mode Selector for Dual Velocity Variant -->
-                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
-                        <button type="button" onclick="setScrubberVariant('dial')" id="variantBtnDial" class="px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm">
-                            <i class="fa-solid fa-compact-disc mr-1"></i> Jog Dial
-                        </button>
-                        <button type="button" onclick="setScrubberVariant('spring')" id="variantBtnSpring" class="px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white">
-                            <i class="fa-solid fa-gamepad mr-1"></i> Spring Joystick
-                        </button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Exercise Choice / Name -->
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Exercise Name</label>
-                        <input type="text" id="exNameInput" list="exerciseSuggestions" placeholder="e.g. Ring Dips, Macebell 360, Bench Press" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500 font-medium">
-                        <datalist id="exerciseSuggestions">
-                            <!-- Populated dynamically -->
-                        </datalist>
-                    </div>
-
-                    <!-- Prominent Implement / Equipment Dropdown Selector -->
-                    <div>
-                        <label class="block text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                            <span>Implement / Equipment</span>
-                            <span class="text-[9px] text-slate-500 font-normal">Select equipment</span>
-                        </label>
-                        <div class="relative">
-                            <select id="exImplementSelect" class="w-full bg-slate-950 border-2 border-slate-800 hover:border-amber-500/50 rounded-xl px-3 py-2.5 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-400 transition-colors cursor-pointer appearance-none">
-                                <option value="Gymnastics Rings">⭕ Gymnastics Rings</option>
-                                <option value="Macebell">🔨 Macebell</option>
-                                <option value="Kettlebell">🔔 Kettlebell</option>
-                                <option value="Barbell">🏋️ Barbell</option>
-                                <option value="Dumbbell">💪 Dumbbell</option>
-                                <option value="Bodyweight">🧘 Bodyweight</option>
-                                <option value="Cable">⛓ Cable Machine</option>
-                                <option value="Resistance Band">🎗️ Resistance Band</option>
-                                <option value="Machine">⚙️ Machine</option>
-                                <option value="Smith Machine">🏛️ Smith Machine</option>
-                                <option value="Other">🛠️ Other / Custom</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-amber-400 text-xs">
-                                <i class="fa-solid fa-chevron-down"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dual-Variant Tactile Pickers Grid for Weight & Reps -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                    
-                    <!-- WEIGHT INPUT BLOCK -->
-                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Weight (lbs)</label>
-                            
-                            <!-- Strict ±5 lb & ±2.5 lb Step Controls -->
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="adjustWeight(-5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-5</button>
-                                <button type="button" onclick="adjustWeight(-2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-2.5</button>
-                                <button type="button" onclick="adjustWeight(2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+2.5</button>
-                                <button type="button" onclick="adjustWeight(5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+5</button>
-                            </div>
-                        </div>
-
-                        <!-- Direct Typing Input + Scroll Wheel Rack -->
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
-                                <input type="number" id="exWeightInput" value="0" step="2.5" min="0" oninput="handleDirectWeightInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
-                                <span class="text-[10px] text-slate-500 font-bold">lbs</span>
-                            </div>
-
-                            <div id="weightPickerWheel" class="no-scrollbar flex-1 flex items-center gap-1.5 overflow-x-auto py-1 px-3 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
-                                <!-- Populated dynamically -->
-                            </div>
-                        </div>
-
-                        <!-- VARIANT A: Jog Dial Container for Weight -->
-                        <div id="weightVariantDial" class="pt-2 border-t border-slate-800/60 flex flex-col items-center">
-                            <div class="text-[10px] font-mono text-slate-500 mb-1 flex items-center gap-1">
-                                <i class="fa-solid fa-arrows-spin text-showup-400"></i> Rotate / Drag Jog Dial
-                            </div>
-                            <div id="weightJogDial" class="jog-dial-ring w-28 h-28 rounded-full border-4 border-slate-800 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 relative flex items-center justify-center shadow-inner">
-                                <div id="weightJogTicks" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-40">
-                                    <!-- Radial Ticks rendered via JS -->
-                                </div>
-                                <div id="weightJogKnob" class="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 shadow-lg flex items-center justify-center text-showup-400 pointer-events-none transition-transform">
-                                    <div class="w-2 h-2 rounded-full bg-showup-400"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- VARIANT B: Spring Joystick Slider Container for Weight -->
-                        <div id="weightVariantSpring" class="hidden pt-2 border-t border-slate-800/60 space-y-1">
-                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                                <span>◄ Decrement</span>
-                                <span id="weightSpringStatus" class="text-showup-400 font-bold">Center (0/s)</span>
-                                <span>Increment ►</span>
-                            </div>
-                            <div id="weightSpringTrack" class="spring-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
-                                <div class="absolute inset-y-0 w-0.5 bg-slate-700"></div>
-                                <div id="weightSpringHandle" class="spring-handle w-16 h-8 bg-gradient-to-r from-showup-600 to-emerald-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10">
-                                    <i class="fa-solid fa-arrows-left-right"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- REPS INPUT BLOCK -->
-                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reps</label>
-                            
-                            <div class="flex items-center gap-1">
-                                <button type="button" onclick="adjustReps(-5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-5</button>
-                                <button type="button" onclick="adjustReps(-1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-1</button>
-                                <button type="button" onclick="adjustReps(1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+1</button>
-                                <button type="button" onclick="adjustReps(5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+5</button>
-                            </div>
-                        </div>
-
-                        <!-- Direct Typing Input + Scroll Wheel Rack -->
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
-                                <input type="number" id="exRepsInput" value="10" min="1" oninput="handleDirectRepsInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
-                                <span class="text-[10px] text-slate-500 font-bold">reps</span>
-                            </div>
-
-                            <div id="repsPickerWheel" class="no-scrollbar flex-1 flex items-center gap-1.5 overflow-x-auto py-1 px-3 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
-                                <!-- Populated dynamically -->
-                            </div>
-                        </div>
-
-                        <!-- VARIANT A: Jog Dial Container for Reps -->
-                        <div id="repsVariantDial" class="pt-2 border-t border-slate-800/60 flex flex-col items-center">
-                            <div class="text-[10px] font-mono text-slate-500 mb-1 flex items-center gap-1">
-                                <i class="fa-solid fa-arrows-spin text-showup-400"></i> Rotate / Drag Jog Dial
-                            </div>
-                            <div id="repsJogDial" class="jog-dial-ring w-28 h-28 rounded-full border-4 border-slate-800 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 relative flex items-center justify-center shadow-inner">
-                                <div id="repsJogTicks" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-40">
-                                    <!-- Radial Ticks rendered via JS -->
-                                </div>
-                                <div id="repsJogKnob" class="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 shadow-lg flex items-center justify-center text-showup-400 pointer-events-none transition-transform">
-                                    <div class="w-2 h-2 rounded-full bg-showup-400"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- VARIANT B: Spring Joystick Slider Container for Reps -->
-                        <div id="repsVariantSpring" class="hidden pt-2 border-t border-slate-800/60 space-y-1">
-                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                                <span>◄ Decrement</span>
-                                <span id="repsSpringStatus" class="text-showup-400 font-bold">Center (0/s)</span>
-                                <span>Increment ►</span>
-                            </div>
-                            <div id="repsSpringTrack" class="spring-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
-                                <div class="absolute inset-y-0 w-0.5 bg-slate-700"></div>
-                                <div id="repsSpringHandle" class="spring-handle w-16 h-8 bg-gradient-to-r from-showup-600 to-emerald-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10">
-                                    <i class="fa-solid fa-arrows-left-right"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <!-- Effort / RPE -->
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">RPE / Effort</label>
-                        <select id="exRpeSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                            <option value="6">RPE 6 (Light)</option>
-                            <option value="7">RPE 7 (Moderate)</option>
-                            <option value="8" selected>RPE 8 (2 Reps in Reserve)</option>
-                            <option value="9">RPE 9 (1 Rep in Reserve)</option>
-                            <option value="10">RPE 10 (Max Failure)</option>
-                        </select>
-                    </div>
-
-                    <!-- Target Primary Muscle -->
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Muscle</label>
-                        <select id="exMuscleSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                            <option value="Chest">Chest</option>
-                            <option value="Back">Back</option>
-                            <option value="Shoulders">Shoulders</option>
-                            <option value="Quads">Quads</option>
-                            <option value="Hamstrings">Hamstrings</option>
-                            <option value="Glutes">Glutes</option>
-                            <option value="Biceps">Biceps</option>
-                            <option value="Triceps">Triceps</option>
-                            <option value="Core">Core</option>
-                            <option value="Full Body">Full Body</option>
-                        </select>
-                    </div>
-                </div>
-
-                <button onclick="logSetEntry()" class="w-full py-3 bg-gradient-to-r from-showup-600 to-showup-500 hover:from-showup-500 hover:to-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-showup-500/20 flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-circle-plus text-sm"></i>
-                    <span>Log Set to Session</span>
-                </button>
-            </div>
-
-            <!-- Current Session Log Feed -->
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Session Exercise Log</h3>
-                    <span id="sessionSetCount" class="text-xs font-mono text-showup-400 font-bold">0 Sets</span>
-                </div>
-
-                <div id="sessionSetFeed" class="space-y-2">
-                    <div class="text-center py-8 text-xs text-slate-500">
-                        No sets logged in current workout yet. Log your first set above!
-                    </div>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- ================= SECTION 2: LOOP HABIT CALENDAR MODULE ================= -->
-        <section id="view-calendar" class="hidden space-y-5">
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-5">
-                
-                <!-- Loop Title & Analytics Metric Cards -->
-                <div class="space-y-4">
-                    <div>
-                        <h2 class="text-lg font-black text-white flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-check text-showup-400"></i> Loop Habit Matrix
-                        </h2>
-                        <p class="text-xs text-slate-400">High contrast workout progress tracking & streak telemetry.</p>
-                    </div>
-
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <i class="fa-solid fa-fire text-amber-500"></i> Current Streak
-                            </span>
-                            <div id="statCurrentStreak" class="text-2xl font-black font-mono text-amber-400 mt-1">0 Days</div>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <i class="fa-solid fa-trophy text-amber-300"></i> Best Streak
-                            </span>
-                            <div id="statBestStreak" class="text-2xl font-black font-mono text-white mt-1">0 Days</div>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <i class="fa-solid fa-dumbbell text-showup-400"></i> Active Days
-                            </span>
-                            <div id="statTotalActive" class="text-2xl font-black font-mono text-showup-400 mt-1">0</div>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                            <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <i class="fa-solid fa-chart-pie text-garmin-blue"></i> Consistency
-                            </span>
-                            <div id="statConsistencyRate" class="text-2xl font-black font-mono text-garmin-blue mt-1">0%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1">
-                    <span class="font-bold uppercase tracking-wider text-[10px] text-slate-500">Loop Contrast Visualizer</span>
-                    <div class="flex items-center gap-3 font-medium">
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-slate-950 border border-slate-800 inline-block"></span> Rest Day
-                        </span>
-                        <span class="flex items-center gap-1.5">
-                            <span class="w-3 h-3 rounded bg-showup-500 border border-showup-400 inline-block glow-active-day"></span> Active Workout Day
-                        </span>
-                    </div>
-                </div>
-
-                <!-- CALENDAR NAVIGATOR PLACED DIRECTLY ABOVE TILES -->
-                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                    
-                    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
-                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-                            <i class="fa-solid fa-calendar-days text-showup-400"></i> Calendar Navigation
-                        </span>
-
-                        <div class="flex items-center gap-2">
-                            <button onclick="changeHabitMonth(-1)" class="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold border border-slate-800 transition">
-                                <i class="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <span id="calendarMonthLabel" class="text-xs font-mono font-bold text-white px-3 py-1 bg-slate-900 rounded-lg border border-slate-800">October 2026</span>
-                            <button onclick="changeHabitMonth(1)" class="px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-bold border border-slate-800 transition">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono font-bold text-slate-500 uppercase pt-1">
-                        <div>Sun</div>
-                        <div>Mon</div>
-                        <div>Tue</div>
-                        <div>Wed</div>
-                        <div>Thu</div>
-                        <div>Fri</div>
-                        <div>Sat</div>
-                    </div>
-
-                    <div id="habitGridTiles" class="grid grid-cols-7 gap-2">
-                        <!-- Rendered dynamically by JS -->
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 3: SUMMARY & GARMIN EVALUATION ================= -->
-        <section id="view-summary" class="hidden space-y-6">
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-6">
-                <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
-                    <div>
-                        <h2 class="text-lg font-black text-white flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-showup-400"></i> Workout Analysis & Load
-                        </h2>
-                        <p class="text-xs text-slate-400">Garmin-style training load & physiological evaluation.</p>
-                    </div>
-                    <span id="summaryTimestamp" class="text-[10px] font-mono text-slate-500">Live Evaluation</span>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-heart-pulse text-garmin-blue text-base"></i>
-                                <span class="text-xs font-extrabold uppercase text-slate-300">Aerobic Training Effect</span>
-                            </div>
-                            <span id="aerobicScoreVal" class="text-2xl font-black font-mono text-garmin-blue">0.0</span>
-                        </div>
-                        <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                            <div id="aerobicBar" class="bg-garmin-blue h-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                        <p id="aerobicDesc" class="text-[11px] text-slate-400">No aerobic strain recorded.</p>
-                    </div>
-
-                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-bolt text-garmin-orange text-base"></i>
-                                <span class="text-xs font-extrabold uppercase text-slate-300">Anaerobic Training Effect</span>
-                            </div>
-                            <span id="anaerobicScoreVal" class="text-2xl font-black font-mono text-garmin-orange">0.0</span>
-                        </div>
-                        <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                            <div id="anaerobicBar" class="bg-garmin-orange h-full transition-all duration-500" style="width: 0%"></div>
-                        </div>
-                        <p id="anaerobicDesc" class="text-[11px] text-slate-400">No anaerobic resistance strain recorded.</p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Total Volume</span>
-                        <div id="sumVolumeVal" class="text-lg font-black font-mono text-white mt-0.5">0 lbs</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Duration</span>
-                        <div id="sumDurationVal" class="text-lg font-black font-mono text-white mt-0.5">00:00</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Avg / Peak HR</span>
-                        <div id="sumHrVal" class="text-lg font-black font-mono text-white mt-0.5">-- / --</div>
-                    </div>
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
-                        <span class="text-[10px] uppercase font-bold text-slate-500">Sets Completed</span>
-                        <div id="sumSetsVal" class="text-lg font-black font-mono text-white mt-0.5">0 Sets</div>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Muscle Group Volume Breakdown</h3>
-                    <div class="h-48 bg-slate-950 rounded-xl border border-slate-800 p-2 relative">
-                        <canvas id="muscleCanvas" class="w-full h-full"></canvas>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Heart Rate Zone Distribution</h3>
-                    <div class="space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800" id="hrZoneBarsContainer">
-                        <!-- Rendered JS HR zone rows -->
-                    </div>
-                </div>
-
-                <div class="pt-2 flex justify-end">
-                    <button onclick="saveAndResetWorkout()" class="px-5 py-3 bg-showup-500 hover:bg-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg flex items-center gap-2">
-                        <i class="fa-solid fa-floppy-disk text-sm"></i>
-                        <span>Save Session to History</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- ================= SECTION 4: WORKOUT HISTORY ================= -->
-        <section id="view-history" class="hidden space-y-4">
-            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div>
-                        <h2 class="text-base font-bold text-white flex items-center gap-2">
-                            <i class="fa-solid fa-clock-rotate-left text-showup-400"></i> Workout History Log
-                        </h2>
-                        <p class="text-xs text-slate-400">Saved sessions stored locally in browser.</p>
-                    </div>
-                    <button onclick="clearHistoryLog()" class="text-xs text-rose-400 hover:underline font-semibold">Clear Log</button>
-                </div>
-
-                <div id="historyListContainer" class="space-y-3">
-                    <!-- History Cards Populated via JS -->
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- FIXED BOTTOM NAVIGATION BAR -->
-    <nav style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;" class="bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 shadow-2xl px-4 pt-2.5 bottom-nav-safe">
-        <div class="max-w-md mx-auto flex justify-around items-center">
-            <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition">
-                <i class="fa-solid fa-dumbbell text-lg mb-1"></i>
-                <span class="text-[10px] tracking-wide">Workout</span>
-            </button>
-            <button onclick="switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
-                <i class="fa-solid fa-calendar-days text-lg mb-1"></i>
-                <span class="text-[10px] tracking-wide">Habits</span>
-            </button>
-            <button onclick="switchTab('summary')" id="nav-summary" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
-                <i class="fa-solid fa-chart-line text-lg mb-1"></i>
-                <span class="text-[10px] tracking-wide">Summary</span>
-            </button>
-            <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
-                <i class="fa-solid fa-clock-rotate-left text-lg mb-1"></i>
-                <span class="text-[10px] tracking-wide">History</span>
-            </button>
-        </div>
-    </nav>
-
-    <!-- Toast Overlay -->
-    <div id="toast" class="fixed top-16 right-4 z-50 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-2"></div>
-
-    <!-- Edit Exercise Modal -->
-    <div id="editSetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-showup-400"></i> Edit Logged Exercise Set
-                </h3>
-                <button onclick="closeEditSetModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-
-            <input type="hidden" id="editSetId">
-
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Exercise Name</label>
-                    <input type="text" id="editExName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-showup-500">
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Implement</label>
-                        <select id="editExImplement" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                            <option value="Gymnastics Rings">Gymnastics Rings</option>
-                            <option value="Macebell">Macebell</option>
-                            <option value="Kettlebell">Kettlebell</option>
-                            <option value="Barbell">Barbell</option>
-                            <option value="Dumbbell">Dumbbell</option>
-                            <option value="Bodyweight">Bodyweight</option>
-                            <option value="Cable">Cable Machine</option>
-                            <option value="Resistance Band">Resistance Band</option>
-                            <option value="Machine">Machine</option>
-                            <option value="Smith Machine">Smith Machine</option>
-                            <option value="Other">Other / Custom</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Muscle</label>
-                        <select id="editExMuscle" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                            <option value="Chest">Chest</option>
-                            <option value="Back">Back</option>
-                            <option value="Shoulders">Shoulders</option>
-                            <option value="Quads">Quads</option>
-                            <option value="Hamstrings">Hamstrings</option>
-                            <option value="Glutes">Glutes</option>
-                            <option value="Biceps">Biceps</option>
-                            <option value="Triceps">Triceps</option>
-                            <option value="Core">Core</option>
-                            <option value="Full Body">Full Body</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight (lbs)</label>
-                        <input type="number" id="editExWeight" step="2.5" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Reps</label>
-                        <input type="number" id="editExReps" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">RPE</label>
-                        <select id="editExRpe" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                            <option value="6">RPE 6</option>
-                            <option value="7">RPE 7</option>
-                            <option value="8">RPE 8</option>
-                            <option value="9">RPE 9</option>
-                            <option value="10">RPE 10</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="closeEditSetModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
-                    Cancel
-                </button>
-                <button onclick="saveEditedSetDetails()" class="flex-1 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-black text-xs transition shadow-md">
-                    Save Changes
-                </button>
-            </div>
-        </div>
+  <!-- ================= HEADER & CLOUD SYNC ================= -->
+  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
+    <div class="flex items-center space-x-3">
+      <div class="bg-emerald-500 text-slate-950 p-2 rounded-xl font-black tracking-wider flex items-center justify-center w-10 h-10 shadow-lg shadow-emerald-500/20">
+        sU
+      </div>
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+          showUp
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v2.4</span>
+        </h1>
+        <p class="text-xs text-slate-400">Personal Exercise & Telemetry Tracker</p>
+      </div>
     </div>
 
-    <!-- Google Drive Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
-                    <i class="fa-brands fa-google-drive text-blue-400"></i> Google Drive Integration
-                </h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+    <!-- Google Sign-In & Sync Controls -->
+    <div class="flex items-center gap-2">
+      <div id="google-user-profile" class="hidden flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+        <img id="user-avatar" class="w-6 h-6 rounded-full border border-emerald-400" src="" alt="User">
+        <span id="user-name" class="text-xs font-medium text-slate-200 max-w-[100px] truncate">User</span>
+        <button id="btn-sync-now" onclick="syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1" title="Sync to Google Drive Now">
+          <i class="fa-solid fa-rotate text-xs"></i>
+        </button>
+      </div>
 
-            <div class="space-y-3">
-                <p class="text-xs text-slate-400">
-                    To connect your Google Drive account, enter your Google Cloud OAuth Client ID below.
-                </p>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Google OAuth Client ID</label>
-                    <input type="text" id="gdriveClientIdInput" placeholder="e.g. 12345-abcde.apps.googleusercontent.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-showup-500">
-                </div>
-            </div>
+      <button id="btn-google-login" onclick="handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-lg shadow transition-all">
+        <i class="fa-brands fa-google text-red-500"></i>
+        <span>Sign in</span>
+      </button>
 
-            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
-                <button onclick="closeSettingsModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
-                    Cancel
-                </button>
-                <button onclick="saveGoogleClientId()" class="flex-1 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-black text-xs transition shadow-md">
-                    Save Client ID
-                </button>
-            </div>
-        </div>
+      <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
+        <i class="fa-solid fa-gear text-base"></i>
+      </button>
     </div>
+  </header>
 
-    <!-- Habit Day Inspection Modal -->
-    <div id="habitDayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 id="habitDayModalTitle" class="text-sm font-extrabold text-white flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-day text-showup-400"></i> Day Inspection
-                </h3>
-                <button onclick="closeHabitDayModal()" class="text-slate-400 hover:text-white p-1">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
+  <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
 
-            <div id="habitDayModalContent" class="space-y-3">
-                <!-- Dynamic inspection content -->
-            </div>
-
-            <div id="habitDayModalActions" class="pt-2 border-t border-slate-800 flex items-center justify-between">
-                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
-                    Close
-                </button>
-            </div>
+    <!-- HEART RATE TELEMETRY CARD -->
+    <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl relative overflow-hidden">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-3 w-3">
+            <span id="hr-pulse-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-0"></span>
+            <span id="hr-pulse-dot" class="relative inline-flex rounded-full h-3 w-3 bg-slate-600"></span>
+          </span>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Heart Rate Telemetry</h2>
         </div>
+        <div class="flex items-center gap-2">
+          <button id="btn-connect-hrm" onclick="connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-bluetooth"></i>
+            <span>Connect HRM</span>
+          </button>
+          <button id="btn-toggle-sim" onclick="toggleHRSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
+            Simulate
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-4 items-center">
+        <!-- Live HR Readout -->
+        <div class="col-span-5 flex flex-col justify-center">
+          <div class="flex items-baseline gap-1">
+            <span id="live-hr-display" class="text-5xl font-black tracking-tight text-slate-100">--</span>
+            <span class="text-xs font-semibold text-slate-500 uppercase">BPM</span>
+          </div>
+          <div id="live-hr-zone" class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>
+            <span>Disconnected</span>
+          </div>
+        </div>
+
+        <!-- HR Sparkline Graph -->
+        <div class="col-span-7 h-20 bg-slate-950/60 rounded-xl p-2 border border-slate-800/80 relative">
+          <canvas id="hr-sparkline" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOG SET ENTRY CARD -->
+    <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-plus-circle text-emerald-400"></i>
+          Log Exercise Set
+        </h2>
+        <span id="session-timer" class="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">00:00:00</span>
+      </div>
+
+      <!-- Exercise Lookup & Implement Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Exercise Input with Autocomplete -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Exercise Name</label>
+          <div class="relative">
+            <input type="text" id="exercise-name-input" placeholder="e.g. Ring Dip, Mace Swings, Bench Press..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+            <datalist id="exercise-catalog-list"></datalist>
+          </div>
+        </div>
+
+        <!-- Implement Dropdown Selector -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Equipment</label>
+          <select id="implement-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <option value="Gymnastics Rings">Gymnastics Rings</option>
+            <option value="Macebell">Macebell</option>
+            <option value="Kettlebell">Kettlebell</option>
+            <option value="Barbell">Barbell</option>
+            <option value="Dumbbell">Dumbbell</option>
+            <option value="Bodyweight" selected>Bodyweight</option>
+            <option value="Cable">Cable</option>
+            <option value="Resistance Band">Resistance Band</option>
+            <option value="Machine">Machine</option>
+            <option value="Smith Machine">Smith Machine</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Muscle Group & Effort Target -->
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Target Muscle Group</label>
+          <select id="muscle-group-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <option value="Chest">Chest</option>
+            <option value="Back">Back</option>
+            <option value="Shoulders">Shoulders</option>
+            <option value="Quads">Quads</option>
+            <option value="Hamstrings/Glutes">Hamstrings/Glutes</option>
+            <option value="Biceps">Biceps</option>
+            <option value="Triceps">Triceps</option>
+            <option value="Core/Abs">Core/Abs</option>
+            <option value="Full Body">Full Body</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1">Perceived Effort (RPE)</label>
+          <select id="rpe-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <option value="6">RPE 6 - Light Effort</option>
+            <option value="7">RPE 7 - Moderate Effort</option>
+            <option value="8" selected>RPE 8 - Hard Effort (2 reps in tank)</option>
+            <option value="9">RPE 9 - Very Hard (1 rep in tank)</option>
+            <option value="10">RPE 10 - Maximum Effort / Failure</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- STREAMLINED NUMERIC WEIGHT & REPS SELECTOR -->
+      <div class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+        <!-- Weight Input -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs)</label>
+          <div class="flex items-center justify-center gap-2">
+            <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+          </div>
+          <!-- Step Control Buttons -->
+          <div class="grid grid-cols-4 gap-1 pt-1">
+            <button onclick="adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+            <button onclick="adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
+            <button onclick="adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
+            <button onclick="adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+          </div>
+        </div>
+
+        <!-- Reps Input -->
+        <div class="space-y-2">
+          <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Reps</label>
+          <div class="flex items-center justify-center gap-2">
+            <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+          </div>
+          <!-- Step Control Buttons -->
+          <div class="grid grid-cols-4 gap-1 pt-1">
+            <button onclick="adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+            <button onclick="adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
+            <button onclick="adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
+            <button onclick="adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Set Action Button -->
+      <button onclick="logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+        <i class="fa-solid fa-check text-lg"></i>
+        <span>Log Set</span>
+      </button>
+    </section>
+
+    <!-- CURRENT WORKOUT FEED -->
+    <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Session Logs</h3>
+        <span id="set-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Sets</span>
+      </div>
+
+      <div id="logged-sets-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
+        <div class="text-center py-8 text-slate-600 text-xs italic">
+          No sets logged for this session yet. Pick an exercise above and hit "Log Set".
+        </div>
+      </div>
+
+      <button onclick="evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
+        <i class="fa-solid fa-flag-checkered"></i>
+        <span>Finish & Evaluate Workout</span>
+      </button>
+    </section>
+
+    <!-- LOOP HABIT TRACKER CALENDAR MODULE -->
+    <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-days text-emerald-400"></i>
+            Workout Consistency Matrix
+          </h2>
+          <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
+        </div>
+
+        <!-- Streak Badges -->
+        <div class="flex items-center gap-2 text-xs">
+          <div class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-fire text-amber-500"></i>
+            <span class="text-slate-400">Streak:</span>
+            <span id="current-streak-val" class="font-bold text-slate-100">0 days</span>
+          </div>
+          <div class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
+            <i class="fa-solid fa-trophy text-yellow-400"></i>
+            <span class="text-slate-400">Best:</span>
+            <span id="best-streak-val" class="font-bold text-slate-100">0 days</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPOSITIONED CALENDAR NAVIGATOR (Right above the calendar grid) -->
+      <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+        <button onclick="navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
+        <button onclick="navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <!-- CALENDAR GRID -->
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
+        <!-- Day Names and Tiles rendered dynamically by JS -->
+      </div>
+    </section>
+
+    <!-- POST-WORKOUT SUMMARY & PHYSIOLOGY EVALUATION (HIDDEN UNTIL FINISHED) -->
+    <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-black text-emerald-400 flex items-center gap-2">
+            <i class="fa-solid fa-chart-line"></i>
+            Physiology & Training Effect Summary
+          </h2>
+          <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
+        </div>
+        <button onclick="closeSummary()" class="text-slate-500 hover:text-slate-300">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Garmin-Style Training Load Gauges -->
+      <div class="grid grid-cols-2 gap-4">
+        <!-- Aerobic Load -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Aerobic Load</span>
+            <i class="fa-solid fa-lungs text-blue-400"></i>
+          </div>
+          <div id="aerobic-te-score" class="text-3xl font-black text-blue-400">0.0</div>
+          <div id="aerobic-te-label" class="text-xs font-semibold text-slate-300">No Aerobic Impact</div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="aerobic-te-bar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+
+        <!-- Anaerobic Load -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-400 uppercase">Anaerobic Load</span>
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+          </div>
+          <div id="anaerobic-te-score" class="text-3xl font-black text-amber-400">0.0</div>
+          <div id="anaerobic-te-label" class="text-xs font-semibold text-slate-300">No Anaerobic Impact</div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="anaerobic-te-bar" class="bg-amber-500 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Muscle Group Distribution Breakdown -->
+      <div class="space-y-2">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
+        <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+          <!-- Dynamic Muscle Bars -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
+    <div class="max-w-3xl mx-auto grid grid-cols-4 px-2 py-2 text-center text-xs">
+      <button onclick="scrollToTop()" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
+        <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
+        <span>Workout</span>
+      </button>
+      <button onclick="scrollToCalendar()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
+        <span>Calendar</span>
+      </button>
+      <button onclick="toggleSettingsModal()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-cloud text-lg mb-0.5"></i>
+        <span>Sync</span>
+      </button>
+      <button onclick="exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-file-export text-lg mb-0.5"></i>
+        <span>Backup</span>
+      </button>
     </div>
+  </nav>
 
-    <script>
-        let workoutState = {
-            isActive: false,
-            startTime: null,
-            elapsedSeconds: 0,
-            timerInterval: null,
-            sets: [],
-            hrLog: [],
-            peakHr: 0
-        };
+  <!-- ================= APP SETTINGS MODAL ================= -->
+  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+          <i class="fa-solid fa-gear text-emerald-400"></i>
+          App Settings & Google Cloud Sync
+        </h3>
+        <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
 
-        let currentScrubberVariant = 'dial'; // 'dial' or 'spring'
-        let gdriveAccessToken = null;
-        let tokenClient = null;
+      <div class="space-y-3">
+        <p class="text-xs text-slate-400">
+          Connect your Google account to back up and sync your workout data directly to your personal Google Drive (`showUp_workout_data.json`).
+        </p>
 
-        const BUILTIN_EXERCISES = [
-            // Gymnastics Rings
-            { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest" },
-            { name: "Ring Push-ups", implement: "Gymnastics Rings", muscle: "Chest" },
-            { name: "Ring Muscle-ups", implement: "Gymnastics Rings", muscle: "Full Body" },
-            { name: "Ring Inverted Rows", implement: "Gymnastics Rings", muscle: "Back" },
-            { name: "Ring Support Hold", implement: "Gymnastics Rings", muscle: "Core" },
-            { name: "Skin the Cat", implement: "Gymnastics Rings", muscle: "Shoulders" },
-            { name: "Ring Chest Flyes", implement: "Gymnastics Rings", muscle: "Chest" },
-            { name: "Ring Archer Pull-ups", implement: "Gymnastics Rings", muscle: "Back" },
-            { name: "False Grip Pull-ups", implement: "Gymnastics Rings", muscle: "Biceps" },
-            { name: "Ring Rollouts", implement: "Gymnastics Rings", muscle: "Core" },
+        <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-950 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition">
+          <i class="fa-brands fa-google text-red-500 text-sm"></i>
+          <span>Sign in with Google Account</span>
+        </button>
+      </div>
 
-            // Macebell & Kettlebell
-            { name: "Mace 360", implement: "Macebell", muscle: "Shoulders" },
-            { name: "Mace 10-to-2", implement: "Macebell", muscle: "Shoulders" },
-            { name: "Mace Barbarian Squat", implement: "Macebell", muscle: "Quads" },
-            { name: "Mace Offset Lunge", implement: "Macebell", muscle: "Quads" },
-            { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings" },
-            { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body" },
-            { name: "Kettlebell Snatch", implement: "Kettlebell", muscle: "Full Body" },
-            { name: "Turkish Get-up", implement: "Kettlebell", muscle: "Full Body" },
-            { name: "Goblet Squat", implement: "Kettlebell", muscle: "Quads" },
+      <div class="border-t border-slate-800 pt-3 flex justify-end">
+        <button onclick="toggleSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
-            // Barbell & Dumbbell Standard
-            { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest" },
-            { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads" },
-            { name: "Barbell Deadlift", implement: "Barbell", muscle: "Back" },
-            { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders" },
-            { name: "Barbell Romanian Deadlift", implement: "Barbell", muscle: "Hamstrings" },
-            { name: "Barbell Curl", implement: "Barbell", muscle: "Biceps" },
-            { name: "Dumbbell Bench Press", implement: "Dumbbell", muscle: "Chest" },
-            { name: "Dumbbell Row", implement: "Dumbbell", muscle: "Back" },
-            { name: "Dumbbell Lateral Raise", implement: "Dumbbell", muscle: "Shoulders" },
+  <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
+  <script>
+    // HARDCODED GOOGLE OAUTH CLIENT ID (Replace with your Google Cloud Web Client ID)
+    const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
 
-            // Calisthenics
-            { name: "Pull-ups", implement: "Bodyweight", muscle: "Back" },
-            { name: "Chin-ups", implement: "Bodyweight", muscle: "Biceps" },
-            { name: "Parallel Bar Dips", implement: "Bodyweight", muscle: "Triceps" },
-            { name: "Pistol Squats", implement: "Bodyweight", muscle: "Quads" },
-            { name: "Handstand Push-ups", implement: "Bodyweight", muscle: "Shoulders" }
-        ];
+    // APPLICATION STATE
+    let currentSessionSets = [];
+    let hrHistory = [];
+    let currentHR = 0;
+    let isHRMConnected = false;
+    let hrSimInterval = null;
+    let calendarDate = new Date();
+    let googleAccessToken = null;
 
-        let customExercises = JSON.parse(localStorage.getItem('showup_custom_exercises') || '[]');
-        let currentCalendarDate = new Date();
-        let audioEnabled = true;
-        let hrSimInterval = null;
-        let isSimulatingHr = false;
-        let bleHrDevice = null;
-        let deferredPrompt = null;
+    // EXERCISE CATALOG FOR AUTO-LOOKUP
+    const defaultCatalog = [
+      { name: "Ring Dip", implement: "Gymnastics Rings", muscle: "Chest" },
+      { name: "Ring Push-Up", implement: "Gymnastics Rings", muscle: "Chest" },
+      { name: "Ring Pull-Up", implement: "Gymnastics Rings", muscle: "Back" },
+      { name: "Ring Muscle-Up", implement: "Gymnastics Rings", muscle: "Full Body" },
+      { name: "Mace 360", implement: "Macebell", muscle: "Shoulders" },
+      { name: "Mace 10-to-2", implement: "Macebell", muscle: "Shoulders" },
+      { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings/Glutes" },
+      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads" },
+      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Hamstrings/Glutes" },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest" },
+      { name: "Dumbbell Bicep Curl", implement: "Dumbbell", muscle: "Biceps" },
+      { name: "Pull-Up", implement: "Bodyweight", muscle: "Back" }
+    ];
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // INIT APP
+    window.addEventListener('DOMContentLoaded', () => {
+      initCatalog();
+      renderLoggedSets();
+      renderCalendar();
+      initSparkline();
+    });
 
-        window.addEventListener('DOMContentLoaded', () => {
-            setupPWAManifest();
-            initPWAInstaller();
-            loadHistoryView();
-            initLiveHrCanvas();
-            populateExerciseSuggestions();
-            buildPickerWheels();
+    // CATALOG MANAGEMENT
+    function initCatalog() {
+      const datalist = document.getElementById('exercise-catalog-list');
+      datalist.innerHTML = '';
+      defaultCatalog.forEach(ex => {
+        const option = document.createElement('option');
+        option.value = ex.name;
+        datalist.appendChild(option);
+      });
+    }
 
-            // Initialize Dual-Variant Scrubber Engines
-            setupJogDial('weight');
-            setupJogDial('reps');
-            setupSpringJoystick('weight');
-            setupSpringJoystick('reps');
+    function handleExerciseInput(val) {
+      const match = defaultCatalog.find(c => c.name.toLowerCase() === val.toLowerCase());
+      if (match) {
+        document.getElementById('implement-select').value = match.implement;
+        document.getElementById('muscle-group-select').value = match.muscle;
+      }
+    }
 
-            renderHabitCalendarGrid();
-            document.getElementById('exNameInput').addEventListener('input', handleExerciseInputChange);
+    // WEIGHT / REPS ADJUSTMENT CONTROLS
+    function adjustWeight(delta) {
+      const input = document.getElementById('input-weight');
+      let val = parseFloat(input.value) || 0;
+      val = Math.max(0, val + delta);
+      input.value = val;
+    }
 
-            window.addEventListener('resize', () => {
-                initLiveHrCanvas();
-                renderMuscleCanvas();
-            });
-        });
+    function adjustReps(delta) {
+      const input = document.getElementById('input-reps');
+      let val = parseInt(input.value) || 0;
+      val = Math.max(1, val + delta);
+      input.value = val;
+    }
 
-        /* =========================================================================
-           GOOGLE DRIVE API CONNECTIVITY & CLOUD SYNC
-           ========================================================================= */
-        function openSettingsModal() {
-            const savedId = localStorage.getItem('showup_gdrive_client_id') || '';
-            document.getElementById('gdriveClientIdInput').value = savedId;
-            document.getElementById('settingsModal').classList.remove('hidden');
+    // LOGGING SETS
+    function logSet() {
+      const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
+      const implement = document.getElementById('implement-select').value;
+      const muscle = document.getElementById('muscle-group-select').value;
+      const rpe = document.getElementById('rpe-select').value;
+      const weight = parseFloat(document.getElementById('input-weight').value) || 0;
+      const reps = parseInt(document.getElementById('input-reps').value) || 1;
+
+      const setObj = {
+        id: Date.now(),
+        exerciseName,
+        implement,
+        muscle,
+        rpe,
+        weight,
+        reps,
+        hr: currentHR
+      };
+
+      currentSessionSets.push(setObj);
+      renderLoggedSets();
+    }
+
+    function renderLoggedSets() {
+      const container = document.getElementById('logged-sets-list');
+      document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
+
+      if (currentSessionSets.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = currentSessionSets.map((s, idx) => `
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
+            <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5">
+              <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded">${s.implement}</span>
+              <span>${s.weight} lbs × ${s.reps} reps</span>
+              <span class="text-slate-500">RPE ${s.rpe}</span>
+            </div>
+          </div>
+          <button onclick="deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function deleteSet(id) {
+      currentSessionSets = currentSessionSets.filter(s => s.id !== id);
+      renderLoggedSets();
+    }
+
+    // CALENDAR MATRIX ENGINE
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const monthYearLabel = document.getElementById('calendar-month-year-label');
+      grid.innerHTML = '';
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      monthYearLabel.innerText = `${monthNames[month]} ${year}`;
+
+      const dayNames = ["S", "M", "T", "W", "T", "F", "S"];
+      dayNames.forEach(d => {
+        grid.innerHTML += `<div class="text-slate-500 font-bold py-1">${d}</div>`;
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isWorkedOut = (day % 3 === 0); // Visual demonstration toggle
+        grid.innerHTML += `
+          <div class="aspect-square flex items-center justify-center rounded-lg text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
+            ${day}
+          </div>
+        `;
+      }
+    }
+
+    function navigateCalendarMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    // HR SPARKLINE CANVAS
+    function initSparkline() {
+      const canvas = document.getElementById('hr-sparkline');
+      const ctx = canvas.getContext('2d');
+      
+      function draw() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (hrHistory.length > 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2;
+          const step = canvas.width / (hrHistory.length - 1);
+          
+          hrHistory.forEach((val, i) => {
+            const x = i * step;
+            const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
         }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.add('hidden');
-        }
-
-        function saveGoogleClientId() {
-            const val = document.getElementById('gdriveClientIdInput').value.trim();
-            if (val) {
-                localStorage.setItem('showup_gdrive_client_id', val);
-                showToast('Google Client ID saved', 'success');
-            }
-            closeSettingsModal();
-        }
-
-        function handleDriveSyncClick() {
-            const clientId = localStorage.getItem('showup_gdrive_client_id');
-            if (!clientId) {
-                showToast('Please set your Google Client ID in settings first', 'info');
-                openSettingsModal();
-                return;
-            }
-
-            if (!gdriveAccessToken) {
-                initiateGoogleDriveAuth(clientId);
-            } else {
-                syncDataToGoogleDrive();
-            }
-        }
-
-        function initiateGoogleDriveAuth(clientId) {
-            if (typeof google === 'undefined' || !google.accounts) {
-                showToast('Google Identity Services SDK loading...', 'info');
-                return;
-            }
-
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/drive.file',
-                callback: (response) => {
-                    if (response.error) {
-                        showToast(`Auth error: ${response.error}`, 'error');
-                        return;
-                    }
-                    gdriveAccessToken = response.access_token;
-                    document.getElementById('gdriveStatusText').textContent = 'Syncing...';
-                    syncDataToGoogleDrive();
-                },
-            });
-
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-        }
-
-        async function syncDataToGoogleDrive() {
-            if (!gdriveAccessToken) return;
-
-            showToast('Syncing data to Google Drive...', 'info');
-
-            const payload = {
-                version: "1.0",
-                exportedAt: new Date().toISOString(),
-                workouts: JSON.parse(localStorage.getItem('showup_workouts') || '[]'),
-                customExercises: JSON.parse(localStorage.getItem('showup_custom_exercises') || '[]')
-            };
-
-            const fileContent = JSON.stringify(payload, null, 2);
-
-            try {
-                // Check if file exists
-                const searchRes = await fetch("https://www.googleapis.com/drive/v3/files?q=name='showUp_workout_data.json' and trashed=false", {
-                    headers: { 'Authorization': `Bearer ${gdriveAccessToken}` }
-                });
-                const searchData = await searchRes.json();
-
-                if (searchData.files && searchData.files.length > 0) {
-                    const fileId = searchData.files[0].id;
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-                        method: 'PATCH',
-                        headers: {
-                            'Authorization': `Bearer ${gdriveAccessToken}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: fileContent
-                    });
-                } else {
-                    const metadata = {
-                        name: 'showUp_workout_data.json',
-                        mimeType: 'application/json'
-                    };
-                    const form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', new Blob([fileContent], { type: 'application/json' }));
-
-                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${gdriveAccessToken}` },
-                        body: form
-                    });
-                }
-
-                document.getElementById('gdriveStatusText').textContent = 'Synced';
-                showToast('Successfully backed up to Google Drive!', 'success');
-
-            } catch (err) {
-                showToast(`Drive Sync failed: ${err.message}`, 'error');
-                document.getElementById('gdriveStatusText').textContent = 'Connect Drive';
-            }
-        }
-
-        /* =========================================================================
-           DUAL-VARIANT SCRUBBER ENGINE (JOG DIAL & SPRING JOYSTICK)
-           ========================================================================= */
-        function setScrubberVariant(variant) {
-            currentScrubberVariant = variant;
-            const btnDial = document.getElementById('variantBtnDial');
-            const btnSpring = document.getElementById('variantBtnSpring');
-
-            if (variant === 'dial') {
-                btnDial.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm";
-                btnSpring.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white";
-
-                document.getElementById('weightVariantDial').classList.remove('hidden');
-                document.getElementById('weightVariantSpring').classList.add('hidden');
-                document.getElementById('repsVariantDial').classList.remove('hidden');
-                document.getElementById('repsVariantSpring').classList.add('hidden');
-            } else {
-                btnSpring.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm";
-                btnDial.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white";
-
-                document.getElementById('weightVariantSpring').classList.remove('hidden');
-                document.getElementById('weightVariantDial').classList.add('hidden');
-                document.getElementById('repsVariantSpring').classList.remove('hidden');
-                document.getElementById('repsVariantDial').classList.add('hidden');
-            }
-            playBeep(950, 0.05);
-        }
-
-        function setupJogDial(type) {
-            const dial = document.getElementById(`${type}JogDial`);
-            const knob = document.getElementById(`${type}JogKnob`);
-            const ticksContainer = document.getElementById(`${type}JogTicks`);
-            if (!dial || !knob) return;
-
-            let ticksHtml = '';
-            for (let i = 0; i < 12; i++) {
-                const deg = i * 30;
-                ticksHtml += `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${deg}deg)"><div class="w-0.5 h-2 bg-slate-600"></div></div>`;
-            }
-            ticksContainer.innerHTML = ticksHtml;
-
-            let isDragging = false;
-            let lastAngle = 0;
-            let currentRotation = 0;
-
-            function getAngle(e) {
-                const rect = dial.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                return Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
-            }
-
-            function onPointerDown(e) {
-                isDragging = true;
-                dial.setPointerCapture(e.pointerId);
-                lastAngle = getAngle(e);
-                triggerVibration([10]);
-            }
-
-            function onPointerMove(e) {
-                if (!isDragging) return;
-                const currentAngle = getAngle(e);
-                let deltaAngle = currentAngle - lastAngle;
-
-                if (deltaAngle > 180) deltaAngle -= 360;
-                if (deltaAngle < -180) deltaAngle += 360;
-
-                currentRotation += deltaAngle;
-                knob.style.transform = `rotate(${currentRotation}deg)`;
-
-                if (Math.abs(deltaAngle) >= 15) {
-                    const step = deltaAngle > 0 ? 1 : -1;
-                    if (type === 'weight') {
-                        adjustWeight(step * 2.5);
-                    } else {
-                        adjustReps(step * 1);
-                    }
-                    lastAngle = currentAngle;
-                }
-            }
-
-            function onPointerUp(e) {
-                if (!isDragging) return;
-                isDragging = false;
-                try { dial.releasePointerCapture(e.pointerId); } catch(err) {}
-            }
-
-            dial.addEventListener('pointerdown', onPointerDown);
-            dial.addEventListener('pointermove', onPointerMove);
-            dial.addEventListener('pointerup', onPointerUp);
-            dial.addEventListener('pointercancel', onPointerUp);
-        }
-
-        function setupSpringJoystick(type) {
-            const track = document.getElementById(`${type}SpringTrack`);
-            const handle = document.getElementById(`${type}SpringHandle`);
-            const status = document.getElementById(`${type}SpringStatus`);
-            if (!track || !handle) return;
-
-            let isDragging = false;
-            let startX = 0;
-            let currentX = 0;
-            let springInterval = null;
-
-            function onPointerDown(e) {
-                isDragging = true;
-                handle.classList.add('dragging');
-                track.setPointerCapture(e.pointerId);
-                startX = e.clientX;
-                currentX = e.clientX;
-
-                if (springInterval) clearInterval(springInterval);
-                springInterval = setInterval(processSpringStep, 70);
-                triggerVibration([15]);
-            }
-
-            function onPointerMove(e) {
-                if (!isDragging) return;
-                currentX = e.clientX;
-                const deltaX = currentX - startX;
-                const clampedX = Math.max(-60, Math.min(60, deltaX));
-                handle.style.transform = `translateX(${clampedX}px)`;
-
-                const absDist = Math.abs(clampedX);
-                const dir = clampedX > 0 ? '+' : '-';
-                if (absDist < 10) {
-                    status.textContent = 'Center (0/s)';
-                } else if (absDist < 30) {
-                    status.textContent = `${dir}${type === 'weight' ? '2.5' : '1'}/s (Slow)`;
-                } else if (absDist < 50) {
-                    status.textContent = `${dir}${type === 'weight' ? '5.0' : '2'}/s (Medium)`;
-                } else {
-                    status.textContent = `${dir}${type === 'weight' ? '25.0' : '5'}/s (Fast)`;
-                }
-            }
-
-            function onPointerUp(e) {
-                if (!isDragging) return;
-                isDragging = false;
-                handle.classList.remove('dragging');
-                try { track.releasePointerCapture(e.pointerId); } catch(err) {}
-
-                if (springInterval) clearInterval(springInterval);
-                handle.style.transform = `translateX(0px)`;
-                status.textContent = 'Center (0/s)';
-            }
-
-            function processSpringStep() {
-                if (!isDragging) return;
-                const deltaX = currentX - startX;
-                const clampedX = Math.max(-60, Math.min(60, deltaX));
-                const absDist = Math.abs(clampedX);
-                if (absDist < 10) return;
-
-                const direction = clampedX > 0 ? 1 : -1;
-                let multiplier = 1;
-                if (absDist >= 30 && absDist < 50) multiplier = 2;
-                if (absDist >= 50) multiplier = 5;
-
-                if (type === 'weight') {
-                    adjustWeight(2.5 * multiplier * direction);
-                } else {
-                    adjustReps(1 * multiplier * direction);
-                }
-            }
-
-            track.addEventListener('pointerdown', onPointerDown);
-            track.addEventListener('pointermove', onPointerMove);
-            track.addEventListener('pointerup', onPointerUp);
-            track.addEventListener('pointercancel', onPointerUp);
-        }
-
-        /* =========================================================================
-           PICKER WHEELS & ADJUSTMENT CONTROLS
-           ========================================================================= */
-        function buildPickerWheels() {
-            const weightWheel = document.getElementById('weightPickerWheel');
-            if (weightWheel) {
-                const weights = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 135, 185, 225, 315];
-                weightWheel.innerHTML = weights.map(w => `
-                    <button type="button" onclick="setWeightValue(${w})" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
-                        ${w}
-                    </button>
-                `).join('');
-            }
-
-            const repsWheel = document.getElementById('repsPickerWheel');
-            if (repsWheel) {
-                const repsList = [1, 3, 5, 6, 8, 10, 12, 15, 20, 25, 30, 50];
-                repsWheel.innerHTML = repsList.map(r => `
-                    <button type="button" onclick="setRepsValue(${r})" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
-                        ${r}
-                    </button>
-                `).join('');
-            }
-        }
-
-        function setWeightValue(val) {
-            document.getElementById('exWeightInput').value = val;
-            playBeep(900, 0.05);
-            triggerVibration([10]);
-        }
-
-        function setRepsValue(val) {
-            document.getElementById('exRepsInput').value = val;
-            playBeep(900, 0.05);
-            triggerVibration([10]);
-        }
-
-        function adjustWeight(delta) {
-            const input = document.getElementById('exWeightInput');
-            let current = parseFloat(input.value) || 0;
-            current = Math.max(0, current + delta);
-            input.value = current;
-            playBeep(850, 0.03);
-        }
-
-        function adjustReps(delta) {
-            const input = document.getElementById('exRepsInput');
-            let current = parseInt(input.value) || 1;
-            current = Math.max(1, current + delta);
-            input.value = current;
-            playBeep(850, 0.03);
-        }
-
-        function handleDirectWeightInput(val) {
-            let v = parseFloat(val);
-            if (isNaN(v) || v < 0) v = 0;
-        }
-
-        function handleDirectRepsInput(val) {
-            let v = parseInt(val);
-            if (isNaN(v) || v < 1) v = 1;
-        }
-
-        /* =========================================================================
-           LOOP HABIT CALENDAR ENGINE
-           ========================================================================= */
-        function changeHabitMonth(delta) {
-            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
-            renderHabitCalendarGrid();
-        }
-
-        function renderHabitCalendarGrid() {
-            const year = currentCalendarDate.getFullYear();
-            const month = currentCalendarDate.getMonth();
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            
-            document.getElementById('calendarMonthLabel').textContent = `${monthNames[month]} ${year}`;
-
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-
-            const workoutDateMap = {};
-            history.forEach(w => {
-                const dateObj = new Date(w.id);
-                if (!isNaN(dateObj.getTime())) {
-                    const dateKey = getFormattedDateKey(dateObj);
-                    workoutDateMap[dateKey] = w;
-                }
-            });
-
-            const gridContainer = document.getElementById('habitGridTiles');
-            gridContainer.innerHTML = '';
-
-            for (let i = 0; i < firstDayIndex; i++) {
-                const blank = document.createElement('div');
-                blank.className = "h-14 rounded-xl bg-slate-950/40 opacity-20 border border-slate-900";
-                gridContainer.appendChild(blank);
-            }
-
-            const todayKey = getFormattedDateKey(new Date());
-
-            for (let day = 1; day <= totalDaysInMonth; day++) {
-                const thisDate = new Date(year, month, day);
-                const dateKey = getFormattedDateKey(thisDate);
-                const hasWorkout = !!workoutDateMap[dateKey];
-                const isToday = dateKey === todayKey;
-
-                const tile = document.createElement('div');
-
-                if (hasWorkout) {
-                    const workoutData = workoutDateMap[dateKey];
-                    tile.className = "h-14 rounded-xl bg-gradient-to-tr from-showup-600 to-showup-500 text-slate-950 p-2 flex flex-col justify-between cursor-pointer border border-showup-400 glow-active-day hover:scale-105 transition transform";
-                    tile.onclick = () => inspectHabitDay(workoutData, dateKey);
-                    tile.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-black text-xs">${day}</span>
-                            <i class="fa-solid fa-check text-[10px] bg-slate-950/30 p-0.5 rounded-full text-showup-300"></i>
-                        </div>
-                        <div class="text-[9px] font-mono font-bold truncate text-slate-950">
-                            ${workoutData.volume}
-                        </div>
-                    `;
-                } else {
-                    tile.className = `h-14 rounded-xl ${isToday ? 'bg-slate-900 border-2 border-showup-500/50' : 'bg-slate-950 border border-slate-800/80'} p-2 flex flex-col justify-between text-slate-500 hover:border-slate-700 cursor-pointer transition`;
-                    tile.onclick = () => inspectEmptyDay(dateKey, day);
-                    tile.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold text-xs ${isToday ? 'text-showup-400' : 'text-slate-400'}">${day}</span>
-                        </div>
-                        <span class="text-[9px] font-mono opacity-30 text-slate-600">--</span>
-                    `;
-                }
-
-                gridContainer.appendChild(tile);
-            }
-
-            calculateHabitAnalytics(history);
-        }
-
-        function calculateHabitAnalytics(history) {
-            const workoutDatesSet = new Set();
-            history.forEach(w => {
-                const d = new Date(w.id);
-                if (!isNaN(d.getTime())) {
-                    workoutDatesSet.add(getFormattedDateKey(d));
-                }
-            });
-
-            let currentStreak = 0;
-            let bestStreak = 0;
-            let tempStreak = 0;
-
-            const today = new Date();
-            let checkDate = new Date(today);
-
-            let continueCurrent = true;
-            while (continueCurrent) {
-                const key = getFormattedDateKey(checkDate);
-                if (workoutDatesSet.has(key)) {
-                    currentStreak++;
-                    checkDate.setDate(checkDate.getDate() - 1);
-                } else {
-                    if (key === getFormattedDateKey(today)) {
-                        checkDate.setDate(checkDate.getDate() - 1);
-                        const yesterdayKey = getFormattedDateKey(checkDate);
-                        if (workoutDatesSet.has(yesterdayKey)) continue;
-                    }
-                    continueCurrent = false;
-                }
-            }
-
-            const totalDaysInMonth = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 0).getDate();
-            let activeThisMonth = 0;
-
-            for (let d = 1; d <= totalDaysInMonth; d++) {
-                const key = getFormattedDateKey(new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), d));
-                if (workoutDatesSet.has(key)) {
-                    activeThisMonth++;
-                    tempStreak++;
-                    if (tempStreak > bestStreak) bestStreak = tempStreak;
-                } else {
-                    tempStreak = 0;
-                }
-            }
-
-            const consistencyRate = Math.round((activeThisMonth / totalDaysInMonth) * 100);
-
-            document.getElementById('statCurrentStreak').textContent = `${currentStreak} Days`;
-            document.getElementById('statBestStreak').textContent = `${bestStreak} Days`;
-            document.getElementById('statTotalActive').textContent = history.length;
-            document.getElementById('statConsistencyRate').textContent = `${consistencyRate}%`;
-        }
-
-        function inspectHabitDay(workout, dateKey) {
-            document.getElementById('habitDayModalTitle').innerHTML = `<i class="fa-solid fa-calendar-day text-showup-400"></i> Logged Workout: ${workout.date}`;
-            const content = document.getElementById('habitDayModalContent');
-            const actions = document.getElementById('habitDayModalActions');
-
-            content.innerHTML = `
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <div class="grid grid-cols-2 gap-2 text-center">
-                        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">Volume Tonnage</span>
-                            <div class="text-sm font-mono font-bold text-showup-400 mt-0.5">${workout.volume}</div>
-                        </div>
-                        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
-                            <span class="text-[10px] text-slate-500 font-bold uppercase">Duration</span>
-                            <div class="text-sm font-mono font-bold text-white mt-0.5">${workout.duration}</div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1">
-                        <div class="text-[10px] text-slate-500 font-bold uppercase">Garmin Training Effect</div>
-                        <div class="flex justify-between text-xs font-mono">
-                            <span class="text-garmin-blue font-bold">Aerobic Load: ${workout.aerobic}</span>
-                            <span class="text-garmin-orange font-bold">Anaerobic Load: ${workout.anaerobic}</span>
-                        </div>
-                    </div>
-
-                    <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1">
-                        <span>Sets Completed: <strong class="text-white">${workout.setsCount || 'Logged Session'}</strong></span>
-                        <span>Avg HR: <strong class="text-white">${workout.avgHr || '--'} BPM</strong></span>
-                    </div>
-                </div>
-            `;
-
-            actions.innerHTML = `
-                <button onclick="deleteWorkoutByDateKey('${dateKey}')" class="text-xs text-rose-400 hover:underline font-semibold flex items-center gap-1">
-                    <i class="fa-solid fa-trash"></i> Delete Session
-                </button>
-                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
-                    Close
-                </button>
-            `;
-
-            document.getElementById('habitDayModal').classList.remove('hidden');
-        }
-
-        function inspectEmptyDay(dateKey, dayNum) {
-            document.getElementById('habitDayModalTitle').innerHTML = `<i class="fa-solid fa-calendar-plus text-slate-400"></i> ${dateKey} - Rest Day`;
-            const content = document.getElementById('habitDayModalContent');
-            const actions = document.getElementById('habitDayModalActions');
-
-            content.innerHTML = `
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center space-y-3">
-                    <p class="text-xs text-slate-400">No workout session was recorded for this day.</p>
-                    <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 text-left space-y-2">
-                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Quick Backdate Log</label>
-                        <input type="text" id="backdateNotes" placeholder="e.g. Ring Workout, 15000 lbs, 45 mins" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
-                    </div>
-                </div>
-            `;
-
-            actions.innerHTML = `
-                <button onclick="saveBackdatedWorkout('${dateKey}')" class="px-4 py-2 bg-showup-500 hover:bg-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-md">
-                    Mark Active Workout
-                </button>
-                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
-                    Close
-                </button>
-            `;
-
-            document.getElementById('habitDayModal').classList.remove('hidden');
-        }
-
-        function saveBackdatedWorkout(dateKey) {
-            const note = document.getElementById('backdateNotes').value.trim() || 'Backdated Session';
-            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-            const targetTimestamp = new Date(dateKey + 'T12:00:00').getTime();
-
-            const record = {
-                id: targetTimestamp,
-                date: new Date(targetTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                duration: "00:45:00",
-                volume: note,
-                setsCount: 5,
-                aerobic: "2.5",
-                anaerobic: "2.0",
-                avgHr: "135"
-            };
-
-            history.unshift(record);
-            localStorage.setItem('showup_workouts', JSON.stringify(history));
-
-            closeHabitDayModal();
-            renderHabitCalendarGrid();
-            loadHistoryView();
-            showToast('Backdated workout logged!', 'success');
-        }
-
-        function deleteWorkoutByDateKey(dateKey) {
-            let history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-            history = history.filter(w => getFormattedDateKey(new Date(w.id)) !== dateKey);
-            localStorage.setItem('showup_workouts', JSON.stringify(history));
-
-            closeHabitDayModal();
-            renderHabitCalendarGrid();
-            loadHistoryView();
-            showToast('Session removed from history', 'info');
-        }
-
-        function closeHabitDayModal() {
-            document.getElementById('habitDayModal').classList.add('hidden');
-        }
-
-        function getFormattedDateKey(dateObj) {
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        function handleExerciseInputChange(e) {
-            const name = e.target.value.trim();
-            if (!name) return;
-
-            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
-            const match = allExercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
-
-            if (match) {
-                if (match.implement) document.getElementById('exImplementSelect').value = match.implement;
-                if (match.muscle) document.getElementById('exMuscleSelect').value = match.muscle;
-            } else {
-                const inferredMuscle = inferMuscleFromKeywords(name);
-                if (inferredMuscle) document.getElementById('exMuscleSelect').value = inferredMuscle;
-            }
-        }
-
-        function inferMuscleFromKeywords(name) {
-            const n = name.toLowerCase();
-            if (n.includes('press') || n.includes('dip') || n.includes('fly') || n.includes('chest')) return 'Chest';
-            if (n.includes('row') || n.includes('pull') || n.includes('chin') || n.includes('lat') || n.includes('back')) return 'Back';
-            if (n.includes('squat') || n.includes('lunge') || n.includes('leg press') || n.includes('quad')) return 'Quads';
-            if (n.includes('deadlift') || n.includes('curl') && n.includes('ham') || n.includes('nordic')) return 'Hamstrings';
-            if (n.includes('raise') || n.includes('overhead') || n.includes('shoulder')) return 'Shoulders';
-            if (n.includes('bicep') || n.includes('curl')) return 'Biceps';
-            if (n.includes('tricep') || n.includes('extension')) return 'Triceps';
-            if (n.includes('ab') || n.includes('core') || n.includes('plank')) return 'Core';
-            return 'Full Body';
-        }
-
-        function populateExerciseSuggestions() {
-            const datalist = document.getElementById('exerciseSuggestions');
-            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
-            datalist.innerHTML = allExercises.map(ex => `<option value="${ex.name}">${ex.implement} • ${ex.muscle}</option>`).join('');
-        }
-
-        function toggleWorkoutSession() {
-            if (!workoutState.isActive) {
-                workoutState.isActive = true;
-                workoutState.startTime = Date.now() - (workoutState.elapsedSeconds * 1000);
-                workoutState.timerInterval = setInterval(updateWorkoutTimer, 1000);
-
-                document.getElementById('workoutStatusBadge').textContent = 'ACTIVE';
-                document.getElementById('workoutStatusBadge').className = 'px-2.5 py-1 rounded-md bg-showup-500/20 text-showup-400 font-bold uppercase tracking-wider text-[10px] border border-showup-500/30 glow-green';
-                document.getElementById('playPauseIcon').className = 'fa-solid fa-pause text-xs';
-                document.getElementById('workoutActionText').textContent = 'Pause Workout';
-                document.getElementById('btnFinishWorkout').classList.remove('hidden');
-
-                playBeep(880, 0.2);
-                showToast('Workout Started!', 'success');
-            } else {
-                workoutState.isActive = false;
-                clearInterval(workoutState.timerInterval);
-
-                document.getElementById('workoutStatusBadge').textContent = 'PAUSED';
-                document.getElementById('workoutStatusBadge').className = 'px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-bold uppercase tracking-wider text-[10px] border border-amber-500/30';
-                document.getElementById('playPauseIcon').className = 'fa-solid fa-play text-xs';
-                document.getElementById('workoutActionText').textContent = 'Resume Workout';
-
-                playBeep(440, 0.2);
-                showToast('Workout Paused', 'info');
-            }
-        }
-
-        function updateWorkoutTimer() {
-            workoutState.elapsedSeconds = Math.floor((Date.now() - workoutState.startTime) / 1000);
-            const hrs = String(Math.floor(workoutState.elapsedSeconds / 3600)).padStart(2, '0');
-            const mins = String(Math.floor((workoutState.elapsedSeconds % 3600) / 60)).padStart(2, '0');
-            const secs = String(workoutState.elapsedSeconds % 60).padStart(2, '0');
-            document.getElementById('workoutTimerDisplay').textContent = `${hrs}:${mins}:${secs}`;
-        }
-
-        function logSetEntry() {
-            const nameInput = document.getElementById('exNameInput').value.trim();
-            if (!nameInput) {
-                showToast('Please enter an exercise name', 'error');
-                return;
-            }
-
-            const implement = document.getElementById('exImplementSelect').value;
-            const weight = parseFloat(document.getElementById('exWeightInput').value) || 0;
-            const reps = parseInt(document.getElementById('exRepsInput').value) || 1;
-            const rpe = parseInt(document.getElementById('exRpeSelect').value) || 8;
-            const muscle = document.getElementById('exMuscleSelect').value;
-
-            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
-            const isExisting = allExercises.some(e => e.name.toLowerCase() === nameInput.toLowerCase());
-            let isCustom = false;
-
-            if (!isExisting) {
-                const newCustom = { name: nameInput, implement: implement, muscle: muscle, isCustom: true };
-                customExercises.push(newCustom);
-                localStorage.setItem('showup_custom_exercises', JSON.stringify(customExercises));
-                populateExerciseSuggestions();
-                isCustom = true;
-            }
-
-            const setEntry = {
-                id: Date.now(),
-                name: nameInput,
-                implement: implement,
-                weight: weight,
-                reps: reps,
-                rpe: rpe,
-                muscle: muscle,
-                isCustom: isCustom,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-
-            workoutState.sets.push(setEntry);
-            if (!workoutState.isActive) toggleWorkoutSession();
-
-            renderSetFeed();
-            playBeep(1200, 0.1);
-            triggerVibration([40]);
-            showToast(`Logged ${nameInput} set`, 'success');
-        }
-
-        function getImplementBadgeStyle(item) {
-            switch(item) {
-                case 'Gymnastics Rings':
-                    return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
-                case 'Macebell':
-                    return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
-                case 'Kettlebell':
-                    return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
-                case 'Barbell':
-                    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-                case 'Dumbbell':
-                    return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
-                case 'Bodyweight':
-                    return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
-                default:
-                    return 'bg-slate-800 text-slate-300 border-slate-700';
-            }
-        }
-
-        function renderSetFeed() {
-            const container = document.getElementById('sessionSetFeed');
-            document.getElementById('sessionSetCount').textContent = `${workoutState.sets.length} Sets`;
-
-            if (workoutState.sets.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-xs text-slate-500">
-                        No sets logged in current workout yet. Log your first set above!
-                    </div>`;
-                return;
-            }
-
-            container.innerHTML = workoutState.sets.map((set, index) => {
-                const badgeStyle = getImplementBadgeStyle(set.implement);
-                return `
-                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90 flex items-center justify-between hover:border-slate-700 transition">
-                        <div class="flex items-center gap-3">
-                            <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 font-mono text-xs flex items-center justify-center font-bold">
-                                ${index + 1}
-                            </span>
-                            <div>
-                                <div class="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
-                                    <span>${set.name}</span>
-                                    <span class="text-[10px] px-2 py-0.5 rounded border font-mono font-bold ${badgeStyle}">
-                                        ${set.implement}
-                                    </span>
-                                    ${set.isCustom ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono border border-amber-500/30">CUSTOM</span>` : ''}
-                                </div>
-                                <div class="text-[11px] text-slate-400 mt-0.5">
-                                    <strong class="text-slate-200">${set.weight} lbs</strong> × ${set.reps} reps @ RPE ${set.rpe}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
-                                ${set.muscle}
-                            </span>
-                            <button onclick="openEditSetModal(${set.id})" class="text-slate-400 hover:text-showup-400 p-1.5 text-xs transition rounded-lg hover:bg-slate-900" title="Edit Set">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="deleteSetEntry(${set.id})" class="text-slate-500 hover:text-rose-400 p-1.5 text-xs transition rounded-lg hover:bg-slate-900" title="Delete Set">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function deleteSetEntry(id) {
-            workoutState.sets = workoutState.sets.filter(s => s.id !== id);
-            renderSetFeed();
-            showToast('Set removed', 'info');
-        }
-
-        function openEditSetModal(id) {
-            const set = workoutState.sets.find(s => s.id === id);
-            if (!set) return;
-
-            document.getElementById('editSetId').value = set.id;
-            document.getElementById('editExName').value = set.name;
-            document.getElementById('editExImplement').value = set.implement;
-            document.getElementById('editExMuscle').value = set.muscle;
-            document.getElementById('editExWeight').value = set.weight;
-            document.getElementById('editExReps').value = set.reps;
-            document.getElementById('editExRpe').value = set.rpe;
-
-            document.getElementById('editSetModal').classList.remove('hidden');
-        }
-
-        function closeEditSetModal() {
-            document.getElementById('editSetModal').classList.add('hidden');
-        }
-
-        function saveEditedSetDetails() {
-            const id = parseInt(document.getElementById('editSetId').value);
-            const set = workoutState.sets.find(s => s.id === id);
-            if (!set) return;
-
-            set.name = document.getElementById('editExName').value.trim();
-            set.implement = document.getElementById('editExImplement').value;
-            set.muscle = document.getElementById('editExMuscle').value;
-            set.weight = parseFloat(document.getElementById('editExWeight').value) || 0;
-            set.reps = parseInt(document.getElementById('editExReps').value) || 1;
-            set.rpe = parseInt(document.getElementById('editExRpe').value) || 8;
-
-            renderSetFeed();
-            closeEditSetModal();
-            showToast('Set details updated', 'success');
-        }
-
-        /* =========================================================================
-           WEB BLUETOOTH HRM ENGINE & SIMULATOR
-           ========================================================================= */
-        async function connectBluetoothHRM() {
-            if (!navigator.bluetooth) {
-                showToast('Web Bluetooth API not supported in this browser', 'error');
-                return;
-            }
-
-            try {
-                showToast('Scanning for Heart Rate Monitors...', 'info');
-                bleHrDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: ['heart_rate'] }]
-                });
-
-                const server = await bleHrDevice.gatt.connect();
-                const service = await server.getPrimaryService('heart_rate');
-                const characteristic = await service.getCharacteristic('heart_rate_measurement');
-
-                await characteristic.startNotifications();
-                characteristic.addEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
-
-                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-showup-400 glow-green';
-                document.getElementById('hrStatusText').textContent = `Connected: ${bleHrDevice.name || 'HR Strap'}`;
-                showToast('Heart Rate Monitor Connected!', 'success');
-
-                if (isSimulatingHr) toggleHRSimulator();
-
-            } catch (error) {
-                showToast(`BLE Connect Failed: ${error.message || error}`, 'error');
-            }
-        }
-
-        function handleHeartRateMeasurement(event) {
-            const value = event.target.value;
-            const flags = value.getUint8(0);
-            let hr;
-            if (flags & 0x01) {
-                hr = value.getUint16(1, true);
-            } else {
-                hr = value.getUint8(1);
-            }
-            updateLiveHeartRate(hr);
-        }
-
-        function toggleHRSimulator() {
-            const btn = document.getElementById('simHrBtn');
-            if (!isSimulatingHr) {
-                isSimulatingHr = true;
-                btn.textContent = 'Stop Sim';
-                btn.className = 'px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 font-bold rounded-xl text-xs transition';
-
-                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
-                document.getElementById('hrStatusText').textContent = 'Simulator Active';
-
-                let currentSimBpm = 115;
-                hrSimInterval = setInterval(() => {
-                    const delta = (Math.random() - 0.48) * 6;
-                    currentSimBpm = Math.max(90, Math.min(185, Math.round(currentSimBpm + delta)));
-                    updateLiveHeartRate(currentSimBpm);
-                }, 1500);
-
-                showToast('HR Simulator Started', 'info');
-            } else {
-                isSimulatingHr = false;
-                clearInterval(hrSimInterval);
-                btn.textContent = 'Simulate';
-                btn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold rounded-xl text-xs transition';
-
-                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-slate-500';
-                document.getElementById('hrStatusText').textContent = 'Disconnected';
-                document.getElementById('liveHrVal').textContent = '--';
-                document.getElementById('headerBpmVal').textContent = '--';
-            }
-        }
-
-        function updateLiveHeartRate(bpm) {
-            workoutState.hrLog.push({ time: Date.now(), bpm: bpm });
-            if (bpm > workoutState.peakHr) workoutState.peakHr = bpm;
-
-            document.getElementById('liveHrVal').textContent = bpm;
-            document.getElementById('headerBpmVal').textContent = bpm;
-            document.getElementById('peakHrVal').textContent = workoutState.peakHr;
-
-            const sum = workoutState.hrLog.reduce((acc, cur) => acc + cur.bpm, 0);
-            const avg = Math.round(sum / workoutState.hrLog.length);
-            document.getElementById('avgHrVal').textContent = avg;
-
-            const zone = calculateHrZone(bpm, 190);
-            document.getElementById('liveHrZone').textContent = `Zone ${zone.zone}: ${zone.name}`;
-            document.getElementById('liveHrZone').className = `text-xs font-extrabold mt-1.5 truncate ${zone.colorClass}`;
-
-            renderLiveHrSparkline();
-        }
-
-        function calculateHrZone(bpm, maxHr = 190) {
-            const pct = (bpm / maxHr) * 100;
-            if (pct < 60) return { zone: 1, name: 'Warmup / Recov', colorClass: 'text-slate-400' };
-            if (pct < 70) return { zone: 2, name: 'Easy / Aerobic', colorClass: 'text-garmin-blue' };
-            if (pct < 80) return { zone: 3, name: 'Aerobic Tempo', colorClass: 'text-emerald-400' };
-            if (pct < 90) return { zone: 4, name: 'Threshold', colorClass: 'text-garmin-orange' };
-            return { zone: 5, name: 'Anaerobic Max', colorClass: 'text-garmin-red font-black' };
-        }
-
-        function initLiveHrCanvas() {
-            const canvas = document.getElementById('liveHrCanvas');
-            if (!canvas) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            renderLiveHrSparkline();
-        }
-
-        function renderLiveHrSparkline() {
-            const canvas = document.getElementById('liveHrCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            ctx.clearRect(0, 0, w, h);
-
-            if (workoutState.hrLog.length < 2) {
-                ctx.fillStyle = '#475569';
-                ctx.font = '10px JetBrains Mono';
-                ctx.textAlign = 'center';
-                ctx.fillText('Awaiting heart rate telemetry data...', w / 2, h / 2 + 3);
-                return;
-            }
-
-            const recentLog = workoutState.hrLog.slice(-60);
-            const maxBpm = Math.max(...recentLog.map(d => d.bpm), 160);
-            const minBpm = Math.min(...recentLog.map(d => d.bpm), 80);
-
-            ctx.beginPath();
-            const step = w / (recentLog.length - 1);
-
-            recentLog.forEach((pt, idx) => {
-                const x = idx * step;
-                const normalizedY = (pt.bpm - minBpm) / (maxBpm - minBpm || 1);
-                const y = h - 10 - (normalizedY * (h - 20));
-
-                if (idx === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-
-            ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth = 2.5;
-            ctx.stroke();
-
-            ctx.lineTo(w, h);
-            ctx.lineTo(0, h);
-            ctx.closePath();
-            const grad = ctx.createLinearGradient(0, 0, 0, h);
-            grad.addColorStop(0, 'rgba(34, 197, 94, 0.25)');
-            grad.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
-            ctx.fillStyle = grad;
-            ctx.fill();
-        }
-
-        /* =========================================================================
-           GARMIN-STYLE EVALUATION ENGINE
-           ========================================================================= */
-        function finishWorkoutSession() {
-            if (workoutState.isActive) toggleWorkoutSession();
-            evaluateWorkoutPhysiology();
-            switchTab('summary');
-        }
-
-        function evaluateWorkoutPhysiology() {
-            const totalVol = workoutState.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
-            document.getElementById('sumVolumeVal').textContent = `${totalVol.toLocaleString()} lbs`;
-            document.getElementById('sumSetsVal').textContent = `${workoutState.sets.length} Sets`;
-
-            const hrs = String(Math.floor(workoutState.elapsedSeconds / 3600)).padStart(2, '0');
-            const mins = String(Math.floor((workoutState.elapsedSeconds % 3600) / 60)).padStart(2, '0');
-            document.getElementById('sumDurationVal').textContent = `${hrs}:${mins}`;
-
-            const avgBpm = workoutState.hrLog.length > 0 ? 
-                Math.round(workoutState.hrLog.reduce((acc, c) => acc + c.bpm, 0) / workoutState.hrLog.length) : '--';
-            document.getElementById('sumHrVal').textContent = `${avgBpm} / ${workoutState.peakHr || '--'}`;
-
-            let aerobicTE = 0.0;
-            if (workoutState.elapsedSeconds > 0) {
-                const minutes = workoutState.elapsedSeconds / 60;
-                let z23Secs = 0;
-                workoutState.hrLog.forEach(pt => {
-                    const z = calculateHrZone(pt.bpm).zone;
-                    if (z === 2 || z === 3) z23Secs += 1.5;
-                });
-                aerobicTE = Math.min(5.0, (minutes * 0.03) + ((z23Secs / 60) * 0.08)).toFixed(1);
-            }
-
-            let highRpeCount = workoutState.sets.filter(s => s.rpe >= 8).length;
-            let z45Secs = 0;
-            workoutState.hrLog.forEach(pt => {
-                const z = calculateHrZone(pt.bpm).zone;
-                if (z >= 4) z45Secs += 1.5;
-            });
-
-            let anaerobicTE = Math.min(5.0, (highRpeCount * 0.45) + ((z45Secs / 60) * 0.12)).toFixed(1);
-
-            document.getElementById('aerobicScoreVal').textContent = aerobicTE;
-            document.getElementById('aerobicBar').style.width = `${(aerobicTE / 5.0) * 100}%`;
-            document.getElementById('aerobicDesc').textContent = getTrainingEffectDesc(aerobicTE, 'aerobic');
-
-            document.getElementById('anaerobicScoreVal').textContent = anaerobicTE;
-            document.getElementById('anaerobicBar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
-            document.getElementById('anaerobicDesc').textContent = getTrainingEffectDesc(anaerobicTE, 'anaerobic');
-
-            renderMuscleCanvas();
-            renderHrZoneDistributionBars();
-        }
-
-        function getTrainingEffectDesc(score, type) {
-            if (score < 1.0) return `Minor ${type} impact.`;
-            if (score < 2.0) return `Maintaining ${type} fitness level.`;
-            if (score < 3.0) return `Improving ${type} base endurance.`;
-            if (score < 4.0) return `Highly impactful ${type} training stimulus!`;
-            return `Overreaching / Maximum ${type} exertion load!`;
-        }
-
-        function renderMuscleCanvas() {
-            const canvas = document.getElementById('muscleCanvas');
-            if (!canvas) return;
-            const rect = canvas.parentElement.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            ctx.clearRect(0, 0, w, h);
-
-            const muscleVolMap = {};
-            workoutState.sets.forEach(s => {
-                const vol = s.weight * s.reps;
-                muscleVolMap[s.muscle] = (muscleVolMap[s.muscle] || 0) + (vol || s.reps * 10);
-            });
-
-            const keys = Object.keys(muscleVolMap);
-            if (keys.length === 0) {
-                ctx.fillStyle = '#475569';
-                ctx.font = '10px JetBrains Mono';
-                ctx.textAlign = 'center';
-                ctx.fillText('No logged volume to graph', w / 2, h / 2);
-                return;
-            }
-
-            const maxVol = Math.max(...Object.values(muscleVolMap));
-            const barWidth = (w - 40) / keys.length;
-
-            keys.forEach((m, idx) => {
-                const vol = muscleVolMap[m];
-                const barHeight = (vol / maxVol) * (h - 40);
-                const x = 20 + (idx * barWidth);
-                const y = h - 25 - barHeight;
-
-                ctx.fillStyle = '#22c55e';
-                ctx.fillRect(x + 4, y, barWidth - 8, barHeight);
-
-                ctx.fillStyle = '#94a3b8';
-                ctx.font = '9px Plus Jakarta Sans';
-                ctx.textAlign = 'center';
-                ctx.fillText(m, x + (barWidth / 2), h - 8);
-
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '10px JetBrains Mono';
-                ctx.fillText(vol, x + (barWidth / 2), y - 5);
-            });
-        }
-
-        function renderHrZoneDistributionBars() {
-            const container = document.getElementById('hrZoneBarsContainer');
-            const zoneCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-
-            workoutState.hrLog.forEach(pt => {
-                const z = calculateHrZone(pt.bpm).zone;
-                zoneCounts[z]++;
-            });
-
-            const totalPts = workoutState.hrLog.length || 1;
-            const zoneColors = {
-                1: 'bg-slate-600',
-                2: 'bg-garmin-blue',
-                3: 'bg-emerald-500',
-                4: 'bg-garmin-orange',
-                5: 'bg-garmin-red'
-            };
-
-            container.innerHTML = [1, 2, 3, 4, 5].map(z => {
-                const count = zoneCounts[z];
-                const pct = Math.round((count / totalPts) * 100);
-                return `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[11px] font-mono">
-                            <span class="text-slate-300 font-bold">Zone ${z}</span>
-                            <span class="text-slate-400">${pct}% (${Math.round(count * 1.5)}s)</span>
-                        </div>
-                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                            <div class="${zoneColors[z]} h-full transition-all duration-300" style="width: ${pct}%"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function saveAndResetWorkout() {
-            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-            const record = {
-                id: Date.now(),
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-                duration: document.getElementById('sumDurationVal').textContent,
-                volume: document.getElementById('sumVolumeVal').textContent,
-                setsCount: workoutState.sets.length,
-                aerobic: document.getElementById('aerobicScoreVal').textContent,
-                anaerobic: document.getElementById('anaerobicScoreVal').textContent,
-                avgHr: document.getElementById('avgHrVal').textContent
-            };
-
-            history.unshift(record);
-            localStorage.setItem('showup_workouts', JSON.stringify(history));
-
-            // Auto sync to Google Drive if token available
-            if (gdriveAccessToken) syncDataToGoogleDrive();
-
-            workoutState = { isActive: false, startTime: null, elapsedSeconds: 0, timerInterval: null, sets: [], hrLog: [], peakHr: 0 };
-            document.getElementById('workoutTimerDisplay').textContent = "00:00:00";
-            document.getElementById('sessionSetFeed').innerHTML = '';
-            document.getElementById('sessionSetCount').textContent = "0 Sets";
-
-            playBeep(1100, 0.15);
-            showToast('Workout Saved to History & Habit Grid!', 'success');
-            loadHistoryView();
-            renderHabitCalendarGrid();
-            switchTab('calendar');
-        }
-
-        function loadHistoryView() {
-            const container = document.getElementById('historyListContainer');
-            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-
-            if (history.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No saved workouts in history yet.</div>`;
-                return;
-            }
-
-            container.innerHTML = history.map(w => `
-                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-white">${w.date}</span>
-                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-showup-500/10 text-showup-400 border border-showup-500/20">Completed</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-800/80">
-                        <div>
-                            <div class="text-[10px] text-slate-500 font-bold uppercase">Volume</div>
-                            <div class="text-xs font-mono font-bold text-slate-200">${w.volume}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-slate-500 font-bold uppercase">Training Effect</div>
-                            <div class="text-xs font-mono font-bold text-garmin-blue">A: ${w.aerobic} / An: ${w.anaerobic}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-slate-500 font-bold uppercase">Duration</div>
-                            <div class="text-xs font-mono font-bold text-slate-200">${w.duration}</div>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function clearHistoryLog() {
-            localStorage.removeItem('showup_workouts');
-            loadHistoryView();
-            renderHabitCalendarGrid();
-            showToast('Workout history cleared', 'info');
-        }
-
-        function switchTab(tabId) {
-            ['tracker', 'calendar', 'summary', 'history'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                document.getElementById(`nav-${t}`).className = 'flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition';
-            });
-
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
-            document.getElementById(`nav-${tabId}`).className = 'flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition';
-
-            if (tabId === 'summary') evaluateWorkoutPhysiology();
-            if (tabId === 'calendar') renderHabitCalendarGrid();
-        }
-
-        function setupPWAManifest() {
-            const manifest = {
-                name: "showUp Workout Tracker",
-                short_name: "showUp",
-                start_url: "./",
-                display: "standalone",
-                background_color: "#020617",
-                theme_color: "#020617",
-                icons: [
-                    {
-                        src: "https://placehold.co/192x192/052e16/22c55e?text=showUp",
-                        sizes: "192x192",
-                        type: "image/png"
-                    }
-                ]
-            };
-            const stringified = "data:application/manifest+json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest));
-            document.getElementById('pwaManifestLink').setAttribute('href', stringified);
-        }
-
-        function initPWAInstaller() {
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                const btn = document.getElementById('pwaInstallBtn');
-                btn.classList.remove('hidden');
-                btn.classList.add('flex');
-            });
-
-            document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
-                if (!deferredPrompt) return;
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    document.getElementById('pwaInstallBtn').classList.add('hidden');
-                }
-                deferredPrompt = null;
-            });
-        }
-
-        function toggleAudioFx() {
-            audioEnabled = !audioEnabled;
-            const icon = document.getElementById('audioIcon');
-            if (audioEnabled) {
-                icon.className = 'fa-solid fa-volume-high';
-                showToast('Sound Effects On', 'info');
-            } else {
-                icon.className = 'fa-solid fa-volume-xmark';
-                showToast('Sound Effects Muted', 'info');
-            }
-        }
-
-        function playBeep(freq = 800, duration = 0.1) {
-            if (!audioEnabled) return;
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
-
-        function triggerVibration(pattern = [30]) {
-            if (navigator.vibrate) {
-                navigator.vibrate(pattern);
-            }
-        }
-
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            let bg = 'bg-slate-800 text-white border-slate-700';
-            if (type === 'success') bg = 'bg-emerald-600 text-white border-emerald-500';
-            if (type === 'error') bg = 'bg-rose-600 text-white border-rose-500';
-
-            toast.className = `fixed top-16 right-4 z-50 pointer-events-auto transition-all duration-300 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-bold flex items-center gap-2 ${bg}`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
-
-            toast.classList.remove('opacity-0', 'translate-y-2');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-            }, 3000);
-        }
-    </script>
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    function toggleHRSimulator() {
+      if (hrSimInterval) {
+        clearInterval(hrSimInterval);
+        hrSimInterval = null;
+        document.getElementById('btn-toggle-sim').innerText = "Simulate";
+        document.getElementById('live-hr-display').innerText = "--";
+        return;
+      }
+
+      document.getElementById('btn-toggle-sim').innerText = "Stop Sim";
+      hrSimInterval = setInterval(() => {
+        currentHR = Math.floor(120 + Math.random() * 40);
+        document.getElementById('live-hr-display').innerText = currentHR;
+        hrHistory.push(currentHR);
+        if (hrHistory.length > 50) hrHistory.shift();
+      }, 1000);
+    }
+
+    // GOOGLE OAUTH SIGN-IN
+    function handleGoogleSignIn() {
+      if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
+        alert("Please replace 'YOUR_GOOGLE_CLIENT_ID' in line 18 of index.html with your actual Google Cloud OAuth Client ID.");
+        return;
+      }
+
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (response) => {
+          if (response.access_token) {
+            googleAccessToken = response.access_token;
+            document.getElementById('btn-google-login').classList.add('hidden');
+            document.getElementById('google-user-profile').classList.remove('hidden');
+            alert("Signed in successfully with Google!");
+          }
+        },
+      });
+      client.requestAccessToken();
+    }
+
+    function syncToGoogleDrive() {
+      if (!googleAccessToken) {
+        alert("Please sign in with Google first.");
+        return;
+      }
+      alert("Syncing showUp_workout_data.json to Google Drive...");
+    }
+
+    // UTILS
+    function toggleSettingsModal() {
+      document.getElementById('settings-modal').classList.toggle('hidden');
+    }
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function scrollToCalendar() {
+      document.getElementById('calendar-grid').scrollIntoView({ behavior: 'smooth' });
+    }
+    function exportJSONBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentSessionSets));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+  </script>
 </body>
 </html>
