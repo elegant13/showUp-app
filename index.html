@@ -45,29 +45,27 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v2.5</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v2.8</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Google Sign-In & Sync Controls -->
+    <!-- Google Sign-In & User Sync Controls -->
     <div class="flex items-center gap-2">
       <div id="google-user-profile" class="hidden flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-        <img id="user-avatar" class="w-6 h-6 rounded-full border border-emerald-400" src="" alt="User">
+        <img id="user-avatar" class="w-6 h-6 rounded-full border border-emerald-400" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
         <span id="user-name" class="text-xs font-medium text-slate-200 max-w-[100px] truncate">User</span>
-        <button id="btn-sync-now" onclick="syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1" title="Sync to Google Drive Now">
-          <i class="fa-solid fa-rotate text-xs"></i>
+        
+        <!-- Refresh / Sync Button with Spinner -->
+        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1" title="Sync with Google Drive">
+          <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
       </div>
 
-      <button id="btn-google-login" onclick="handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-lg shadow transition-all">
+      <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-lg shadow transition-all">
         <i class="fa-brands fa-google text-red-500"></i>
         <span>Sign in</span>
-      </button>
-
-      <button onclick="toggleSettingsModal()" class="text-slate-400 hover:text-slate-200 p-2 rounded-lg hover:bg-slate-800 transition">
-        <i class="fa-solid fa-gear text-base"></i>
       </button>
     </div>
   </header>
@@ -86,11 +84,11 @@
           <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Heart Rate Telemetry</h2>
         </div>
         <div class="flex items-center gap-2">
-          <button id="btn-connect-hrm" onclick="connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+          <button id="btn-connect-hrm" onclick="triggerHaptic('medium'); connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
             <i class="fa-solid fa-bluetooth"></i>
             <span>Connect HRM</span>
           </button>
-          <button id="btn-toggle-sim" onclick="toggleHRSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
+          <button id="btn-toggle-sim" onclick="triggerHaptic('medium'); toggleHRSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
             Simulate
           </button>
         </div>
@@ -185,7 +183,7 @@
         </div>
       </div>
 
-      <!-- STREAMLINED NUMERIC WEIGHT & REPS SELECTOR -->
+      <!-- STREAMLINED NUMERIC WEIGHT & REPS SELECTOR WITH HAPTIC FEEDBACK -->
       <div class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
         <!-- Weight Input -->
         <div class="space-y-2">
@@ -195,10 +193,10 @@
           </div>
           <!-- Step Control Buttons -->
           <div class="grid grid-cols-4 gap-1 pt-1">
-            <button onclick="adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-            <button onclick="adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
-            <button onclick="adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
-            <button onclick="adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+            <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+            <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
+            <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
+            <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
           </div>
         </div>
 
@@ -210,16 +208,16 @@
           </div>
           <!-- Step Control Buttons -->
           <div class="grid grid-cols-4 gap-1 pt-1">
-            <button onclick="adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-            <button onclick="adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
-            <button onclick="adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
-            <button onclick="adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+            <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+            <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
+            <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
+            <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
           </div>
         </div>
       </div>
 
       <!-- Add Set Action Button -->
-      <button onclick="logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+      <button onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
         <i class="fa-solid fa-check text-lg"></i>
         <span>Log Set</span>
       </button>
@@ -238,7 +236,7 @@
         </div>
       </div>
 
-      <button onclick="evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
+      <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
         <i class="fa-solid fa-flag-checkered"></i>
         <span>Finish & Evaluate Workout</span>
       </button>
@@ -270,13 +268,13 @@
         </div>
       </div>
 
-      <!-- REPOSITIONED CALENDAR NAVIGATOR (Right above the calendar grid) -->
+      <!-- REPOSITIONED CALENDAR NAVIGATOR -->
       <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-        <button onclick="navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+        <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
           <i class="fa-solid fa-chevron-left"></i>
         </button>
         <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
-        <button onclick="navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+        <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
           <i class="fa-solid fa-chevron-right"></i>
         </button>
       </div>
@@ -287,7 +285,7 @@
       </div>
     </section>
 
-    <!-- POST-WORKOUT SUMMARY & PHYSIOLOGY EVALUATION (HIDDEN UNTIL FINISHED) -->
+    <!-- POST-WORKOUT SUMMARY & PHYSIOLOGY EVALUATION -->
     <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
@@ -297,9 +295,16 @@
           </h2>
           <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
         </div>
-        <button onclick="closeSummary()" class="text-slate-500 hover:text-slate-300">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <!-- WhatsApp Full Workout Share Button -->
+          <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition">
+            <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
+            <span>Share</span>
+          </button>
+          <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Garmin-Style Training Load Gauges -->
@@ -344,71 +349,53 @@
 
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
   <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
-    <div class="max-w-3xl mx-auto grid grid-cols-4 px-2 py-2 text-center text-xs">
-      <button onclick="scrollToTop()" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
+    <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
+      <button onclick="triggerHaptic('medium'); scrollToTop()" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
         <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
         <span>Workout</span>
       </button>
-      <button onclick="scrollToCalendar()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+      <button onclick="triggerHaptic('medium'); scrollToCalendar()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
         <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
         <span>Calendar</span>
       </button>
-      <button onclick="toggleSettingsModal()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-cloud text-lg mb-0.5"></i>
-        <span>Sync</span>
-      </button>
-      <button onclick="exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+      <button onclick="triggerHaptic('medium'); exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
         <i class="fa-solid fa-file-export text-lg mb-0.5"></i>
         <span>Backup</span>
       </button>
     </div>
   </nav>
 
-  <!-- ================= APP SETTINGS MODAL ================= -->
-  <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <i class="fa-solid fa-gear text-emerald-400"></i>
-          App Settings & Google Cloud Sync
-        </h3>
-        <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3">
-        <p class="text-xs text-slate-400">
-          Connect your Google account to back up and sync your workout data directly to your personal Google Drive (`showUp_workout_data.json`).
-        </p>
-
-        <button onclick="handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-950 font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition">
-          <i class="fa-brands fa-google text-red-500 text-sm"></i>
-          <span>Sign in with Google Account</span>
-        </button>
-      </div>
-
-      <div class="border-t border-slate-800 pt-3 flex justify-end">
-        <button onclick="toggleSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold px-4 py-2 rounded-lg transition">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
-    // HARDCODED GOOGLE OAUTH CLIENT ID (Replace with your Google Cloud Web Client ID)
+    // HARDCODED GOOGLE OAUTH CLIENT ID
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
 
     // APPLICATION STATE
     let currentSessionSets = [];
+    let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+    let lastEvaluatedSummary = null;
     let hrHistory = [];
     let currentHR = 0;
-    let isHRMConnected = false;
     let hrSimInterval = null;
     let calendarDate = new Date();
     let googleAccessToken = null;
+
+    // HAPTIC FEEDBACK ENGINE (Web Vibration API)
+    function triggerHaptic(type = 'light') {
+      if (!('vibrate' in navigator)) return;
+      
+      switch (type) {
+        case 'light':
+          navigator.vibrate(12);
+          break;
+        case 'medium':
+          navigator.vibrate(25);
+          break;
+        case 'heavy':
+          navigator.vibrate([35, 50, 35]); // Tactile success pulse
+          break;
+      }
+    }
 
     // EXERCISE CATALOG FOR AUTO-LOOKUP
     const defaultCatalog = [
@@ -434,7 +421,6 @@
       initSparkline();
     });
 
-    // CATALOG MANAGEMENT
     function initCatalog() {
       const datalist = document.getElementById('exercise-catalog-list');
       datalist.innerHTML = '';
@@ -453,7 +439,6 @@
       }
     }
 
-    // WEIGHT / REPS ADJUSTMENT CONTROLS
     function adjustWeight(delta) {
       const input = document.getElementById('input-weight');
       let val = parseFloat(input.value) || 0;
@@ -468,12 +453,11 @@
       input.value = val;
     }
 
-    // LOGGING SETS
     function logSet() {
       const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
       const implement = document.getElementById('implement-select').value;
       const muscle = document.getElementById('muscle-group-select').value;
-      const rpe = document.getElementById('rpe-select').value;
+      const rpe = parseFloat(document.getElementById('rpe-select').value) || 8;
       const weight = parseFloat(document.getElementById('input-weight').value) || 0;
       const reps = parseInt(document.getElementById('input-reps').value) || 1;
 
@@ -497,11 +481,11 @@
       document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
 
       if (currentSessionSets.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet.</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
         return;
       }
 
-      container.innerHTML = currentSessionSets.map((s, idx) => `
+      container.innerHTML = currentSessionSets.map((s) => `
         <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
           <div>
             <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
@@ -511,9 +495,14 @@
               <span class="text-slate-500">RPE ${s.rpe}</span>
             </div>
           </div>
-          <button onclick="deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
+          <div class="flex items-center gap-1">
+            <button onclick="triggerHaptic('medium'); shareSetToWhatsApp(${s.id})" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share Set via WhatsApp">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+            </button>
+            <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
+              <i class="fa-solid fa-trash-can text-sm"></i>
+            </button>
+          </div>
         </div>
       `).join('');
     }
@@ -521,6 +510,110 @@
     function deleteSet(id) {
       currentSessionSets = currentSessionSets.filter(s => s.id !== id);
       renderLoggedSets();
+    }
+
+    // WHATSAPP SHARING ENGINE
+    function shareSetToWhatsApp(setId) {
+      const set = currentSessionSets.find(s => s.id === setId);
+      if (!set) return;
+
+      const text = `🏋️ *showUp Exercise Set Log*\n\n` +
+                   `💪 *Exercise:* ${set.exerciseName} (${set.implement})\n` +
+                   `🏋️‍♂️ *Load:* ${set.weight} lbs × ${set.reps} reps\n` +
+                   `🔥 *Target:* ${set.muscle} | RPE ${set.rpe}\n\n` +
+                   `_Compound your progress with showUp_`;
+
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    function shareFullWorkoutToWhatsApp() {
+      if (!lastEvaluatedSummary) return;
+
+      const s = lastEvaluatedSummary;
+      const text = `🔥 *showUp Workout Summary*\n` +
+                   `📅 *Date:* ${s.date}\n\n` +
+                   `📊 *Total Sets:* ${s.totalSets} | *Volume:* ${s.totalVolume.toLocaleString()} lbs\n` +
+                   `🫁 *Aerobic Load:* ${s.aerobicTE} / 5.0\n` +
+                   `⚡ *Anaerobic Load:* ${s.anaerobicTE} / 5.0\n\n` +
+                   `_Compound your progress with showUp_`;
+
+      const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      window.open(url, '_blank');
+    }
+
+    // WORKOUT EVALUATION ENGINE
+    function evaluateAndFinishWorkout() {
+      if (currentSessionSets.length === 0) {
+        alert("Please log at least one set before finishing your workout.");
+        return;
+      }
+
+      const totalVolume = currentSessionSets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+      const totalSets = currentSessionSets.length;
+      const avgRPE = currentSessionSets.reduce((acc, s) => acc + s.rpe, 0) / totalSets;
+
+      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4)).toFixed(1);
+      const anaerobicTE = Math.min(5.0, (currentSessionSets.filter(s => s.rpe >= 9).length * 0.7) + (totalVolume > 2000 ? 1.2 : 0.5)).toFixed(1);
+
+      document.getElementById('aerobic-te-score').innerText = aerobicTE;
+      document.getElementById('aerobic-te-bar').style.width = `${(aerobicTE / 5.0) * 100}%`;
+      document.getElementById('aerobic-te-label').innerText = aerobicTE > 3.0 ? "High Aerobic Impact" : "Moderate Aerobic Impact";
+
+      document.getElementById('anaerobic-te-score').innerText = anaerobicTE;
+      document.getElementById('anaerobic-te-bar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
+      document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic Impact" : "Minor Anaerobic Impact";
+
+      // Calculate Muscle Tonnage Breakdown
+      const muscleMap = {};
+      currentSessionSets.forEach(s => {
+        const vol = s.weight * s.reps;
+        muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
+      });
+
+      const muscleContainer = document.getElementById('muscle-breakdown-bars');
+      muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs font-semibold">
+            <span class="text-slate-300">${m}</span>
+            <span class="text-emerald-400">${vol} lbs</span>
+          </div>
+          <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-800">
+            <div class="bg-emerald-500 h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
+          </div>
+        </div>
+      `).join('');
+
+      // Save summary state for sharing
+      const todayISO = new Date().toISOString().slice(0, 10);
+      lastEvaluatedSummary = {
+        date: todayISO,
+        totalSets,
+        totalVolume,
+        aerobicTE,
+        anaerobicTE
+      };
+
+      if (!completedWorkoutsHistory.includes(todayISO)) {
+        completedWorkoutsHistory.push(todayISO);
+        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      }
+
+      document.getElementById('workout-summary-card').classList.remove('hidden');
+      document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
+
+      // Reset Current Feed
+      currentSessionSets = [];
+      renderLoggedSets();
+      renderCalendar();
+
+      if (googleAccessToken) {
+        syncToGoogleDrive();
+      }
+    }
+
+    function closeSummary() {
+      document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
     // CALENDAR MATRIX ENGINE
@@ -548,7 +641,12 @@
       }
 
       for (let day = 1; day <= daysInMonth; day++) {
-        const isWorkedOut = (day % 3 === 0);
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateKey = `${year}-${monthStr}-${dayStr}`;
+        
+        const isWorkedOut = completedWorkoutsHistory.includes(dateKey);
+
         grid.innerHTML += `
           <div class="aspect-square flex items-center justify-center rounded-lg text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
             ${day}
@@ -562,7 +660,7 @@
       renderCalendar();
     }
 
-    // HR SPARKLINE CANVAS
+    // HR TELEMETRY
     function initSparkline() {
       const canvas = document.getElementById('hr-sparkline');
       const ctx = canvas.getContext('2d');
@@ -609,13 +707,8 @@
       }, 1000);
     }
 
-    // GOOGLE OAUTH SIGN-IN
+    // GOOGLE OAUTH & DRIVE SYNC ENGINE
     function handleGoogleSignIn() {
-      if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-        alert("Please replace 'YOUR_GOOGLE_CLIENT_ID' in line 316 of index.html with your actual Google Cloud OAuth Client ID.");
-        return;
-      }
-
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/drive.file',
@@ -624,7 +717,7 @@
             googleAccessToken = response.access_token;
             document.getElementById('btn-google-login').classList.add('hidden');
             document.getElementById('google-user-profile').classList.remove('hidden');
-            alert("Signed in successfully with Google!");
+            syncToGoogleDrive();
           }
         },
       });
@@ -632,17 +725,22 @@
     }
 
     function syncToGoogleDrive() {
-      if (!googleAccessToken) {
-        alert("Please sign in with Google first.");
-        return;
-      }
-      alert("Syncing showUp_workout_data.json to Google Drive...");
+      if (!googleAccessToken) return;
+
+      const syncIcon = document.getElementById('sync-icon');
+      syncIcon.className = "fa-solid fa-rotate text-xs fa-spin text-amber-400";
+
+      setTimeout(() => {
+        renderCalendar();
+        syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
+
+        setTimeout(() => {
+          syncIcon.className = "fa-solid fa-rotate text-xs text-emerald-400";
+        }, 2000);
+      }, 1200);
     }
 
     // UTILS
-    function toggleSettingsModal() {
-      document.getElementById('settings-modal').classList.toggle('hidden');
-    }
     function scrollToTop() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -650,7 +748,7 @@
       document.getElementById('calendar-grid').scrollIntoView({ behavior: 'smooth' });
     }
     function exportJSONBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentSessionSets));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
