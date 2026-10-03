@@ -1,0 +1,55 @@
+Privacy Policy for showUp
+Last Updated: October 3, 2026
+
+1. Overview
+showUp ("we," "our," or "the App") is a privacy-first, client-side workout tracking and exercise telemetry application. We believe your health and fitness data belongs strictly to you.
+
+This Privacy Policy explains how showUp handles your information. In short: we do not collect, process, track, or store any of your personal data on external servers.
+
+2. Information Collection and Storage
+A. Local Device Storage
+All exercise logs, workout histories, set telemetry, perceived exertion (RPE) scores, and custom exercise libraries are stored locally on your device using your web browser's standard localStorage and IndexedDB browser APIs.
+
+We do not operate central servers or databases to aggregate or store your workout data.
+
+B. Heart Rate Telemetry & Sensors
+showUp uses the Web Bluetooth API to connect directly to standard Bluetooth Low Energy (BLE) Heart Rate Monitors (GATT 0x180D).
+
+Sensor data (such as live heart rate readings and calculated training effect scores) is processed entirely in real time on your local device. This biometric telemetry is never transmitted to us or any third party.
+
+3. Third-Party Services & Integrations
+Google Drive & Google Identity Services
+showUp provides an optional cloud sync feature using Google Identity Services (GIS) and the Google Drive API.
+
+User-Initiated Authorization: If you choose to enable cloud sync, you will be prompted to sign in with your Google account.
+
+Limited File Access (drive.file Scope): showUp requests access only to the specific application file it creates (showUp_workout_data.json). The App cannot read, view, edit, or access any other files, folders, or documents inside your Google Drive.
+
+Direct Client-to-Cloud Sync: All sync operations occur directly between your web browser and Google’s official APIs over HTTPS. Your Google authentication tokens and workout data never pass through any intermediate third-party server.
+
+4. Google API Services User Data Policy Compliance
+showUp's use and transfer of information received from Google APIs to any other app will adhere to the Google API Services User Data Policy, including the Limited Use requirements.
+
+We do not use Google user data to train AI/ML models.
+
+We do not sell, rent, or transfer your Google user data or workout logs to third parties, advertisers, or data brokers.
+
+5. Data Retention, Export, and Control
+Because your data is stored locally and in your personal Google Drive:
+
+Full Control: You can export a full copy of your workout history at any time as a .json backup file via the App's interface.
+
+Data Deletion: Clearing your browser cache or site data for https://elegant13.github.io/showUp-app/ permanently deletes your local data. You can also manually delete or modify the showUp_workout_data.json file directly inside your personal Google Drive at any time.
+
+6. Hosting & Analytics
+GitHub Pages: showUp is hosted statically on GitHub Pages. When you access the App, GitHub may collect basic technical server logs (such as your IP address and user-agent string) strictly for security, network diagnostics, and operational reliability. For more details, please review the GitHub Privacy Statement.
+
+No Third-Party Advertising or Tracking Cookies: showUp contains no advertisement networks, tracking pixels, or cross-site behavioral analytics scripts.
+
+7. Changes to This Privacy Policy
+We may update this Privacy Policy from time to time as new features are added. Any updates will be posted on this page with an updated "Last Updated" revision date.
+
+8. Contact Us
+If you have any questions or feedback regarding this Privacy Policy or the security of showUp, please open an issue directly on the open-source repository at:
+
+GitHub Repository: https://github.com/elegant13/showUp-app
