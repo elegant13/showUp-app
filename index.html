@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>showUp - Custom Workout & Health Telemetry</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        showup: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            950: '#052e16',
+                        },
+                        garmin: {
+                            blue: '#00a0e9',
+                            orange: '#f39c12',
+                            red: '#e74c3c',
+                            purple: '#8e44ad',
+                            gray: '#64748b'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains-Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Inline Dynamic PWA Manifest -->
+    <link rel="manifest" id="pwaManifestLink">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        code, pre, .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        .pulse-heart {
+            animation: pulse-ring 1.1s infinite ease-in-out;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.96); opacity: 0.9; }
+            50% { transform: scale(1.15); opacity: 0.4; }
+            100% { transform: scale(0.96); opacity: 0.9; }
+        }
+        .glow-green {
+            box-shadow: 0 0 20px -3px rgba(34, 197, 94, 0.4);
+        }
+        .glow-active-day {
+            box-shadow: 0 0 14px -1px rgba(34, 197, 94, 0.6);
+        }
+        /* Fixed Bottom Safe Area Inset Utility for iOS Gesture Bar */
+        .bottom-nav-safe {
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+        }
+        /* Scrollable Wheel Styling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Touch Scrub Handle */
+        .scrub-track {
+            touch-action: none;
+            cursor: ew-resize;
+        }
+        .scrub-handle {
+            touch-action: none;
+            transition: transform 0.05s linear;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-showup-500 selection:text-slate-950 overflow-x-hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center space-x-2.5 cursor-pointer" onclick="switchTab('tracker')">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-showup-600 to-emerald-400 flex items-center justify-center text-slate-950 font-black text-lg shadow-md shadow-showup-500/20">
+                    <i class="fa-solid fa-dumbbell"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight text-white flex items-center gap-1">
+                        showUp <span class="text-[10px] px-1.5 py-0.5 rounded bg-showup-500/20 text-showup-400 font-mono border border-showup-500/30">PRO</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Header Heart Rate & Install Actions -->
+            <div class="flex items-center space-x-2">
+                <!-- HR Quick Badge -->
+                <div id="headerHrBadge" onclick="switchTab('tracker')" class="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 text-xs font-semibold">
+                    <i class="fa-solid fa-heart pulse-heart text-rose-500 text-xs"></i>
+                    <span id="headerBpmVal" class="font-mono text-white font-bold">--</span>
+                    <span class="text-[10px] text-slate-400">BPM</span>
+                </div>
+
+                <!-- Sound FX Mute Toggle -->
+                <button onclick="toggleAudioFx()" id="audioToggleBtn" class="p-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white text-xs" title="Toggle Audio FX">
+                    <i class="fa-solid fa-volume-high" id="audioIcon"></i>
+                </button>
+
+                <!-- Install PWA Trigger Button -->
+                <button id="pwaInstallBtn" class="hidden items-center gap-1.5 bg-showup-500 hover:bg-showup-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-md">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="hidden sm:inline">Install</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main View Container (pb-40 ensures ample room above bottom navbar) -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-40">
+
+        <!-- ================= SECTION 1: WORKOUT TRACKER ================= -->
+        <section id="view-tracker" class="space-y-5">
+            
+            <!-- Live Workout Timer Bar & Status Controls -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-850 to-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div id="workoutTimerDisplay" class="font-mono text-2xl md:text-3xl font-black text-showup-400">
+                        00:00:00
+                    </div>
+                    <div>
+                        <span id="workoutStatusBadge" class="px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px] border border-slate-700">
+                            Ready
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button id="btnToggleWorkout" onclick="toggleWorkoutSession()" class="flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-md">
+                        <i class="fa-solid fa-play text-xs" id="playPauseIcon"></i>
+                        <span id="workoutActionText">Start Workout</span>
+                    </button>
+                    <button id="btnFinishWorkout" onclick="finishWorkoutSession()" class="hidden flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs transition flex items-center justify-center gap-2 shadow-md">
+                        <i class="fa-solid fa-flag-checkered text-xs"></i>
+                        <span>Finish & Evaluate</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Heart Rate Monitor Telemetry Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500">
+                            <i class="fa-solid fa-heart pulse-heart"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Heart Rate Telemetry</h2>
+                            <div class="flex items-center gap-1.5">
+                                <span id="hrStatusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                                <span id="hrStatusText" class="text-xs font-semibold text-slate-300">Disconnected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pairing Actions -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="connectBluetoothHRM()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-showup-400 border border-slate-700 font-bold rounded-xl text-xs transition flex items-center gap-1.5">
+                            <i class="fa-brands fa-bluetooth-b text-sm"></i>
+                            <span class="hidden sm:inline">Connect HRM</span>
+                        </button>
+                        <button onclick="toggleHRSimulator()" id="simHrBtn" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold rounded-xl text-xs transition">
+                            Simulate
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Heart Rate Metrics Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                        <div class="text-[10px] uppercase font-bold text-slate-500">Live Heart Rate</div>
+                        <div class="flex items-baseline gap-1 mt-0.5">
+                            <span id="liveHrVal" class="text-2xl font-black font-mono text-white">--</span>
+                            <span class="text-xs text-slate-400">BPM</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                        <div class="text-[10px] uppercase font-bold text-slate-500">Current HR Zone</div>
+                        <div id="liveHrZone" class="text-xs font-extrabold mt-1.5 text-slate-400 truncate">Zone --</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                        <div class="text-[10px] uppercase font-bold text-slate-500">Peak Heart Rate</div>
+                        <div class="flex items-baseline gap-1 mt-0.5">
+                            <span id="peakHrVal" class="text-xl font-bold font-mono text-white">--</span>
+                            <span class="text-xs text-slate-400">BPM</span>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/80">
+                        <div class="text-[10px] uppercase font-bold text-slate-500">Average HR</div>
+                        <div class="flex items-baseline gap-1 mt-0.5">
+                            <span id="avgHrVal" class="text-xl font-bold font-mono text-white">--</span>
+                            <span class="text-xs text-slate-400">BPM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live HR Sparkline Canvas -->
+                <div class="h-20 bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden relative">
+                    <canvas id="liveHrCanvas" class="w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <!-- Exercise Logging Form -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-showup-400 text-sm"></i> Log Exercise Set
+                    </span>
+                    <span class="text-[10px] font-mono text-slate-500">Unit: LBS</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Exercise Choice / Name -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Exercise Name</label>
+                        <input type="text" id="exNameInput" list="exerciseSuggestions" placeholder="e.g. Ring Dips, Macebell 360, Bench Press" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500 font-medium">
+                        <datalist id="exerciseSuggestions">
+                            <!-- Populated dynamically -->
+                        </datalist>
+                    </div>
+
+                    <!-- Prominent Implement / Equipment Dropdown Selector -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                            <span>Implement / Equipment</span>
+                            <span class="text-[9px] text-slate-500 font-normal">Select equipment</span>
+                        </label>
+                        <div class="relative">
+                            <select id="exImplementSelect" class="w-full bg-slate-950 border-2 border-slate-800 hover:border-amber-500/50 rounded-xl px-3 py-2.5 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-400 transition-colors cursor-pointer appearance-none">
+                                <option value="Gymnastics Rings">⭕ Gymnastics Rings</option>
+                                <option value="Macebell">🔨 Macebell</option>
+                                <option value="Kettlebell">🔔 Kettlebell</option>
+                                <option value="Barbell">🏋️ Barbell</option>
+                                <option value="Dumbbell">💪 Dumbbell</option>
+                                <option value="Bodyweight">🧘 Bodyweight</option>
+                                <option value="Cable">⛓ Cable Machine</option>
+                                <option value="Resistance Band">🎗️ Resistance Band</option>
+                                <option value="Machine">⚙️ Machine</option>
+                                <option value="Smith Machine">🏛️ Smith Machine</option>
+                                <option value="Other">🛠️ Other / Custom</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-amber-400 text-xs">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Scrollable & Velocity-Sensitive Weight & Reps Selection Pickers -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <!-- Weight Selector Block -->
+                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Weight (lbs)</label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="adjustWeight(-10)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-10</button>
+                                <button type="button" onclick="adjustWeight(-2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-2.5</button>
+                                <button type="button" onclick="adjustWeight(2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+2.5</button>
+                                <button type="button" onclick="adjustWeight(10)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+10</button>
+                            </div>
+                        </div>
+
+                        <!-- Direct Typing Input + Scroll Wheel Track -->
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
+                                <input type="number" id="exWeightInput" value="0" step="0.5" min="0" oninput="handleDirectWeightInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
+                                <span class="text-[10px] text-slate-500 font-bold">lbs</span>
+                            </div>
+
+                            <!-- Wheel Tick Strip -->
+                            <div id="weightPickerWheel" class="no-scrollbar flex-1 flex items-center gap-2 overflow-x-auto py-1.5 px-4 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Pointer Event Touch / Mouse Drag Velocity Scrubber -->
+                        <div class="pt-1 border-t border-slate-800/60">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1">
+                                <span>◄ Drag Left</span>
+                                <span id="weightVelocityFeedback" class="text-showup-400 font-bold">Velocity Scrub</span>
+                                <span>Drag Right ►</span>
+                            </div>
+                            <div id="weightScrubTrack" class="scrub-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden select-none">
+                                <div class="absolute inset-y-0 w-0.5 bg-slate-700/80"></div>
+                                <div id="weightScrubHandle" class="scrub-handle w-14 h-8 bg-gradient-to-r from-showup-600 to-showup-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10 pointer-events-none">
+                                    <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reps Selector Block -->
+                    <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reps</label>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="adjustReps(-5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-5</button>
+                                <button type="button" onclick="adjustReps(-1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-1</button>
+                                <button type="button" onclick="adjustReps(1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+1</button>
+                                <button type="button" onclick="adjustReps(5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+5</button>
+                            </div>
+                        </div>
+
+                        <!-- Direct Typing Input + Scroll Wheel Track -->
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
+                                <input type="number" id="exRepsInput" value="10" min="1" oninput="handleDirectRepsInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
+                                <span class="text-[10px] text-slate-500 font-bold">reps</span>
+                            </div>
+
+                            <!-- Wheel Tick Strip -->
+                            <div id="repsPickerWheel" class="no-scrollbar flex-1 flex items-center gap-2 overflow-x-auto py-1.5 px-4 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Pointer Event Touch / Mouse Drag Velocity Scrubber -->
+                        <div class="pt-1 border-t border-slate-800/60">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1">
+                                <span>◄ Drag Left</span>
+                                <span id="repsVelocityFeedback" class="text-showup-400 font-bold">Velocity Scrub</span>
+                                <span>Drag Right ►</span>
+                            </div>
+                            <div id="repsScrubTrack" class="scrub-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden select-none">
+                                <div class="absolute inset-y-0 w-0.5 bg-slate-700/80"></div>
+                                <div id="repsScrubHandle" class="scrub-handle w-14 h-8 bg-gradient-to-r from-showup-600 to-showup-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10 pointer-events-none">
+                                    <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Effort / RPE -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">RPE / Effort</label>
+                        <select id="exRpeSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                            <option value="6">RPE 6 (Light)</option>
+                            <option value="7">RPE 7 (Moderate)</option>
+                            <option value="8" selected>RPE 8 (2 Reps in Reserve)</option>
+                            <option value="9">RPE 9 (1 Rep in Reserve)</option>
+                            <option value="10">RPE 10 (Max Failure)</option>
+                        </select>
+                    </div>
+
+                    <!-- Target Primary Muscle -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Muscle</label>
+                        <select id="exMuscleSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                            <option value="Chest">Chest</option>
+                            <option value="Back">Back</option>
+                            <option value="Shoulders">Shoulders</option>
+                            <option value="Quads">Quads</option>
+                            <option value="Hamstrings">Hamstrings</option>
+                            <option value="Glutes">Glutes</option>
+                            <option value="Biceps">Biceps</option>
+                            <option value="Triceps">Triceps</option>
+                            <option value="Core">Core</option>
+                            <option value="Full Body">Full Body</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="logSetEntry()" class="w-full py-3 bg-gradient-to-r from-showup-600 to-showup-500 hover:from-showup-500 hover:to-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg shadow-showup-500/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-sm"></i>
+                    <span>Log Set to Session</span>
+                </button>
+            </div>
+
+            <!-- Current Session Log Feed -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Session Exercise Log</h3>
+                    <span id="sessionSetCount" class="text-xs font-mono text-showup-400 font-bold">0 Sets</span>
+                </div>
+
+                <div id="sessionSetFeed" class="space-y-2">
+                    <div class="text-center py-8 text-xs text-slate-500">
+                        No sets logged in current workout yet. Log your first set above!
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= SECTION: LOOP HABIT CALENDAR MODULE ================= -->
+        <section id="view-calendar" class="hidden space-y-5">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-6">
+                <!-- Loop Header Bar -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-check text-showup-400"></i> Loop Habit Matrix
+                        </h2>
+                        <p class="text-xs text-slate-400">High contrast workout progress tracking & streak telemetry.</p>
+                    </div>
+                    
+                    <!-- Month Navigation Controls -->
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
+                        <button onclick="changeHabitMonth(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span id="calendarMonthLabel" class="text-xs font-mono font-bold text-white px-2">October 2026</span>
+                        <button onclick="changeHabitMonth(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loop Habit Analytics Metric Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-fire text-amber-500"></i> Current Streak
+                        </span>
+                        <div id="statCurrentStreak" class="text-2xl font-black font-mono text-amber-400 mt-1">0 Days</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-trophy text-amber-300"></i> Best Streak
+                        </span>
+                        <div id="statBestStreak" class="text-2xl font-black font-mono text-white mt-1">0 Days</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-dumbbell text-showup-400"></i> Active Days
+                        </span>
+                        <div id="statTotalActive" class="text-2xl font-black font-mono text-showup-400 mt-1">0</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-chart-pie text-garmin-blue"></i> Consistency
+                        </span>
+                        <div id="statConsistencyRate" class="text-2xl font-black font-mono text-garmin-blue mt-1">0%</div>
+                    </div>
+                </div>
+
+                <!-- Contrast Legend -->
+                <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1">
+                    <span class="font-bold uppercase tracking-wider text-[10px] text-slate-500">Loop Contrast Visualizer</span>
+                    <div class="flex items-center gap-3 font-medium">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-slate-950 border border-slate-800 inline-block"></span> Rest Day
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-showup-500 border border-showup-400 inline-block glow-active-day"></span> Active Workout Day
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Loop Habit Grid Container -->
+                <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 overflow-x-auto">
+                    <!-- Day of Week Headers -->
+                    <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono font-bold text-slate-500 uppercase">
+                        <div>Sun</div>
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div>Sat</div>
+                    </div>
+
+                    <!-- Calendar Grid Day Tiles -->
+                    <div id="habitGridTiles" class="grid grid-cols-7 gap-2">
+                        <!-- Rendered dynamically by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 2: SUMMARY & GARMIN EVALUATION ================= -->
+        <section id="view-summary" class="hidden space-y-6">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-6">
+                <div class="border-b border-slate-800 pb-3 flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-black text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-showup-400"></i> Workout Analysis & Load
+                        </h2>
+                        <p class="text-xs text-slate-400">Garmin-style training load & physiological evaluation.</p>
+                    </div>
+                    <span id="summaryTimestamp" class="text-[10px] font-mono text-slate-500">Live Evaluation</span>
+                </div>
+
+                <!-- Garmin-style Training Effect Load Gauges -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Aerobic Load Score -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-heart-pulse text-garmin-blue text-base"></i>
+                                <span class="text-xs font-extrabold uppercase text-slate-300">Aerobic Training Effect</span>
+                            </div>
+                            <span id="aerobicScoreVal" class="text-2xl font-black font-mono text-garmin-blue">0.0</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="aerobicBar" class="bg-garmin-blue h-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p id="aerobicDesc" class="text-[11px] text-slate-400">No aerobic strain recorded.</p>
+                    </div>
+
+                    <!-- Anaerobic Load Score -->
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-garmin-orange text-base"></i>
+                                <span class="text-xs font-extrabold uppercase text-slate-300">Anaerobic Training Effect</span>
+                            </div>
+                            <span id="anaerobicScoreVal" class="text-2xl font-black font-mono text-garmin-orange">0.0</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="anaerobicBar" class="bg-garmin-orange h-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p id="anaerobicDesc" class="text-[11px] text-slate-400">No anaerobic resistance strain recorded.</p>
+                    </div>
+                </div>
+
+                <!-- Metrics Overview Row -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Total Volume</span>
+                        <div id="sumVolumeVal" class="text-lg font-black font-mono text-white mt-0.5">0 lbs</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Duration</span>
+                        <div id="sumDurationVal" class="text-lg font-black font-mono text-white mt-0.5">00:00</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Avg / Peak HR</span>
+                        <div id="sumHrVal" class="text-lg font-black font-mono text-white mt-0.5">-- / --</div>
+                    </div>
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] uppercase font-bold text-slate-500">Sets Completed</span>
+                        <div id="sumSetsVal" class="text-lg font-black font-mono text-white mt-0.5">0 Sets</div>
+                    </div>
+                </div>
+
+                <!-- Targeted Muscle Group Breakdown Canvas Graph -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Muscle Group Volume Breakdown</h3>
+                    <div class="h-48 bg-slate-950 rounded-xl border border-slate-800 p-2 relative">
+                        <canvas id="muscleCanvas" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- HR Zone Time Breakdown Bars -->
+                <div class="space-y-2">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Heart Rate Zone Distribution</h3>
+                    <div class="space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800" id="hrZoneBarsContainer">
+                        <!-- Rendered JS HR zone rows -->
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end">
+                    <button onclick="saveAndResetWorkout()" class="px-5 py-3 bg-showup-500 hover:bg-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-sm"></i>
+                        <span>Save Session to History</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECTION 3: WORKOUT HISTORY ================= -->
+        <section id="view-history" class="hidden space-y-4">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clock-rotate-left text-showup-400"></i> Workout History Log
+                        </h2>
+                        <p class="text-xs text-slate-400">Saved sessions stored locally in browser.</p>
+                    </div>
+                    <button onclick="clearHistoryLog()" class="text-xs text-rose-400 hover:underline font-semibold">Clear Log</button>
+                </div>
+
+                <div id="historyListContainer" class="space-y-3">
+                    <!-- History Cards Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Fully Fixed Bottom Navigation Bar with Safe Area Padding -->
+    <nav style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;" class="bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 shadow-2xl px-4 pt-2.5 bottom-nav-safe">
+        <div class="max-w-md mx-auto flex justify-around items-center">
+            <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition">
+                <i class="fa-solid fa-dumbbell text-lg mb-1"></i>
+                <span class="text-[10px] tracking-wide">Workout</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-calendar-days text-lg mb-1"></i>
+                <span class="text-[10px] tracking-wide">Habits</span>
+            </button>
+            <button onclick="switchTab('summary')" id="nav-summary" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-chart-line text-lg mb-1"></i>
+                <span class="text-[10px] tracking-wide">Summary</span>
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition">
+                <i class="fa-solid fa-clock-rotate-left text-lg mb-1"></i>
+                <span class="text-[10px] tracking-wide">History</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed top-16 right-4 z-50 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-2"></div>
+
+    <!-- Edit Exercise Modal Overlay -->
+    <div id="editSetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-sm font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-showup-400"></i> Edit Logged Exercise Set
+                </h3>
+                <button onclick="closeEditSetModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <input type="hidden" id="editSetId">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Exercise Name</label>
+                    <input type="text" id="editExName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-medium focus:outline-none focus:border-showup-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Implement</label>
+                        <select id="editExImplement" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                            <option value="Gymnastics Rings">Gymnastics Rings</option>
+                            <option value="Macebell">Macebell</option>
+                            <option value="Kettlebell">Kettlebell</option>
+                            <option value="Barbell">Barbell</option>
+                            <option value="Dumbbell">Dumbbell</option>
+                            <option value="Bodyweight">Bodyweight</option>
+                            <option value="Cable">Cable Machine</option>
+                            <option value="Resistance Band">Resistance Band</option>
+                            <option value="Machine">Machine</option>
+                            <option value="Smith Machine">Smith Machine</option>
+                            <option value="Other">Other / Custom</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Target Muscle</label>
+                        <select id="editExMuscle" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                            <option value="Chest">Chest</option>
+                            <option value="Back">Back</option>
+                            <option value="Shoulders">Shoulders</option>
+                            <option value="Quads">Quads</option>
+                            <option value="Hamstrings">Hamstrings</option>
+                            <option value="Glutes">Glutes</option>
+                            <option value="Biceps">Biceps</option>
+                            <option value="Triceps">Triceps</option>
+                            <option value="Core">Core</option>
+                            <option value="Full Body">Full Body</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight (lbs)</label>
+                        <input type="number" id="editExWeight" step="0.5" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Reps</label>
+                        <input type="number" id="editExReps" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">RPE</label>
+                        <select id="editExRpe" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                            <option value="6">RPE 6</option>
+                            <option value="7">RPE 7</option>
+                            <option value="8">RPE 8</option>
+                            <option value="9">RPE 9</option>
+                            <option value="10">RPE 10</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeEditSetModal()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
+                    Cancel
+                </button>
+                <button onclick="saveEditedSetDetails()" class="flex-1 py-2.5 rounded-xl bg-showup-500 hover:bg-showup-400 text-slate-950 font-black text-xs transition shadow-md">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Habit Day Inspection & Backdate Modal -->
+    <div id="habitDayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 id="habitDayModalTitle" class="text-sm font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-day text-showup-400"></i> Day Inspection
+                </h3>
+                <button onclick="closeHabitDayModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="habitDayModalContent" class="space-y-3">
+                <!-- Dynamic inspection content -->
+            </div>
+
+            <div id="habitDayModalActions" class="pt-2 border-t border-slate-800 flex items-center justify-between">
+                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application JavaScript Engine -->
+    <script>
+        let workoutState = {
+            isActive: false,
+            startTime: null,
+            elapsedSeconds: 0,
+            timerInterval: null,
+            sets: [],
+            hrLog: [],
+            peakHr: 0
+        };
+
+        const IMPLEMENT_LIST = [
+            "Gymnastics Rings", "Macebell", "Kettlebell", "Barbell", 
+            "Dumbbell", "Bodyweight", "Cable", "Resistance Band", 
+            "Machine", "Smith Machine", "Other"
+        ];
+
+        // Built-in Expanded Exercise Catalog including Gymnastics Rings
+        const BUILTIN_EXERCISES = [
+            // Gymnastics Rings
+            { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest" },
+            { name: "Ring Push-ups", implement: "Gymnastics Rings", muscle: "Chest" },
+            { name: "Ring Muscle-ups", implement: "Gymnastics Rings", muscle: "Full Body" },
+            { name: "Ring Inverted Rows", implement: "Gymnastics Rings", muscle: "Back" },
+            { name: "Ring Support Hold", implement: "Gymnastics Rings", muscle: "Core" },
+            { name: "Skin the Cat", implement: "Gymnastics Rings", muscle: "Shoulders" },
+            { name: "Ring Chest Flyes", implement: "Gymnastics Rings", muscle: "Chest" },
+            { name: "Ring Archer Pull-ups", implement: "Gymnastics Rings", muscle: "Back" },
+            { name: "False Grip Pull-ups", implement: "Gymnastics Rings", muscle: "Biceps" },
+            { name: "Ring Rollouts", implement: "Gymnastics Rings", muscle: "Core" },
+
+            // Macebell & Kettlebell
+            { name: "Mace 360", implement: "Macebell", muscle: "Shoulders" },
+            { name: "Mace 10-to-2", implement: "Macebell", muscle: "Shoulders" },
+            { name: "Mace Barbarian Squat", implement: "Macebell", muscle: "Quads" },
+            { name: "Mace Offset Lunge", implement: "Macebell", muscle: "Quads" },
+            { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings" },
+            { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body" },
+            { name: "Kettlebell Snatch", implement: "Kettlebell", muscle: "Full Body" },
+            { name: "Turkish Get-up", implement: "Kettlebell", muscle: "Full Body" },
+            { name: "Goblet Squat", implement: "Kettlebell", muscle: "Quads" },
+
+            // Barbell & Dumbbell Standard Strength
+            { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest" },
+            { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads" },
+            { name: "Barbell Deadlift", implement: "Barbell", muscle: "Back" },
+            { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders" },
+            { name: "Barbell Romanian Deadlift", implement: "Barbell", muscle: "Hamstrings" },
+            { name: "Barbell Curl", implement: "Barbell", muscle: "Biceps" },
+            { name: "Dumbbell Bench Press", implement: "Dumbbell", muscle: "Chest" },
+            { name: "Dumbbell Row", implement: "Dumbbell", muscle: "Back" },
+            { name: "Dumbbell Lateral Raise", implement: "Dumbbell", muscle: "Shoulders" },
+
+            // Bodyweight & Calisthenics
+            { name: "Pull-ups", implement: "Bodyweight", muscle: "Back" },
+            { name: "Chin-ups", implement: "Bodyweight", muscle: "Biceps" },
+            { name: "Parallel Bar Dips", implement: "Bodyweight", muscle: "Triceps" },
+            { name: "Pistol Squats", implement: "Bodyweight", muscle: "Quads" },
+            { name: "Handstand Push-ups", implement: "Bodyweight", muscle: "Shoulders" },
+            { name: "Nordic Curls", implement: "Bodyweight", muscle: "Hamstrings" }
+        ];
+
+        let customExercises = JSON.parse(localStorage.getItem('showup_custom_exercises') || '[]');
+
+        let currentCalendarDate = new Date();
+        let audioEnabled = true;
+        let hrSimInterval = null;
+        let isSimulatingHr = false;
+        let bleHrDevice = null;
+        let deferredPrompt = null;
+
+        // Web Audio API Synth Engine
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setupPWAManifest();
+            initPWAInstaller();
+            loadHistoryView();
+            initLiveHrCanvas();
+            populateExerciseSuggestions();
+            
+            buildPickerWheels();
+            setupPointerVelocityScrubber('weight');
+            setupPointerVelocityScrubber('reps');
+
+            renderHabitCalendarGrid();
+
+            document.getElementById('exNameInput').addEventListener('input', handleExerciseInputChange);
+
+            window.addEventListener('resize', () => {
+                initLiveHrCanvas();
+                renderMuscleCanvas();
+            });
+        });
+
+        /* =========================================================================
+           LOOP HABIT CALENDAR ENGINE
+           ========================================================================= */
+        function changeHabitMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderHabitCalendarGrid();
+        }
+
+        function renderHabitCalendarGrid() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            document.getElementById('calendarMonthLabel').textContent = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
+
+            // Map workout ISO dates to records
+            const workoutDateMap = {};
+            history.forEach(w => {
+                const dateObj = new Date(w.id);
+                if (!isNaN(dateObj.getTime())) {
+                    const dateKey = getFormattedDateKey(dateObj);
+                    workoutDateMap[dateKey] = w;
+                }
+            });
+
+            const gridContainer = document.getElementById('habitGridTiles');
+            gridContainer.innerHTML = '';
+
+            // Blank Spacer Tiles for preceding days
+            for (let i = 0; i < firstDayIndex; i++) {
+                const blank = document.createElement('div');
+                blank.className = "h-14 rounded-xl bg-slate-950/40 opacity-20 border border-slate-900";
+                gridContainer.appendChild(blank);
+            }
+
+            const todayKey = getFormattedDateKey(new Date());
+
+            // Build Month Tiles
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const thisDate = new Date(year, month, day);
+                const dateKey = getFormattedDateKey(thisDate);
+                const hasWorkout = !!workoutDateMap[dateKey];
+                const isToday = dateKey === todayKey;
+
+                const tile = document.createElement('div');
+
+                if (hasWorkout) {
+                    const workoutData = workoutDateMap[dateKey];
+                    tile.className = "h-14 rounded-xl bg-gradient-to-tr from-showup-600 to-showup-500 text-slate-950 p-2 flex flex-col justify-between cursor-pointer border border-showup-400 glow-active-day hover:scale-105 transition transform";
+                    tile.onclick = () => inspectHabitDay(workoutData, dateKey);
+                    tile.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-black text-xs">${day}</span>
+                            <i class="fa-solid fa-check text-[10px] bg-slate-950/30 p-0.5 rounded-full text-showup-300"></i>
+                        </div>
+                        <div class="text-[9px] font-mono font-bold truncate text-slate-950">
+                            ${workoutData.volume}
+                        </div>
+                    `;
+                } else {
+                    tile.className = `h-14 rounded-xl ${isToday ? 'bg-slate-900 border-2 border-showup-500/50' : 'bg-slate-950 border border-slate-800/80'} p-2 flex flex-col justify-between text-slate-500 hover:border-slate-700 cursor-pointer transition`;
+                    tile.onclick = () => inspectEmptyDay(dateKey, day);
+                    tile.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-xs ${isToday ? 'text-showup-400' : 'text-slate-400'}">${day}</span>
+                        </div>
+                        <span class="text-[9px] font-mono opacity-30 text-slate-600">--</span>
+                    `;
+                }
+
+                gridContainer.appendChild(tile);
+            }
+
+            calculateHabitAnalytics(history);
+        }
+
+        function calculateHabitAnalytics(history) {
+            const workoutDatesSet = new Set();
+            history.forEach(w => {
+                const d = new Date(w.id);
+                if (!isNaN(d.getTime())) {
+                    workoutDatesSet.add(getFormattedDateKey(d));
+                }
+            });
+
+            let currentStreak = 0;
+            let bestStreak = 0;
+            let tempStreak = 0;
+
+            const today = new Date();
+            let checkDate = new Date(today);
+
+            // Calculate current continuous streak
+            let continueCurrent = true;
+            while (continueCurrent) {
+                const key = getFormattedDateKey(checkDate);
+                if (workoutDatesSet.has(key)) {
+                    currentStreak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    if (key === getFormattedDateKey(today)) {
+                        checkDate.setDate(checkDate.getDate() - 1);
+                        const yesterdayKey = getFormattedDateKey(checkDate);
+                        if (workoutDatesSet.has(yesterdayKey)) {
+                            continue;
+                        }
+                    }
+                    continueCurrent = false;
+                }
+            }
+
+            // Calculate Best Streak
+            const totalDaysInMonth = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 0).getDate();
+            let activeThisMonth = 0;
+
+            for (let d = 1; d <= totalDaysInMonth; d++) {
+                const key = getFormattedDateKey(new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), d));
+                if (workoutDatesSet.has(key)) {
+                    activeThisMonth++;
+                    tempStreak++;
+                    if (tempStreak > bestStreak) bestStreak = tempStreak;
+                } else {
+                    tempStreak = 0;
+                }
+            }
+
+            const consistencyRate = Math.round((activeThisMonth / totalDaysInMonth) * 100);
+
+            document.getElementById('statCurrentStreak').textContent = `${currentStreak} Days`;
+            document.getElementById('statBestStreak').textContent = `${bestStreak} Days`;
+            document.getElementById('statTotalActive').textContent = history.length;
+            document.getElementById('statConsistencyRate').textContent = `${consistencyRate}%`;
+        }
+
+        function inspectHabitDay(workout, dateKey) {
+            document.getElementById('habitDayModalTitle').innerHTML = `<i class="fa-solid fa-calendar-day text-showup-400"></i> Logged Workout: ${workout.date}`;
+            const content = document.getElementById('habitDayModalContent');
+            const actions = document.getElementById('habitDayModalActions');
+
+            content.innerHTML = `
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                            <span class="text-[10px] text-slate-500 font-bold uppercase">Volume Tonnage</span>
+                            <div class="text-sm font-mono font-bold text-showup-400 mt-0.5">${workout.volume}</div>
+                        </div>
+                        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                            <span class="text-[10px] text-slate-500 font-bold uppercase">Duration</span>
+                            <div class="text-sm font-mono font-bold text-white mt-0.5">${workout.duration}</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-1">
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">Garmin Training Effect</div>
+                        <div class="flex justify-between text-xs font-mono">
+                            <span class="text-garmin-blue font-bold">Aerobic Load: ${workout.aerobic}</span>
+                            <span class="text-garmin-orange font-bold">Anaerobic Load: ${workout.anaerobic}</span>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-slate-400 flex items-center justify-between pt-1">
+                        <span>Sets Completed: <strong class="text-white">${workout.setsCount || 'Logged Session'}</strong></span>
+                        <span>Avg HR: <strong class="text-white">${workout.avgHr || '--'} BPM</strong></span>
+                    </div>
+                </div>
+            `;
+
+            actions.innerHTML = `
+                <button onclick="deleteWorkoutByDateKey('${dateKey}')" class="text-xs text-rose-400 hover:underline font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-trash"></i> Delete Session
+                </button>
+                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+                    Close
+                </button>
+            `;
+
+            document.getElementById('habitDayModal').classList.remove('hidden');
+        }
+
+        function inspectEmptyDay(dateKey, dayNum) {
+            document.getElementById('habitDayModalTitle').innerHTML = `<i class="fa-solid fa-calendar-plus text-slate-400"></i> ${dateKey} - Rest Day`;
+            const content = document.getElementById('habitDayModalContent');
+            const actions = document.getElementById('habitDayModalActions');
+
+            content.innerHTML = `
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-center space-y-3">
+                    <p class="text-xs text-slate-400">No workout session was recorded for this day.</p>
+                    <div class="p-3 bg-slate-900 rounded-lg border border-slate-800 text-left space-y-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase">Quick Backdate Log</label>
+                        <input type="text" id="backdateNotes" placeholder="e.g. Ring Workout, 15000 lbs, 45 mins" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-showup-500">
+                    </div>
+                </div>
+            `;
+
+            actions.innerHTML = `
+                <button onclick="saveBackdatedWorkout('${dateKey}')" class="px-4 py-2 bg-showup-500 hover:bg-showup-400 text-slate-950 font-black rounded-xl text-xs transition shadow-md">
+                    Mark Active Workout
+                </button>
+                <button onclick="closeHabitDayModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition">
+                    Close
+                </button>
+            `;
+
+            document.getElementById('habitDayModal').classList.remove('hidden');
+        }
+
+        function saveBackdatedWorkout(dateKey) {
+            const note = document.getElementById('backdateNotes').value.trim() || 'Backdated Session';
+            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
+
+            const targetTimestamp = new Date(dateKey + 'T12:00:00').getTime();
+
+            const record = {
+                id: targetTimestamp,
+                date: new Date(targetTimestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                duration: "00:45:00",
+                volume: note,
+                setsCount: 5,
+                aerobic: "2.5",
+                anaerobic: "2.0",
+                avgHr: "135"
+            };
+
+            history.unshift(record);
+            localStorage.setItem('showup_workouts', JSON.stringify(history));
+
+            closeHabitDayModal();
+            renderHabitCalendarGrid();
+            loadHistoryView();
+            showToast('Backdated workout logged!', 'success');
+        }
+
+        function deleteWorkoutByDateKey(dateKey) {
+            let history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
+            history = history.filter(w => getFormattedDateKey(new Date(w.id)) !== dateKey);
+            localStorage.setItem('showup_workouts', JSON.stringify(history));
+
+            closeHabitDayModal();
+            renderHabitCalendarGrid();
+            loadHistoryView();
+            showToast('Session removed from history', 'info');
+        }
+
+        function closeHabitDayModal() {
+            document.getElementById('habitDayModal').classList.add('hidden');
+        }
+
+        function getFormattedDateKey(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /* =========================================================================
+           POINTER EVENT VELOCITY SCRUBBER ENGINE (TOUCH & MOUSE RELIABLE)
+           ========================================================================= */
+        function setupPointerVelocityScrubber(type) {
+            const track = document.getElementById(`${type}ScrubTrack`);
+            const handle = document.getElementById(`${type}ScrubHandle`);
+            const feedback = document.getElementById(`${type}VelocityFeedback`);
+            if (!track || !handle) return;
+
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            let scrubInterval = null;
+
+            function onPointerDown(e) {
+                isDragging = true;
+                track.setPointerCapture(e.pointerId);
+                startX = e.clientX;
+                currentX = e.clientX;
+                
+                feedback.textContent = "Scrubbing Active";
+                feedback.className = "text-amber-400 font-extrabold animate-pulse";
+
+                if (scrubInterval) clearInterval(scrubInterval);
+                scrubInterval = setInterval(processScrubStep, 60);
+                triggerVibration([15]);
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                currentX = e.clientX;
+                const deltaX = currentX - startX;
+                
+                const clampedX = Math.max(-45, Math.min(45, deltaX));
+                handle.style.transform = `translateX(${clampedX}px)`;
+            }
+
+            function onPointerUp(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                try {
+                    track.releasePointerCapture(e.pointerId);
+                } catch(err) {}
+
+                if (scrubInterval) clearInterval(scrubInterval);
+                handle.style.transform = `translateX(0px)`;
+                feedback.textContent = "Velocity Scrub";
+                feedback.className = "text-showup-400 font-bold";
+            }
+
+            function processScrubStep() {
+                if (!isDragging) return;
+                const deltaX = currentX - startX;
+                if (Math.abs(deltaX) < 8) return;
+
+                const direction = deltaX > 0 ? 1 : -1;
+                const absDist = Math.abs(deltaX);
+
+                let multiplier = 1;
+                if (absDist > 20) multiplier = 2;
+                if (absDist > 35) multiplier = 5;
+
+                if (type === 'weight') {
+                    const step = 0.5 * multiplier * direction;
+                    adjustWeight(step);
+                } else if (type === 'reps') {
+                    const step = 1 * multiplier * direction;
+                    adjustReps(step);
+                }
+            }
+
+            track.addEventListener('pointerdown', onPointerDown);
+            track.addEventListener('pointermove', onPointerMove);
+            track.addEventListener('pointerup', onPointerUp);
+            track.addEventListener('pointercancel', onPointerUp);
+        }
+
+        function buildPickerWheels() {
+            const weightWheel = document.getElementById('weightPickerWheel');
+            if (weightWheel) {
+                const weights = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 135, 185, 225, 315];
+                weightWheel.innerHTML = weights.map(w => `
+                    <button type="button" onclick="setWeightValue(${w})" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
+                        ${w}
+                    </button>
+                `).join('');
+            }
+
+            const repsWheel = document.getElementById('repsPickerWheel');
+            if (repsWheel) {
+                const repsList = [1, 3, 5, 6, 8, 10, 12, 15, 20, 25, 30, 50];
+                repsWheel.innerHTML = repsList.map(r => `
+                    <button type="button" onclick="setRepsValue(${r})" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
+                        ${r}
+                    </button>
+                `).join('');
+            }
+        }
+
+        function setWeightValue(val) {
+            document.getElementById('exWeightInput').value = val;
+            playBeep(900, 0.05);
+            triggerVibration([10]);
+        }
+
+        function setRepsValue(val) {
+            document.getElementById('exRepsInput').value = val;
+            playBeep(900, 0.05);
+            triggerVibration([10]);
+        }
+
+        function adjustWeight(delta) {
+            const input = document.getElementById('exWeightInput');
+            let current = parseFloat(input.value) || 0;
+            current = Math.max(0, current + delta);
+            input.value = current;
+            playBeep(850, 0.03);
+        }
+
+        function adjustReps(delta) {
+            const input = document.getElementById('exRepsInput');
+            let current = parseInt(input.value) || 1;
+            current = Math.max(1, current + delta);
+            input.value = current;
+            playBeep(850, 0.03);
+        }
+
+        function handleDirectWeightInput(val) {
+            let v = parseFloat(val);
+            if (isNaN(v) || v < 0) v = 0;
+        }
+
+        function handleDirectRepsInput(val) {
+            let v = parseInt(val);
+            if (isNaN(v) || v < 1) v = 1;
+        }
+
+        function handleExerciseInputChange(e) {
+            const name = e.target.value.trim();
+            if (!name) return;
+
+            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
+            const match = allExercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
+
+            if (match) {
+                if (match.implement) {
+                    document.getElementById('exImplementSelect').value = match.implement;
+                }
+                if (match.muscle) {
+                    document.getElementById('exMuscleSelect').value = match.muscle;
+                }
+            } else {
+                const inferredMuscle = inferMuscleFromKeywords(name);
+                if (inferredMuscle) {
+                    document.getElementById('exMuscleSelect').value = inferredMuscle;
+                }
+            }
+        }
+
+        function inferMuscleFromKeywords(name) {
+            const n = name.toLowerCase();
+            if (n.includes('press') || n.includes('dip') || n.includes('fly') || n.includes('chest')) return 'Chest';
+            if (n.includes('row') || n.includes('pull') || n.includes('chin') || n.includes('lat') || n.includes('back')) return 'Back';
+            if (n.includes('squat') || n.includes('lunge') || n.includes('leg press') || n.includes('quad')) return 'Quads';
+            if (n.includes('deadlift') || n.includes('curl') && n.includes('ham') || n.includes('nordic')) return 'Hamstrings';
+            if (n.includes('raise') || n.includes('overhead') || n.includes('shoulder')) return 'Shoulders';
+            if (n.includes('bicep') || n.includes('curl')) return 'Biceps';
+            if (n.includes('tricep') || n.includes('extension')) return 'Triceps';
+            if (n.includes('ab') || n.includes('core') || n.includes('plank')) return 'Core';
+            return 'Full Body';
+        }
+
+        function populateExerciseSuggestions() {
+            const datalist = document.getElementById('exerciseSuggestions');
+            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
+            datalist.innerHTML = allExercises.map(ex => `<option value="${ex.name}">${ex.implement} • ${ex.muscle}</option>`).join('');
+        }
+
+        function toggleWorkoutSession() {
+            if (!workoutState.isActive) {
+                workoutState.isActive = true;
+                workoutState.startTime = Date.now() - (workoutState.elapsedSeconds * 1000);
+                workoutState.timerInterval = setInterval(updateWorkoutTimer, 1000);
+
+                document.getElementById('workoutStatusBadge').textContent = 'ACTIVE';
+                document.getElementById('workoutStatusBadge').className = 'px-2.5 py-1 rounded-md bg-showup-500/20 text-showup-400 font-bold uppercase tracking-wider text-[10px] border border-showup-500/30 glow-green';
+                document.getElementById('playPauseIcon').className = 'fa-solid fa-pause text-xs';
+                document.getElementById('workoutActionText').textContent = 'Pause Workout';
+                document.getElementById('btnFinishWorkout').classList.remove('hidden');
+
+                playBeep(880, 0.2);
+                showToast('Workout Started!', 'success');
+            } else {
+                workoutState.isActive = false;
+                clearInterval(workoutState.timerInterval);
+
+                document.getElementById('workoutStatusBadge').textContent = 'PAUSED';
+                document.getElementById('workoutStatusBadge').className = 'px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-400 font-bold uppercase tracking-wider text-[10px] border border-amber-500/30';
+                document.getElementById('playPauseIcon').className = 'fa-solid fa-play text-xs';
+                document.getElementById('workoutActionText').textContent = 'Resume Workout';
+
+                playBeep(440, 0.2);
+                showToast('Workout Paused', 'info');
+            }
+        }
+
+        function updateWorkoutTimer() {
+            workoutState.elapsedSeconds = Math.floor((Date.now() - workoutState.startTime) / 1000);
+            const hrs = String(Math.floor(workoutState.elapsedSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((workoutState.elapsedSeconds % 3600) / 60)).padStart(2, '0');
+            const secs = String(workoutState.elapsedSeconds % 60).padStart(2, '0');
+            document.getElementById('workoutTimerDisplay').textContent = `${hrs}:${mins}:${secs}`;
+        }
+
+        function logSetEntry() {
+            const nameInput = document.getElementById('exNameInput').value.trim();
+            if (!nameInput) {
+                showToast('Please enter an exercise name', 'error');
+                return;
+            }
+
+            const implement = document.getElementById('exImplementSelect').value;
+            const weight = parseFloat(document.getElementById('exWeightInput').value) || 0;
+            const reps = parseInt(document.getElementById('exRepsInput').value) || 1;
+            const rpe = parseInt(document.getElementById('exRpeSelect').value) || 8;
+            const muscle = document.getElementById('exMuscleSelect').value;
+
+            const allExercises = [...BUILTIN_EXERCISES, ...customExercises];
+            const isExisting = allExercises.some(e => e.name.toLowerCase() === nameInput.toLowerCase());
+            let isCustom = false;
+
+            if (!isExisting) {
+                const newCustom = { name: nameInput, implement: implement, muscle: muscle, isCustom: true };
+                customExercises.push(newCustom);
+                localStorage.setItem('showup_custom_exercises', JSON.stringify(customExercises));
+                populateExerciseSuggestions();
+                isCustom = true;
+            }
+
+            const setEntry = {
+                id: Date.now(),
+                name: nameInput,
+                implement: implement,
+                weight: weight,
+                reps: reps,
+                rpe: rpe,
+                muscle: muscle,
+                isCustom: isCustom,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            workoutState.sets.push(setEntry);
+
+            if (!workoutState.isActive) {
+                toggleWorkoutSession();
+            }
+
+            renderSetFeed();
+            playBeep(1200, 0.1);
+            triggerVibration([40]);
+            showToast(`Logged ${nameInput} set`, 'success');
+        }
+
+        function getImplementBadgeStyle(item) {
+            switch(item) {
+                case 'Gymnastics Rings':
+                    return 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                case 'Macebell':
+                    return 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+                case 'Kettlebell':
+                    return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
+                case 'Barbell':
+                    return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+                case 'Dumbbell':
+                    return 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+                case 'Bodyweight':
+                    return 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                default:
+                    return 'bg-slate-800 text-slate-300 border-slate-700';
+            }
+        }
+
+        function renderSetFeed() {
+            const container = document.getElementById('sessionSetFeed');
+            document.getElementById('sessionSetCount').textContent = `${workoutState.sets.length} Sets`;
+
+            if (workoutState.sets.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-xs text-slate-500">
+                        No sets logged in current workout yet. Log your first set above!
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = workoutState.sets.map((set, index) => {
+                const badgeStyle = getImplementBadgeStyle(set.implement);
+
+                return `
+                    <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90 flex items-center justify-between hover:border-slate-700 transition">
+                        <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 font-mono text-xs flex items-center justify-center font-bold">
+                                ${index + 1}
+                            </span>
+                            <div>
+                                <div class="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                    <span>${set.name}</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded border font-mono font-bold ${badgeStyle}">
+                                        ${set.implement}
+                                    </span>
+                                    ${set.isCustom ? `<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono border border-amber-500/30">CUSTOM</span>` : ''}
+                                </div>
+                                <div class="text-[11px] text-slate-400 mt-0.5">
+                                    <strong class="text-slate-200">${set.weight} lbs</strong> × ${set.reps} reps @ RPE ${set.rpe}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
+                                ${set.muscle}
+                            </span>
+                            <button onclick="openEditSetModal(${set.id})" class="text-slate-400 hover:text-showup-400 p-1.5 text-xs transition rounded-lg hover:bg-slate-900" title="Edit Set">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteSetEntry(${set.id})" class="text-slate-500 hover:text-rose-400 p-1.5 text-xs transition rounded-lg hover:bg-slate-900" title="Delete Set">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteSetEntry(id) {
+            workoutState.sets = workoutState.sets.filter(s => s.id !== id);
+            renderSetFeed();
+            showToast('Set removed', 'info');
+        }
+
+        function openEditSetModal(id) {
+            const set = workoutState.sets.find(s => s.id === id);
+            if (!set) return;
+
+            document.getElementById('editSetId').value = set.id;
+            document.getElementById('editExName').value = set.name;
+            document.getElementById('editExImplement').value = set.implement;
+            document.getElementById('editExMuscle').value = set.muscle;
+            document.getElementById('editExWeight').value = set.weight;
+            document.getElementById('editExReps').value = set.reps;
+            document.getElementById('editExRpe').value = set.rpe;
+
+            document.getElementById('editSetModal').classList.remove('hidden');
+        }
+
+        function closeEditSetModal() {
+            document.getElementById('editSetModal').classList.add('hidden');
+        }
+
+        function saveEditedSetDetails() {
+            const id = parseInt(document.getElementById('editSetId').value);
+            const set = workoutState.sets.find(s => s.id === id);
+            if (!set) return;
+
+            set.name = document.getElementById('editExName').value.trim();
+            set.implement = document.getElementById('editExImplement').value;
+            set.muscle = document.getElementById('editExMuscle').value;
+            set.weight = parseFloat(document.getElementById('editExWeight').value) || 0;
+            set.reps = parseInt(document.getElementById('editExReps').value) || 1;
+            set.rpe = parseInt(document.getElementById('editExRpe').value) || 8;
+
+            renderSetFeed();
+            closeEditSetModal();
+            showToast('Set details updated', 'success');
+        }
+
+        /* =========================================================================
+           WEB BLUETOOTH HRM ENGINE & SIMULATOR
+           ========================================================================= */
+        async function connectBluetoothHRM() {
+            if (!navigator.bluetooth) {
+                showToast('Web Bluetooth API not supported in this browser', 'error');
+                return;
+            }
+
+            try {
+                showToast('Scanning for Heart Rate Monitors...', 'info');
+                bleHrDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: ['heart_rate'] }]
+                });
+
+                const server = await bleHrDevice.gatt.connect();
+                const service = await server.getPrimaryService('heart_rate');
+                const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+                await characteristic.startNotifications();
+                characteristic.addEventListener('characteristicvaluechanged', handleHeartRateMeasurement);
+
+                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-showup-400 glow-green';
+                document.getElementById('hrStatusText').textContent = `Connected: ${bleHrDevice.name || 'HR Strap'}`;
+                showToast('Heart Rate Monitor Connected!', 'success');
+
+                if (isSimulatingHr) toggleHRSimulator();
+
+            } catch (error) {
+                showToast(`BLE Connect Failed: ${error.message || error}`, 'error');
+            }
+        }
+
+        function handleHeartRateMeasurement(event) {
+            const value = event.target.value;
+            const flags = value.getUint8(0);
+            let hr;
+            if (flags & 0x01) {
+                hr = value.getUint16(1, true);
+            } else {
+                hr = value.getUint8(1);
+            }
+            updateLiveHeartRate(hr);
+        }
+
+        function toggleHRSimulator() {
+            const btn = document.getElementById('simHrBtn');
+            if (!isSimulatingHr) {
+                isSimulatingHr = true;
+                btn.textContent = 'Stop Sim';
+                btn.className = 'px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 font-bold rounded-xl text-xs transition';
+
+                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                document.getElementById('hrStatusText').textContent = 'Simulator Active';
+
+                let currentSimBpm = 115;
+                hrSimInterval = setInterval(() => {
+                    const delta = (Math.random() - 0.48) * 6;
+                    currentSimBpm = Math.max(90, Math.min(185, Math.round(currentSimBpm + delta)));
+                    updateLiveHeartRate(currentSimBpm);
+                }, 1500);
+
+                showToast('HR Simulator Started', 'info');
+            } else {
+                isSimulatingHr = false;
+                clearInterval(hrSimInterval);
+                btn.textContent = 'Simulate';
+                btn.className = 'px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 font-bold rounded-xl text-xs transition';
+
+                document.getElementById('hrStatusDot').className = 'w-2 h-2 rounded-full bg-slate-500';
+                document.getElementById('hrStatusText').textContent = 'Disconnected';
+                document.getElementById('liveHrVal').textContent = '--';
+                document.getElementById('headerBpmVal').textContent = '--';
+            }
+        }
+
+        function updateLiveHeartRate(bpm) {
+            workoutState.hrLog.push({ time: Date.now(), bpm: bpm });
+            if (bpm > workoutState.peakHr) workoutState.peakHr = bpm;
+
+            document.getElementById('liveHrVal').textContent = bpm;
+            document.getElementById('headerBpmVal').textContent = bpm;
+            document.getElementById('peakHrVal').textContent = workoutState.peakHr;
+
+            const sum = workoutState.hrLog.reduce((acc, cur) => acc + cur.bpm, 0);
+            const avg = Math.round(sum / workoutState.hrLog.length);
+            document.getElementById('avgHrVal').textContent = avg;
+
+            const zone = calculateHrZone(bpm, 190);
+            document.getElementById('liveHrZone').textContent = `Zone ${zone.zone}: ${zone.name}`;
+            document.getElementById('liveHrZone').className = `text-xs font-extrabold mt-1.5 truncate ${zone.colorClass}`;
+
+            renderLiveHrSparkline();
+        }
+
+        function calculateHrZone(bpm, maxHr = 190) {
+            const pct = (bpm / maxHr) * 100;
+            if (pct < 60) return { zone: 1, name: 'Warmup / Recov', colorClass: 'text-slate-400' };
+            if (pct < 70) return { zone: 2, name: 'Easy / Aerobic', colorClass: 'text-garmin-blue' };
+            if (pct < 80) return { zone: 3, name: 'Aerobic Tempo', colorClass: 'text-emerald-400' };
+            if (pct < 90) return { zone: 4, name: 'Threshold', colorClass: 'text-garmin-orange' };
+            return { zone: 5, name: 'Anaerobic Max', colorClass: 'text-garmin-red font-black' };
+        }
+
+        function initLiveHrCanvas() {
+            const canvas = document.getElementById('liveHrCanvas');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            renderLiveHrSparkline();
+        }
+
+        function renderLiveHrSparkline() {
+            const canvas = document.getElementById('liveHrCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            if (workoutState.hrLog.length < 2) {
+                ctx.fillStyle = '#475569';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText('Awaiting heart rate telemetry data...', w / 2, h / 2 + 3);
+                return;
+            }
+
+            const recentLog = workoutState.hrLog.slice(-60);
+            const maxBpm = Math.max(...recentLog.map(d => d.bpm), 160);
+            const minBpm = Math.min(...recentLog.map(d => d.bpm), 80);
+
+            ctx.beginPath();
+            const step = w / (recentLog.length - 1);
+
+            recentLog.forEach((pt, idx) => {
+                const x = idx * step;
+                const normalizedY = (pt.bpm - minBpm) / (maxBpm - minBpm || 1);
+                const y = h - 10 - (normalizedY * (h - 20));
+
+                if (idx === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(34, 197, 94, 0.25)');
+            grad.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
+
+        /* =========================================================================
+           GARMIN-STYLE PHYSIOLOGICAL EVALUATION & SUMMARY ENGINE
+           ========================================================================= */
+        function finishWorkoutSession() {
+            if (workoutState.isActive) {
+                toggleWorkoutSession();
+            }
+
+            evaluateWorkoutPhysiology();
+            switchTab('summary');
+        }
+
+        function evaluateWorkoutPhysiology() {
+            const totalVol = workoutState.sets.reduce((acc, set) => acc + (set.weight * set.reps), 0);
+            document.getElementById('sumVolumeVal').textContent = `${totalVol.toLocaleString()} lbs`;
+            document.getElementById('sumSetsVal').textContent = `${workoutState.sets.length} Sets`;
+
+            const hrs = String(Math.floor(workoutState.elapsedSeconds / 3600)).padStart(2, '0');
+            const mins = String(Math.floor((workoutState.elapsedSeconds % 3600) / 60)).padStart(2, '0');
+            document.getElementById('sumDurationVal').textContent = `${hrs}:${mins}`;
+
+            const avgBpm = workoutState.hrLog.length > 0 ? 
+                Math.round(workoutState.hrLog.reduce((acc, c) => acc + c.bpm, 0) / workoutState.hrLog.length) : '--';
+            document.getElementById('sumHrVal').textContent = `${avgBpm} / ${workoutState.peakHr || '--'}`;
+
+            let aerobicTE = 0.0;
+            if (workoutState.elapsedSeconds > 0) {
+                const minutes = workoutState.elapsedSeconds / 60;
+                let z23Secs = 0;
+                workoutState.hrLog.forEach(pt => {
+                    const z = calculateHrZone(pt.bpm).zone;
+                    if (z === 2 || z === 3) z23Secs += 1.5;
+                });
+                aerobicTE = Math.min(5.0, (minutes * 0.03) + ((z23Secs / 60) * 0.08)).toFixed(1);
+            }
+
+            let highRpeCount = workoutState.sets.filter(s => s.rpe >= 8).length;
+            let z45Secs = 0;
+            workoutState.hrLog.forEach(pt => {
+                const z = calculateHrZone(pt.bpm).zone;
+                if (z >= 4) z45Secs += 1.5;
+            });
+
+            let anaerobicTE = Math.min(5.0, (highRpeCount * 0.45) + ((z45Secs / 60) * 0.12)).toFixed(1);
+
+            document.getElementById('aerobicScoreVal').textContent = aerobicTE;
+            document.getElementById('aerobicBar').style.width = `${(aerobicTE / 5.0) * 100}%`;
+            document.getElementById('aerobicDesc').textContent = getTrainingEffectDesc(aerobicTE, 'aerobic');
+
+            document.getElementById('anaerobicScoreVal').textContent = anaerobicTE;
+            document.getElementById('anaerobicBar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
+            document.getElementById('anaerobicDesc').textContent = getTrainingEffectDesc(anaerobicTE, 'anaerobic');
+
+            renderMuscleCanvas();
+            renderHrZoneDistributionBars();
+        }
+
+        function getTrainingEffectDesc(score, type) {
+            if (score < 1.0) return `Minor ${type} impact.`;
+            if (score < 2.0) return `Maintaining ${type} fitness level.`;
+            if (score < 3.0) return `Improving ${type} base endurance.`;
+            if (score < 4.0) return `Highly impactful ${type} training stimulus!`;
+            return `Overreaching / Maximum ${type} exertion load!`;
+        }
+
+        function renderMuscleCanvas() {
+            const canvas = document.getElementById('muscleCanvas');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            ctx.clearRect(0, 0, w, h);
+
+            const muscleVolMap = {};
+            workoutState.sets.forEach(s => {
+                const vol = s.weight * s.reps;
+                muscleVolMap[s.muscle] = (muscleVolMap[s.muscle] || 0) + (vol || s.reps * 10);
+            });
+
+            const keys = Object.keys(muscleVolMap);
+            if (keys.length === 0) {
+                ctx.fillStyle = '#475569';
+                ctx.font = '10px JetBrains Mono';
+                ctx.textAlign = 'center';
+                ctx.fillText('No logged volume to graph', w / 2, h / 2);
+                return;
+            }
+
+            const maxVol = Math.max(...Object.values(muscleVolMap));
+            const barWidth = (w - 40) / keys.length;
+
+            keys.forEach((m, idx) => {
+                const vol = muscleVolMap[m];
+                const barHeight = (vol / maxVol) * (h - 40);
+                const x = 20 + (idx * barWidth);
+                const y = h - 25 - barHeight;
+
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(x + 4, y, barWidth - 8, barHeight);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '9px Plus Jakarta Sans';
+                ctx.textAlign = 'center';
+                ctx.fillText(m, x + (barWidth / 2), h - 8);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px JetBrains Mono';
+                ctx.fillText(vol, x + (barWidth / 2), y - 5);
+            });
+        }
+
+        function renderHrZoneDistributionBars() {
+            const container = document.getElementById('hrZoneBarsContainer');
+            const zoneCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+            workoutState.hrLog.forEach(pt => {
+                const z = calculateHrZone(pt.bpm).zone;
+                zoneCounts[z]++;
+            });
+
+            const totalPts = workoutState.hrLog.length || 1;
+            const zoneColors = {
+                1: 'bg-slate-600',
+                2: 'bg-garmin-blue',
+                3: 'bg-emerald-500',
+                4: 'bg-garmin-orange',
+                5: 'bg-garmin-red'
+            };
+
+            container.innerHTML = [1, 2, 3, 4, 5].map(z => {
+                const count = zoneCounts[z];
+                const pct = Math.round((count / totalPts) * 100);
+                return `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[11px] font-mono">
+                            <span class="text-slate-300 font-bold">Zone ${z}</span>
+                            <span class="text-slate-400">${pct}% (${Math.round(count * 1.5)}s)</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                            <div class="${zoneColors[z]} h-full transition-all duration-300" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function saveAndResetWorkout() {
+            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
+            const record = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                duration: document.getElementById('sumDurationVal').textContent,
+                volume: document.getElementById('sumVolumeVal').textContent,
+                setsCount: workoutState.sets.length,
+                aerobic: document.getElementById('aerobicScoreVal').textContent,
+                anaerobic: document.getElementById('anaerobicScoreVal').textContent,
+                avgHr: document.getElementById('avgHrVal').textContent
+            };
+
+            history.unshift(record);
+            localStorage.setItem('showup_workouts', JSON.stringify(history));
+
+            workoutState = { isActive: false, startTime: null, elapsedSeconds: 0, timerInterval: null, sets: [], hrLog: [], peakHr: 0 };
+            document.getElementById('workoutTimerDisplay').textContent = "00:00:00";
+            document.getElementById('sessionSetFeed').innerHTML = '';
+            document.getElementById('sessionSetCount').textContent = "0 Sets";
+
+            playBeep(1100, 0.15);
+            showToast('Workout Saved to History & Habit Grid!', 'success');
+            loadHistoryView();
+            renderHabitCalendarGrid();
+            switchTab('calendar');
+        }
+
+        function loadHistoryView() {
+            const container = document.getElementById('historyListContainer');
+            const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
+
+            if (history.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">No saved workouts in history yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = history.map(w => `
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-white">${w.date}</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-showup-500/10 text-showup-400 border border-showup-500/20">Completed</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-800/80">
+                        <div>
+                            <div class="text-[10px] text-slate-500 font-bold uppercase">Volume</div>
+                            <div class="text-xs font-mono font-bold text-slate-200">${w.volume}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-500 font-bold uppercase">Training Effect</div>
+                            <div class="text-xs font-mono font-bold text-garmin-blue">A: ${w.aerobic} / An: ${w.anaerobic}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-500 font-bold uppercase">Duration</div>
+                            <div class="text-xs font-mono font-bold text-slate-200">${w.duration}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistoryLog() {
+            localStorage.removeItem('showup_workouts');
+            loadHistoryView();
+            renderHabitCalendarGrid();
+            showToast('Workout history cleared', 'info');
+        }
+
+        function switchTab(tabId) {
+            ['tracker', 'calendar', 'summary', 'history'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = 'flex flex-col items-center py-1 px-3 text-slate-400 hover:text-white transition';
+            });
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).className = 'flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition';
+
+            if (tabId === 'summary') evaluateWorkoutPhysiology();
+            if (tabId === 'calendar') renderHabitCalendarGrid();
+        }
+
+        function setupPWAManifest() {
+            const manifest = {
+                name: "showUp Workout Tracker",
+                short_name: "showUp",
+                start_url: "./",
+                display: "standalone",
+                background_color: "#020617",
+                theme_color: "#020617",
+                icons: [
+                    {
+                        src: "https://placehold.co/192x192/052e16/22c55e?text=showUp",
+                        sizes: "192x192",
+                        type: "image/png"
+                    }
+                ]
+            };
+            const stringified = "data:application/manifest+json;charset=utf-8," + encodeURIComponent(JSON.stringify(manifest));
+            document.getElementById('pwaManifestLink').setAttribute('href', stringified);
+        }
+
+        function initPWAInstaller() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                const btn = document.getElementById('pwaInstallBtn');
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+            });
+
+            document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('pwaInstallBtn').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        }
+
+        function toggleAudioFx() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('audioIcon');
+            if (audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high';
+                showToast('Sound Effects On', 'info');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark';
+                showToast('Sound Effects Muted', 'info');
+            }
+        }
+
+        function playBeep(freq = 800, duration = 0.1) {
+            if (!audioEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function triggerVibration(pattern = [30]) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            let bg = 'bg-slate-800 text-white border-slate-700';
+            if (type === 'success') bg = 'bg-emerald-600 text-white border-emerald-500';
+            if (type === 'error') bg = 'bg-rose-600 text-white border-rose-500';
+
+            toast.className = `fixed top-16 right-4 z-50 pointer-events-auto transition-all duration-300 px-4 py-2.5 rounded-xl shadow-2xl border text-xs font-bold flex items-center gap-2 ${bg}`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
+
+            toast.classList.remove('opacity-0', 'translate-y-2');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
