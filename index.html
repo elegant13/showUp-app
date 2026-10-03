@@ -76,11 +76,9 @@
         .glow-active-day {
             box-shadow: 0 0 14px -1px rgba(34, 197, 94, 0.6);
         }
-        /* Fixed Bottom Safe Area Inset Utility for iOS Gesture Bar */
         .bottom-nav-safe {
             padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
         }
-        /* Scrollable Wheel Styling */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -88,20 +86,32 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        /* Touch Scrub Handle */
-        .scrub-track {
+        /* Dial & Joystick Touch Styles */
+        .jog-dial-ring {
+            touch-action: none;
+            cursor: grab;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .jog-dial-ring:active {
+            cursor: grabbing;
+            border-color: #22c55e;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+        }
+        .spring-track {
             touch-action: none;
             cursor: ew-resize;
         }
-        .scrub-handle {
+        .spring-handle {
             touch-action: none;
-            transition: transform 0.05s linear;
+            transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .spring-handle.dragging {
+            transition: none;
         }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-showup-500 selection:text-slate-950 overflow-x-hidden">
 
-    <!-- Top Navigation Bar -->
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
             <!-- Brand Logo -->
@@ -139,7 +149,6 @@
         </div>
     </header>
 
-    <!-- Main View Container (pb-40 ensures ample room above bottom navbar) -->
     <main class="flex-1 max-w-4xl w-full mx-auto p-4 pb-40">
 
         <!-- ================= SECTION 1: WORKOUT TRACKER ================= -->
@@ -233,14 +242,22 @@
                 </div>
             </div>
 
-            <!-- Exercise Logging Form -->
             <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                    <span class="flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
                         <i class="fa-solid fa-plus-circle text-showup-400 text-sm"></i> Log Exercise Set
-                    </span>
-                    <span class="text-[10px] font-mono text-slate-500">Unit: LBS</span>
-                </h3>
+                    </h3>
+
+                    <!-- Segmented Pill Mode Selector for Dual Velocity Variant -->
+                    <div class="flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+                        <button type="button" onclick="setScrubberVariant('dial')" id="variantBtnDial" class="px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm">
+                            <i class="fa-solid fa-compact-disc mr-1"></i> Jog Dial
+                        </button>
+                        <button type="button" onclick="setScrubberVariant('spring')" id="variantBtnSpring" class="px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white">
+                            <i class="fa-solid fa-gamepad mr-1"></i> Spring Joystick
+                        </button>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <!-- Exercise Choice / Name -->
@@ -279,53 +296,71 @@
                     </div>
                 </div>
 
-                <!-- Interactive Scrollable & Velocity-Sensitive Weight & Reps Selection Pickers -->
+                <!-- Dual-Variant Tactile Pickers Grid for Weight & Reps -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-                    <!-- Weight Selector Block -->
+                    
+                    <!-- WEIGHT INPUT BLOCK -->
                     <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
                         <div class="flex items-center justify-between">
                             <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Weight (lbs)</label>
+                            
+                            <!-- Strict ±5 lb & ±2.5 lb Step Controls -->
                             <div class="flex items-center gap-1">
-                                <button type="button" onclick="adjustWeight(-10)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-10</button>
+                                <button type="button" onclick="adjustWeight(-5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-5</button>
                                 <button type="button" onclick="adjustWeight(-2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-2.5</button>
                                 <button type="button" onclick="adjustWeight(2.5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+2.5</button>
-                                <button type="button" onclick="adjustWeight(10)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+10</button>
+                                <button type="button" onclick="adjustWeight(5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">+5</button>
                             </div>
                         </div>
 
-                        <!-- Direct Typing Input + Scroll Wheel Track -->
+                        <!-- Direct Typing Input + Scroll Wheel Rack -->
                         <div class="flex items-center gap-2">
                             <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
-                                <input type="number" id="exWeightInput" value="0" step="0.5" min="0" oninput="handleDirectWeightInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
+                                <input type="number" id="exWeightInput" value="0" step="2.5" min="0" oninput="handleDirectWeightInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
                                 <span class="text-[10px] text-slate-500 font-bold">lbs</span>
                             </div>
 
-                            <!-- Wheel Tick Strip -->
-                            <div id="weightPickerWheel" class="no-scrollbar flex-1 flex items-center gap-2 overflow-x-auto py-1.5 px-4 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
-                                <!-- Populated dynamically by JS -->
+                            <div id="weightPickerWheel" class="no-scrollbar flex-1 flex items-center gap-1.5 overflow-x-auto py-1 px-3 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
+                                <!-- Populated dynamically -->
                             </div>
                         </div>
 
-                        <!-- Pointer Event Touch / Mouse Drag Velocity Scrubber -->
-                        <div class="pt-1 border-t border-slate-800/60">
-                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1">
-                                <span>◄ Drag Left</span>
-                                <span id="weightVelocityFeedback" class="text-showup-400 font-bold">Velocity Scrub</span>
-                                <span>Drag Right ►</span>
+                        <!-- VARIANT A: Jog Dial Container for Weight -->
+                        <div id="weightVariantDial" class="pt-2 border-t border-slate-800/60 flex flex-col items-center">
+                            <div class="text-[10px] font-mono text-slate-500 mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-spin text-showup-400"></i> Rotate / Drag Jog Dial
                             </div>
-                            <div id="weightScrubTrack" class="scrub-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden select-none">
-                                <div class="absolute inset-y-0 w-0.5 bg-slate-700/80"></div>
-                                <div id="weightScrubHandle" class="scrub-handle w-14 h-8 bg-gradient-to-r from-showup-600 to-showup-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10 pointer-events-none">
-                                    <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+                            <div id="weightJogDial" class="jog-dial-ring w-28 h-28 rounded-full border-4 border-slate-800 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 relative flex items-center justify-center shadow-inner">
+                                <div id="weightJogTicks" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-40">
+                                    <!-- Radial Ticks rendered via JS -->
+                                </div>
+                                <div id="weightJogKnob" class="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 shadow-lg flex items-center justify-center text-showup-400 pointer-events-none transition-transform">
+                                    <div class="w-2 h-2 rounded-full bg-showup-400"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VARIANT B: Spring Joystick Slider Container for Weight -->
+                        <div id="weightVariantSpring" class="hidden pt-2 border-t border-slate-800/60 space-y-1">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                                <span>◄ Decrement</span>
+                                <span id="weightSpringStatus" class="text-showup-400 font-bold">Center (0/s)</span>
+                                <span>Increment ►</span>
+                            </div>
+                            <div id="weightSpringTrack" class="spring-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
+                                <div class="absolute inset-y-0 w-0.5 bg-slate-700"></div>
+                                <div id="weightSpringHandle" class="spring-handle w-16 h-8 bg-gradient-to-r from-showup-600 to-emerald-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10">
+                                    <i class="fa-solid fa-arrows-left-right"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Reps Selector Block -->
+                    <!-- REPS INPUT BLOCK -->
                     <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800/80 space-y-3">
                         <div class="flex items-center justify-between">
                             <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reps</label>
+                            
                             <div class="flex items-center gap-1">
                                 <button type="button" onclick="adjustReps(-5)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-5</button>
                                 <button type="button" onclick="adjustReps(-1)" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono text-slate-300 border border-slate-700">-1</button>
@@ -334,34 +369,49 @@
                             </div>
                         </div>
 
-                        <!-- Direct Typing Input + Scroll Wheel Track -->
+                        <!-- Direct Typing Input + Scroll Wheel Rack -->
                         <div class="flex items-center gap-2">
                             <div class="flex items-center border border-slate-700 rounded-lg bg-slate-900 px-2 py-1">
                                 <input type="number" id="exRepsInput" value="10" min="1" oninput="handleDirectRepsInput(this.value)" class="w-16 bg-transparent text-center text-sm font-mono font-bold text-showup-400 focus:outline-none">
                                 <span class="text-[10px] text-slate-500 font-bold">reps</span>
                             </div>
 
-                            <!-- Wheel Tick Strip -->
-                            <div id="repsPickerWheel" class="no-scrollbar flex-1 flex items-center gap-2 overflow-x-auto py-1.5 px-4 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
-                                <!-- Populated dynamically by JS -->
+                            <div id="repsPickerWheel" class="no-scrollbar flex-1 flex items-center gap-1.5 overflow-x-auto py-1 px-3 bg-slate-900/80 rounded-lg border border-slate-800/80 select-none">
+                                <!-- Populated dynamically -->
                             </div>
                         </div>
 
-                        <!-- Pointer Event Touch / Mouse Drag Velocity Scrubber -->
-                        <div class="pt-1 border-t border-slate-800/60">
-                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 mb-1">
-                                <span>◄ Drag Left</span>
-                                <span id="repsVelocityFeedback" class="text-showup-400 font-bold">Velocity Scrub</span>
-                                <span>Drag Right ►</span>
+                        <!-- VARIANT A: Jog Dial Container for Reps -->
+                        <div id="repsVariantDial" class="pt-2 border-t border-slate-800/60 flex flex-col items-center">
+                            <div class="text-[10px] font-mono text-slate-500 mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-spin text-showup-400"></i> Rotate / Drag Jog Dial
                             </div>
-                            <div id="repsScrubTrack" class="scrub-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden select-none">
-                                <div class="absolute inset-y-0 w-0.5 bg-slate-700/80"></div>
-                                <div id="repsScrubHandle" class="scrub-handle w-14 h-8 bg-gradient-to-r from-showup-600 to-showup-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10 pointer-events-none">
-                                    <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+                            <div id="repsJogDial" class="jog-dial-ring w-28 h-28 rounded-full border-4 border-slate-800 bg-gradient-to-tr from-slate-950 via-slate-900 to-slate-950 relative flex items-center justify-center shadow-inner">
+                                <div id="repsJogTicks" class="absolute inset-0 rounded-full overflow-hidden pointer-events-none opacity-40">
+                                    <!-- Radial Ticks rendered via JS -->
+                                </div>
+                                <div id="repsJogKnob" class="w-10 h-10 rounded-full bg-slate-800 border-2 border-slate-700 shadow-lg flex items-center justify-center text-showup-400 pointer-events-none transition-transform">
+                                    <div class="w-2 h-2 rounded-full bg-showup-400"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VARIANT B: Spring Joystick Slider Container for Reps -->
+                        <div id="repsVariantSpring" class="hidden pt-2 border-t border-slate-800/60 space-y-1">
+                            <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                                <span>◄ Decrement</span>
+                                <span id="repsSpringStatus" class="text-showup-400 font-bold">Center (0/s)</span>
+                                <span>Increment ►</span>
+                            </div>
+                            <div id="repsSpringTrack" class="spring-track w-full h-10 bg-slate-900 rounded-xl border border-slate-800 relative flex items-center justify-center overflow-hidden">
+                                <div class="absolute inset-y-0 w-0.5 bg-slate-700"></div>
+                                <div id="repsSpringHandle" class="spring-handle w-16 h-8 bg-gradient-to-r from-showup-600 to-emerald-500 rounded-lg shadow-md flex items-center justify-center text-slate-950 font-black text-xs z-10">
+                                    <i class="fa-solid fa-arrows-left-right"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -429,7 +479,6 @@
                         <p class="text-xs text-slate-400">High contrast workout progress tracking & streak telemetry.</p>
                     </div>
                     
-                    <!-- Month Navigation Controls -->
                     <div class="flex items-center gap-2 self-start sm:self-auto">
                         <button onclick="changeHabitMonth(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold border border-slate-700 transition">
                             <i class="fa-solid fa-chevron-left"></i>
@@ -441,7 +490,7 @@
                     </div>
                 </div>
 
-                <!-- Loop Habit Analytics Metric Cards -->
+                <!-- Loop Analytics Metric Cards -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
@@ -469,7 +518,7 @@
                     </div>
                 </div>
 
-                <!-- Contrast Legend -->
+                <!-- Legend -->
                 <div class="flex items-center justify-between text-[11px] text-slate-400 px-1 pt-1">
                     <span class="font-bold uppercase tracking-wider text-[10px] text-slate-500">Loop Contrast Visualizer</span>
                     <div class="flex items-center gap-3 font-medium">
@@ -482,9 +531,7 @@
                     </div>
                 </div>
 
-                <!-- Loop Habit Grid Container -->
                 <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 overflow-x-auto">
-                    <!-- Day of Week Headers -->
                     <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono font-bold text-slate-500 uppercase">
                         <div>Sun</div>
                         <div>Mon</div>
@@ -495,7 +542,6 @@
                         <div>Sat</div>
                     </div>
 
-                    <!-- Calendar Grid Day Tiles -->
                     <div id="habitGridTiles" class="grid grid-cols-7 gap-2">
                         <!-- Rendered dynamically by JS -->
                     </div>
@@ -516,9 +562,7 @@
                     <span id="summaryTimestamp" class="text-[10px] font-mono text-slate-500">Live Evaluation</span>
                 </div>
 
-                <!-- Garmin-style Training Effect Load Gauges -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Aerobic Load Score -->
                     <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-2">
@@ -533,7 +577,6 @@
                         <p id="aerobicDesc" class="text-[11px] text-slate-400">No aerobic strain recorded.</p>
                     </div>
 
-                    <!-- Anaerobic Load Score -->
                     <div class="bg-slate-950 p-4 rounded-xl border border-slate-800/80 space-y-2">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-2">
@@ -549,7 +592,6 @@
                     </div>
                 </div>
 
-                <!-- Metrics Overview Row -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
                         <span class="text-[10px] uppercase font-bold text-slate-500">Total Volume</span>
@@ -569,7 +611,6 @@
                     </div>
                 </div>
 
-                <!-- Targeted Muscle Group Breakdown Canvas Graph -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Muscle Group Volume Breakdown</h3>
                     <div class="h-48 bg-slate-950 rounded-xl border border-slate-800 p-2 relative">
@@ -577,7 +618,6 @@
                     </div>
                 </div>
 
-                <!-- HR Zone Time Breakdown Bars -->
                 <div class="space-y-2">
                     <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Heart Rate Zone Distribution</h3>
                     <div class="space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800" id="hrZoneBarsContainer">
@@ -615,7 +655,6 @@
 
     </main>
 
-    <!-- Fully Fixed Bottom Navigation Bar with Safe Area Padding -->
     <nav style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 9999;" class="bg-slate-900/95 backdrop-blur-xl border-t border-slate-800 shadow-2xl px-4 pt-2.5 bottom-nav-safe">
         <div class="max-w-md mx-auto flex justify-around items-center">
             <button onclick="switchTab('tracker')" id="nav-tracker" class="flex flex-col items-center py-1 px-3 text-showup-400 font-bold transition">
@@ -637,10 +676,10 @@
         </div>
     </nav>
 
-    <!-- Toast Notification Overlay -->
+    <!-- Toast Overlay -->
     <div id="toast" class="fixed top-16 right-4 z-50 pointer-events-none transition-all duration-300 opacity-0 transform translate-y-2"></div>
 
-    <!-- Edit Exercise Modal Overlay -->
+    <!-- Edit Exercise Modal -->
     <div id="editSetModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-5 space-y-4 shadow-2xl relative">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -698,7 +737,7 @@
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight (lbs)</label>
-                        <input type="number" id="editExWeight" step="0.5" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
+                        <input type="number" id="editExWeight" step="2.5" min="0" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-showup-500">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Reps</label>
@@ -728,7 +767,7 @@
         </div>
     </div>
 
-    <!-- Habit Day Inspection & Backdate Modal -->
+    <!-- Habit Day Inspection Modal -->
     <div id="habitDayModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[10000] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl relative">
             <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -752,7 +791,6 @@
         </div>
     </div>
 
-    <!-- Application JavaScript Engine -->
     <script>
         let workoutState = {
             isActive: false,
@@ -764,13 +802,8 @@
             peakHr: 0
         };
 
-        const IMPLEMENT_LIST = [
-            "Gymnastics Rings", "Macebell", "Kettlebell", "Barbell", 
-            "Dumbbell", "Bodyweight", "Cable", "Resistance Band", 
-            "Machine", "Smith Machine", "Other"
-        ];
+        let currentScrubberVariant = 'dial'; // 'dial' or 'spring'
 
-        // Built-in Expanded Exercise Catalog including Gymnastics Rings
         const BUILTIN_EXERCISES = [
             // Gymnastics Rings
             { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest" },
@@ -795,7 +828,7 @@
             { name: "Turkish Get-up", implement: "Kettlebell", muscle: "Full Body" },
             { name: "Goblet Squat", implement: "Kettlebell", muscle: "Quads" },
 
-            // Barbell & Dumbbell Standard Strength
+            // Barbell & Dumbbell Standard
             { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest" },
             { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads" },
             { name: "Barbell Deadlift", implement: "Barbell", muscle: "Back" },
@@ -806,17 +839,15 @@
             { name: "Dumbbell Row", implement: "Dumbbell", muscle: "Back" },
             { name: "Dumbbell Lateral Raise", implement: "Dumbbell", muscle: "Shoulders" },
 
-            // Bodyweight & Calisthenics
+            // Calisthenics
             { name: "Pull-ups", implement: "Bodyweight", muscle: "Back" },
             { name: "Chin-ups", implement: "Bodyweight", muscle: "Biceps" },
             { name: "Parallel Bar Dips", implement: "Bodyweight", muscle: "Triceps" },
             { name: "Pistol Squats", implement: "Bodyweight", muscle: "Quads" },
-            { name: "Handstand Push-ups", implement: "Bodyweight", muscle: "Shoulders" },
-            { name: "Nordic Curls", implement: "Bodyweight", muscle: "Hamstrings" }
+            { name: "Handstand Push-ups", implement: "Bodyweight", muscle: "Shoulders" }
         ];
 
         let customExercises = JSON.parse(localStorage.getItem('showup_custom_exercises') || '[]');
-
         let currentCalendarDate = new Date();
         let audioEnabled = true;
         let hrSimInterval = null;
@@ -824,7 +855,6 @@
         let bleHrDevice = null;
         let deferredPrompt = null;
 
-        // Web Audio API Synth Engine
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -833,13 +863,15 @@
             loadHistoryView();
             initLiveHrCanvas();
             populateExerciseSuggestions();
-            
             buildPickerWheels();
-            setupPointerVelocityScrubber('weight');
-            setupPointerVelocityScrubber('reps');
+
+            // Initialize Dual-Variant Scrubber Engines
+            setupJogDial('weight');
+            setupJogDial('reps');
+            setupSpringJoystick('weight');
+            setupSpringJoystick('reps');
 
             renderHabitCalendarGrid();
-
             document.getElementById('exNameInput').addEventListener('input', handleExerciseInputChange);
 
             window.addEventListener('resize', () => {
@@ -847,6 +879,245 @@
                 renderMuscleCanvas();
             });
         });
+
+        /* =========================================================================
+           DUAL-VARIANT SCRUBBER ENGINE (JOG DIAL & SPRING JOYSTICK)
+           ========================================================================= */
+        function setScrubberVariant(variant) {
+            currentScrubberVariant = variant;
+            const btnDial = document.getElementById('variantBtnDial');
+            const btnSpring = document.getElementById('variantBtnSpring');
+
+            if (variant === 'dial') {
+                btnDial.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm";
+                btnSpring.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white";
+
+                document.getElementById('weightVariantDial').classList.remove('hidden');
+                document.getElementById('weightVariantSpring').classList.add('hidden');
+                document.getElementById('repsVariantDial').classList.remove('hidden');
+                document.getElementById('repsVariantSpring').classList.add('hidden');
+            } else {
+                btnSpring.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition bg-showup-500 text-slate-950 shadow-sm";
+                btnDial.className = "px-3 py-1 rounded-lg text-[10px] font-bold transition text-slate-400 hover:text-white";
+
+                document.getElementById('weightVariantSpring').classList.remove('hidden');
+                document.getElementById('weightVariantDial').classList.add('hidden');
+                document.getElementById('repsVariantSpring').classList.remove('hidden');
+                document.getElementById('repsVariantDial').classList.add('hidden');
+            }
+            playBeep(950, 0.05);
+        }
+
+        // VARIANT A: Jog Dial Rotation & Drag Engine
+        function setupJogDial(type) {
+            const dial = document.getElementById(`${type}JogDial`);
+            const knob = document.getElementById(`${type}JogKnob`);
+            const ticksContainer = document.getElementById(`${type}JogTicks`);
+            if (!dial || !knob) return;
+
+            // Render radial ticks
+            let ticksHtml = '';
+            for (let i = 0; i < 12; i++) {
+                const deg = i * 30;
+                ticksHtml += `<div class="absolute inset-0 flex justify-center" style="transform: rotate(${deg}deg)"><div class="w-0.5 h-2 bg-slate-600"></div></div>`;
+            }
+            ticksContainer.innerHTML = ticksHtml;
+
+            let isDragging = false;
+            let lastAngle = 0;
+            let currentRotation = 0;
+
+            function getAngle(e) {
+                const rect = dial.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                return Math.atan2(e.clientY - centerY, e.clientX - centerX) * (180 / Math.PI);
+            }
+
+            function onPointerDown(e) {
+                isDragging = true;
+                dial.setPointerCapture(e.pointerId);
+                lastAngle = getAngle(e);
+                triggerVibration([10]);
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                const currentAngle = getAngle(e);
+                let deltaAngle = currentAngle - lastAngle;
+
+                if (deltaAngle > 180) deltaAngle -= 360;
+                if (deltaAngle < -180) deltaAngle += 360;
+
+                currentRotation += deltaAngle;
+                knob.style.transform = `rotate(${currentRotation}deg)`;
+
+                if (Math.abs(deltaAngle) >= 15) {
+                    const step = deltaAngle > 0 ? 1 : -1;
+                    if (type === 'weight') {
+                        adjustWeight(step * 2.5);
+                    } else {
+                        adjustReps(step * 1);
+                    }
+                    lastAngle = currentAngle;
+                }
+            }
+
+            function onPointerUp(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                try { dial.releasePointerCapture(e.pointerId); } catch(err) {}
+            }
+
+            dial.addEventListener('pointerdown', onPointerDown);
+            dial.addEventListener('pointermove', onPointerMove);
+            dial.addEventListener('pointerup', onPointerUp);
+            dial.addEventListener('pointercancel', onPointerUp);
+        }
+
+        // VARIANT B: Spring-Loaded Joystick Slider with Velocity Multipliers
+        function setupSpringJoystick(type) {
+            const track = document.getElementById(`${type}SpringTrack`);
+            const handle = document.getElementById(`${type}SpringHandle`);
+            const status = document.getElementById(`${type}SpringStatus`);
+            if (!track || !handle) return;
+
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            let springInterval = null;
+
+            function onPointerDown(e) {
+                isDragging = true;
+                handle.classList.add('dragging');
+                track.setPointerCapture(e.pointerId);
+                startX = e.clientX;
+                currentX = e.clientX;
+
+                if (springInterval) clearInterval(springInterval);
+                springInterval = setInterval(processSpringStep, 70);
+                triggerVibration([15]);
+            }
+
+            function onPointerMove(e) {
+                if (!isDragging) return;
+                currentX = e.clientX;
+                const deltaX = currentX - startX;
+                const clampedX = Math.max(-60, Math.min(60, deltaX));
+                handle.style.transform = `translateX(${clampedX}px)`;
+
+                const absDist = Math.abs(clampedX);
+                const dir = clampedX > 0 ? '+' : '-';
+                if (absDist < 10) {
+                    status.textContent = 'Center (0/s)';
+                } else if (absDist < 30) {
+                    status.textContent = `${dir}${type === 'weight' ? '2.5' : '1'}/s (Slow)`;
+                } else if (absDist < 50) {
+                    status.textContent = `${dir}${type === 'weight' ? '5.0' : '2'}/s (Medium)`;
+                } else {
+                    status.textContent = `${dir}${type === 'weight' ? '25.0' : '5'}/s (Fast)`;
+                }
+            }
+
+            function onPointerUp(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                handle.classList.remove('dragging');
+                try { track.releasePointerCapture(e.pointerId); } catch(err) {}
+
+                if (springInterval) clearInterval(springInterval);
+                handle.style.transform = `translateX(0px)`;
+                status.textContent = 'Center (0/s)';
+            }
+
+            function processSpringStep() {
+                if (!isDragging) return;
+                const deltaX = currentX - startX;
+                const clampedX = Math.max(-60, Math.min(60, deltaX));
+                const absDist = Math.abs(clampedX);
+                if (absDist < 10) return;
+
+                const direction = clampedX > 0 ? 1 : -1;
+                let multiplier = 1;
+                if (absDist >= 30 && absDist < 50) multiplier = 2;
+                if (absDist >= 50) multiplier = 5;
+
+                if (type === 'weight') {
+                    adjustWeight(2.5 * multiplier * direction);
+                } else {
+                    adjustReps(1 * multiplier * direction);
+                }
+            }
+
+            track.addEventListener('pointerdown', onPointerDown);
+            track.addEventListener('pointermove', onPointerMove);
+            track.addEventListener('pointerup', onPointerUp);
+            track.addEventListener('pointercancel', onPointerUp);
+        }
+
+        /* =========================================================================
+           PICKER WHEELS & ADJUSTMENT CONTROLS
+           ========================================================================= */
+        function buildPickerWheels() {
+            const weightWheel = document.getElementById('weightPickerWheel');
+            if (weightWheel) {
+                const weights = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 135, 185, 225, 315];
+                weightWheel.innerHTML = weights.map(w => `
+                    <button type="button" onclick="setWeightValue(${w})" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
+                        ${w}
+                    </button>
+                `).join('');
+            }
+
+            const repsWheel = document.getElementById('repsPickerWheel');
+            if (repsWheel) {
+                const repsList = [1, 3, 5, 6, 8, 10, 12, 15, 20, 25, 30, 50];
+                repsWheel.innerHTML = repsList.map(r => `
+                    <button type="button" onclick="setRepsValue(${r})" class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
+                        ${r}
+                    </button>
+                `).join('');
+            }
+        }
+
+        function setWeightValue(val) {
+            document.getElementById('exWeightInput').value = val;
+            playBeep(900, 0.05);
+            triggerVibration([10]);
+        }
+
+        function setRepsValue(val) {
+            document.getElementById('exRepsInput').value = val;
+            playBeep(900, 0.05);
+            triggerVibration([10]);
+        }
+
+        // Strict ±5 lb & ±2.5 lb Weight adjustments
+        function adjustWeight(delta) {
+            const input = document.getElementById('exWeightInput');
+            let current = parseFloat(input.value) || 0;
+            current = Math.max(0, current + delta);
+            input.value = current;
+            playBeep(850, 0.03);
+        }
+
+        function adjustReps(delta) {
+            const input = document.getElementById('exRepsInput');
+            let current = parseInt(input.value) || 1;
+            current = Math.max(1, current + delta);
+            input.value = current;
+            playBeep(850, 0.03);
+        }
+
+        function handleDirectWeightInput(val) {
+            let v = parseFloat(val);
+            if (isNaN(v) || v < 0) v = 0;
+        }
+
+        function handleDirectRepsInput(val) {
+            let v = parseInt(val);
+            if (isNaN(v) || v < 1) v = 1;
+        }
 
         /* =========================================================================
            LOOP HABIT CALENDAR ENGINE
@@ -865,10 +1136,8 @@
 
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-
             const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
 
-            // Map workout ISO dates to records
             const workoutDateMap = {};
             history.forEach(w => {
                 const dateObj = new Date(w.id);
@@ -881,7 +1150,6 @@
             const gridContainer = document.getElementById('habitGridTiles');
             gridContainer.innerHTML = '';
 
-            // Blank Spacer Tiles for preceding days
             for (let i = 0; i < firstDayIndex; i++) {
                 const blank = document.createElement('div');
                 blank.className = "h-14 rounded-xl bg-slate-950/40 opacity-20 border border-slate-900";
@@ -890,7 +1158,6 @@
 
             const todayKey = getFormattedDateKey(new Date());
 
-            // Build Month Tiles
             for (let day = 1; day <= totalDaysInMonth; day++) {
                 const thisDate = new Date(year, month, day);
                 const dateKey = getFormattedDateKey(thisDate);
@@ -945,7 +1212,6 @@
             const today = new Date();
             let checkDate = new Date(today);
 
-            // Calculate current continuous streak
             let continueCurrent = true;
             while (continueCurrent) {
                 const key = getFormattedDateKey(checkDate);
@@ -956,15 +1222,12 @@
                     if (key === getFormattedDateKey(today)) {
                         checkDate.setDate(checkDate.getDate() - 1);
                         const yesterdayKey = getFormattedDateKey(checkDate);
-                        if (workoutDatesSet.has(yesterdayKey)) {
-                            continue;
-                        }
+                        if (workoutDatesSet.has(yesterdayKey)) continue;
                     }
                     continueCurrent = false;
                 }
             }
 
-            // Calculate Best Streak
             const totalDaysInMonth = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 0).getDate();
             let activeThisMonth = 0;
 
@@ -1062,7 +1325,6 @@
         function saveBackdatedWorkout(dateKey) {
             const note = document.getElementById('backdateNotes').value.trim() || 'Backdated Session';
             const history = JSON.parse(localStorage.getItem('showup_workouts') || '[]');
-
             const targetTimestamp = new Date(dateKey + 'T12:00:00').getTime();
 
             const record = {
@@ -1107,143 +1369,6 @@
             return `${y}-${m}-${d}`;
         }
 
-        /* =========================================================================
-           POINTER EVENT VELOCITY SCRUBBER ENGINE (TOUCH & MOUSE RELIABLE)
-           ========================================================================= */
-        function setupPointerVelocityScrubber(type) {
-            const track = document.getElementById(`${type}ScrubTrack`);
-            const handle = document.getElementById(`${type}ScrubHandle`);
-            const feedback = document.getElementById(`${type}VelocityFeedback`);
-            if (!track || !handle) return;
-
-            let isDragging = false;
-            let startX = 0;
-            let currentX = 0;
-            let scrubInterval = null;
-
-            function onPointerDown(e) {
-                isDragging = true;
-                track.setPointerCapture(e.pointerId);
-                startX = e.clientX;
-                currentX = e.clientX;
-                
-                feedback.textContent = "Scrubbing Active";
-                feedback.className = "text-amber-400 font-extrabold animate-pulse";
-
-                if (scrubInterval) clearInterval(scrubInterval);
-                scrubInterval = setInterval(processScrubStep, 60);
-                triggerVibration([15]);
-            }
-
-            function onPointerMove(e) {
-                if (!isDragging) return;
-                currentX = e.clientX;
-                const deltaX = currentX - startX;
-                
-                const clampedX = Math.max(-45, Math.min(45, deltaX));
-                handle.style.transform = `translateX(${clampedX}px)`;
-            }
-
-            function onPointerUp(e) {
-                if (!isDragging) return;
-                isDragging = false;
-                try {
-                    track.releasePointerCapture(e.pointerId);
-                } catch(err) {}
-
-                if (scrubInterval) clearInterval(scrubInterval);
-                handle.style.transform = `translateX(0px)`;
-                feedback.textContent = "Velocity Scrub";
-                feedback.className = "text-showup-400 font-bold";
-            }
-
-            function processScrubStep() {
-                if (!isDragging) return;
-                const deltaX = currentX - startX;
-                if (Math.abs(deltaX) < 8) return;
-
-                const direction = deltaX > 0 ? 1 : -1;
-                const absDist = Math.abs(deltaX);
-
-                let multiplier = 1;
-                if (absDist > 20) multiplier = 2;
-                if (absDist > 35) multiplier = 5;
-
-                if (type === 'weight') {
-                    const step = 0.5 * multiplier * direction;
-                    adjustWeight(step);
-                } else if (type === 'reps') {
-                    const step = 1 * multiplier * direction;
-                    adjustReps(step);
-                }
-            }
-
-            track.addEventListener('pointerdown', onPointerDown);
-            track.addEventListener('pointermove', onPointerMove);
-            track.addEventListener('pointerup', onPointerUp);
-            track.addEventListener('pointercancel', onPointerUp);
-        }
-
-        function buildPickerWheels() {
-            const weightWheel = document.getElementById('weightPickerWheel');
-            if (weightWheel) {
-                const weights = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70, 80, 90, 100, 135, 185, 225, 315];
-                weightWheel.innerHTML = weights.map(w => `
-                    <button type="button" onclick="setWeightValue(${w})" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
-                        ${w}
-                    </button>
-                `).join('');
-            }
-
-            const repsWheel = document.getElementById('repsPickerWheel');
-            if (repsWheel) {
-                const repsList = [1, 3, 5, 6, 8, 10, 12, 15, 20, 25, 30, 50];
-                repsWheel.innerHTML = repsList.map(r => `
-                    <button type="button" onclick="setRepsValue(${r})" class="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:border-showup-500 hover:text-white shrink-0 transition">
-                        ${r}
-                    </button>
-                `).join('');
-            }
-        }
-
-        function setWeightValue(val) {
-            document.getElementById('exWeightInput').value = val;
-            playBeep(900, 0.05);
-            triggerVibration([10]);
-        }
-
-        function setRepsValue(val) {
-            document.getElementById('exRepsInput').value = val;
-            playBeep(900, 0.05);
-            triggerVibration([10]);
-        }
-
-        function adjustWeight(delta) {
-            const input = document.getElementById('exWeightInput');
-            let current = parseFloat(input.value) || 0;
-            current = Math.max(0, current + delta);
-            input.value = current;
-            playBeep(850, 0.03);
-        }
-
-        function adjustReps(delta) {
-            const input = document.getElementById('exRepsInput');
-            let current = parseInt(input.value) || 1;
-            current = Math.max(1, current + delta);
-            input.value = current;
-            playBeep(850, 0.03);
-        }
-
-        function handleDirectWeightInput(val) {
-            let v = parseFloat(val);
-            if (isNaN(v) || v < 0) v = 0;
-        }
-
-        function handleDirectRepsInput(val) {
-            let v = parseInt(val);
-            if (isNaN(v) || v < 1) v = 1;
-        }
-
         function handleExerciseInputChange(e) {
             const name = e.target.value.trim();
             if (!name) return;
@@ -1252,17 +1377,11 @@
             const match = allExercises.find(ex => ex.name.toLowerCase() === name.toLowerCase());
 
             if (match) {
-                if (match.implement) {
-                    document.getElementById('exImplementSelect').value = match.implement;
-                }
-                if (match.muscle) {
-                    document.getElementById('exMuscleSelect').value = match.muscle;
-                }
+                if (match.implement) document.getElementById('exImplementSelect').value = match.implement;
+                if (match.muscle) document.getElementById('exMuscleSelect').value = match.muscle;
             } else {
                 const inferredMuscle = inferMuscleFromKeywords(name);
-                if (inferredMuscle) {
-                    document.getElementById('exMuscleSelect').value = inferredMuscle;
-                }
+                if (inferredMuscle) document.getElementById('exMuscleSelect').value = inferredMuscle;
             }
         }
 
@@ -1359,10 +1478,7 @@
             };
 
             workoutState.sets.push(setEntry);
-
-            if (!workoutState.isActive) {
-                toggleWorkoutSession();
-            }
+            if (!workoutState.isActive) toggleWorkoutSession();
 
             renderSetFeed();
             playBeep(1200, 0.1);
@@ -1403,7 +1519,6 @@
 
             container.innerHTML = workoutState.sets.map((set, index) => {
                 const badgeStyle = getImplementBadgeStyle(set.implement);
-
                 return `
                     <div class="bg-slate-950 p-3 rounded-xl border border-slate-800/90 flex items-center justify-between hover:border-slate-700 transition">
                         <div class="flex items-center gap-3">
@@ -1642,13 +1757,10 @@
         }
 
         /* =========================================================================
-           GARMIN-STYLE PHYSIOLOGICAL EVALUATION & SUMMARY ENGINE
+           GARMIN-STYLE EVALUATION ENGINE
            ========================================================================= */
         function finishWorkoutSession() {
-            if (workoutState.isActive) {
-                toggleWorkoutSession();
-            }
-
+            if (workoutState.isActive) toggleWorkoutSession();
             evaluateWorkoutPhysiology();
             switchTab('summary');
         }
