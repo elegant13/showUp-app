@@ -2666,50 +2666,6 @@
       showToastNotification("Signed In", "Authenticated as Demo Athlete.", "fa-solid fa-user-check theme-text");
     }
 
-      try {
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_CLIENT_ID,
-          scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          callback: (response) => {
-            if (response.access_token) {
-              googleAccessToken = response.access_token;
-              localStorage.setItem('showUp_google_token', googleAccessToken);
-
-              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${googleAccessToken}` }
-              })
-              .then(res => res.json())
-              .then(profile => {
-                if (profile && profile.email) {
-                  const firstName = profile.given_name || profile.name || 'User';
-                  const userEmail = profile.email;
-                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-
-                  const profileObj = { firstName, email: userEmail, picture };
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-
-                  updateProfileUI(firstName, userEmail, picture);
-                  showToastNotification("Signed In", `Welcome back, ${firstName}!`, "fa-solid fa-user-check theme-text");
-                }
-              })
-              .catch(() => demoProfileFallback());
-            }
-          },
-          error_callback: () => demoProfileFallback()
-        });
-        client.requestAccessToken();
-      } catch (e) {
-        demoProfileFallback();
-      }
-    }
-
-    function demoProfileFallback() {
-      const demoProfile = { firstName: 'Demo Athlete', email: 'athlete@gmail.com', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
-      localStorage.setItem('showUp_user_profile', JSON.stringify(demoProfile));
-      updateProfileUI(demoProfile.firstName, demoProfile.email, demoProfile.picture);
-      showToastNotification("Signed In (Demo)", "Authenticated as Demo Athlete.", "fa-solid fa-user-check theme-text");
-    }
-
     function updateProfileUI(firstName, email, picture) {
       if (firstName) document.getElementById('user-first-name').innerText = firstName;
       if (email) {
