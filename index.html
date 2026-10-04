@@ -132,7 +132,7 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v4.6</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v4.7</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
@@ -269,7 +269,7 @@
         </div>
       </section>
 
-      <!-- LOG SET ENTRY CARD WITH HISTORICAL DATE SELECTOR -->
+      <!-- LOG SET ENTRY CARD WITH OPTIONAL WORKOUT NAME & NOTES -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div class="flex items-center gap-2">
@@ -287,6 +287,23 @@
         <div id="historical-mode-banner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold px-3 py-2 rounded-2xl flex items-center justify-between">
           <span><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Logging workout for historical date: <b id="banner-date-label"></b></span>
           <button onclick="resetToTodayDate()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 px-2 py-0.5 rounded-lg underline transition">Reset to Today</button>
+        </div>
+
+        <!-- OPTIONAL WORKOUT NAME & NOTES INPUTS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">
+              Workout Name <span class="text-slate-500 font-normal">(Optional)</span>
+            </label>
+            <input type="text" id="workout-title-input" placeholder="e.g. Leg Day, Pahlwani Session, Erg Pulls..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1">
+              Session Notes <span class="text-slate-500 font-normal">(Optional)</span>
+            </label>
+            <input type="text" id="workout-notes-input" placeholder="e.g. Felt explosive on mace swings, good recovery..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+          </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -425,27 +442,29 @@
         </button>
       </section>
 
-      <!-- POST-WORKOUT SUMMARY CARD WITH WHATSAPP MUSCLE MAP IMAGE SHARING -->
+      <!-- POST-WORKOUT SUMMARY CARD -->
       <section id="workout-summary-card" class="hidden m3-card rounded-3xl p-5 border shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h2 class="text-base font-black text-emerald-400 flex items-center gap-2">
+            <h2 id="summary-title" class="text-base font-black text-emerald-400 flex items-center gap-2">
               <i class="fa-solid fa-chart-line"></i>
               Physiology & Training Effect Summary
             </h2>
             <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
           </div>
           <div class="flex items-center gap-2">
-            <!-- WHATSAPP SHARE BUTTON WITH TARGETED MUSCLE MAP IMAGE -->
-            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutWithMuscleMapImage()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition">
+            <!-- TEXT-ONLY WHATSAPP SHARE BUTTON -->
+            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition">
               <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
-              <span>Share Image / WhatsApp</span>
+              <span>Share via WhatsApp</span>
             </button>
             <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
               <i class="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>
         </div>
+
+        <div id="summary-notes-display" class="hidden bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 italic"></div>
 
         <div class="grid grid-cols-2 gap-4">
           <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
@@ -473,7 +492,7 @@
           </div>
         </div>
 
-        <!-- TARGETED MUSCLE MAP SVG CONTAINER FOR IMAGE RENDERING -->
+        <!-- TARGETED MUSCLE MAP SVG CONTAINER -->
         <div id="muscle-map-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
           
@@ -600,9 +619,6 @@
     </div>
   </nav>
 
-  <!-- Hidden Canvas for Converting SVG Muscle Map to PNG Image -->
-  <canvas id="export-canvas" width="600" height="400" class="hidden"></canvas>
-
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
@@ -679,109 +695,42 @@
       document.getElementById('historical-mode-banner').classList.add('hidden');
     }
 
-    // WHATSAPP IMAGE + TEXT SUMMARY GENERATION & NATIVE SHARING ENGINE
-    async function shareWorkoutWithMuscleMapImage() {
-      if (!lastEvaluatedSummary) return;
-      const s = lastEvaluatedSummary;
+    // TEXT-ONLY WHATSAPP SHARE ENGINE INCLUDING WORKOUT NAME & NOTES
+    function shareWorkoutToWhatsApp(dateStr = null) {
+      const targetDate = dateStr || (lastEvaluatedSummary ? lastEvaluatedSummary.date : selectedWorkoutDate);
+      const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === targetDate) || lastEvaluatedSummary;
+      
+      if (!w) return;
 
-      const summaryText = `🔥 *showUp Workout Summary*\n` +
-                          `📅 *Date:* ${s.date}\n\n` +
-                          `📊 *Total Sets:* ${s.totalSets} | *Volume:* ${s.totalVolume.toLocaleString()} units\n` +
-                          `🫁 *Aerobic Load:* ${s.aerobicTE} / 5.0\n` +
-                          `⚡ *Anaerobic Load:* ${s.anaerobicTE} / 5.0\n\n` +
-                          `💪 *Targeted Muscle Engagement Map Attached*\n` +
-                          `_Compound your progress with showUp_`;
+      const titlePart = w.workoutName ? `🏋️ *${w.workoutName}*\n` : `🏋️ *showUp Workout Summary*\n`;
+      const notesPart = w.notes ? `📝 *Notes:* ${w.notes}\n` : ``;
+      const setsCount = w.sets ? w.sets.length : w.totalSets || 0;
+      const vol = w.totalVolume ? `${w.totalVolume.toLocaleString()} units` : 'Logged';
 
-      try {
-        const canvas = document.getElementById('export-canvas');
-        const ctx = canvas.getContext('2d');
+      let text = `${titlePart}` +
+                 `📅 *Date:* ${w.date || targetDate}\n` +
+                 `${notesPart}` +
+                 `📊 *Total Sets:* ${setsCount} | *Volume:* ${vol}\n`;
 
-        // Draw background canvas
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Header Title
-        ctx.fillStyle = '#10b981';
-        ctx.font = 'bold 20px sans-serif';
-        ctx.fillText('showUp - Targeted Muscle Engagement Map', 20, 35);
-
-        ctx.fillStyle = '#94a3b8';
-        ctx.font = '14px sans-serif';
-        ctx.fillText(`Date: ${s.date}  |  Total Volume: ${s.totalVolume.toLocaleString()} units`, 20, 60);
-
-        // Render SVG Vector maps into Canvas
-        const svgAnt = document.getElementById('svg-anterior');
-        const svgPost = document.getElementById('svg-posterior');
-
-        const xmlAnt = new XMLSerializer().serializeToString(svgAnt);
-        const xmlPost = new XMLSerializer().serializeToString(svgPost);
-
-        const imgAnt = new Image();
-        const imgPost = new Image();
-
-        const antBlob = new Blob([xmlAnt], { type: 'image/svg+xml;charset=utf-8' });
-        const postBlob = new Blob([xmlPost], { type: 'image/svg+xml;charset=utf-8' });
-
-        const urlAnt = URL.createObjectURL(antBlob);
-        const urlPost = URL.createObjectURL(postBlob);
-
-        let loadedCount = 0;
-        const onImgLoad = async () => {
-          loadedCount++;
-          if (loadedCount === 2) {
-            ctx.drawImage(imgAnt, 80, 80, 180, 300);
-            ctx.drawImage(imgPost, 340, 80, 180, 300);
-
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 12px sans-serif';
-            ctx.fillText('ANTERIOR VIEW', 120, 390);
-            ctx.fillText('POSTERIOR VIEW', 380, 390);
-
-            URL.revokeObjectURL(urlAnt);
-            URL.revokeObjectURL(urlPost);
-
-            canvas.toBlob(async (pngBlob) => {
-              if (!pngBlob) return;
-              const file = new File([pngBlob], `showUp_Muscle_Map_${s.date}.png`, { type: 'image/png' });
-
-              // Check for Web Share API support with files (Mobile browsers / WhatsApp)
-              if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                  await navigator.share({
-                    title: 'showUp Workout Summary',
-                    text: summaryText,
-                    files: [file]
-                  });
-                } catch (err) {
-                  console.log("Share cancelled or fallback triggered", err);
-                }
-              } else {
-                // Fallback for Desktop/Unsupported browsers: Auto-download image & copy text
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(pngBlob);
-                a.download = `showUp_Muscle_Map_${s.date}.png`;
-                a.click();
-
-                if (navigator.clipboard) {
-                  await navigator.clipboard.writeText(summaryText);
-                  alert("Targeted Muscle Map image downloaded! Summary text copied to clipboard. Open WhatsApp and paste to share.");
-                } else {
-                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(summaryText)}`, '_blank');
-                }
-              }
-            }, 'image/png');
-          }
-        };
-
-        imgAnt.onload = onImgLoad;
-        imgPost.onload = onImgLoad;
-        imgAnt.src = urlAnt;
-        imgPost.src = urlPost;
-
-      } catch (err) {
-        console.warn("Canvas share error, falling back to text share:", err);
-        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(summaryText)}`, '_blank');
+      if (w.aerobicTE && w.anaerobicTE) {
+        text += `🫁 *Aerobic Load:* ${w.aerobicTE} / 5.0\n` +
+                `⚡ *Anaerobic Load:* ${w.anaerobicTE} / 5.0\n`;
       }
+
+      if (w.sets && w.sets.length > 0) {
+        text += `\n*Logged Exercises:*\n`;
+        w.sets.forEach((s, i) => {
+          if (s.implement === "Row Erg") {
+            text += `${i + 1}. ${s.exerciseName}: ${s.ergDistance}m | ${s.ergTime}\n`;
+          } else {
+            text += `${i + 1}. ${s.exerciseName}: ${s.weight} lbs × ${s.reps} reps (RPE ${s.rpe})\n`;
+          }
+        });
+      }
+
+      text += `\n_Compound your progress with showUp_`;
+
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     function toggleSettingsModal() {
@@ -1050,6 +999,9 @@
         return;
       }
 
+      const workoutName = document.getElementById('workout-title-input').value.trim() || "";
+      const notes = document.getElementById('workout-notes-input').value.trim() || "";
+
       const totalVolume = currentSessionSets.reduce((acc, s) => acc + (s.implement === "Row Erg" ? s.ergDistance : (s.weight * s.reps)), 0);
       const totalSets = currentSessionSets.length;
       const avgRPE = currentSessionSets.reduce((acc, s) => acc + s.rpe, 0) / totalSets;
@@ -1095,6 +1047,8 @@
       const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
       const workoutObj = {
         date: targetDate,
+        workoutName,
+        notes,
         totalSets,
         totalVolume,
         aerobicTE,
@@ -1112,7 +1066,18 @@
       }
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
 
+      // Display summary card title and notes
+      document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
       document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;
+
+      const notesEl = document.getElementById('summary-notes-display');
+      if (notes) {
+        notesEl.innerText = `Notes: "${notes}"`;
+        notesEl.classList.remove('hidden');
+      } else {
+        notesEl.classList.add('hidden');
+      }
+
       document.getElementById('workout-summary-card').classList.remove('hidden');
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
@@ -1248,6 +1213,8 @@
 
       container.innerHTML = monthlyEntries.map(w => {
         const dateStr = typeof w === 'string' ? w : w.date;
+        const nameStr = typeof w === 'object' && w.workoutName ? w.workoutName : 'Workout Session';
+        const notesStr = typeof w === 'object' && w.notes ? w.notes : '';
         const setsList = typeof w === 'object' && w.sets ? w.sets : [];
         const setsCount = setsList.length || '1+';
         const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} units` : 'Logged';
@@ -1260,7 +1227,8 @@
                 <div>
                   <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
                     <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-                    <span>${dateStr}</span>
+                    <span>${nameStr}</span>
+                    <span class="text-xs font-normal text-slate-400">(${dateStr})</span>
                   </div>
                   <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
                     <span>${setsCount} Sets</span>
@@ -1271,7 +1239,7 @@
               </div>
 
               <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-                <button onclick="triggerHaptic('medium'); shareWorkoutWithMuscleMapImage('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
+                <button onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
                   <i class="fa-brands fa-whatsapp text-sm"></i>
                 </button>
                 <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
@@ -1281,6 +1249,7 @@
             </div>
 
             <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
+              ${notesStr ? `<div class="text-xs text-slate-300 italic bg-slate-950/80 p-2 rounded-lg border border-slate-800 mb-2">Notes: "${notesStr}"</div>` : ''}
               <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
               ${setsList.length === 0 ? `
                 <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
