@@ -45,7 +45,7 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.6</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.8</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
@@ -54,7 +54,6 @@
     <!-- Google Sign-In & User Profile Display -->
     <div class="relative flex items-center gap-2">
       <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-        <!-- Clickable Avatar & User Info Container -->
         <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
           <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
           
@@ -65,12 +64,10 @@
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
         </button>
         
-        <!-- Refresh / Sync Button -->
         <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
           <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
 
-        <!-- DROPDOWN MENU FOR LOGOUT -->
         <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
           <div class="px-3.5 py-2">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
@@ -256,7 +253,7 @@
         </button>
       </section>
 
-      <!-- POST-WORKOUT SUMMARY CARD WITH ANATOMICAL BODY MAP VISUALIZATION -->
+      <!-- POST-WORKOUT SUMMARY CARD -->
       <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -269,7 +266,7 @@
           <div class="flex items-center gap-2">
             <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition">
               <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
-              <span>Share Workout via WhatsApp</span>
+              <span>Share Workout</span>
             </button>
             <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
               <i class="fa-solid fa-xmark text-lg"></i>
@@ -303,68 +300,45 @@
           </div>
         </div>
 
-        <!-- ANATOMICAL BODY MAP VISUALIZATION (ANTERIOR & POSTERIOR) -->
+        <!-- HIGH-DEFINITION ANATOMICAL BODY VECTOR VISUALIZATION -->
         <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 text-center">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Engagement Map</h3>
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
           
-          <div class="flex justify-center items-center gap-6 py-2">
-            <!-- Anterior Body Vector SVG -->
-            <div class="w-32 flex flex-col items-center">
-              <svg viewBox="0 0 100 200" class="w-full h-auto max-h-52 drop-shadow-md">
-                <!-- Body Base Contour -->
-                <path d="M50,15 C45,15 42,22 42,28 C42,32 45,35 50,35 C55,35 58,32 58,28 C58,22 55,15 50,15 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M35,45 C30,50 25,70 20,95 C18,105 16,120 18,125" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M65,45 C70,50 75,70 80,95 C82,105 84,120 82,125" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M35,45 L65,45 L60,110 L40,110 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M42,110 L38,185 L46,185 L50,130 L54,185 L62,185 L58,110" fill="none" stroke="#475569" stroke-width="1.5"/>
-
-                <!-- Muscle Group Overlay Elements -->
-                <!-- Chest -->
-                <path id="body-chest" d="M37,48 C43,47 48,52 49,58 C44,61 38,60 36,54 Z M63,48 C57,47 52,52 51,58 C56,61 62,60 64,54 Z" fill="#334155"/>
-                <!-- Shoulders Anterior -->
-                <path id="body-shoulders-ant" d="M32,46 C35,45 37,50 35,56 C31,54 30,48 32,46 Z M68,46 C65,45 63,50 65,56 C69,54 70,48 68,46 Z" fill="#334155"/>
-                <!-- Core / Abs -->
-                <path id="body-core" d="M44,62 L56,62 L55,95 L45,95 Z" fill="#334155"/>
-                <!-- Biceps -->
-                <path id="body-biceps" d="M28,60 C31,60 32,72 29,76 C27,74 26,65 28,60 Z M72,60 C69,60 68,72 71,76 C73,74 74,65 72,60 Z" fill="#334155"/>
-                <!-- Quads -->
-                <path id="body-quads" d="M41,114 C46,114 48,140 47,152 C42,152 40,135 40,120 Z M59,114 C54,114 52,140 53,152 C58,152 60,135 60,120 Z" fill="#334155"/>
+          <div class="flex justify-center items-center gap-8 py-2">
+            <!-- ANTERIOR VIEW SVG -->
+            <div class="w-36 flex flex-col items-center">
+              <svg viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg">
+                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
               </svg>
               <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
             </div>
 
-            <!-- Posterior Body Vector SVG -->
-            <div class="w-32 flex flex-col items-center">
-              <svg viewBox="0 0 100 200" class="w-full h-auto max-h-52 drop-shadow-md">
-                <!-- Body Base Contour -->
-                <path d="M50,15 C45,15 42,22 42,28 C42,32 45,35 50,35 C55,35 58,32 58,28 C58,22 55,15 50,15 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M35,45 C30,50 25,70 20,95 C18,105 16,120 18,125" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M65,45 C70,50 75,70 80,95 C82,105 84,120 82,125" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M35,45 L65,45 L60,110 L40,110 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
-                <path d="M42,110 L38,185 L46,185 L50,130 L54,185 L62,185 L58,110" fill="none" stroke="#475569" stroke-width="1.5"/>
-
-                <!-- Muscle Group Overlay Elements -->
-                <!-- Back / Lats / Upper Back -->
-                <path id="body-back" d="M38,48 L62,48 L58,82 L42,82 Z" fill="#334155"/>
-                <!-- Shoulders Posterior -->
-                <path id="body-shoulders-post" d="M32,46 C35,45 37,50 35,56 C31,54 30,48 32,46 Z M68,46 C65,45 63,50 65,56 C69,54 70,48 68,46 Z" fill="#334155"/>
-                <!-- Triceps -->
-                <path id="body-triceps" d="M26,58 C28,58 30,68 28,74 C25,70 24,62 26,58 Z M74,58 C72,58 70,68 72,74 C75,70 76,62 74,58 Z" fill="#334155"/>
-                <!-- Glutes & Hamstrings -->
-                <path id="body-hamstrings" d="M40,86 C48,85 50,105 48,150 C42,150 39,125 39,100 Z M60,86 C52,85 50,105 52,150 C58,150 61,125 61,100 Z" fill="#334155"/>
+            <!-- POSTERIOR VIEW SVG -->
+            <div class="w-36 flex flex-col items-center">
+              <svg viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg">
+                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
+                <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
               </svg>
               <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
             </div>
           </div>
 
           <!-- Color Legend -->
-          <div class="flex items-center justify-center gap-4 text-xs pt-1 border-t border-slate-800/80">
+          <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
             <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
               <span class="text-slate-300 font-semibold">Primary Muscles</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
               <span class="text-slate-300 font-semibold">Secondary Muscles</span>
             </div>
             <div class="flex items-center gap-1.5">
@@ -423,7 +397,7 @@
         <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
       </section>
 
-      <!-- MONTHLY HISTORICAL WORKOUT LIST -->
+      <!-- MONTHLY HISTORICAL WORKOUT LIST WITH INTERACTIVE EXPANDABLE ACCORDION & INLINE EDITING -->
       <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
@@ -634,7 +608,6 @@
       }
     }
 
-    // RENDER LOGGED SETS (PER-SET WHATSAPP SHARE REMOVED)
     function renderLoggedSets() {
       const container = document.getElementById('logged-sets-list');
       document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
@@ -673,7 +646,6 @@
       }
     }
 
-    // WORKOUT-LEVEL WHATSAPP SHARING ONLY
     function shareFullWorkoutToWhatsApp() {
       if (!lastEvaluatedSummary) return;
       const s = lastEvaluatedSummary;
@@ -703,7 +675,6 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
-    // WORKOUT EVALUATION ENGINE & DYNAMIC ANATOMICAL MAP COLORING
     function evaluateAndFinishWorkout() {
       if (currentSessionSets.length === 0) {
         alert("Please log at least one set before finishing your workout.");
@@ -725,14 +696,12 @@
       document.getElementById('anaerobic-te-bar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
       document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic Impact" : "Minor Anaerobic Impact";
 
-      // Calculate Tonnage Per Muscle Group
       const muscleMap = {};
       currentSessionSets.forEach(s => {
         const vol = s.weight * s.reps;
         muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
       });
 
-      // Update Tonnage Bars
       const muscleContainer = document.getElementById('muscle-breakdown-bars');
       muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
         <div class="space-y-1">
@@ -746,7 +715,6 @@
         </div>
       `).join('');
 
-      // HIGHLIGHT ANATOMICAL BODY MAP (PRIMARY = RED, SECONDARY = YELLOW)
       updateAnatomicalBodyMap(muscleMap);
 
       const todayISO = new Date().toISOString().slice(0, 10);
@@ -784,9 +752,7 @@
       }
     }
 
-    // ANATOMICAL MAP COLORING FUNCTION
     function updateAnatomicalBodyMap(muscleMap) {
-      // SVG Muscle Element ID mapping
       const muscleSvgMap = {
         'Chest': ['body-chest'],
         'Back': ['body-back'],
@@ -798,20 +764,17 @@
         'Hamstrings/Glutes': ['body-hamstrings']
       };
 
-      // Reset all vector elements to default gray (#334155)
       Object.values(muscleSvgMap).flat().forEach(id => {
         const el = document.getElementById(id);
         if (el) el.setAttribute('fill', '#334155');
       });
 
-      // Sort engaged muscle groups by volume
       const sortedMuscles = Object.entries(muscleMap).sort((a, b) => b[1] - a[1]);
       if (sortedMuscles.length === 0) return;
 
       const primaryMuscle = sortedMuscles[0][0];
       const secondaryMuscles = sortedMuscles.slice(1).map(m => m[0]);
 
-      // Apply RED (#ef4444) to Primary Muscle
       if (muscleSvgMap[primaryMuscle]) {
         muscleSvgMap[primaryMuscle].forEach(id => {
           const el = document.getElementById(id);
@@ -819,7 +782,6 @@
         });
       }
 
-      // Apply YELLOW (#eab308) to Secondary Muscles
       secondaryMuscles.forEach(m => {
         if (muscleSvgMap[m]) {
           muscleSvgMap[m].forEach(id => {
@@ -872,6 +834,7 @@
       }
     }
 
+    // MONTHLY WORKOUT HISTORY WITH INTERACTIVE EXPANDABLE ACCORDION & INLINE SET EDITING
     function renderMonthlyHistory() {
       const container = document.getElementById('monthly-history-list');
       const year = calendarDate.getFullYear();
@@ -892,47 +855,114 @@
 
       container.innerHTML = monthlyEntries.map(w => {
         const dateStr = typeof w === 'string' ? w : w.date;
-        const setsCount = typeof w === 'string' ? '1+' : w.sets ? w.sets.length : 1;
-        const vol = typeof w === 'string' ? 'N/A' : w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
+        const setsList = typeof w === 'object' && w.sets ? w.sets : [];
+        const setsCount = setsList.length || '1+';
+        const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
 
         return `
-          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
-            <div>
-              <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-calendar-check text-emerald-400"></i>
-                <span>${dateStr}</span>
+          <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden transition-all">
+            <!-- Accordion Header -->
+            <div onclick="triggerHaptic('light'); toggleWorkoutAccordion('${dateStr}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition select-none">
+              <div class="flex items-center gap-3">
+                <i id="chevron-${dateStr}" class="fa-solid fa-chevron-right text-xs text-slate-500 transition-transform"></i>
+                <div>
+                  <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                    <span>${dateStr}</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
+                    <span>${setsCount} Sets</span>
+                    <span class="text-slate-600">•</span>
+                    <span class="text-emerald-400">${vol}</span>
+                  </div>
+                </div>
               </div>
-              <div class="text-xs text-slate-400 mt-1 flex items-center gap-3">
-                <span>${setsCount} Sets</span>
-                <span class="text-slate-600">•</span>
-                <span class="text-emerald-400">${vol}</span>
+
+              <!-- Action Icons -->
+              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                <button onclick="triggerHaptic('medium'); shareHistoricalWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                </button>
+                <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
               </div>
             </div>
-            <div class="flex items-center gap-1">
-              <button onclick="triggerHaptic('medium'); editHistoricalWorkout('${dateStr}')" class="text-slate-500 hover:text-amber-400 p-2 transition" title="Edit Workout">
-                <i class="fa-solid fa-pen text-xs"></i>
-              </button>
-              <button onclick="triggerHaptic('medium'); shareHistoricalWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
-              </button>
-              <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
-                <i class="fa-solid fa-trash-can text-xs"></i>
-              </button>
+
+            <!-- Expandable Accordion Body (Logged Exercise Sets) -->
+            <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
+              ${setsList.length === 0 ? `
+                <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
+              ` : setsList.map(s => `
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                  <div>
+                    <div class="font-bold text-slate-200">${s.exerciseName}</div>
+                    <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px]">
+                      <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.2 rounded">${s.implement}</span>
+                      <span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>
+                      <span class="text-slate-500">RPE ${s.rpe}</span>
+                    </div>
+                  </div>
+
+                  <!-- Edit Set Button -->
+                  <button onclick="triggerHaptic('medium'); editHistoricalSet('${dateStr}',${s.id})" class="text-slate-500 hover:text-amber-400 p-1.5 rounded transition" title="Edit Set">
+                    <i class="fa-solid fa-pen text-xs"></i>
+                  </button>
+                </div>
+              `).join('')}
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function editHistoricalWorkout(dateStr) {
-      const entry = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === dateStr);
-      if (entry && typeof entry === 'object' && entry.sets) {
-        currentSessionSets = [...entry.sets];
-        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
-        renderLoggedSets();
-        switchTab('workout');
+    // TOGGLE WORKOUT ACCORDION
+    function toggleWorkoutAccordion(dateStr) {
+      const detailsEl = document.getElementById(`details-${dateStr}`);
+      const chevronEl = document.getElementById(`chevron-${dateStr}`);
+
+      if (detailsEl.classList.contains('hidden')) {
+        detailsEl.classList.remove('hidden');
+        if (chevronEl) chevronEl.style.transform = "rotate(90deg)";
       } else {
-        alert("This workout log contains basic history. You can log new sets for today in the Workout tab.");
+        detailsEl.classList.add('hidden');
+        if (chevronEl) chevronEl.style.transform = "rotate(0deg)";
+      }
+    }
+
+    // INLINE SET EDITING FOR HISTORICAL WORKOUTS
+    function editHistoricalSet(dateStr, setId) {
+      const workoutIdx = completedWorkoutsHistory.findIndex(w => (typeof w === 'object' && w.date === dateStr));
+      if (workoutIdx === -1) return;
+
+      const workout = completedWorkoutsHistory[workoutIdx];
+      const setObj = workout.sets.find(s => s.id === setId);
+      if (!setObj) return;
+
+      const newWeight = prompt(`Edit Weight (lbs) for ${setObj.exerciseName}:`, setObj.weight);
+      if (newWeight === null) return;
+
+      const newReps = prompt(`Edit Reps for ${setObj.exerciseName}:`, setObj.reps);
+      if (newReps === null) return;
+
+      const newRPE = prompt(`Edit Perceived Effort RPE (6-10) for ${setObj.exerciseName}:`, setObj.rpe);
+      if (newRPE === null) return;
+
+      // Update values
+      setObj.weight = parseFloat(newWeight) || 0;
+      setObj.reps = parseInt(newReps) || 1;
+      setObj.rpe = parseFloat(newRPE) || 8;
+
+      // Recalculate total workout volume
+      workout.totalVolume = workout.sets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+
+      // Save updated history state
+      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      renderMonthlyHistory();
+
+      if (googleAccessToken) {
+        syncToGoogleDrive();
       }
     }
 
