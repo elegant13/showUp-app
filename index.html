@@ -15,10 +15,12 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <style>
+    /* iOS Safe Area Padding */
     .bottom-nav-safe {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
     
+    /* Custom scrollbar styling */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
@@ -32,7 +34,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-28 selection:bg-emerald-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950">
 
   <!-- ================= HEADER & CLOUD SYNC ================= -->
   <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
@@ -43,18 +45,25 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.0</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.1</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Google Sign-In & User Sync Controls -->
+    <!-- Google Sign-In & User Profile Display (First Name & Email to the Right of Avatar) -->
     <div class="flex items-center gap-2">
-      <div id="google-user-profile" class="hidden flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
-        <img id="user-avatar" class="w-6 h-6 rounded-full border border-emerald-400" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
-        <span id="user-name" class="text-xs font-medium text-slate-200 max-w-[100px] truncate">User</span>
+      <div id="google-user-profile" class="hidden flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
+        <!-- Avatar Image -->
+        <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
         
+        <!-- Text Stack to the Right of Avatar -->
+        <div class="flex flex-col text-left leading-tight">
+          <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
+          <span id="user-email" class="text-[10px] text-slate-400 max-w-[130px] truncate">user@email.com</span>
+        </div>
+        
+        <!-- Refresh / Sync Button with Spinner -->
         <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1" title="Sync with Google Drive">
           <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
@@ -67,12 +76,12 @@
     </div>
   </header>
 
-  <!-- ================= MAIN CONTENT VIEWS ================= -->
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
 
-    <!-- ================= TAB 1: WORKOUT (ACTIVE TRACKING) ================= -->
-    <div id="view-workout" class="space-y-6">
-      
+    <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
+    <div id="tab-workout-view" class="space-y-6">
+
       <!-- HEART RATE TELEMETRY CARD -->
       <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl relative overflow-hidden">
         <div class="flex items-center justify-between mb-3">
@@ -101,8 +110,8 @@
               <span class="text-xs font-semibold text-slate-500 uppercase">BPM</span>
             </div>
             <div id="live-hr-zone" class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5">
-              <span id="live-hr-indicator" class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>
-              <span id="live-hr-status">Disconnected</span>
+              <span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>
+              <span>Disconnected</span>
             </div>
           </div>
 
@@ -177,7 +186,7 @@
           </div>
         </div>
 
-        <!-- NUMERIC WEIGHT & REPS SELECTOR -->
+        <!-- NUMERIC WEIGHT & REPS SELECTOR WITH STEP BUTTONS -->
         <div class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
           <div class="space-y-2">
             <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs)</label>
@@ -185,10 +194,10 @@
               <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
             </div>
           </div>
 
@@ -198,15 +207,15 @@
               <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+              <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
+              <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
+              <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
+              <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
             </div>
           </div>
         </div>
 
-        <button type="button" onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
+        <button onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
           <i class="fa-solid fa-check text-lg"></i>
           <span>Log Set</span>
         </button>
@@ -225,7 +234,7 @@
           </div>
         </div>
 
-        <button type="button" id="btn-finish-workout" onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
+        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
           <i class="fa-solid fa-flag-checkered"></i>
           <span>Finish & Evaluate Workout</span>
         </button>
@@ -242,11 +251,11 @@
             <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
           </div>
           <div class="flex items-center gap-2">
-            <button type="button" id="btn-share-workout-summary" onclick="triggerHaptic('medium'); shareFullSessionWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
-              <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i>
-              <span>Share Workout</span>
+            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition">
+              <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
+              <span>Share</span>
             </button>
-            <button type="button" onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
+            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
               <i class="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>
@@ -280,15 +289,18 @@
 
         <div class="space-y-2">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
-          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800"></div>
+          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <!-- Dynamic Muscle Bars -->
+          </div>
         </div>
       </section>
 
     </div>
 
-    <!-- ================= TAB 2: CALENDAR & WORKOUT HISTORY ================= -->
-    <div id="view-calendar" class="hidden space-y-6">
-      
+    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT (HIDDEN BY DEFAULT) -->
+    <div id="tab-calendar-view" class="hidden space-y-6">
+
+      <!-- CALENDAR MODULE -->
       <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
@@ -296,7 +308,7 @@
               <i class="fa-solid fa-calendar-days text-emerald-400"></i>
               Workout Consistency Matrix
             </h2>
-            <p class="text-xs text-slate-400">Loop-style visual activity tracking</p>
+            <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
           </div>
 
           <div class="flex items-center gap-2 text-xs">
@@ -315,33 +327,33 @@
 
         <!-- REPOSITIONED CALENDAR NAVIGATOR -->
         <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-          <button type="button" onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
             <i class="fa-solid fa-chevron-left"></i>
           </button>
-          <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">-- ----</span>
-          <button type="button" onclick="navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+          <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
+          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
             <i class="fa-solid fa-chevron-right"></i>
           </button>
         </div>
 
         <!-- CALENDAR GRID -->
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
+          <!-- Day Names and Tiles rendered dynamically by JS -->
+        </div>
       </section>
 
-      <!-- HISTORICAL WORKOUT LIST VIEW -->
+      <!-- MONTHLY HISTORICAL WORKOUT LIST WITH EDIT/DELETE/SHARE -->
       <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
             <i class="fa-solid fa-list-check text-emerald-400"></i>
-            Monthly Workout History
+            Monthly Workouts History
           </h3>
-          <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2.5 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
+          <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
         </div>
 
-        <div id="monthly-workouts-list" class="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-          <div class="text-center py-10 text-slate-600 text-xs italic">
-            No completed workouts recorded for this month.
-          </div>
+        <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+          <!-- Rendered dynamically -->
         </div>
       </section>
 
@@ -352,15 +364,15 @@
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
   <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
     <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
-      <button type="button" id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1.5 text-emerald-400 font-bold transition">
+      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
         <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
         <span>Workout</span>
       </button>
-      <button type="button" id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-slate-200 transition">
+      <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
         <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
         <span>Calendar</span>
       </button>
-      <button type="button" onclick="triggerHaptic('medium'); exportJSONBackup()" class="flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-slate-200 transition">
+      <button onclick="triggerHaptic('medium'); exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
         <i class="fa-solid fa-file-export text-lg mb-0.5"></i>
         <span>Backup</span>
       </button>
@@ -374,11 +386,10 @@
 
     // APPLICATION STATE
     let currentSessionSets = [];
-    let workoutHistoryStore = JSON.parse(localStorage.getItem('showUp_workout_records') || '[]');
+    let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let lastEvaluatedSummary = null;
     let hrHistory = [];
     let currentHR = 0;
-    let bluetoothDevice = null;
     let hrSimInterval = null;
     let calendarDate = new Date();
     let googleAccessToken = null;
@@ -393,28 +404,29 @@
       }
     }
 
-    // TAB SWITCHING CONTROLLER
+    // TAB SWITCHING SYSTEM
     function switchTab(tabName) {
-      const workoutView = document.getElementById('view-workout');
-      const calendarView = document.getElementById('view-calendar');
+      const workoutView = document.getElementById('tab-workout-view');
+      const calendarView = document.getElementById('tab-calendar-view');
       const btnWorkout = document.getElementById('nav-btn-workout');
       const btnCalendar = document.getElementById('nav-btn-calendar');
 
       if (tabName === 'workout') {
         workoutView.classList.remove('hidden');
         calendarView.classList.add('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1.5 text-emerald-400 font-bold transition";
-        btnCalendar.className = "flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-slate-200 transition";
-      } else if (tabName === 'calendar') {
+        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
+        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+      } else {
         workoutView.classList.add('hidden');
         calendarView.classList.remove('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1.5 text-slate-400 hover:text-slate-200 transition";
-        btnCalendar.className = "flex flex-col items-center justify-center py-1.5 text-emerald-400 font-bold transition";
+        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
+        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
         renderCalendar();
+        renderMonthlyHistory();
       }
     }
 
-    // EXERCISE CATALOG FOR AUTO-LOOKUP
+    // EXERCISE CATALOG
     const defaultCatalog = [
       { name: "Ring Dip", implement: "Gymnastics Rings", muscle: "Chest" },
       { name: "Ring Push-Up", implement: "Gymnastics Rings", muscle: "Chest" },
@@ -440,7 +452,6 @@
 
     function initCatalog() {
       const datalist = document.getElementById('exercise-catalog-list');
-      if (!datalist) return;
       datalist.innerHTML = '';
       defaultCatalog.forEach(ex => {
         const option = document.createElement('option');
@@ -496,10 +507,7 @@
 
     function renderLoggedSets() {
       const container = document.getElementById('logged-sets-list');
-      const badge = document.getElementById('set-count-badge');
-      if (badge) badge.innerText = `${currentSessionSets.length} Sets`;
-
-      if (!container) return;
+      document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
 
       if (currentSessionSets.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
@@ -517,11 +525,11 @@
             </div>
           </div>
           <div class="flex items-center gap-1">
-            <button type="button" onclick="triggerHaptic('medium'); shareSingleSetWhatsApp(${s.id})" class="text-emerald-400 hover:text-emerald-300 p-2" title="Share set on WhatsApp">
-              <i class="fa-brands fa-whatsapp text-base"></i>
+            <button onclick="triggerHaptic('medium'); shareSetToWhatsApp(${s.id})" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share Set via WhatsApp">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
             </button>
-            <button type="button" onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2" title="Delete set">
-              <i class="fa-solid fa-trash-can"></i>
+            <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
+              <i class="fa-solid fa-trash-can text-sm"></i>
             </button>
           </div>
         </div>
@@ -531,6 +539,49 @@
     function deleteSet(id) {
       currentSessionSets = currentSessionSets.filter(s => s.id !== id);
       renderLoggedSets();
+    }
+
+    // WHATSAPP SHARING ENGINE
+    function shareSetToWhatsApp(setId) {
+      const set = currentSessionSets.find(s => s.id === setId);
+      if (!set) return;
+
+      const text = `🏋️ *showUp Exercise Set Log*\n\n` +
+                   `💪 *Exercise:* ${set.exerciseName} (${set.implement})\n` +
+                   `🏋️‍♂️ *Load:* ${set.weight} lbs × ${set.reps} reps\n` +
+                   `🔥 *Target:* ${set.muscle} | RPE ${set.rpe}\n\n` +
+                   `_Compound your progress with showUp_`;
+
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareFullWorkoutToWhatsApp() {
+      if (!lastEvaluatedSummary) return;
+      const s = lastEvaluatedSummary;
+      const text = `🔥 *showUp Workout Summary*\n` +
+                   `📅 *Date:* ${s.date}\n\n` +
+                   `📊 *Total Sets:* ${s.totalSets} | *Volume:* ${s.totalVolume.toLocaleString()} lbs\n` +
+                   `🫁 *Aerobic Load:* ${s.aerobicTE} / 5.0\n` +
+                   `⚡ *Anaerobic Load:* ${s.anaerobicTE} / 5.0\n\n` +
+                   `_Compound your progress with showUp_`;
+
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareHistoricalWorkoutToWhatsApp(dateStr) {
+      const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === dateStr);
+      if (!w) return;
+
+      const dateVal = typeof w === 'string' ? w : w.date;
+      const setsCount = typeof w === 'string' ? 'Logged' : w.sets ? w.sets.length : 'Completed';
+      const vol = typeof w === 'string' ? 'N/A' : w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
+
+      const text = `🔥 *showUp Workout Log*\n` +
+                   `📅 *Date:* ${dateVal}\n` +
+                   `📊 *Sets:* ${setsCount} | *Volume:* ${vol}\n\n` +
+                   `_Compound your progress with showUp_`;
+
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
     // WORKOUT EVALUATION ENGINE
@@ -574,40 +625,34 @@
         </div>
       `).join('');
 
-      const now = new Date();
-      const dateISO = now.toISOString().slice(0, 10);
-      const formattedTimestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-      const workoutRecord = {
-        id: Date.now(),
-        date: dateISO,
-        timestamp: `${now.toLocaleDateString()} ${formattedTimestamp}`,
-        sets: [...currentSessionSets],
-        totalVolume,
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const workoutObj = {
+        date: todayISO,
         totalSets,
+        totalVolume,
         aerobicTE,
-        anaerobicTE
+        anaerobicTE,
+        sets: [...currentSessionSets]
       };
 
-      lastEvaluatedSummary = workoutRecord;
+      lastEvaluatedSummary = workoutObj;
 
-      // Check if updating existing record or pushing new one
-      const existingIdx = workoutHistoryStore.findIndex(w => w.date === dateISO);
+      const existingIdx = completedWorkoutsHistory.findIndex(item => (typeof item === 'string' ? item : item.date) === todayISO);
       if (existingIdx >= 0) {
-        workoutHistoryStore[existingIdx] = workoutRecord;
+        completedWorkoutsHistory[existingIdx] = workoutObj;
       } else {
-        workoutHistoryStore.push(workoutRecord);
+        completedWorkoutsHistory.push(workoutObj);
       }
+      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
 
-      localStorage.setItem('showUp_workout_records', JSON.stringify(workoutHistoryStore));
-
-      document.getElementById('summary-timestamp').innerText = `Completed at ${formattedTimestamp}`;
       document.getElementById('workout-summary-card').classList.remove('hidden');
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
       currentSessionSets = [];
       renderLoggedSets();
-      
+      renderCalendar();
+      renderMonthlyHistory();
+
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
@@ -617,10 +662,10 @@
       document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
+    // CALENDAR & MONTHLY HISTORY ENGINE
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
-      if (!grid || !monthYearLabel) return;
       grid.innerHTML = '';
 
       const year = calendarDate.getFullYear();
@@ -641,14 +686,12 @@
         grid.innerHTML += `<div></div>`;
       }
 
-      const completedDates = workoutHistoryStore.map(w => w.date);
-
       for (let day = 1; day <= daysInMonth; day++) {
         const monthStr = String(month + 1).padStart(2, '0');
         const dayStr = String(day).padStart(2, '0');
         const dateKey = `${year}-${monthStr}-${dayStr}`;
         
-        const isWorkedOut = completedDates.includes(dateKey);
+        const isWorkedOut = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === dateKey);
 
         grid.innerHTML += `
           <div class="aspect-square flex items-center justify-center rounded-lg text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
@@ -656,132 +699,89 @@
           </div>
         `;
       }
-
-      document.getElementById('current-streak-val').innerText = `${workoutHistoryStore.length} days`;
-      document.getElementById('best-streak-val').innerText = `${workoutHistoryStore.length} days`;
-
-      renderMonthlyWorkoutList(year, month);
     }
 
-    function renderMonthlyWorkoutList(year, month) {
-      const listContainer = document.getElementById('monthly-workouts-list');
-      const countBadge = document.getElementById('monthly-count-badge');
-      if (!listContainer) return;
+    function renderMonthlyHistory() {
+      const container = document.getElementById('monthly-history-list');
+      const year = calendarDate.getFullYear();
+      const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
+      const prefix = `${year}-${monthStr}`;
 
-      const targetPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
-      const monthWorkouts = workoutHistoryStore.filter(w => w.date.startsWith(targetPrefix));
+      const monthlyEntries = completedWorkoutsHistory.filter(item => {
+        const d = typeof item === 'string' ? item : item.date;
+        return d && d.startsWith(prefix);
+      });
 
-      if (countBadge) countBadge.innerText = `${monthWorkouts.length} Workouts`;
+      document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
 
-      if (monthWorkouts.length === 0) {
-        listContainer.innerHTML = `<div class="text-center py-10 text-slate-600 text-xs italic">No completed workouts recorded for this month.</div>`;
+      if (monthlyEntries.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;
         return;
       }
 
-      listContainer.innerHTML = monthWorkouts.map((w) => {
-        const exerciseSummaryText = w.sets.map(s => `${s.exerciseName} (${s.weight}lbs × ${s.reps})`).join(', ');
+      container.innerHTML = monthlyEntries.map(w => {
+        const dateStr = typeof w === 'string' ? w : w.date;
+        const setsCount = typeof w === 'string' ? '1+' : w.sets ? w.sets.length : 1;
+        const vol = typeof w === 'string' ? 'Logged' : w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Completed';
+
         return `
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-              <div>
-                <span class="text-xs font-bold text-emerald-400">${w.date}</span>
-                <span class="text-xs text-slate-500 ml-2">${w.timestamp.split(' ')[1] || ''}</span>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                <span>${dateStr}</span>
               </div>
-              
-              <!-- EDIT, DELETE, SHARE ACTION ICONS -->
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="triggerHaptic('medium'); editHistoricalWorkout(${w.id})" class="text-slate-400 hover:text-emerald-400 p-1.5 transition" title="Edit Workout">
-                  <i class="fa-solid fa-pen-to-square text-sm"></i>
-                </button>
-                <button type="button" onclick="triggerHaptic('medium'); shareHistoricalWorkoutWhatsApp(${w.id})" class="text-emerald-400 hover:text-emerald-300 p-1.5 transition" title="Share Workout via WhatsApp">
-                  <i class="fa-brands fa-whatsapp text-sm"></i>
-                </button>
-                <button type="button" onclick="triggerHaptic('medium'); deleteHistoricalWorkout(${w.id})" class="text-slate-600 hover:text-rose-400 p-1.5 transition" title="Delete Workout">
-                  <i class="fa-solid fa-trash-can text-sm"></i>
-                </button>
+              <div class="text-xs text-slate-400 mt-1 flex items-center gap-3">
+                <span>${setsCount} Sets</span>
+                <span class="text-slate-600">•</span>
+                <span class="text-emerald-400">${vol}</span>
               </div>
             </div>
-
-            <div class="text-xs text-slate-300 line-clamp-2">${exerciseSummaryText}</div>
-
-            <div class="flex items-center justify-between text-xs text-slate-400 pt-1">
-              <span><strong>${w.totalSets}</strong> Sets | <strong>${w.totalVolume.toLocaleString()}</strong> lbs</span>
-              <span class="bg-slate-900 px-2 py-0.5 rounded border border-slate-800 text-blue-400">A-TE: ${w.aerobicTE} | An-TE: ${w.anaerobicTE}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="triggerHaptic('medium'); editHistoricalWorkout('${dateStr}')" class="text-slate-500 hover:text-amber-400 p-2 transition" title="Edit Workout">
+                <i class="fa-solid fa-pen text-xs"></i>
+              </button>
+              <button onclick="triggerHaptic('medium'); shareHistoricalWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
+                <i class="fa-brands fa-whatsapp text-sm"></i>
+              </button>
+              <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+              </button>
             </div>
           </div>
         `;
       }).join('');
     }
 
+    function editHistoricalWorkout(dateStr) {
+      const entry = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === dateStr);
+      if (entry && typeof entry === 'object' && entry.sets) {
+        currentSessionSets = [...entry.sets];
+        renderLoggedSets();
+        switchTab('workout');
+      } else {
+        alert("This workout log contains basic history. You can log new sets for today in the Workout tab.");
+      }
+    }
+
+    function deleteHistoricalWorkout(dateStr) {
+      if (!confirm(`Are you sure you want to delete the workout entry for ${dateStr}?`)) return;
+
+      completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
+      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      renderCalendar();
+      renderMonthlyHistory();
+    }
+
     function navigateCalendarMonth(delta) {
       calendarDate.setMonth(calendarDate.getMonth() + delta);
       renderCalendar();
+      renderMonthlyHistory();
     }
 
-    // HISTORICAL WORKOUT MANAGEMENT (EDIT, DELETE, SHARE)
-    function editHistoricalWorkout(workoutId) {
-      const record = workoutHistoryStore.find(w => w.id === workoutId);
-      if (!record) return;
-
-      if (currentSessionSets.length > 0 && !confirm("Loading this workout will replace your current unsaved active session sets. Proceed?")) {
-        return;
-      }
-
-      currentSessionSets = [...record.sets];
-      renderLoggedSets();
-      switchTab('workout');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function deleteHistoricalWorkout(workoutId) {
-      if (!confirm("Are you sure you want to delete this workout entry?")) return;
-
-      workoutHistoryStore = workoutHistoryStore.filter(w => w.id !== workoutId);
-      localStorage.setItem('showUp_workout_records', JSON.stringify(workoutHistoryStore));
-      renderCalendar();
-
-      if (googleAccessToken) {
-        syncToGoogleDrive();
-      }
-    }
-
-    function shareHistoricalWorkoutWhatsApp(workoutId) {
-      const w = workoutHistoryStore.find(item => item.id === workoutId);
-      if (!w) return;
-
-      let setsText = w.sets.map((s, idx) => `${idx + 1}. *${s.exerciseName}* (${s.implement}): ${s.weight} lbs × ${s.reps} reps`).join('\n');
-
-      const text = `🔥 *showUp Workout Record*\n` +
-                   `📅 Date: ${w.date}\n` +
-                   `📊 Sets: ${w.totalSets} | Tonnage: ${w.totalVolume.toLocaleString()} lbs\n\n` +
-                   `*Logged Exercises:*\n${setsText}\n\n` +
-                   `Compound your progress - logged on showUp 🚀`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-    }
-
-    function shareSingleSetWhatsApp(setId) {
-      const setObj = currentSessionSets.find(s => s.id === setId);
-      if (!setObj) return;
-
-      const text = `🏋️ *showUp Exercise Set*\n` +
-                   `• *Exercise:* ${setObj.exerciseName}\n` +
-                   `• *Weight:* ${setObj.weight} lbs × ${setObj.reps} reps\n` +
-                   `• *Target:* ${setObj.muscle} | RPE ${setObj.rpe}\n\n` +
-                   `Compound your progress 🚀`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-    }
-
-    function shareFullSessionWhatsApp() {
-      if (!lastEvaluatedSummary) return;
-      shareHistoricalWorkoutWhatsApp(lastEvaluatedSummary.id);
-    }
-
-    // HR TELEMETRY & GATT BLUETOOTH
+    // HR TELEMETRY
     function initSparkline() {
       const canvas = document.getElementById('hr-sparkline');
-      if (!canvas) return;
       const ctx = canvas.getContext('2d');
       
       function draw() {
@@ -808,83 +808,56 @@
       draw();
     }
 
-    async function connectHRM() {
-      if (!navigator.bluetooth) {
-        alert("Web Bluetooth API is not supported in this browser.");
-        return;
-      }
-
-      try {
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ['heart_rate'] }]
-        });
-
-        const server = await bluetoothDevice.gatt.connect();
-        const service = await server.getPrimaryService('heart_rate');
-        const characteristic = await service.getCharacteristic('heart_rate_measurement');
-
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', (e) => {
-          const value = e.target.value;
-          currentHR = value.getUint8(1);
-          updateHRUI(currentHR, "Connected (BLE)");
-        });
-
-        document.getElementById('btn-connect-hrm').innerHTML = `<i class="fa-solid fa-bluetooth"></i> Connected`;
-      } catch (err) {
-        console.error("Bluetooth HRM error:", err);
-      }
-    }
-
     function toggleHRSimulator() {
       if (hrSimInterval) {
         clearInterval(hrSimInterval);
         hrSimInterval = null;
         document.getElementById('btn-toggle-sim').innerText = "Simulate";
-        updateHRUI(0, "Disconnected");
+        document.getElementById('live-hr-display').innerText = "--";
         return;
       }
 
       document.getElementById('btn-toggle-sim').innerText = "Stop Sim";
       hrSimInterval = setInterval(() => {
-        currentHR = Math.floor(125 + Math.random() * 35);
-        updateHRUI(currentHR, "Simulated");
+        currentHR = Math.floor(120 + Math.random() * 40);
+        document.getElementById('live-hr-display').innerText = currentHR;
+        hrHistory.push(currentHR);
+        if (hrHistory.length > 50) hrHistory.shift();
       }, 1000);
     }
 
-    function updateHRUI(hr, statusText) {
-      document.getElementById('live-hr-display').innerText = hr > 0 ? hr : "--";
-      document.getElementById('live-hr-status').innerText = statusText;
-      const dot = document.getElementById('live-hr-indicator');
-      const ping = document.getElementById('hr-pulse-ping');
-
-      if (hr > 0) {
-        dot.className = "relative inline-flex rounded-full h-3 w-3 bg-rose-500";
-        ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75";
-        hrHistory.push(hr);
-        if (hrHistory.length > 50) hrHistory.shift();
-      } else {
-        dot.className = "relative inline-flex rounded-full h-3 w-3 bg-slate-600";
-        ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-0";
-      }
-    }
-
-    // GOOGLE OAUTH & DRIVE SYNC
+    // GOOGLE OAUTH & DRIVE SYNC WITH DISPLAYING NAME AND EMAIL TO THE RIGHT OF AVATAR
     function handleGoogleSignIn() {
-      if (typeof google === 'undefined') {
-        alert("Google Identity Services SDK not loaded.");
-        return;
-      }
-
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: 'https://www.googleapis.com/auth/drive.file',
         callback: (response) => {
           if (response.access_token) {
             googleAccessToken = response.access_token;
-            document.getElementById('btn-google-login').classList.add('hidden');
-            document.getElementById('google-user-profile').classList.remove('hidden');
-            syncToGoogleDrive();
+
+            // Request user profile details from Google API
+            fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+              headers: { Authorization: `Bearer ${googleAccessToken}` }
+            })
+            .then(res => res.json())
+            .then(profile => {
+              if (profile) {
+                const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
+                const userEmail = profile.email || '';
+
+                document.getElementById('user-first-name').innerText = firstName;
+                document.getElementById('user-email').innerText = userEmail;
+                if (profile.picture) {
+                  document.getElementById('user-avatar').src = profile.picture;
+                }
+              }
+            })
+            .catch(() => {})
+            .finally(() => {
+              document.getElementById('btn-google-login').classList.add('hidden');
+              document.getElementById('google-user-profile').classList.remove('hidden');
+              syncToGoogleDrive();
+            });
           }
         },
       });
@@ -899,6 +872,7 @@
 
       setTimeout(() => {
         renderCalendar();
+        renderMonthlyHistory();
         syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
 
         setTimeout(() => {
@@ -911,11 +885,8 @@
     function scrollToTop() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    function scrollToCalendar() {
-      switchTab('calendar');
-    }
     function exportJSONBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(workoutHistoryStore));
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
