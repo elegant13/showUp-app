@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>showUp - Compound your progress</title>
+  <title>showUp - Compound Progress</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Leaflet CSS & JS for Interactive Global Map -->
+  <!-- Leaflet CSS & JS for Interactive Global Heatmap -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   
@@ -118,14 +118,13 @@
     }
 
     /* Muscle Map Highlight Styling */
-    .muscle-primary { fill: #ef4444 !important; opacity: 0.9; }
-    .muscle-secondary { fill: #f59e0b !important; opacity: 0.7; }
-    .muscle-neutral { fill: #334155 !important; opacity: 0.4; }
+    .muscle-primary { fill: #ef4444 !important; opacity: 0.9; transition: fill 0.3s ease; }
+    .muscle-secondary { fill: #f59e0b !important; opacity: 0.7; transition: fill 0.3s ease; }
+    .muscle-neutral { fill: #334155 !important; opacity: 0.4; transition: fill 0.3s ease; }
   </style>
 </head>
 <body class="pb-24 sm:pb-28">
 
-  <!-- HEADER BAR -->
   <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 px-4 py-3">
     <div class="max-w-4xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-3">
@@ -161,7 +160,7 @@
           <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 space-y-1">
             <div class="px-3 py-2 border-b border-slate-800">
               <p id="profile-name-text" class="text-xs font-bold text-slate-200 truncate">Guest Athlete</p>
-              <p id="profile-email-text" class="text-[10px] text-slate-400 truncate">Local Mode</p>
+              <p id="profile-email-text" class="text-[10px] text-slate-400 truncate">me@gmail.com</p>
             </div>
             <button onclick="handleGoogleSignIn()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-xs text-slate-300 flex items-center gap-2">
               <i class="fa-brands fa-google text-xs theme-text"></i>
@@ -231,7 +230,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Workout Title</label>
-            <input id="input-workout-title" type="text" placeholder="e.g. Morning Upper Body Hypertrophy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+            <input id="input-workout-title" type="text" placeholder="e.g. Upper Body Strength & Hypertrophy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
           </div>
           <div>
             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Target Category</label>
@@ -274,17 +273,36 @@
           </div>
         </div>
 
-        <!-- EXERCISE SET LOGGER PANEL -->
+        <!-- EXERCISE SET LOGGER PANEL WITH IMPLEMENT/EQUIPMENT CATEGORY -->
         <div id="strength-input-panel" class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
             <div class="sm:col-span-1">
               <label class="text-[10px] text-slate-400 font-semibold block mb-1">Exercise</label>
-              <input id="input-exercise-name" type="text" placeholder="e.g. Bench Press" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+              <input id="input-exercise-name" type="text" placeholder="e.g. Bench Press / Squat" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
             </div>
+
+            <!-- IMPLEMENT / EQUIPMENT SELECTION -->
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block mb-1">Implement / Equipment</label>
+              <select id="select-exercise-implement" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+                <option value="Barbell">Barbell</option>
+                <option value="Dumbbell">Dumbbell</option>
+                <option value="Kettlebell">Kettlebell</option>
+                <option value="Cable Machine">Cable Machine</option>
+                <option value="Lever Machine">Lever / Plate Machine</option>
+                <option value="Bodyweight">Bodyweight</option>
+                <option value="Resistance Band">Resistance Band</option>
+                <option value="Smith Machine">Smith Machine</option>
+                <option value="Landmine">Landmine</option>
+                <option value="Weighted Vest">Weighted Vest / Sandbag</option>
+              </select>
+            </div>
+
             <div>
               <label class="text-[10px] text-slate-400 font-semibold block mb-1">Weight (lbs)</label>
               <input id="input-set-weight" type="number" placeholder="185" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
             </div>
+
             <div>
               <label class="text-[10px] text-slate-400 font-semibold block mb-1">Reps</label>
               <input id="input-set-reps" type="number" placeholder="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
@@ -581,7 +599,6 @@
 
   </main>
 
-  <!-- BOTTOM NAVIGATION BAR -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-2xl border-t border-slate-800/80 px-6 py-2.5">
     <div class="max-w-md mx-auto flex items-center justify-around">
       <button id="nav-btn-workout" onclick="switchTab('workout')" class="flex flex-col items-center gap-1 theme-text font-bold transition">
@@ -721,11 +738,10 @@
     </div>
   </div>
 
-  <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'showup-app';
     const firebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -754,6 +770,7 @@
       onAuthStateChanged(auth, (user) => {
         if (user) {
           currentUser = user;
+          window.currentUserEmail = user.email || 'me@gmail.com';
           setupCloudListeners();
         }
       });
@@ -850,6 +867,16 @@
       }
     };
 
+    window.deleteSquadFromCloud = async function(squadId) {
+      if (!db || !currentUser || !squadId) return;
+      try {
+        const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'squads', squadId);
+        await deleteDoc(docRef);
+      } catch (e) {
+        console.warn("Cloud squad delete exception:", e);
+      }
+    };
+
     function triggerCheckAnimation() {
       const headerIcon = document.getElementById('header-check-icon');
       const heroIcon = document.getElementById('hero-check-icon');
@@ -872,6 +899,7 @@
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
     
+    // Purge legacy mock squads
     window.squadsData = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
     window.squadsData = window.squadsData.filter(s => s.id !== 'squad-pahlwani' && s.name !== 'Pahlwani Conditioning Circle');
     localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
@@ -901,6 +929,7 @@
     ];
 
     window.currentUserLocation = { lat: 38.9, lng: -77.5, city: 'Stone Ridge', state: 'VA', country: 'USA', continent: 'North America' };
+    window.currentUserEmail = 'me@gmail.com';
 
     window.addEventListener('DOMContentLoaded', () => {
       loadPhysicalProfile();
@@ -917,27 +946,53 @@
     });
 
     function detectUserGeoLocation() {
-      fetch('https://ipapi.co/json/')
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            window.currentUserLocation = {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              city: 'Current Location',
+              state: 'Local',
+              country: 'USA',
+              continent: 'North America'
+            };
+            if (leafletMap) {
+              leafletMap.setView([window.currentUserLocation.lat, window.currentUserLocation.lng], 6);
+            }
+          },
+          () => fetchIpLocationFallback(),
+          { timeout: 4000 }
+        );
+      } else {
+        fetchIpLocationFallback();
+      }
+    }
+
+    function fetchIpLocationFallback() {
+      // Free HTTPS IP Geolocation API without required API key
+      fetch('https://ipwho.is/')
         .then(res => res.json())
         .then(data => {
-          if (data && data.latitude && data.longitude) {
+          if (data && data.success && data.latitude && data.longitude) {
             window.currentUserLocation = {
               lat: data.latitude,
               lng: data.longitude,
               city: data.city || 'Local Area',
               state: data.region_code || data.region || 'VA',
-              country: data.country_name || 'USA',
-              continent: data.continent_code === 'EU' ? 'Europe' : data.continent_code === 'AS' ? 'Asia' : 'North America'
+              country: data.country || 'USA',
+              continent: data.continent || 'North America'
             };
             if (leafletMap) {
               leafletMap.setView([window.currentUserLocation.lat, window.currentUserLocation.lng], 4);
             }
           }
         })
-        .catch(console.warn);
+        .catch(err => {
+          console.warn("Geolocation fallback active:", err);
+        });
     }
 
-    /* HEART RATE TELEMETRY & SIMULATOR */
     window.toggleHRMSimulator = function() {
       const btn = document.getElementById('btn-hrm-sim');
       if (hrmSimInterval) {
@@ -957,7 +1012,7 @@
 
     window.connectHRM = async function() {
       if (!navigator.bluetooth) {
-        alert("Web Bluetooth is not supported on this browser. Try Chrome/Edge or use HR Simulator.");
+        showToast("Web Bluetooth is not supported on this browser. Use HR Simulator.");
         return;
       }
       try {
@@ -1018,7 +1073,6 @@
       ctx.stroke();
     }
 
-    /* GLOBAL LEAFLET MAP & CLUSTERING */
     window.initGlobalMap = function() {
       const mapContainer = document.getElementById('global-map-canvas');
       if (!mapContainer || leafletMap) return;
@@ -1146,7 +1200,7 @@
     }
 
     window.refreshGlobalMap = function() {
-      if (typeof detectUserGeoLocation === 'function') detectUserGeoLocation();
+      detectUserGeoLocation();
       window.renderGlobalHeatmap();
     };
 
@@ -1197,6 +1251,7 @@
 
     window.addCurrentSet = function() {
       const name = document.getElementById('input-exercise-name').value.trim() || 'General Exercise';
+      const implement = document.getElementById('select-exercise-implement').value || 'Barbell';
       const weight = parseFloat(document.getElementById('input-set-weight').value) || 0;
       const reps = parseInt(document.getElementById('input-set-reps').value) || 0;
 
@@ -1205,7 +1260,7 @@
         localStorage.setItem('showUp_session_start_global_count', workoutInitiatedCount.toString());
       }
 
-      currentSessionSets.push({ id: Date.now(), name, weight, reps, timestamp: Date.now() });
+      currentSessionSets.push({ id: Date.now(), name, implement, weight, reps, timestamp: Date.now() });
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
       updateSessionDeltaUI();
@@ -1229,7 +1284,10 @@
           <div class="flex items-center gap-3">
             <span class="w-6 h-6 rounded-full theme-bg text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
             <div>
-              <p class="text-xs font-extrabold text-slate-100">${s.name}</p>
+              <div class="flex items-center gap-1.5">
+                <p class="text-xs font-extrabold text-slate-100">${s.name}</p>
+                <span class="text-[9px] px-2 py-0.5 rounded-full font-bold bg-slate-900 border border-slate-800 theme-text">${s.implement || 'Barbell'}</span>
+              </div>
               <p class="text-[10px] text-slate-400 font-semibold">${s.weight} lbs &times; ${s.reps} reps</p>
             </div>
           </div>
@@ -1270,21 +1328,27 @@
       document.getElementById('bar-te-aerobic').style.width = `${(aerobicVal / 5) * 100}%`;
       document.getElementById('bar-te-anaerobic').style.width = `${(anaerobicVal / 5) * 100}%`;
 
-      // Highlight Muscle Map
-      const names = currentSessionSets.map(s => s.name.toLowerCase()).join(' ');
+      // Highlight Anatomical SVG Muscle Map
+      const names = currentSessionSets.map(s => `${s.name} ${s.implement}`).join(' ').toLowerCase();
       document.querySelectorAll('svg path').forEach(p => p.className.baseVal = 'muscle-neutral');
 
-      if (names.includes('bench') || names.includes('chest') || names.includes('pushup')) {
+      if (names.includes('bench') || names.includes('chest') || names.includes('pushup') || names.includes('dip')) {
         document.getElementById('muscle-chest')?.setAttribute('class', 'muscle-primary');
         document.getElementById('muscle-triceps')?.setAttribute('class', 'muscle-secondary');
       }
-      if (names.includes('squat') || names.includes('leg')) {
+      if (names.includes('squat') || names.includes('leg') || names.includes('lunge') || names.includes('press')) {
         document.getElementById('muscle-quads')?.setAttribute('class', 'muscle-primary');
         document.getElementById('muscle-glutes')?.setAttribute('class', 'muscle-secondary');
       }
-      if (names.includes('pull') || names.includes('row') || names.includes('lat')) {
+      if (names.includes('pull') || names.includes('row') || names.includes('lat') || names.includes('deadlift')) {
         document.getElementById('muscle-lats')?.setAttribute('class', 'muscle-primary');
         document.getElementById('muscle-biceps')?.setAttribute('class', 'muscle-secondary');
+      }
+      if (names.includes('curl') || names.includes('bicep')) {
+        document.getElementById('muscle-biceps')?.setAttribute('class', 'muscle-primary');
+      }
+      if (names.includes('extension') || names.includes('tricep')) {
+        document.getElementById('muscle-triceps')?.setAttribute('class', 'muscle-primary');
       }
     }
 
@@ -1549,28 +1613,63 @@
         return;
       }
 
-      container.innerHTML = window.squadsData.map(s => `
-        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-xs font-extrabold text-slate-100 flex items-center gap-2">
-                ${s.name}
-                <span class="text-[9px] theme-badge px-2 py-0.5 rounded-full font-bold">Active</span>
-              </h3>
-              <p class="text-[10px] text-slate-400">${s.members ? s.members.length : 1} Members</p>
+      const activeUser = window.currentUserEmail;
+
+      container.innerHTML = window.squadsData.map(s => {
+        const isCreator = (s.creatorEmail || 'me@gmail.com') === activeUser;
+        const members = s.members || [activeUser];
+
+        return `
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-xs font-extrabold text-slate-100 flex items-center gap-2">
+                  ${s.name}
+                  ${isCreator ? '<span class="text-[9px] theme-badge px-2 py-0.5 rounded-full font-bold">Creator</span>' : ''}
+                </h3>
+                <p class="text-[10px] text-slate-400">${members.length} Members</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="nudgeSquad('${s.id}')" class="px-3 py-1.5 rounded-xl theme-bg text-xs font-bold flex items-center gap-1 shadow">
+                  <i class="fa-solid fa-hand-back-fist"></i> Fistbump
+                </button>
+                ${isCreator ? `
+                  <button onclick="deleteSquad('${s.id}')" class="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400 transition" title="Delete Squad">
+                    <i class="fa-solid fa-trash text-xs"></i>
+                  </button>
+                ` : `
+                  <button onclick="leaveSquad('${s.id}')" class="p-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-red-400 transition" title="Leave Squad">
+                    <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                  </button>
+                `}
+              </div>
             </div>
-            <button onclick="nudgeSquad('${s.id}')" class="px-3 py-1.5 rounded-xl theme-bg text-xs font-bold flex items-center gap-1 shadow">
-              <i class="fa-solid fa-hand-back-fist"></i> Fistbump
-            </button>
+
+            <!-- MEMBER ROSTER -->
+            <div class="space-y-1.5 pt-1">
+              ${members.map(m => `
+                <div class="flex items-center justify-between bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800/80 text-xs">
+                  <span class="text-slate-300 font-medium truncate">${m}</span>
+                  ${isCreator && m !== activeUser ? `
+                    <button onclick="removeSquadMember('${s.id}', '${m}')" class="text-[10px] text-slate-500 hover:text-red-400 font-bold">Remove</button>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     };
 
     window.openCreateSquadModal = function() {
       const name = prompt("Enter Squad Name:");
       if (name) {
-        const newSquad = { id: `squad-${Date.now()}`, name, members: ['me@gmail.com'] };
+        const newSquad = { 
+          id: `squad-${Date.now()}`, 
+          name, 
+          creatorEmail: window.currentUserEmail || 'me@gmail.com',
+          members: [window.currentUserEmail || 'me@gmail.com'] 
+        };
         window.squadsData.push(newSquad);
         localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
         if (typeof window.syncSquadToCloud === 'function') window.syncSquadToCloud(newSquad);
@@ -1578,9 +1677,47 @@
       }
     };
 
-    window.nudgeSquad = function(id) {
-      alert("👊 Fistbump sent to squad members!");
+    window.removeSquadMember = function(squadId, memberEmail) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (squad && (squad.creatorEmail || 'me@gmail.com') === window.currentUserEmail) {
+        squad.members = squad.members.filter(m => m !== memberEmail);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        if (typeof window.syncSquadToCloud === 'function') window.syncSquadToCloud(squad);
+        renderSquads();
+      }
     };
+
+    window.leaveSquad = function(squadId) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (squad) {
+        squad.members = squad.members.filter(m => m !== window.currentUserEmail);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        if (typeof window.syncSquadToCloud === 'function') window.syncSquadToCloud(squad);
+        renderSquads();
+      }
+    };
+
+    window.deleteSquad = function(squadId) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (squad && (squad.creatorEmail || 'me@gmail.com') === window.currentUserEmail) {
+        window.squadsData = window.squadsData.filter(s => s.id !== squadId);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        if (typeof window.deleteSquadFromCloud === 'function') window.deleteSquadFromCloud(squadId);
+        renderSquads();
+      }
+    };
+
+    window.nudgeSquad = function(id) {
+      showToast("👊 Fistbump sent to squad members!");
+    };
+
+    function showToast(msg) {
+      const toast = document.createElement('div');
+      toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-100 text-xs px-4 py-2 rounded-2xl shadow-2xl z-50 animate-bounce';
+      toast.innerText = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
 
     window.openSettingsModal = function() {
       document.getElementById('modal-settings').classList.remove('hidden');
@@ -1658,16 +1795,20 @@
     window.handleGoogleSignIn = function() {
       const nameEl = document.getElementById('profile-name-text');
       const emailEl = document.getElementById('profile-email-text');
+      window.currentUserEmail = "user@gmail.com";
       if (nameEl) nameEl.innerText = "Logged In User";
-      if (emailEl) emailEl.innerText = "user@gmail.com";
+      if (emailEl) emailEl.innerText = window.currentUserEmail;
+      renderSquads();
       toggleProfileMenu();
     };
 
     window.handleSignOut = function() {
       const nameEl = document.getElementById('profile-name-text');
       const emailEl = document.getElementById('profile-email-text');
+      window.currentUserEmail = "me@gmail.com";
       if (nameEl) nameEl.innerText = "Guest Athlete";
-      if (emailEl) emailEl.innerText = "Local Mode";
+      if (emailEl) emailEl.innerText = window.currentUserEmail;
+      renderSquads();
       toggleProfileMenu();
     };
 
