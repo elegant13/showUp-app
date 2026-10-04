@@ -45,7 +45,7 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.5</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.6</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
@@ -256,7 +256,7 @@
         </button>
       </section>
 
-      <!-- POST-WORKOUT SUMMARY CARD -->
+      <!-- POST-WORKOUT SUMMARY CARD WITH ANATOMICAL BODY MAP VISUALIZATION -->
       <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -269,7 +269,7 @@
           <div class="flex items-center gap-2">
             <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition">
               <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
-              <span>Share</span>
+              <span>Share Workout via WhatsApp</span>
             </button>
             <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
               <i class="fa-solid fa-xmark text-lg"></i>
@@ -299,6 +299,77 @@
             <div id="anaerobic-te-label" class="text-xs font-semibold text-slate-300">No Anaerobic Impact</div>
             <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
               <div id="anaerobic-te-bar" class="bg-amber-500 h-full w-0 transition-all duration-500"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANATOMICAL BODY MAP VISUALIZATION (ANTERIOR & POSTERIOR) -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 text-center">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Engagement Map</h3>
+          
+          <div class="flex justify-center items-center gap-6 py-2">
+            <!-- Anterior Body Vector SVG -->
+            <div class="w-32 flex flex-col items-center">
+              <svg viewBox="0 0 100 200" class="w-full h-auto max-h-52 drop-shadow-md">
+                <!-- Body Base Contour -->
+                <path d="M50,15 C45,15 42,22 42,28 C42,32 45,35 50,35 C55,35 58,32 58,28 C58,22 55,15 50,15 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M35,45 C30,50 25,70 20,95 C18,105 16,120 18,125" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M65,45 C70,50 75,70 80,95 C82,105 84,120 82,125" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M35,45 L65,45 L60,110 L40,110 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M42,110 L38,185 L46,185 L50,130 L54,185 L62,185 L58,110" fill="none" stroke="#475569" stroke-width="1.5"/>
+
+                <!-- Muscle Group Overlay Elements -->
+                <!-- Chest -->
+                <path id="body-chest" d="M37,48 C43,47 48,52 49,58 C44,61 38,60 36,54 Z M63,48 C57,47 52,52 51,58 C56,61 62,60 64,54 Z" fill="#334155"/>
+                <!-- Shoulders Anterior -->
+                <path id="body-shoulders-ant" d="M32,46 C35,45 37,50 35,56 C31,54 30,48 32,46 Z M68,46 C65,45 63,50 65,56 C69,54 70,48 68,46 Z" fill="#334155"/>
+                <!-- Core / Abs -->
+                <path id="body-core" d="M44,62 L56,62 L55,95 L45,95 Z" fill="#334155"/>
+                <!-- Biceps -->
+                <path id="body-biceps" d="M28,60 C31,60 32,72 29,76 C27,74 26,65 28,60 Z M72,60 C69,60 68,72 71,76 C73,74 74,65 72,60 Z" fill="#334155"/>
+                <!-- Quads -->
+                <path id="body-quads" d="M41,114 C46,114 48,140 47,152 C42,152 40,135 40,120 Z M59,114 C54,114 52,140 53,152 C58,152 60,135 60,120 Z" fill="#334155"/>
+              </svg>
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
+            </div>
+
+            <!-- Posterior Body Vector SVG -->
+            <div class="w-32 flex flex-col items-center">
+              <svg viewBox="0 0 100 200" class="w-full h-auto max-h-52 drop-shadow-md">
+                <!-- Body Base Contour -->
+                <path d="M50,15 C45,15 42,22 42,28 C42,32 45,35 50,35 C55,35 58,32 58,28 C58,22 55,15 50,15 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M35,45 C30,50 25,70 20,95 C18,105 16,120 18,125" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M65,45 C70,50 75,70 80,95 C82,105 84,120 82,125" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M35,45 L65,45 L60,110 L40,110 Z" fill="none" stroke="#475569" stroke-width="1.5"/>
+                <path d="M42,110 L38,185 L46,185 L50,130 L54,185 L62,185 L58,110" fill="none" stroke="#475569" stroke-width="1.5"/>
+
+                <!-- Muscle Group Overlay Elements -->
+                <!-- Back / Lats / Upper Back -->
+                <path id="body-back" d="M38,48 L62,48 L58,82 L42,82 Z" fill="#334155"/>
+                <!-- Shoulders Posterior -->
+                <path id="body-shoulders-post" d="M32,46 C35,45 37,50 35,56 C31,54 30,48 32,46 Z M68,46 C65,45 63,50 65,56 C69,54 70,48 68,46 Z" fill="#334155"/>
+                <!-- Triceps -->
+                <path id="body-triceps" d="M26,58 C28,58 30,68 28,74 C25,70 24,62 26,58 Z M74,58 C72,58 70,68 72,74 C75,70 76,62 74,58 Z" fill="#334155"/>
+                <!-- Glutes & Hamstrings -->
+                <path id="body-hamstrings" d="M40,86 C48,85 50,105 48,150 C42,150 39,125 39,100 Z M60,86 C52,85 50,105 52,150 C58,150 61,125 61,100 Z" fill="#334155"/>
+              </svg>
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
+            </div>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="flex items-center justify-center gap-4 text-xs pt-1 border-t border-slate-800/80">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-red-500 inline-block"></span>
+              <span class="text-slate-300 font-semibold">Primary Muscles</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block"></span>
+              <span class="text-slate-300 font-semibold">Secondary Muscles</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
+              <span class="text-slate-500">Untargeted</span>
             </div>
           </div>
         </div>
@@ -563,6 +634,7 @@
       }
     }
 
+    // RENDER LOGGED SETS (PER-SET WHATSAPP SHARE REMOVED)
     function renderLoggedSets() {
       const container = document.getElementById('logged-sets-list');
       document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
@@ -583,9 +655,6 @@
             </div>
           </div>
           <div class="flex items-center gap-1">
-            <button onclick="triggerHaptic('medium'); shareSetToWhatsApp(${s.id})" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share Set via WhatsApp">
-              <i class="fa-brands fa-whatsapp text-sm"></i>
-            </button>
             <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
               <i class="fa-solid fa-trash-can text-sm"></i>
             </button>
@@ -604,19 +673,7 @@
       }
     }
 
-    function shareSetToWhatsApp(setId) {
-      const set = currentSessionSets.find(s => s.id === setId);
-      if (!set) return;
-
-      const text = `🏋️ *showUp Exercise Set Log*\n\n` +
-                   `💪 *Exercise:* ${set.exerciseName} (${set.implement})\n` +
-                   `🏋️‍♂️ *Load:* ${set.weight} lbs × ${set.reps} reps\n` +
-                   `🔥 *Target:* ${set.muscle} | RPE ${set.rpe}\n\n` +
-                   `_Compound your progress with showUp_`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-    }
-
+    // WORKOUT-LEVEL WHATSAPP SHARING ONLY
     function shareFullWorkoutToWhatsApp() {
       if (!lastEvaluatedSummary) return;
       const s = lastEvaluatedSummary;
@@ -646,6 +703,7 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
+    // WORKOUT EVALUATION ENGINE & DYNAMIC ANATOMICAL MAP COLORING
     function evaluateAndFinishWorkout() {
       if (currentSessionSets.length === 0) {
         alert("Please log at least one set before finishing your workout.");
@@ -667,12 +725,14 @@
       document.getElementById('anaerobic-te-bar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
       document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic Impact" : "Minor Anaerobic Impact";
 
+      // Calculate Tonnage Per Muscle Group
       const muscleMap = {};
       currentSessionSets.forEach(s => {
         const vol = s.weight * s.reps;
         muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
       });
 
+      // Update Tonnage Bars
       const muscleContainer = document.getElementById('muscle-breakdown-bars');
       muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
         <div class="space-y-1">
@@ -685,6 +745,9 @@
           </div>
         </div>
       `).join('');
+
+      // HIGHLIGHT ANATOMICAL BODY MAP (PRIMARY = RED, SECONDARY = YELLOW)
+      updateAnatomicalBodyMap(muscleMap);
 
       const todayISO = new Date().toISOString().slice(0, 10);
       const workoutObj = {
@@ -719,6 +782,52 @@
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
+    }
+
+    // ANATOMICAL MAP COLORING FUNCTION
+    function updateAnatomicalBodyMap(muscleMap) {
+      // SVG Muscle Element ID mapping
+      const muscleSvgMap = {
+        'Chest': ['body-chest'],
+        'Back': ['body-back'],
+        'Shoulders': ['body-shoulders-ant', 'body-shoulders-post'],
+        'Biceps': ['body-biceps'],
+        'Triceps': ['body-triceps'],
+        'Core/Abs': ['body-core'],
+        'Quads': ['body-quads'],
+        'Hamstrings/Glutes': ['body-hamstrings']
+      };
+
+      // Reset all vector elements to default gray (#334155)
+      Object.values(muscleSvgMap).flat().forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('fill', '#334155');
+      });
+
+      // Sort engaged muscle groups by volume
+      const sortedMuscles = Object.entries(muscleMap).sort((a, b) => b[1] - a[1]);
+      if (sortedMuscles.length === 0) return;
+
+      const primaryMuscle = sortedMuscles[0][0];
+      const secondaryMuscles = sortedMuscles.slice(1).map(m => m[0]);
+
+      // Apply RED (#ef4444) to Primary Muscle
+      if (muscleSvgMap[primaryMuscle]) {
+        muscleSvgMap[primaryMuscle].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('fill', '#ef4444');
+        });
+      }
+
+      // Apply YELLOW (#eab308) to Secondary Muscles
+      secondaryMuscles.forEach(m => {
+        if (muscleSvgMap[m]) {
+          muscleSvgMap[m].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.setAttribute('fill', '#eab308');
+          });
+        }
+      });
     }
 
     function closeSummary() {
@@ -892,11 +1001,9 @@
       }, 1000);
     }
 
-    // UPDATED GOOGLE OAUTH WITH FULL SCOPES
     function handleGoogleSignIn() {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        // Combined Drive File + Userinfo Profile + Userinfo Email Scopes
         scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
         callback: (response) => {
           if (response.access_token) {
