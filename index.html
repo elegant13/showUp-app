@@ -190,7 +190,7 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.6</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.7</span>
         </h1>
         <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
       </div>
@@ -1108,7 +1108,6 @@
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
-      initDefaultSquadsIfNeeded();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
@@ -2199,32 +2198,6 @@
         hrHistory.push(currentHR);
         if (hrHistory.length > 50) hrHistory.shift();
       }, 1000);
-    }
-
-    function initDefaultSquadsIfNeeded() {
-      if (squadsData.length === 0) {
-        const userEmail = getCurrentUserEmail();
-        squadsData = [
-          {
-            id: "squad-1",
-            name: "Pahlwani Conditioning Circle",
-            creatorEmail: userEmail,
-            createdDate: "2026-10-01",
-            notifyCategories: {
-              silentFlare: true,
-              activeArena: true,
-              sharedStreak: true,
-              instantFistbump: true
-            },
-            members: [
-              { email: userEmail, name: getCurrentUserName(), status: "Active Now", workedOutToday: true, role: "creator" },
-              { email: "swathi@gmail.com", name: "Swathi", status: "Showed up 2h ago", workedOutToday: true, role: "member" },
-              { email: "rohit.runner@gmail.com", name: "Rohit", status: "Resting today", workedOutToday: false, role: "member" }
-            ]
-          }
-        ];
-        localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
-      }
     }
 
     function renderSquads() {
