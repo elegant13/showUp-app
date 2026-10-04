@@ -738,9 +738,52 @@
     </div>
   </div>
 
+  <!-- GOOGLE ACCOUNT AUTH MODAL -->
+  <div id="modal-google-auth" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-brands fa-google theme-text"></i>
+          Google Account Sign In
+        </h3>
+        <button onclick="closeGoogleAuthModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Connect your Google Identity to sync Squads, accountability circles, and global check-ins.
+      </p>
+
+      <button onclick="triggerPopupGoogleAuth()" class="w-full py-3 rounded-2xl bg-white text-slate-900 hover:bg-slate-100 font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+        <i class="fa-brands fa-google text-red-500 text-sm"></i>
+        <span>Continue with Google OAuth</span>
+      </button>
+
+      <div class="relative my-3 flex items-center justify-center">
+        <div class="border-t border-slate-800 w-full"></div>
+        <span class="bg-slate-900 px-3 text-[10px] text-slate-500 font-bold uppercase absolute">or enter gmail address</span>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Display Name</label>
+          <input id="input-google-name" type="text" placeholder="e.g. Alex Johnson" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Gmail Address</label>
+          <input id="input-google-email" type="email" placeholder="alex@gmail.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500">
+        </div>
+      </div>
+
+      <button onclick="saveCustomGoogleProfile()" class="w-full py-3 rounded-2xl theme-bg font-bold text-xs uppercase tracking-wider shadow-lg transition active:scale-95">
+        Sign In & Sync Profile
+      </button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot, collection, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'showup-app';
@@ -770,13 +813,49 @@
       onAuthStateChanged(auth, (user) => {
         if (user) {
           currentUser = user;
-          window.currentUserEmail = user.email || 'me@gmail.com';
+          if (user.email) {
+            window.currentUserEmail = user.email;
+            window.currentUserName = user.displayName || user.email.split('@')[0];
+            if (user.photoURL) window.currentUserPhoto = user.photoURL;
+            window.updateProfileUI();
+          }
           setupCloudListeners();
         }
       });
     } catch (e) {
       console.warn("Cloud sync initialization fallback: local mode enabled.");
     }
+
+    window.triggerPopupGoogleAuth = async function() {
+      if (!auth) {
+        showToast("Firebase Auth initializing... enter Gmail address below.");
+        return;
+      }
+      try {
+        const provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        if (result && result.user) {
+          const user = result.user;
+          window.currentUserEmail = user.email || 'me@gmail.com';
+          window.currentUserName = user.displayName || user.email.split('@')[0];
+          window.currentUserPhoto = user.photoURL || null;
+          
+          localStorage.setItem('showUp_google_user', JSON.stringify({
+            name: window.currentUserName,
+            email: window.currentUserEmail,
+            photo: window.currentUserPhoto
+          }));
+          
+          window.updateProfileUI();
+          window.renderSquads();
+          window.closeGoogleAuthModal();
+          showToast(`Signed in as ${window.currentUserEmail}`);
+        }
+      } catch (err) {
+        console.warn("Google popup auth notice:", err);
+        showToast("Popup blocked in iframe. Please enter your Gmail address below.");
+      }
+    };
 
     const todayKey = new Date().toISOString().slice(0, 10);
 
@@ -930,8 +1009,11 @@
 
     window.currentUserLocation = { lat: 38.9, lng: -77.5, city: 'Stone Ridge', state: 'VA', country: 'USA', continent: 'North America' };
     window.currentUserEmail = 'me@gmail.com';
+    window.currentUserName = 'Guest Athlete';
+    window.currentUserPhoto = null;
 
     window.addEventListener('DOMContentLoaded', () => {
+      restoreGoogleProfile();
       loadPhysicalProfile();
       renderLoggedSets();
       renderCalendar();
@@ -945,18 +1027,98 @@
       updatePhysiologySummary();
     });
 
-    function detectUserGeoLocation() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            window.currentUserLocation = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              city: 'Current Location',
-              state: 'Local',
-              country: 'USA',
-              continent: 'North America'
-            };
+    function restoreGoogleProfile() {
+      const saved = localStorage.getItem('showUp_google_user');
+      if (saved) {
+        try {
+          const u = JSON.parse(saved);
+          if (u && u.email) {
+            window.currentUserEmail = u.email;
+            window.currentUserName = u.name || u.email.split('@')[0];
+            window.currentUserPhoto = u.photo || null;
+            updateProfileUI();
+          }
+        } catch (e) {}
+      }
+    }
+
+    window.updateProfileUI = function() {
+      const nameEl = document.getElementById('profile-name-text');
+      const emailEl = document.getElementById('profile-email-text');
+      const avatarIcon = document.getElementById('user-avatar-icon');
+      const avatarImg = document.getElementById('user-avatar-img');
+
+      if (nameEl) nameEl.innerText = window.currentUserName || 'Guest Athlete';
+      if (emailEl) emailEl.innerText = window.currentUserEmail || 'me@gmail.com';
+
+      if (avatarIcon && avatarImg) {
+        if (window.currentUserPhoto) {
+          avatarImg.src = window.currentUserPhoto;
+          avatarImg.classList.remove('hidden');
+          avatarIcon.classList.add('hidden');
+        } else if (window.currentUserEmail && window.currentUserEmail !== 'me@gmail.com') {
+          avatarImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(window.currentUserName)}&background=10b981&color=000000&bold=true`;
+          avatarImg.classList.remove('hidden');
+          avatarIcon.classList.add('hidden');
+        } else {
+          avatarImg.classList.add('hidden');
+          avatarIcon.classList.remove('hidden');
+        }
+      }
+    };
+
+    window.handleGoogleSignIn = function() {
+      const menu = document.getElementById('profile-dropdown');
+      if (menu) menu.classList.add('hidden');
+      
+      const nameInput = document.getElementById('input-google-name');
+      const emailInput = document.getElementById('input-google-email');
+      
+      if (nameInput) nameInput.value = window.currentUserName !== 'Guest Athlete' ? window.currentUserName : '';
+      if (emailInput) emailInput.value = window.currentUserEmail !== 'me@gmail.com' ? window.currentUserEmail : '';
+
+      document.getElementById('modal-google-auth').classList.remove('hidden');
+    };
+
+    window.closeGoogleAuthModal = function() {
+      document.getElementById('modal-google-auth').classList.add('hidden');
+    };
+
+    window.saveCustomGoogleProfile = function() {
+      const name = document.getElementById('input-google-name').value.trim();
+      const email = document.getElementById('input-google-email').value.trim();
+
+      if (!email || !email.includes('@')) {
+        showToast("Please enter a valid Gmail address");
+        return;
+      }
+
+      window.currentUserEmail = email;
+      window.currentUserName = name || email.split('@')[0];
+      window.currentUserPhoto = null;
+
+      localStorage.setItem('showUp_google_user', JSON.stringify({
+        name: window.currentUserName,
+        email: window.currentUserEmail,
+        photo: null
+      }));
+
+      updateProfileUI();
+      renderSquads();
+      closeGoogleAuthModal();
+      showToast(`Signed in as ${window.currentUserEmail}`);
+    };
+
+    window.handleSignOut = function() {
+      window.currentUserEmail = "me@gmail.com";
+      window.currentUserName = "Guest Athlete";
+      window.currentUserPhoto = null;
+      localStorage.removeItem('showUp_google_user');
+      updateProfileUI();
+      renderSquads();
+      toggleProfileMenu();
+      showToast("Signed out. Reverted to Guest profile.");
+    };
             if (leafletMap) {
               leafletMap.setView([window.currentUserLocation.lat, window.currentUserLocation.lng], 6);
             }
