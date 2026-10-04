@@ -337,74 +337,24 @@
             <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.5" min="50" max="500" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
           </div>
         </div>
-        <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
-      </div>
 
-      <div class="space-y-4">
-        <!-- TYPOGRAPHY FONT PICKER -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Typography Font Family</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button id="font-btn-jakarta" onclick="triggerHaptic('light'); setFontFamily('jakarta')" class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition group text-left">
-              <div>
-                <span class="block text-xs font-bold text-slate-200 font-['Plus_Jakarta_Sans']">Plus Jakarta</span>
-                <span class="text-[10px] text-slate-500">Modern & Balanced</span>
-              </div>
-              <i id="font-check-jakarta" class="fa-solid fa-circle-check theme-text text-sm hidden"></i>
-            </button>
+        <div class="pt-2 border-t border-slate-800/80">
+          <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-map-location-dot theme-text"></i>
+            Regional Location (For Anonymous Heatmap)
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[10px] font-medium text-slate-400 mb-1">State / Region Code</label>
+              <input type="text" id="user-state-input" placeholder="e.g. VA, CA, NY" maxlength="10" onchange="saveLocationProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold uppercase theme-text focus:outline-none focus:border-emerald-500 transition">
+            </div>
 
-            <button id="font-btn-inter" onclick="triggerHaptic('light'); setFontFamily('inter')" class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition group text-left">
-              <div>
-                <span class="block text-xs font-bold text-slate-200 font-['Inter']">Inter</span>
-                <span class="text-[10px] text-slate-500">Clean & Legible</span>
-              </div>
-              <i id="font-check-inter" class="fa-solid fa-circle-check theme-text text-sm hidden"></i>
-            </button>
-
-            <button id="font-btn-outfit" onclick="triggerHaptic('light'); setFontFamily('outfit')" class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition group text-left">
-              <div>
-                <span class="block text-xs font-bold text-slate-200 font-['Outfit']">Outfit</span>
-                <span class="text-[10px] text-slate-500">Athletic & Bold</span>
-              </div>
-              <i id="font-check-outfit" class="fa-solid fa-circle-check theme-text text-sm hidden"></i>
-            </button>
-
-            <button id="font-btn-space" onclick="triggerHaptic('light'); setFontFamily('space')" class="flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 transition group text-left">
-              <div>
-                <span class="block text-xs font-bold text-slate-200 font-['Space_Grotesk']">Space Grotesk</span>
-                <span class="text-[10px] text-slate-500">Tech & Geometric</span>
-              </div>
-              <i id="font-check-space" class="fa-solid fa-circle-check theme-text text-sm hidden"></i>
-            </button>
+            <div>
+              <label class="block text-[10px] font-medium text-slate-400 mb-1">ZIP / Postal Code</label>
+              <input type="text" id="user-zip-input" placeholder="e.g. 20105" maxlength="10" onchange="saveLocationProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
+            </div>
           </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Theme Palette Accent</label>
-          <div class="grid grid-cols-6 gap-2">
-            <button onclick="setThemePalette('emerald')" class="h-9 rounded-xl bg-emerald-500 border-2 border-white/80 active:scale-95 transition" title="Emerald"></button>
-            <button onclick="setThemePalette('blue')" class="h-9 rounded-xl bg-blue-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition" title="Blue"></button>
-            <button onclick="setThemePalette('purple')" class="h-9 rounded-xl bg-purple-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition" title="Purple"></button>
-            <button onclick="setThemePalette('red')" class="h-9 rounded-xl bg-rose-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition" title="Rose Red"></button>
-            <button onclick="setThemePalette('slate')" class="h-9 rounded-xl bg-sky-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition" title="Sky / Slate"></button>
-            <button onclick="setThemePalette('amoled')" class="h-9 rounded-xl bg-slate-100 border-2 border-slate-700 hover:border-white/80 active:scale-95 transition" title="AMOLED White"></button>
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">HR Telemetry Card Default State</label>
-          <div class="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
-            <span class="text-xs text-slate-300">Keep HR Module Collapsed</span>
-            <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Backup Options</label>
-          <button onclick="exportJSONBackup(); toggleSettingsModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-file-export theme-text"></i>
-            <span>Export JSON Data Backup</span>
-          </button>
+          <p class="text-[10px] text-slate-500 italic mt-1.5">Auto-detected via network or manually set above. Only aggregated state/region totals are shared.</p>
         </div>
       </div>
 
@@ -1033,66 +983,26 @@
         </p>
       </section>
 
-      <!-- SQUADS MANAGEMENT SECTION -->
+      <!-- REGIONAL WORKOUT HEATMAP CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
             <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-users theme-text"></i>
-              My Squads & Accountability Circles
+              <i class="fa-solid fa-fire-flame-curved theme-text"></i>
+              Regional Activity Heatmap
             </h2>
-            <p class="text-xs text-slate-400">Connect via Gmail addresses to stay quietly motivated</p>
+            <p class="text-xs text-slate-400">Live distribution of today's workouts by state & region</p>
           </div>
 
-          <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="theme-badge text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i>
-            <span>Create Squad</span>
-          </button>
+          <span id="detected-location-badge" class="theme-badge text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span id="user-location-tag">Locating...</span>
+          </span>
         </div>
 
-        <div id="squads-list-container" class="space-y-4">
-          <!-- Dynamic Squad Cards Rendered Here -->
-        </div>
-      </section>
-
-      <!-- NOTIFICATION CATEGORIES INFORMATION CARD -->
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-bell theme-text"></i>
-          Non-Obtrusive Notification Categories
-        </h3>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="font-bold text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-ghost text-purple-400"></i>
-              <span>Silent Flare</span>
-            </div>
-            <p class="text-[11px] text-slate-400 leading-relaxed">Low-priority, quiet alert when a squad member taps "Start Workout".</p>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="font-bold text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-circle-dot text-emerald-400"></i>
-              <span>Active Arena</span>
-            </div>
-            <p class="text-[11px] text-slate-400 leading-relaxed">Zero push notifications outside the app. A subtle pulse ring appears on active member avatars when opening showUp.</p>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="font-bold text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-check-double theme-text"></i>
-              <span>Shared Squad Streak</span>
-            </div>
-            <p class="text-[11px] text-slate-400 leading-relaxed">Single daily summary celebrating squad completion milestones.</p>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="font-bold text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-hand-fist text-rose-400"></i>
-              <span>Instant Fistbump / Nudge</span>
-            </div>
-            <p class="text-[11px] text-slate-400 leading-relaxed">1-tap interactive flame/fistbump that vibrates your friend's phone while they train.</p>
+        <div id="heatmap-list-container" class="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800 max-h-56 overflow-y-auto">
+          <div class="text-center py-6 text-slate-600 text-xs italic">
+            Fetching active region heatmap data...
           </div>
         </div>
       </section>
@@ -1181,6 +1091,15 @@
         }
       }, (err) => console.warn("Cloud counter listener:", err));
 
+      // Listen for Regional Heatmap Data
+      const heatmapDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'heatmaps', todayKey);
+      onSnapshot(heatmapDocRef, (snap) => {
+        if (snap.exists()) {
+          window.heatmapData = snap.data() || {};
+          window.renderHeatmapUI();
+        }
+      }, (err) => console.warn("Cloud heatmap listener:", err));
+
       const squadsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'squads');
       onSnapshot(squadsColRef, (snap) => {
         const cloudSquads = [];
@@ -1194,6 +1113,8 @@
     }
 
     window.incrementCloudGlobalCounter = async function() {
+      const regionKey = (localStorage.getItem('showUp_user_state') || 'GLOBAL').toUpperCase().replace(/[^A-Z0-9]/g, '');
+
       if (!db || !currentUser) {
         window.globalShowedUpCount += 1;
         localStorage.setItem('showUp_global_counter', window.globalShowedUpCount.toString());
@@ -1205,6 +1126,11 @@
       try {
         const counterDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'daily_counters', todayKey);
         await setDoc(counterDocRef, { count: increment(1) }, { merge: true });
+
+        // Increment region count in cloud heatmap document
+        const heatmapDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'heatmaps', todayKey);
+        await setDoc(heatmapDocRef, { [regionKey]: increment(1) }, { merge: true });
+
         triggerCheckAnimation();
       } catch (err) {
         window.globalShowedUpCount += 1;
@@ -1242,64 +1168,20 @@
   </script>
 
   <script>
-    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
-
-    let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
-    let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-    let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
-    
-    window.squadsData = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
-    window.squadsData = window.squadsData.filter(s => s.id !== 'squad-pahlwani' && s.name !== 'Pahlwani Conditioning Circle');
-    localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-
-    let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70;
-    let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175;
-
-    window.globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || completedWorkoutsHistory.length.toString());
-
-    let workoutInitiatedCount = localStorage.getItem('showUp_session_start_global_count') 
-      ? parseInt(localStorage.getItem('showUp_session_start_global_count')) 
-      : null;
-
-    let lastEvaluatedSummary = null;
-    let hrHistory = [];
-    let currentHR = 0;
-    let hrSimInterval = null;
-    let hrmDevice = null;
-    let calendarDate = new Date();
-    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
-    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
-    let confirmCallback = null;
-
-    const defaultCatalog = [
-      { name: "Running", implement: "Running", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Swimming Laps", implement: "Swimming", muscle: "Full Body", secondary: ["Back", "Shoulders", "Core/Abs"] },
-      { name: "Outdoor Biking", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
-      { name: "Trail Hiking", implement: "Hiking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Rowing (Concept2 Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
-      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
-      { name: "Hindu Squats (Bethak)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Hindu Push-Ups (Dand)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
-      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Triceps"] },
-      { name: "Mace Swings (Gada 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
-      { name: "Gada 10-to-2", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] },
-      { name: "Jori Club Swings", implement: "Jori Clubs / Karlakattai", muscle: "Shoulders", secondary: ["Back", "Triceps", "Core/Abs"] },
-      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
-      { name: "Ring Pull-Ups", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
-      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
-      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] }
-    ];
+    let userState = localStorage.getItem('showUp_user_state') || '';
+    let userZip = localStorage.getItem('showUp_user_zip') || '';
+    window.heatmapData = {};
 
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
+      autoDetectLocation();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
       renderSquads();
+      renderHeatmapUI();
       updateGlobalCounterUI();
       initSparkline();
       restoreSavedSession();
@@ -1307,47 +1189,92 @@
       restoreFontPreference();
     });
 
-    function showToastNotification(title, message, iconClass = "fa-solid fa-circle-info") {
-      document.getElementById('toast-title').innerText = title;
-      document.getElementById('toast-message').innerText = message;
-      document.getElementById('toast-icon').className = iconClass;
-      document.getElementById('toast-modal').classList.remove('hidden');
-    }
-
-    function closeToastModal() {
-      document.getElementById('toast-modal').classList.add('hidden');
-    }
-
-    function showConfirmDialog(title, message, onConfirm) {
-      document.getElementById('confirm-title').innerText = title;
-      document.getElementById('confirm-message').innerText = message;
-      confirmCallback = onConfirm;
-      document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-
-    function handleConfirmResult(confirmed) {
-      document.getElementById('confirm-modal').classList.add('hidden');
-      if (confirmed && typeof confirmCallback === 'function') {
-        confirmCallback();
+    function autoDetectLocation() {
+      if (userState) {
+        updateLocationBadgeUI();
+        return;
       }
-      confirmCallback = null;
+
+      fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(data => {
+          if (data && (data.region_code || data.region)) {
+            userState = data.region_code || data.region;
+            userZip = data.postal || '';
+            
+            localStorage.setItem('showUp_user_state', userState);
+            localStorage.setItem('showUp_user_zip', userZip);
+
+            document.getElementById('user-state-input').value = userState;
+            document.getElementById('user-zip-input').value = userZip;
+
+            updateLocationBadgeUI();
+          }
+        })
+        .catch(() => {
+          userState = 'VA';
+          localStorage.setItem('showUp_user_state', userState);
+          updateLocationBadgeUI();
+        });
     }
 
-    window.updateGlobalCounterUI = function() {
-      const headerVal = document.getElementById('global-counter-header-val');
-      const mainVal = document.getElementById('global-counter-main-val');
-      if (headerVal) headerVal.innerText = window.globalShowedUpCount.toLocaleString();
-      if (mainVal) mainVal.innerText = window.globalShowedUpCount.toLocaleString();
+    function saveLocationProfile() {
+      const stateVal = document.getElementById('user-state-input').value.trim().toUpperCase();
+      const zipVal = document.getElementById('user-zip-input').value.trim();
 
-      const deltaTextEl = document.getElementById('session-delta-text');
-      if (deltaTextEl) {
-        if (workoutInitiatedCount !== null && currentSessionSets.length > 0) {
-          const delta = Math.max(0, window.globalShowedUpCount - workoutInitiatedCount);
-          deltaTextEl.innerHTML = `<b class="theme-text text-sm font-black">${delta}</b> ${delta === 1 ? 'person has' : 'people have'} showed up globally since you initiated your current workout.`;
-        } else {
-          deltaTextEl.innerHTML = `<span class="text-slate-400">Start logging a workout session to track real-time global check-ins during your training.</span>`;
-        }
+      userState = stateVal;
+      userZip = zipVal;
+
+      localStorage.setItem('showUp_user_state', userState);
+      localStorage.setItem('showUp_user_zip', userZip);
+
+      updateLocationBadgeUI();
+      showToastNotification("Location Saved", `Region set to ${userState} (${userZip || 'No ZIP'}).`, "fa-solid fa-map-pin theme-text");
+    }
+
+    function updateLocationBadgeUI() {
+      const tag = document.getElementById('user-location-tag');
+      if (tag) {
+        tag.innerText = userState ? `${userState} ${userZip ? '(' + userZip + ')' : ''}` : 'Unknown Region';
       }
+    }
+
+    window.renderHeatmapUI = function() {
+      const container = document.getElementById('heatmap-list-container');
+      if (!container) return;
+
+      const entries = Object.entries(window.heatmapData).sort((a, b) => b[1] - a[1]);
+
+      if (entries.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-6 text-slate-600 text-xs italic">
+            Be the first to log a workout from your region today!
+          </div>
+        `;
+        return;
+      }
+
+      const totalValue = entries.reduce((acc, curr) => acc + curr[1], 0) || 1;
+
+      container.innerHTML = entries.map(([region, count]) => {
+        const pct = Math.min(100, Math.round((count / totalValue) * 100));
+        const isUserRegion = userState && region === userState.toUpperCase();
+
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-black text-slate-200">${region}</span>
+                ${isUserRegion ? `<span class="text-[9px] uppercase px-1.5 py-0.2 rounded theme-badge font-bold">Your Region</span>` : ''}
+              </div>
+              <span class="theme-text font-bold">${count} ${count === 1 ? 'workout' : 'workouts'} (${pct}%)</span>
+            </div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+              <div class="theme-bg h-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
     };
 
     function setFontFamily(fontKey) {
