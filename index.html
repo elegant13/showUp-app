@@ -16,13 +16,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Google Identity Services SDK -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
   <!-- Leaflet CSS & JS for Interactive Global Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   
+  <!-- Leaflet MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
@@ -63,7 +61,7 @@
       border: 1px solid var(--theme-accent-border) !important;
     }
 
-    /* Custom Leaflet Dark Mode Adjustments */
+    /* Custom Leaflet Map Adjustments */
     .leaflet-container {
       background: #090d16 !important;
       font-family: inherit;
@@ -118,6 +116,11 @@
     .animate-check-pop {
       animation: checkPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+
+    /* Muscle Map Highlight Styling */
+    .muscle-primary { fill: #ef4444 !important; opacity: 0.9; }
+    .muscle-secondary { fill: #f59e0b !important; opacity: 0.7; }
+    .muscle-neutral { fill: #334155 !important; opacity: 0.4; }
   </style>
 </head>
 <body class="pb-24 sm:pb-28">
@@ -182,6 +185,39 @@
 
     <!-- TAB 1: WORKOUT VIEW -->
     <div id="tab-workout-view" class="space-y-6">
+      
+      <!-- HEART RATE TELEMETRY & SIMULATOR PANEL -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-heart-pulse text-red-500 animate-pulse text-base"></i>
+            <h2 class="text-sm font-bold text-slate-200">Heart Rate Telemetry</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="toggleHRMSimulator()" id="btn-hrm-sim" class="px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-300 hover:text-white transition">
+              Simulate HR
+            </button>
+            <button onclick="connectHRM()" class="px-2.5 py-1 rounded-xl theme-bg text-[10px] font-bold flex items-center gap-1 shadow">
+              <i class="fa-solid fa-bluetooth"></i> Connect HRM
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+          <div class="flex items-center gap-3">
+            <div class="text-3xl font-black text-slate-100 font-mono tracking-tight" id="hrm-live-bpm">--</div>
+            <div>
+              <span class="text-[10px] font-bold text-slate-400 uppercase block">BPM</span>
+              <span id="hrm-zone-badge" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-slate-800 text-slate-400">Resting</span>
+            </div>
+          </div>
+
+          <div class="sm:col-span-2 h-10 bg-slate-950 rounded-xl border border-slate-800/80 p-1 flex items-center justify-center">
+            <canvas id="hrm-sparkline-canvas" class="w-full h-full"></canvas>
+          </div>
+        </div>
+      </section>
+
       <!-- WORKOUT SESSION SETUP CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -262,7 +298,7 @@
         </div>
       </section>
 
-      <!-- LOGGED SETS FEED -->
+      <!-- LOGGED SETS FEED & EVALUATION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -281,6 +317,82 @@
           <span>Finish & Evaluate Workout</span>
         </button>
       </section>
+
+      <!-- PHYSIOLOGY & ANATOMICAL BODY MAP PANEL -->
+      <section id="section-physiology-summary" class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-child-reaching theme-text"></i>
+            Anatomical Muscle Engagement & TE
+          </h2>
+          <span class="text-[10px] theme-badge px-2 py-0.5 rounded-full font-bold">Biometric Engine</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+          <!-- ANATOMICAL SVG BODY MAP (Anterior / Posterior) -->
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex justify-around items-center">
+            <!-- Anterior Body Map -->
+            <div class="text-center space-y-1">
+              <span class="text-[9px] font-bold text-slate-500 uppercase">Anterior</span>
+              <svg width="70" height="130" viewBox="0 0 100 200" class="mx-auto">
+                <circle cx="50" cy="20" r="12" class="muscle-neutral"/>
+                <path id="muscle-chest" d="M35 40 h30 v20 h-30 z" class="muscle-neutral"/>
+                <path id="muscle-shoulders-ant" d="M20 40 h12 v20 h-12 z M68 40 h12 v20 h-12 z" class="muscle-neutral"/>
+                <path id="muscle-biceps" d="M22 65 h10 v25 h-10 z M68 65 h10 v25 h-10 z" class="muscle-neutral"/>
+                <path id="muscle-abs" d="M38 65 h24 v40 h-24 z" class="muscle-neutral"/>
+                <path id="muscle-quads" d="M32 110 h15 v45 h-15 z M53 110 h15 v45 h-15 z" class="muscle-neutral"/>
+              </svg>
+            </div>
+
+            <!-- Posterior Body Map -->
+            <div class="text-center space-y-1">
+              <span class="text-[9px] font-bold text-slate-500 uppercase">Posterior</span>
+              <svg width="70" height="130" viewBox="0 0 100 200" class="mx-auto">
+                <circle cx="50" cy="20" r="12" class="muscle-neutral"/>
+                <path id="muscle-lats" d="M32 40 h36 v30 h-36 z" class="muscle-neutral"/>
+                <path id="muscle-triceps" d="M20 65 h10 v25 h-10 z M70 65 h10 v25 h-10 z" class="muscle-neutral"/>
+                <path id="muscle-glutes" d="M32 100 h36 v25 h-36 z" class="muscle-neutral"/>
+                <path id="muscle-hamstrings" d="M32 130 h15 v35 h-15 z M53 130 h15 v35 h-15 z" class="muscle-neutral"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- TRAINING EFFECT & CALORIES -->
+          <div class="space-y-3">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-slate-400">Aerobic Training Effect</span>
+                <span id="te-aerobic-val" class="theme-text">0.0 / 5.0</span>
+              </div>
+              <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+                <div id="bar-te-aerobic" class="theme-bg h-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+              <div class="flex justify-between text-xs font-bold">
+                <span class="text-slate-400">Anaerobic Training Effect</span>
+                <span id="te-anaerobic-val" class="text-amber-400">0.0 / 5.0</span>
+              </div>
+              <div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden">
+                <div id="bar-te-anaerobic" class="bg-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center">
+              <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 block font-bold">Est. Calories Burned</span>
+                <span id="summary-cal-val" class="text-base font-black theme-text">0 kcal</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800">
+                <span class="text-[10px] text-slate-400 block font-bold">Session Tonnage</span>
+                <span id="summary-tonnage-val" class="text-base font-black text-slate-100">0 lbs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
 
     <!-- TAB 2: CALENDAR & HISTORY VIEW -->
@@ -310,7 +422,22 @@
 
         <!-- MONTHLY CALENDAR GRID -->
         <div id="calendar-grid-container" class="space-y-2">
-          <!-- Calendar header and date matrix injected via JS -->
+          <!-- Calendar grid injected via JS -->
+        </div>
+      </section>
+
+      <!-- HISTORICAL WORKOUT HISTORY FEED -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left theme-text"></i>
+            Workout History
+          </h2>
+          <span id="workout-history-count" class="text-xs theme-badge px-2 py-0.5 rounded-full font-bold">0 Logged</span>
+        </div>
+
+        <div id="workout-history-feed" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+          <!-- Workout items injected via JS -->
         </div>
       </section>
 
@@ -329,7 +456,7 @@
             <button onclick="openWeightGraphModal()" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition" title="View Weight Line Graph">
               <i class="fa-solid fa-chart-line theme-text text-sm"></i>
             </button>
-            <button onclick="openLogWeightModal()" class="px-3 py-1.5 rounded-xl theme-bg font-bold text-xs flex items-center gap-1.5">
+            <button onclick="openLogWeightModal()" class="px-3 py-1.5 rounded-xl theme-bg font-bold text-xs flex items-center gap-1.5 shadow">
               <i class="fa-solid fa-plus text-[10px]"></i>
               <span>Log Weight</span>
             </button>
@@ -396,7 +523,7 @@
             <span id="map-zoom-scope-badge" class="theme-badge text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
               Continent Scope
             </span>
-            <button onclick="triggerHaptic('light'); refreshGlobalMap()" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Refresh Heatmap Data">
+            <button onclick="refreshGlobalMap()" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Refresh Heatmap Data">
               <i class="fa-solid fa-rotate text-xs"></i>
             </button>
           </div>
@@ -482,9 +609,7 @@
           <i class="fa-solid fa-sliders theme-text"></i>
           Settings & Customization
         </h3>
-        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-lg font-bold">
-          &times;
-        </button>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-lg font-bold">&times;</button>
       </div>
 
       <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
@@ -517,7 +642,7 @@
         <div class="space-y-2">
           <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">App Typography Font</label>
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="setFontFamily('Plus Jakarta Sans')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold font-sans">Plus Jakarta</button>
+            <button onclick="setFontFamily('Plus Jakarta Sans')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Plus Jakarta</button>
             <button onclick="setFontFamily('Inter')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Inter</button>
             <button onclick="setFontFamily('Outfit')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Outfit</button>
             <button onclick="setFontFamily('Space Grotesk')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Space Grotesk</button>
@@ -761,10 +886,11 @@
       : null;
 
     let calendarDate = new Date();
-    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
-
     let leafletMap = null;
     let markerClusterGroup = null;
+    let hrmSimInterval = null;
+    let hrmBpmBuffer = [];
+
     window.heatmapDataPoints = [
       { id: 'u1', lat: 38.8951, lng: -77.0364, city: 'Washington', state: 'DC', country: 'USA', continent: 'North America' },
       { id: 'u2', lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', country: 'USA', continent: 'North America' },
@@ -780,12 +906,14 @@
       loadPhysicalProfile();
       renderLoggedSets();
       renderCalendar();
+      renderWorkoutHistoryFeed();
       renderWeightHistory();
       renderSquads();
       updateGlobalCounterUI();
       restoreThemePreferences();
       restoreFontPreference();
       detectUserGeoLocation();
+      updatePhysiologySummary();
     });
 
     function detectUserGeoLocation() {
@@ -809,6 +937,88 @@
         .catch(console.warn);
     }
 
+    /* HEART RATE TELEMETRY & SIMULATOR */
+    window.toggleHRMSimulator = function() {
+      const btn = document.getElementById('btn-hrm-sim');
+      if (hrmSimInterval) {
+        clearInterval(hrmSimInterval);
+        hrmSimInterval = null;
+        if (btn) btn.classList.remove('theme-bg');
+        document.getElementById('hrm-live-bpm').innerText = '--';
+        return;
+      }
+
+      if (btn) btn.classList.add('theme-bg');
+      hrmSimInterval = setInterval(() => {
+        const bpm = Math.floor(125 + Math.random() * 35);
+        updateHRMDisplay(bpm);
+      }, 1500);
+    };
+
+    window.connectHRM = async function() {
+      if (!navigator.bluetooth) {
+        alert("Web Bluetooth is not supported on this browser. Try Chrome/Edge or use HR Simulator.");
+        return;
+      }
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['heart_rate'] }]
+        });
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService('heart_rate');
+        const characteristic = await service.getCharacteristic('heart_rate_measurement');
+        characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', (evt) => {
+          const value = evt.target.value;
+          const bpm = value.getUint8(1);
+          updateHRMDisplay(bpm);
+        });
+      } catch (err) {
+        console.warn("Bluetooth HRM connection error:", err);
+      }
+    };
+
+    function updateHRMDisplay(bpm) {
+      document.getElementById('hrm-live-bpm').innerText = bpm.toString();
+      const zoneBadge = document.getElementById('hrm-zone-badge');
+      if (zoneBadge) {
+        if (bpm < 120) { zoneBadge.innerText = 'Zone 1 (Warmup)'; zoneBadge.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-950 text-blue-400'; }
+        else if (bpm < 150) { zoneBadge.innerText = 'Zone 3 (Aerobic)'; zoneBadge.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-950 text-emerald-400'; }
+        else { zoneBadge.innerText = 'Zone 5 (Anaerobic)'; zoneBadge.className = 'text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-950 text-rose-400'; }
+      }
+
+      hrmBpmBuffer.push(bpm);
+      if (hrmBpmBuffer.length > 20) hrmBpmBuffer.shift();
+      drawSparkline();
+    }
+
+    function drawSparkline() {
+      const canvas = document.getElementById('hrm-sparkline-canvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.offsetWidth;
+      const h = canvas.height = canvas.offsetHeight;
+
+      ctx.clearRect(0, 0, w, h);
+      if (hrmBpmBuffer.length < 2) return;
+
+      const min = Math.min(...hrmBpmBuffer) - 5;
+      const max = Math.max(...hrmBpmBuffer) + 5;
+
+      ctx.beginPath();
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 2;
+
+      hrmBpmBuffer.forEach((val, idx) => {
+        const x = (idx / (hrmBpmBuffer.length - 1)) * w;
+        const y = h - ((val - min) / (max - min || 1)) * h;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    /* GLOBAL LEAFLET MAP & CLUSTERING */
     window.initGlobalMap = function() {
       const mapContainer = document.getElementById('global-map-canvas');
       if (!mapContainer || leafletMap) return;
@@ -999,6 +1209,7 @@
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
       updateSessionDeltaUI();
+      updatePhysiologySummary();
     };
 
     function renderLoggedSets() {
@@ -1033,13 +1244,49 @@
       currentSessionSets = currentSessionSets.filter(s => s.id !== id);
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
+      updatePhysiologySummary();
     };
 
     window.clearSessionSets = function() {
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
       renderLoggedSets();
+      updatePhysiologySummary();
     };
+
+    function updatePhysiologySummary() {
+      let totalTonnage = currentSessionSets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+      let estCal = Math.round((currentSessionSets.length * 28) + (totalTonnage * 0.015));
+
+      document.getElementById('summary-tonnage-val').innerText = `${totalTonnage.toLocaleString()} lbs`;
+      document.getElementById('summary-cal-val').innerText = `${estCal} kcal`;
+
+      const aerobicVal = Math.min(5.0, (currentSessionSets.length * 0.4)).toFixed(1);
+      const anaerobicVal = Math.min(5.0, (totalTonnage * 0.0008)).toFixed(1);
+
+      document.getElementById('te-aerobic-val').innerText = `${aerobicVal} / 5.0`;
+      document.getElementById('te-anaerobic-val').innerText = `${anaerobicVal} / 5.0`;
+
+      document.getElementById('bar-te-aerobic').style.width = `${(aerobicVal / 5) * 100}%`;
+      document.getElementById('bar-te-anaerobic').style.width = `${(anaerobicVal / 5) * 100}%`;
+
+      // Highlight Muscle Map
+      const names = currentSessionSets.map(s => s.name.toLowerCase()).join(' ');
+      document.querySelectorAll('svg path').forEach(p => p.className.baseVal = 'muscle-neutral');
+
+      if (names.includes('bench') || names.includes('chest') || names.includes('pushup')) {
+        document.getElementById('muscle-chest')?.setAttribute('class', 'muscle-primary');
+        document.getElementById('muscle-triceps')?.setAttribute('class', 'muscle-secondary');
+      }
+      if (names.includes('squat') || names.includes('leg')) {
+        document.getElementById('muscle-quads')?.setAttribute('class', 'muscle-primary');
+        document.getElementById('muscle-glutes')?.setAttribute('class', 'muscle-secondary');
+      }
+      if (names.includes('pull') || names.includes('row') || names.includes('lat')) {
+        document.getElementById('muscle-lats')?.setAttribute('class', 'muscle-primary');
+        document.getElementById('muscle-biceps')?.setAttribute('class', 'muscle-secondary');
+      }
+    }
 
     window.finishAndEvaluateWorkout = function() {
       const title = document.getElementById('input-workout-title').value.trim() || 'Workout Session';
@@ -1068,7 +1315,9 @@
 
       renderLoggedSets();
       renderCalendar();
+      renderWorkoutHistoryFeed();
       updateSessionDeltaUI();
+      updatePhysiologySummary();
       switchTab('squads');
     };
 
@@ -1149,10 +1398,6 @@
     function calculateStreaks() {
       const dates = Array.from(new Set(completedWorkoutsHistory.map(w => w.date))).sort().reverse();
       let currentStreak = 0;
-      let bestStreak = 0;
-      let tempStreak = 0;
-
-      const today = new Date().toISOString().slice(0, 10);
       let checkDate = new Date();
 
       for (let i = 0; i < 365; i++) {
@@ -1172,6 +1417,39 @@
       if (currEl) currEl.innerText = `${currentStreak} Days`;
       if (bestEl) bestEl.innerText = `${Math.max(currentStreak, dates.length > 0 ? 1 : 0)} Days`;
     }
+
+    function renderWorkoutHistoryFeed() {
+      const container = document.getElementById('workout-history-feed');
+      const countEl = document.getElementById('workout-history-count');
+      if (countEl) countEl.innerText = `${completedWorkoutsHistory.length} Logged`;
+      if (!container) return;
+
+      if (completedWorkoutsHistory.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500 italic">No historical workouts logged yet.</div>';
+        return;
+      }
+
+      container.innerHTML = completedWorkoutsHistory.map(w => `
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xs font-extrabold text-slate-100">${w.title}</h3>
+              <p class="text-[10px] text-slate-400 font-medium">${w.date} &bull; ${w.category} (${w.setsCount} sets)</p>
+            </div>
+            <button onclick="deleteHistoricalWorkout(${w.id})" class="text-slate-500 hover:text-red-400 text-xs">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.deleteHistoricalWorkout = function(id) {
+      completedWorkoutsHistory = completedWorkoutsHistory.filter(w => w.id !== id);
+      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      renderWorkoutHistoryFeed();
+      renderCalendar();
+    };
 
     window.openLogWeightModal = function() {
       document.getElementById('input-weight-date').value = new Date().toISOString().slice(0, 10);
