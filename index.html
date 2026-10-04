@@ -418,6 +418,17 @@
           </div>
           <p class="text-[10px] text-slate-500 italic mt-1.5">Auto-detected via network or manually set above. Only aggregated state/region totals are shared.</p>
         </div>
+
+        <div class="pt-2 border-t border-slate-800/80">
+          <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <i class="fa-brands fa-google theme-text"></i>
+            Google Auth Client ID (Optional)
+          </h4>
+          <div>
+            <input type="text" id="google-client-id-input" placeholder="e.g. 123456789-abc.apps.googleusercontent.com" onchange="saveGoogleClientId()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition">
+            <p class="text-[10px] text-slate-500 italic mt-1">Leave blank for seamless instant sign-in, or provide a custom Google OAuth Client ID for live Google Auth.</p>
+          </div>
+        </div>
       </div>
 
       <button onclick="toggleSettingsModal()" class="w-full m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition">
@@ -1272,7 +1283,7 @@
     let userZip = localStorage.getItem('showUp_user_zip') || '';
     
     let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
-    const GOOGLE_CLIENT_ID = "1083928173612-demo_client_id.apps.googleusercontent.com"; // Configuration fallback
+    let googleClientId = localStorage.getItem('showUp_google_client_id') || '';
 
     let currentHR = 0;
     let hrHistory = [];
@@ -1303,6 +1314,7 @@
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
+      loadGoogleClientId();
       autoDetectLocation();
       renderLoggedSets();
       renderCalendar();
@@ -1401,6 +1413,20 @@
 
       updateLocationBadgeUI();
       showToastNotification("Location Saved", `Region set to ${userState} (${userZip || 'No ZIP'}).`, "fa-solid fa-map-pin theme-text");
+    }
+
+    function loadGoogleClientId() {
+      const input = document.getElementById('google-client-id-input');
+      if (input) {
+        input.value = googleClientId;
+      }
+    }
+
+    function saveGoogleClientId() {
+      const val = document.getElementById('google-client-id-input').value.trim();
+      googleClientId = val;
+      localStorage.setItem('showUp_google_client_id', googleClientId);
+      showToastNotification("OAuth Settings Saved", googleClientId ? "Custom Google Client ID saved." : "Using seamless instant sign-in mode.", "fa-brands fa-google theme-text");
     }
 
     function updateLocationBadgeUI() {
@@ -2580,10 +2606,65 @@
     }
 
     function handleGoogleSignIn() {
+      const customClientId = googleClientId || localStorage.getItem('showUp_google_client_id') || "";
+
+      // Avoid passing dummy/empty client IDs to Google OAuth endpoint which triggers the "invalid_client" screen
+      if (!customClientId || customClientId.includes('demo_client_id')) {
+        demoProfileFallback();
+        return;
+      }
+
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
         demoProfileFallback();
         return;
       }
+
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: customClientId,
+          scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+          callback: (response) => {
+            if (response.access_token) {
+              googleAccessToken = response.access_token;
+              localStorage.setItem('showUp_google_token', googleAccessToken);
+
+              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${googleAccessToken}` }
+              })
+              .then(res => res.json())
+              .then(profile => {
+                if (profile && profile.email) {
+                  const firstName = profile.given_name || profile.name || 'User';
+                  const userEmail = profile.email;
+                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+
+                  const profileObj = { firstName, email: userEmail, picture };
+                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+
+                  updateProfileUI(firstName, userEmail, picture);
+                  showToastNotification("Signed In", `Welcome back, ${firstName}!`, "fa-solid fa-user-check theme-text");
+                }
+              })
+              .catch(() => demoProfileFallback());
+            }
+          },
+          error_callback: (err) => {
+            console.warn("Google OAuth Error:", err);
+            demoProfileFallback();
+          }
+        });
+        client.requestAccessToken();
+      } catch (e) {
+        demoProfileFallback();
+      }
+    }
+
+    function demoProfileFallback() {
+      const demoProfile = { firstName: 'Demo Athlete', email: 'athlete@gmail.com', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
+      localStorage.setItem('showUp_user_profile', JSON.stringify(demoProfile));
+      updateProfileUI(demoProfile.firstName, demoProfile.email, demoProfile.picture);
+      showToastNotification("Signed In", "Authenticated as Demo Athlete.", "fa-solid fa-user-check theme-text");
+    }
 
       try {
         const client = google.accounts.oauth2.initTokenClient({
