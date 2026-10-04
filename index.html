@@ -19,1007 +19,72 @@
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
+  <!-- Leaflet CSS & JS for Interactive Global Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
   <style>
     /* Material 3 Dynamic Design Tokens */
     :root {
       --m3-primary: #10b981;
-      --m3-onPrimary: #022c22;
-      --m3-primaryContainer: #064e3b;
-      --m3-onPrimaryContainer: #a7f3d0;
-      --m3-secondary: #3b82f6;
-      --m3-secondaryContainer: #1e40af;
-      --m3-onSecondaryContainer: #bfdbfe;
-      --m3-surface: #0f172a;
-      --m3-surfaceVariant: #1e293b;
-      --m3-onSurface: #f8fafc;
-      --m3-outline: #334155;
-
-      /* Dynamic Theme Variables */
-      --theme-accent-color: #10b981;
-      --theme-accent-light: #34d399;
-      --theme-accent-dark: #059669;
-      --theme-accent-bg: rgba(16, 185, 129, 0.15);
-      --theme-accent-border: rgba(16, 185, 129, 0.35);
-    }
-
-    .theme-blue {
-      --m3-primary: #3b82f6;
-      --m3-onPrimary: #0f172a;
-      --m3-primaryContainer: #1e40af;
-      --m3-onPrimaryContainer: #bfdbfe;
-      --m3-secondary: #8b5cf6;
-      --m3-secondaryContainer: #5b21b6;
-      --m3-onSecondaryContainer: #ddd6fe;
-
-      --theme-accent-color: #3b82f6;
-      --theme-accent-light: #60a5fa;
-      --theme-accent-dark: #1d4ed8;
-      --theme-accent-bg: rgba(59, 130, 246, 0.15);
-      --theme-accent-border: rgba(59, 130, 246, 0.35);
-    }
-
-    .theme-purple {
-      --m3-primary: #a855f7;
-      --m3-onPrimary: #1e1035;
-      --m3-primaryContainer: #6b21a8;
-      --m3-onPrimaryContainer: #f3e8ff;
-      --m3-secondary: #ec4899;
-      --m3-secondaryContainer: #9d174d;
-      --m3-onSecondaryContainer: #fce7f3;
-
-      --theme-accent-color: #a855f7;
-      --theme-accent-light: #c084fc;
-      --theme-accent-dark: #7e22ce;
-      --theme-accent-bg: rgba(168, 85, 247, 0.15);
-      --theme-accent-border: rgba(168, 85, 247, 0.35);
-    }
-
-    .theme-red {
-      --m3-primary: #f43f5e;
-      --m3-onPrimary: #2a040e;
-      --m3-primaryContainer: #881337;
-      --m3-onPrimaryContainer: #ffe4e6;
-      --m3-secondary: #f97316;
-      --m3-secondaryContainer: #9a3412;
-      --m3-onSecondaryContainer: #ffedd5;
-
-      --theme-accent-color: #f43f5e;
-      --theme-accent-light: #fb7185;
-      --theme-accent-dark: #be123c;
-      --theme-accent-bg: rgba(244, 63, 94, 0.15);
-      --theme-accent-border: rgba(244, 63, 94, 0.35);
-    }
-
-    .theme-slate {
-      --m3-primary: #38bdf8;
-      --m3-onPrimary: #082f49;
-      --m3-primaryContainer: #0369a1;
-      --m3-onPrimaryContainer: #e0f2fe;
-      --m3-secondary: #64748b;
-      --m3-secondaryContainer: #1e293b;
-      --m3-onSecondaryContainer: #e2e8f0;
-
-      --theme-accent-color: #38bdf8;
-      --theme-accent-light: #7dd3fc;
-      --theme-accent-dark: #0284c7;
-      --theme-accent-bg: rgba(56, 189, 248, 0.15);
-      --theme-accent-border: rgba(56, 189, 248, 0.35);
-    }
-
-    .theme-amoled {
-      --m3-primary: #f8fafc;
-      --m3-onPrimary: #000000;
-      --m3-primaryContainer: #334155;
-      --m3-onPrimaryContainer: #ffffff;
-      --m3-secondary: #94a3b8;
-      --m3-secondaryContainer: #0f172a;
-      --m3-onSecondaryContainer: #cbd5e1;
-      --m3-surface: #000000;
-      --m3-surfaceVariant: #09090b;
-
-      --theme-accent-color: #f8fafc;
-      --theme-accent-light: #ffffff;
-      --theme-accent-dark: #94a3b8;
-      --theme-accent-bg: rgba(248, 250, 252, 0.15);
-      --theme-accent-border: rgba(248, 250, 252, 0.35);
-    }
-
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--m3-surface);
-      color: var(--m3-onSurface);
-    }
-
-    /* Typography Font Options */
-    .font-style-jakarta { font-family: 'Plus Jakarta Sans', sans-serif !important; }
-    .font-style-inter { font-family: 'Inter', sans-serif !important; }
-    .font-style-outfit { font-family: 'Outfit', sans-serif !important; }
-    .font-style-space { font-family: 'Space Grotesk', sans-serif !important; }
-
-    /* Dynamic Accent Utilities */
-    .theme-text { color: var(--theme-accent-color) !important; }
-    .theme-bg { background-color: var(--theme-accent-color) !important; color: var(--m3-onPrimary) !important; }
-    .theme-bg-soft { background-color: var(--theme-accent-bg) !important; }
-    .theme-border { border-color: var(--theme-accent-border) !important; }
-    
+<!-- ... existing code -->
     .theme-badge {
       background-color: var(--theme-accent-bg) !important;
       color: var(--theme-accent-color) !important;
       border: 1px solid var(--theme-accent-border) !important;
     }
 
+    /* Custom Leaflet Dark Mode Adjustments */
+    .leaflet-container {
+      background: #090d16 !important;
+      font-family: inherit;
+    }
+    .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background-color: #0f172a !important;
+      color: #f8fafc !important;
+      border: 1px solid #334155;
+      border-radius: 1rem !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .leaflet-popup-content {
+      margin: 12px 16px !important;
+      font-size: 12px !important;
+    }
+    .custom-cluster-icon {
+      background-color: var(--theme-accent-bg);
+      border: 2px solid var(--theme-accent-color);
+      color: var(--theme-accent-color);
+      font-weight: 800;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px var(--theme-accent-bg);
+      transition: all 0.2s ease;
+    }
+    .custom-user-marker {
+      background-color: var(--theme-accent-color);
+      color: var(--m3-onPrimary);
+      border: 2px solid #ffffff;
+      border-radius: 9999px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      box-shadow: 0 0 10px var(--theme-accent-color);
+    }
+
     .m3-card {
       background-color: var(--m3-surfaceVariant);
       border-color: var(--m3-outline);
     }
-
-    .m3-btn-primary {
-      background-color: var(--theme-accent-color) !important;
-      color: var(--m3-onPrimary) !important;
-      font-weight: 800;
-    }
-    .m3-btn-primary:hover {
-      filter: brightness(1.1);
-    }
-
-    .m3-btn-secondary {
-      background-color: var(--m3-secondaryContainer);
-      color: var(--m3-onSecondaryContainer);
-      border-color: var(--m3-outline);
-    }
-
-    .bottom-nav-safe {
-      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
-    }
-
-    /* Animated Checkmark Pop */
-    @keyframes checkPop {
-      0% { transform: scale(1) rotate(0deg); }
-      40% { transform: scale(1.45) rotate(-12deg); filter: drop-shadow(0 0 12px var(--theme-accent-color)); }
-      75% { transform: scale(0.88) rotate(6deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-    .animate-check-pop {
-      animation: checkPop 0.65s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--m3-surface);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: var(--m3-outline);
-      border-radius: 4px;
-    }
-  </style>
-</head>
-<body id="app-body" class="font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
-
-  <!-- ================= HEADER & TOP CONTROLS ================= -->
-  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
-    <div class="flex items-center space-x-3">
-      <div class="m3-btn-primary p-2 rounded-2xl tracking-wider flex items-center justify-center w-10 h-10 shadow-lg text-lg">
-        sU
-      </div>
-      <div>
-        <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
-          showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v6.1</span>
-        </h1>
-        <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
-      </div>
-    </div>
-
-    <!-- ACCURATE GLOBAL DAILY "SHOWED UP" COUNTER BADGE -->
-    <div class="hidden sm:flex items-center gap-2 px-3 py-1 theme-badge rounded-full text-xs font-bold shadow-sm" title="Real-time verified workouts completed today">
-      <div id="header-check-wrapper" class="flex items-center justify-center">
-        <i id="header-check-icon" class="fa-solid fa-check-double theme-text text-sm transition-transform duration-300"></i>
-      </div>
-      <span id="global-counter-header-val" class="font-extrabold">0</span>
-      <span class="font-semibold text-[10px] text-slate-300">showed up today</span>
-    </div>
-
-    <!-- Right Header Controls: Settings & Profile Dropdown -->
-    <div class="relative flex items-center gap-2">
-      <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
-        <i class="fa-solid fa-sliders text-sm"></i>
-      </button>
-
-      <!-- GOOGLE USER PROFILE & DROPDOWN MENU -->
-      <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-        <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account & Backup Menu">
-          <img id="user-avatar" class="w-7 h-7 rounded-full border theme-border object-cover shrink-0 group-hover:brightness-110 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
-          
-          <div class="flex flex-col text-left leading-tight">
-            <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
-            <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
-          </div>
-          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
-        </button>
-
-        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
-          <div class="px-3.5 py-2">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
-            <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
-          </div>
-
-          <div class="py-1">
-            <button onclick="triggerHaptic('medium'); exportJSONBackup(); toggleProfileDropdown(event);" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2.5">
-              <i class="fa-solid fa-file-export theme-text text-sm"></i>
-              <span>Export JSON Backup</span>
-            </button>
-          </div>
-
-          <div class="py-1">
-            <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
-              <i class="fa-solid fa-right-from-bracket text-xs"></i>
-              <span>Log out</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-xl shadow transition-all">
-        <i class="fa-brands fa-google text-red-500"></i>
-        <span>Sign in</span>
-      </button>
-    </div>
-  </header>
-
-  <!-- ================= CUSTOM TOAST NOTIFICATION MODAL ================= -->
-  <div id="toast-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative text-center">
-      <div class="w-12 h-12 rounded-2xl theme-bg-soft theme-text mx-auto flex items-center justify-center text-xl">
-        <i id="toast-icon" class="fa-solid fa-circle-info"></i>
-      </div>
-      <div class="space-y-1">
-        <h3 id="toast-title" class="text-sm font-bold text-slate-100">Notice</h3>
-        <p id="toast-message" class="text-xs text-slate-400 leading-relaxed">Message text goes here.</p>
-      </div>
-      <button onclick="closeToastModal()" class="w-full m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition">
-        Dismiss
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= CUSTOM CONFIRMATION MODAL ================= -->
-  <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative text-center">
-      <div class="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-400 mx-auto flex items-center justify-center text-xl">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-      </div>
-      <div class="space-y-1">
-        <h3 id="confirm-title" class="text-sm font-bold text-slate-100">Confirm Action</h3>
-        <p id="confirm-message" class="text-xs text-slate-400 leading-relaxed">Are you sure you want to proceed?</p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="handleConfirmResult(false)" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs transition">
-          Cancel
-        </button>
-        <button onclick="handleConfirmResult(true)" class="w-1/2 bg-rose-500 hover:bg-rose-600 text-white font-bold py-2.5 rounded-2xl text-xs transition">
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= SETTINGS & PHYSICAL PROFILE MODAL ================= -->
-  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-sliders theme-text"></i>
-          Settings & Customization
-        </h2>
-        <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <!-- COLOR PALETTE CUSTOMIZATION -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-palette theme-text"></i>
-          Color Palette Theme
-        </h3>
-        
-        <div class="grid grid-cols-3 gap-2">
-          <button onclick="triggerHaptic('light'); setThemePalette('emerald')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-emerald-500 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-emerald-500 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">Emerald</span>
-          </button>
-          <button onclick="triggerHaptic('light'); setThemePalette('blue')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-blue-500 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-blue-500 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">Ocean</span>
-          </button>
-          <button onclick="triggerHaptic('light'); setThemePalette('purple')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-purple-500 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-purple-500 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">Purple</span>
-          </button>
-          <button onclick="triggerHaptic('light'); setThemePalette('red')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-rose-500 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-rose-500 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">Crimson</span>
-          </button>
-          <button onclick="triggerHaptic('light'); setThemePalette('slate')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-sky-500 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-sky-400 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">Cyber</span>
-          </button>
-          <button onclick="triggerHaptic('light'); setThemePalette('amoled')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-slate-300 transition text-left">
-            <span class="w-4 h-4 rounded-full bg-slate-100 shrink-0"></span>
-            <span class="text-xs font-bold text-slate-200">AMOLED</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- TYPOGRAPHY FONT SELECTION -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-font theme-text"></i>
-          Typography Font Family
-        </h3>
-
-        <div class="grid grid-cols-2 gap-2">
-          <button id="font-btn-jakarta" onclick="triggerHaptic('light'); setFontFamily('jakarta')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-jakarta hover:border-emerald-500 transition flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Plus Jakarta</span>
-            <i id="font-check-jakarta" class="fa-solid fa-check text-xs theme-text hidden"></i>
-          </button>
-          <button id="font-btn-inter" onclick="triggerHaptic('light'); setFontFamily('inter')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-inter hover:border-emerald-500 transition flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Inter</span>
-            <i id="font-check-inter" class="fa-solid fa-check text-xs theme-text hidden"></i>
-          </button>
-          <button id="font-btn-outfit" onclick="triggerHaptic('light'); setFontFamily('outfit')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-outfit hover:border-emerald-500 transition flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Outfit</span>
-            <i id="font-check-outfit" class="fa-solid fa-check text-xs theme-text hidden"></i>
-          </button>
-          <button id="font-btn-space" onclick="triggerHaptic('light'); setFontFamily('space')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-space hover:border-emerald-500 transition flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-200">Space Grotesk</span>
-            <i id="font-check-space" class="fa-solid fa-check text-xs theme-text hidden"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- PHYSICAL PROFILE INPUTS -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-solid fa-weight-scale theme-text"></i>
-          Physical Profile (For Calorie Calculations)
-        </h3>
-        
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (inches)</label>
-            <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
-            <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.5" min="50" max="500" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
-          </div>
-        </div>
-
-        <div class="pt-2 border-t border-slate-800/80">
-          <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <i class="fa-solid fa-map-location-dot theme-text"></i>
-            Regional Location (For Anonymous Heatmap)
-          </h4>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[10px] font-medium text-slate-400 mb-1">State / Region Code</label>
-              <input type="text" id="user-state-input" placeholder="e.g. VA, CA, NY" maxlength="10" onchange="saveLocationProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold uppercase theme-text focus:outline-none focus:border-emerald-500 transition">
-            </div>
-
-            <div>
-              <label class="block text-[10px] font-medium text-slate-400 mb-1">ZIP / Postal Code</label>
-              <input type="text" id="user-zip-input" placeholder="e.g. 20105" maxlength="10" onchange="saveLocationProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
-            </div>
-          </div>
-          <p class="text-[10px] text-slate-500 italic mt-1.5">Auto-detected via network or manually set above. Only aggregated state/region totals are shared.</p>
-        </div>
-
-        <div class="pt-2 border-t border-slate-800/80">
-          <h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <i class="fa-brands fa-google theme-text"></i>
-            Google Auth Client ID (Optional)
-          </h4>
-          <div>
-            <input type="text" id="google-client-id-input" placeholder="e.g. 123456789-abc.apps.googleusercontent.com" onchange="saveGoogleClientId()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition">
-            <p class="text-[10px] text-slate-500 italic mt-1">Leave blank for seamless instant sign-in, or provide a custom Google OAuth Client ID for live Google Auth.</p>
-          </div>
-        </div>
-      </div>
-
-      <button onclick="toggleSettingsModal()" class="w-full m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition">
-        Done
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= LOG WEIGHT ENTRY MODAL WITH DATE PICKER ================= -->
-  <div id="log-weight-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-weight-scale theme-text"></i>
-          Log Body Weight Record
-        </h2>
-        <button onclick="toggleLogWeightModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Date</label>
-          <input type="date" id="weight-entry-date" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Body Weight (lbs)</label>
-          <input type="number" id="weight-entry-value" placeholder="e.g. 175" step="0.5" min="40" max="500" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm font-black theme-text focus:outline-none focus:border-emerald-500 transition">
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <button onclick="toggleLogWeightModal()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs transition">
-          Cancel
-        </button>
-        <button onclick="saveWeightModalEntry()" class="w-1/2 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition">
-          Save Record
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ================= WEIGHT TREND LINE GRAPH MODAL ================= -->
-  <div id="weight-graph-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-lg shadow-2xl space-y-4 relative">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-chart-line theme-text"></i>
-            Body Weight Trend Line
-          </h2>
-          <p class="text-xs text-slate-400">Historical trajectory over time</p>
-        </div>
-        <button onclick="toggleWeightGraphModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-        <div class="h-56 w-full relative">
-          <svg id="weight-trend-svg" class="w-full h-full overflow-visible" viewBox="0 0 320 160" preserveAspectRatio="none">
-            <!-- Dynamic SVG content generated via JS -->
-          </svg>
-        </div>
-
-        <div class="grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-800/80">
-          <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase block">Min</span>
-            <span id="graph-min-weight" class="text-xs font-extrabold theme-text">-- lbs</span>
-          </div>
-          <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase block">Average</span>
-            <span id="graph-avg-weight" class="text-xs font-extrabold text-slate-200">-- lbs</span>
-          </div>
-          <div>
-            <span class="text-[10px] font-bold text-slate-500 uppercase block">Max</span>
-            <span id="graph-max-weight" class="text-xs font-extrabold text-rose-400">-- lbs</span>
-          </div>
-        </div>
-      </div>
-
-      <button onclick="toggleWeightGraphModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-2xl text-xs border border-slate-700 transition">
-        Close
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= MAIN CONTENT CONTAINER ================= -->
-  <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
-
-    <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
-    <div id="tab-workout-view" class="space-y-6">
-
-      <!-- HEART RATE TELEMETRY CARD -->
-      <section id="hr-card" class="m3-card rounded-3xl p-4 border shadow-xl relative overflow-hidden transition-all">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="relative flex h-3 w-3">
-              <span id="hr-pulse-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-0"></span>
-              <span id="hr-pulse-dot" class="relative inline-flex rounded-full h-3 w-3 bg-slate-600"></span>
-            </span>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Heart Rate Telemetry</h2>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-connect-hrm" onclick="triggerHaptic('medium'); connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-bluetooth"></i>
-              <span id="hrm-btn-text">Connect HRM</span>
-            </button>
-            <button id="btn-toggle-sim" onclick="triggerHaptic('medium'); toggleHRSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-xl transition">
-              Simulate
-            </button>
-            <button onclick="toggleHRCardVisibility()" class="text-slate-500 hover:text-slate-300 p-1.5 rounded-lg transition" title="Toggle Card Visibility">
-              <i id="hr-collapse-icon" class="fa-solid fa-chevron-up text-xs"></i>
-            </button>
-          </div>
-        </div>
-
-        <div id="hr-card-body" class="grid grid-cols-12 gap-4 items-center mt-3 transition-all">
-          <div class="col-span-5 flex flex-col justify-center">
-            <div class="flex items-baseline gap-1">
-              <span id="live-hr-display" class="text-5xl font-black tracking-tight text-slate-100">--</span>
-              <span class="text-xs font-semibold text-slate-500 uppercase">BPM</span>
-            </div>
-            <div id="live-hr-zone" class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>
-              <span>Disconnected</span>
-            </div>
-          </div>
-
-          <div class="col-span-7 h-20 bg-slate-950/60 rounded-2xl p-2 border border-slate-800/80 relative">
-            <canvas id="hr-sparkline" class="w-full h-full block"></canvas>
-          </div>
-        </div>
-      </section>
-
-      <!-- LOG SET ENTRY CARD -->
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-plus-circle theme-text"></i>
-            <h2 class="text-sm font-bold text-slate-200">Log Exercise Set</h2>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400 font-semibold">Date:</span>
-            <input type="date" id="workout-date-picker" onchange="handleDateChange(this.value)" class="bg-slate-950 border border-slate-700 text-xs font-semibold theme-text px-2.5 py-1 rounded-xl focus:outline-none focus:border-emerald-500 transition">
-            <span id="session-timer" class="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-xl border border-slate-700">00:00:00</span>
-          </div>
-        </div>
-
-        <div id="historical-mode-banner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold px-3 py-2 rounded-2xl flex items-center justify-between">
-          <span><i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Logging workout for historical date: <b id="banner-date-label"></b></span>
-          <button onclick="resetToTodayDate()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 px-2 py-0.5 rounded-lg underline transition">Reset to Today</button>
-        </div>
-
-        <!-- OPTIONAL WORKOUT NAME & NOTES INPUTS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">
-              Workout Name <span class="text-slate-500 font-normal">(Optional)</span>
-            </label>
-            <input type="text" id="workout-title-input" placeholder="e.g. Morning Run, Leg Day, Swimming Laps..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">
-              Session Notes <span class="text-slate-500 font-normal">(Optional)</span>
-            </label>
-            <input type="text" id="workout-notes-input" placeholder="e.g. Zone 2 aerobic focus, great cadence..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Exercise Name</label>
-            <div class="relative">
-              <input type="text" id="exercise-name-input" placeholder="e.g. Running, Swimming, Biking, Walking..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-              <datalist id="exercise-catalog-list"></datalist>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Category</label>
-            <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="Bodyweight" selected>Bodyweight</option>
-              <option value="Running">Running</option>
-              <option value="Walking">Walking</option>
-              <option value="Hiking">Hiking</option>
-              <option value="Biking">Biking</option>
-              <option value="Swimming">Swimming</option>
-              <option value="Row Erg">Row Erg</option>
-              <option value="Kettlebell">Kettlebell</option>
-              <option value="Macebell / Gada">Macebell / Gada</option>
-              <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
-              <option value="Gymnastics Rings">Gymnastics Rings</option>
-              <option value="Barbell">Barbell</option>
-              <option value="Dumbbell">Dumbbell</option>
-              <option value="Resistance Band">Resistance Band</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Primary Muscle Target</label>
-            <select id="muscle-group-select" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="Full Body">Full Body / Compound</option>
-              <option value="Chest">Chest</option>
-              <option value="Back">Back</option>
-              <option value="Shoulders">Shoulders</option>
-              <option value="Quads">Quads</option>
-              <option value="Hamstrings/Glutes">Hamstrings / Glutes</option>
-              <option value="Biceps">Biceps</option>
-              <option value="Triceps">Triceps</option>
-              <option value="Core/Abs">Core / Abs</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Perceived Effort (RPE)</label>
-            <select id="rpe-select" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="6">RPE 6 - Light Effort</option>
-              <option value="7">RPE 7 - Moderate Effort</option>
-              <option value="8" selected>RPE 8 - Hard Effort (2 reps in tank)</option>
-              <option value="9">RPE 9 - Very Hard (1 rep in tank)</option>
-              <option value="10">RPE 10 - Maximum Effort / Failure</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- 1. STANDARD METRICS PANEL -->
-        <div id="standard-metrics-panel" class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black theme-text focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Reps</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black theme-text focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. ROW ERG METRICS PANEL -->
-        <div id="erg-metrics-panel" class="hidden grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Distance (Meters)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-erg-distance" value="500" min="50" step="50" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black theme-text focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustErgDistance(-500)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-500m</button>
-              <button onclick="triggerHaptic('light'); adjustErgDistance(-100)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-100m</button>
-              <button onclick="triggerHaptic('light'); adjustErgDistance(100)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+100m</button>
-              <button onclick="triggerHaptic('light'); adjustErgDistance(500)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+500m</button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Duration (mm:ss)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="text" id="input-erg-time" value="02:00" placeholder="02:00" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black theme-text focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustErgTime(-60)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1m</button>
-              <button onclick="triggerHaptic('light'); adjustErgTime(-15)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-15s</button>
-              <button onclick="triggerHaptic('light'); adjustErgTime(15)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+15s</button>
-              <button onclick="triggerHaptic('light'); adjustErgTime(60)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[11px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1m</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. SWIMMING METRICS PANEL -->
-        <div id="swim-metrics-panel" class="hidden grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Distance (Yards)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-swim-distance" value="500" min="25" step="25" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-cyan-400 focus:outline-none focus:border-cyan-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustSwimDistance(-250)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-250y</button>
-              <button onclick="triggerHaptic('light'); adjustSwimDistance(-50)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-50y</button>
-              <button onclick="triggerHaptic('light'); adjustSwimDistance(50)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+50y</button>
-              <button onclick="triggerHaptic('light'); adjustSwimDistance(250)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+250y</button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Duration (mm:ss)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="text" id="input-swim-time" value="10:00" placeholder="10:00" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-cyan-400 focus:outline-none focus:border-cyan-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustSwimTime(-120)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-2m</button>
-              <button onclick="triggerHaptic('light'); adjustSwimTime(-30)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-30s</button>
-              <button onclick="triggerHaptic('light'); adjustSwimTime(30)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+30s</button>
-              <button onclick="triggerHaptic('light'); adjustSwimTime(120)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+2m</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. ENDURANCE METRICS PANEL -->
-        <div id="endurance-metrics-panel" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
-          <div class="space-y-2">
-            <label id="endurance-dist-label" class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Distance (Miles)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-endurance-distance" value="2.5" min="0.1" step="0.1" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-amber-400 focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustEnduranceDistance(-1.0)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1.0m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceDistance(-0.25)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-0.25m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceDistance(0.25)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+0.25m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceDistance(1.0)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1.0m</button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Duration (hh:mm:ss)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="text" id="input-endurance-time" value="00:30:00" placeholder="00:30:00" class="w-32 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-xl font-black text-amber-400 focus:outline-none focus:border-amber-500">
-            </div>
-            <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustEnduranceTime(-900)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-15m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceTime(-300)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceTime(300)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5m</button>
-              <button onclick="triggerHaptic('light'); adjustEnduranceTime(900)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+15m</button>
-            </div>
-          </div>
-
-          <div class="space-y-2 col-span-1 sm:col-span-2 pt-2 border-t border-slate-800/80">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-400 text-center uppercase tracking-wider">Avg HR (BPM)</label>
-                <input type="number" id="input-endurance-avghr" placeholder="e.g. 152" min="40" max="220" class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-xl font-black text-rose-400 focus:outline-none focus:border-rose-500 transition">
-              </div>
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-400 text-center uppercase tracking-wider">Max HR (BPM)</label>
-                <input type="number" id="input-endurance-maxhr" placeholder="e.g. 176" min="40" max="220" class="w-full bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-xl font-black text-rose-400 focus:outline-none focus:border-rose-500 transition">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button onclick="triggerHaptic('heavy'); logSet()" class="w-full m3-btn-primary font-bold py-3 px-4 rounded-2xl shadow-lg active:scale-[0.99] transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-check text-lg"></i>
-          <span>Log Set</span>
-        </button>
-      </section>
-
-      <!-- CURRENT WORKOUT FEED -->
-      <section class="m3-card rounded-3xl p-4 border shadow-xl space-y-3">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Session Logs</h3>
-          <span id="set-count-badge" class="text-xs font-bold bg-slate-800 theme-text px-2 py-0.5 rounded-full border border-slate-700">0 Sets</span>
-        </div>
-
-        <div id="logged-sets-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-          <div class="text-center py-8 text-slate-600 text-xs italic">
-            No sets logged for this session yet. Pick an exercise above and hit "Log Set".
-          </div>
-        </div>
-
-        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full m3-btn-secondary font-bold py-2.5 px-4 rounded-2xl shadow-lg border active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
-          <i class="fa-solid fa-flag-checkered"></i>
-          <span>Finish & Evaluate Workout</span>
-        </button>
-      </section>
-
-      <!-- POST-WORKOUT SUMMARY CARD -->
-      <section id="workout-summary-card" class="hidden m3-card rounded-3xl p-5 border shadow-2xl space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 id="summary-title" class="text-base font-black theme-text flex items-center gap-2">
-              <i class="fa-solid fa-chart-line"></i>
-              Physiology & Training Effect Summary
-            </h2>
-            <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp()" class="theme-badge text-xs font-semibold px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition">
-              <i class="fa-brands fa-whatsapp text-sm theme-text"></i>
-              <span>Share via WhatsApp</span>
-            </button>
-            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
-              <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-          </div>
-        </div>
-
-        <div id="summary-notes-display" class="hidden bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 italic"></div>
-
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Aerobic</span>
-              <i class="fa-solid fa-lungs text-blue-400"></i>
-            </div>
-            <div id="aerobic-te-score" class="text-2xl font-black text-blue-400">0.0</div>
-            <div id="aerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Anaerobic</span>
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-            </div>
-            <div id="anaerobic-te-score" class="text-2xl font-black text-amber-400">0.0</div>
-            <div id="anaerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Calories</span>
-              <i class="fa-solid fa-fire text-rose-500"></i>
-            </div>
-            <div id="calories-burned-score" class="text-2xl font-black text-rose-400">0</div>
-            <div class="text-[10px] font-semibold text-slate-400">Est. kcal</div>
-          </div>
-        </div>
-
-        <!-- TARGETED MUSCLE MAP SVG CONTAINER -->
-        <div id="muscle-map-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
-          
-          <div class="flex justify-center items-center gap-8 py-2">
-            <div class="w-36 flex flex-col items-center">
-              <svg id="svg-anterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
-              </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
-            </div>
-
-            <div class="w-36 flex flex-col items-center">
-              <svg id="svg-posterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
-              </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
-              <span class="text-slate-300 font-semibold">Primary Muscles</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
-              <span class="text-slate-300 font-semibold">Secondary Muscles</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
-              <span class="text-slate-500">Untargeted</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
-          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800"></div>
-        </div>
-      </section>
-
-    </div>
-
-    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT -->
-    <div id="tab-calendar-view" class="hidden space-y-6">
-
-      <!-- HISTORICAL BODY WEIGHT PROGRESS CARD -->
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-weight-scale theme-text"></i>
-              Body Weight Tracking & History
-            </h2>
-            <p class="text-xs text-slate-400">Historical weight progress timeline</p>
-          </div>
-
-          <button onclick="triggerHaptic('medium'); openLogWeightModal()" class="theme-badge text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i>
-            <span>Log Weight</span>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-slate-500 uppercase">Current Weight</div>
-              <div id="cal-current-weight-val" class="text-xl font-black theme-text">-- lbs</div>
-            </div>
-            <i class="fa-solid fa-user-check text-slate-700 text-lg"></i>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-slate-500 uppercase">Weight Change</div>
-              <div id="cal-weight-change-val" class="text-xl font-black text-slate-300">0.0 lbs</div>
-            </div>
-            <button onclick="triggerHaptic('medium'); openWeightTrendGraph()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 theme-text border border-slate-700 transition" title="View Weight Trend Line Graph">
-              <i class="fa-solid fa-chart-line text-lg"></i>
-            </button>
-          </div>
-        </div>
-
-        <div id="weight-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-          <div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>
-        </div>
-      </section>
-
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-days theme-text"></i>
-              Workout Consistency Matrix
-            </h2>
-            <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
-          </div>
-
-          <div class="flex items-center gap-2 text-xs">
-            <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-check-double theme-text"></i>
-              <span class="text-slate-400">Streak:</span>
-              <span id="current-streak-val" class="font-bold text-slate-100">0 days</span>
-            </div>
-            <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-trophy text-yellow-400"></i>
-              <span class="text-slate-400">Best:</span>
-              <span id="best-streak-val" class="font-bold text-slate-100">0 days</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800">
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
-          <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
-      </section>
-
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-list-check theme-text"></i>
-            Monthly Workouts History
-          </h3>
-          <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 theme-text px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
-        </div>
-
-        <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
-      </section>
-
-    </div>
-
-    <!-- VIEW TAB 3: SQUADS & COMMUNITY HUB -->
-    <div id="tab-squads-view" class="hidden space-y-6">
-
+<!-- ... existing code -->
       <!-- ACCURATE GLOBAL "SHOWED UP TODAY" HERO METRIC CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
@@ -1056,77 +121,62 @@
         </p>
       </section>
 
-      <!-- REGIONAL WORKOUT HEATMAP CARD -->
+      <!-- INTERACTIVE GLOBAL HEATMAP MAP SECTION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-fire-flame-curved theme-text"></i>
-              Regional Activity Heatmap
+              <i class="fa-solid fa-earth-americas theme-text"></i>
+              Global Activity Heatmap
             </h2>
-            <p class="text-xs text-slate-400">Live distribution of today's workouts by state & region</p>
+            <p class="text-xs text-slate-400">Zoom out to aggregate by State, Country & Continent</p>
           </div>
 
-          <span id="detected-location-badge" class="theme-badge text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1">
-            <i class="fa-solid fa-location-crosshairs"></i>
-            <span id="user-location-tag">Locating...</span>
-          </span>
+          <div class="flex items-center gap-2">
+            <span id="map-zoom-scope-badge" class="theme-badge text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider">
+              Continent Scope
+            </span>
+            <button onclick="triggerHaptic('light'); refreshGlobalMap()" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Refresh Heatmap Data">
+              <i class="fa-solid fa-rotate text-xs"></i>
+            </button>
+          </div>
         </div>
 
-        <div id="heatmap-list-container" class="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800 max-h-56 overflow-y-auto">
-          <div class="text-center py-6 text-slate-600 text-xs italic">
-            Fetching active region heatmap data...
+        <!-- INTERACTIVE LEAFLET CONTAINER -->
+        <div class="relative w-full rounded-2xl overflow-hidden border border-slate-800 shadow-inner">
+          <div id="global-map-canvas" class="h-80 sm:h-96 w-full z-10"></div>
+          
+          <!-- MAP SCOPE SUMMARY OVERLAY HUD -->
+          <div class="absolute bottom-3 left-3 right-3 z-20 pointer-events-none">
+            <div class="bg-slate-900/90 backdrop-blur-md p-3 rounded-2xl border border-slate-800 shadow-2xl flex items-center justify-between pointer-events-auto">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-layer-group theme-text text-xs"></i>
+                <div>
+                  <span class="text-[10px] font-bold text-slate-400 uppercase block leading-none">Aggregation Mode</span>
+                  <span id="map-scope-summary-label" class="text-xs font-black text-slate-100">Summarized by Continent</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block leading-none">Active Markers</span>
+                <span id="map-marker-count" class="text-xs font-extrabold theme-text">0 Locations</span>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div id="map-top-regions-list" class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs">
+          <!-- Dynamic region counts -->
         </div>
       </section>
 
-      <!-- GMAIL SQUADS CONTAINER -->
+      <!-- SQUADS MANAGEMENT SECTION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-users theme-text"></i>
-              Gmail Circles & Squads
-            </h2>
-            <p class="text-xs text-slate-400">Accountability groups connected via Google Auth</p>
-          </div>
-
-          <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="theme-badge text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i>
-            <span>Create Squad</span>
-          </button>
-        </div>
-
-        <div id="squads-list-container" class="space-y-4"></div>
-      </section>
-
-    </div>
-
-  </main>
-
-  <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
-  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
-    <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
-      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 theme-text transition font-bold">
-        <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
-        <span>Workout</span>
-      </button>
-      <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
-        <span>Calendar</span>
-      </button>
-      <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-users text-lg mb-0.5"></i>
-        <span>Squads</span>
-      </button>
-    </div>
-  </nav>
-
+<!-- ... existing code -->
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, increment, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'showup-app';
     const firebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -1159,7 +209,7 @@
         }
       });
     } catch (e) {
-      console.warn("Cloud sync fallback: local mode enabled.", e);
+      console.warn("Cloud sync initialization fallback: local mode enabled.");
     }
 
     const todayKey = new Date().toISOString().slice(0, 10);
@@ -1184,15 +234,6 @@
         }
       }, (err) => console.warn("Cloud counter listener:", err));
 
-      // Listen for Regional Heatmap Data
-      const heatmapDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'heatmaps', todayKey);
-      onSnapshot(heatmapDocRef, (snap) => {
-        if (snap.exists()) {
-          window.heatmapData = snap.data() || {};
-          window.renderHeatmapUI();
-        }
-      }, (err) => console.warn("Cloud heatmap listener:", err));
-
       const squadsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'squads');
       onSnapshot(squadsColRef, (snap) => {
         const cloudSquads = [];
@@ -1203,11 +244,20 @@
           window.renderSquads();
         }
       }, (err) => console.warn("Cloud squads listener:", err));
+
+      // CLOUD HEATMAP USER LOCATIONS LISTENER
+      const heatmapColRef = collection(db, 'artifacts', appId, 'public', 'data', 'heatmap_points');
+      onSnapshot(heatmapColRef, (snap) => {
+        const points = [];
+        snap.forEach(docSnap => points.push({ id: docSnap.id, ...docSnap.data() }));
+        if (points.length > 0) {
+          window.heatmapDataPoints = points;
+          window.renderGlobalHeatmap();
+        }
+      }, (err) => console.warn("Cloud heatmap listener:", err));
     }
 
     window.incrementCloudGlobalCounter = async function() {
-      const regionKey = (localStorage.getItem('showUp_user_state') || 'GLOBAL').toUpperCase().replace(/[^A-Z0-9]/g, '');
-
       if (!db || !currentUser) {
         window.globalShowedUpCount += 1;
         localStorage.setItem('showUp_global_counter', window.globalShowedUpCount.toString());
@@ -1220,9 +270,19 @@
         const counterDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'daily_counters', todayKey);
         await setDoc(counterDocRef, { count: increment(1) }, { merge: true });
 
-        // Increment region count in cloud heatmap document
-        const heatmapDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'heatmaps', todayKey);
-        await setDoc(heatmapDocRef, { [regionKey]: increment(1) }, { merge: true });
+        // PUBLISH USER COARSE LOCATION POINT TO HEATMAP
+        if (window.currentUserLocation) {
+          const userLocDoc = doc(db, 'artifacts', appId, 'public', 'data', 'heatmap_points', currentUser.uid);
+          await setDoc(userLocDoc, {
+            lat: window.currentUserLocation.lat,
+            lng: window.currentUserLocation.lng,
+            city: window.currentUserLocation.city || 'Unknown',
+            state: window.currentUserLocation.state || 'VA',
+            country: window.currentUserLocation.country || 'USA',
+            continent: window.currentUserLocation.continent || 'North America',
+            updatedAt: Date.now()
+          }, { merge: true });
+        }
 
         triggerCheckAnimation();
       } catch (err) {
@@ -1261,1547 +321,247 @@
   </script>
 
   <script>
-    /* ================= GLOBAL APPLICATION STATE ================= */
+    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
     
-    // Purge any legacy default squads cached from prior sessions
-    let storedSquads = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
-    window.squadsData = storedSquads.filter(s => s.name !== "Pahlwani Conditioning Circle");
+    window.squadsData = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
+    window.squadsData = window.squadsData.filter(s => s.id !== 'squad-pahlwani' && s.name !== 'Pahlwani Conditioning Circle');
     localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
 
-    window.globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || '0', 10);
-    
-    let workoutInitiatedCount = localStorage.getItem('showUp_session_start_global_count') ? parseInt(localStorage.getItem('showUp_session_start_global_count'), 10) : null;
-    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
-    let calendarDate = new Date();
-    
-    let userHeight = parseFloat(localStorage.getItem('showUp_user_height') || '70');
-    let userWeight = parseFloat(localStorage.getItem('showUp_user_weight') || '175');
-    let userState = localStorage.getItem('showUp_user_state') || '';
-    let userZip = localStorage.getItem('showUp_user_zip') || '';
-    
-    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
-    let googleClientId = localStorage.getItem('showUp_google_client_id') || '';
+    let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70;
+    let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175;
 
-    let currentHR = 0;
-    let hrHistory = [];
-    let hrmDevice = null;
-    let hrSimInterval = null;
+    window.globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || completedWorkoutsHistory.length.toString());
+
+    let workoutInitiatedCount = localStorage.getItem('showUp_session_start_global_count') 
+      ? parseInt(localStorage.getItem('showUp_session_start_global_count')) 
+      : null;
+
     let lastEvaluatedSummary = null;
-    let pendingConfirmAction = null;
-    window.heatmapData = {};
+    let hrHistory = [];
+    let currentHR = 0;
+    let hrSimInterval = null;
+    let hrmDevice = null;
+    let calendarDate = new Date();
+    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
+    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
+    let confirmCallback = null;
 
-    /* Exercise Catalog */
-    const defaultCatalog = [
-      { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
-      { name: "Hiking", implement: "Hiking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Biking", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
-      { name: "Swimming", implement: "Swimming", muscle: "Full Body", secondary: ["Back", "Shoulders", "Core/Abs"] },
-      { name: "Row Ergometer", implement: "Row Erg", muscle: "Back", secondary: ["Quads", "Biceps", "Core/Abs"] },
-      { name: "Push Ups", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
-      { name: "Pull Ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps"] },
-      { name: "Barbell Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
-      { name: "Deadlift", implement: "Barbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
-      { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
-      { name: "Mace 360 Spin", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] }
+    // GLOBAL MAP ENGINE VARIABLES
+    let leafletMap = null;
+    let markerClusterGroup = null;
+    window.heatmapDataPoints = [
+      { id: 'u1', lat: 38.8951, lng: -77.0364, city: 'Washington', state: 'DC', country: 'USA', continent: 'North America', name: 'User 1' },
+      { id: 'u2', lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', country: 'USA', continent: 'North America', name: 'User 2' },
+      { id: 'u3', lat: 34.0522, lng: -118.2437, city: 'Los Angeles', state: 'CA', country: 'USA', continent: 'North America', name: 'User 3' },
+      { id: 'u4', lat: 51.5074, lng: -0.1278, city: 'London', state: 'ENG', country: 'UK', continent: 'Europe', name: 'User 4' },
+      { id: 'u5', lat: 48.8566, lng: 2.3522, city: 'Paris', state: 'IDF', country: 'France', continent: 'Europe', name: 'User 5' },
+      { id: 'u6', lat: 35.6762, lng: 139.6503, city: 'Tokyo', state: 'TK', country: 'Japan', continent: 'Asia', name: 'User 6' },
+      { id: 'u7', lat: 19.0760, lng: 72.8777, city: 'Mumbai', state: 'MH', country: 'India', continent: 'Asia', name: 'User 7' },
+      { id: 'u8', lat: -33.8688, lng: 151.2093, city: 'Sydney', state: 'NSW', country: 'Australia', continent: 'Oceania', name: 'User 8' }
     ];
+
+    window.currentUserLocation = { lat: 38.9, lng: -77.5, city: 'Stone Ridge', state: 'VA', country: 'USA', continent: 'North America' };
 
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
-      loadGoogleClientId();
-      autoDetectLocation();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
       renderSquads();
-      renderHeatmapUI();
       updateGlobalCounterUI();
       initSparkline();
       restoreSavedSession();
       restoreThemePreferences();
       restoreFontPreference();
+      detectUserGeoLocation();
     });
 
-    function showToastNotification(title, message, iconClass = "fa-solid fa-circle-info theme-text") {
-      document.getElementById('toast-title').innerText = title;
-      document.getElementById('toast-message').innerText = message;
-      document.getElementById('toast-icon').className = iconClass;
-      document.getElementById('toast-modal').classList.remove('hidden');
-    }
-
-    function closeToastModal() {
-      document.getElementById('toast-modal').classList.add('hidden');
-    }
-
-    function showConfirmDialog(title, message, onConfirm) {
-      document.getElementById('confirm-title').innerText = title;
-      document.getElementById('confirm-message').innerText = message;
-      pendingConfirmAction = onConfirm;
-      document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-
-    function handleConfirmResult(result) {
-      document.getElementById('confirm-modal').classList.add('hidden');
-      if (result && typeof pendingConfirmAction === 'function') {
-        pendingConfirmAction();
-      }
-      pendingConfirmAction = null;
-    }
-
-    window.updateGlobalCounterUI = function() {
-      const headerVal = document.getElementById('global-counter-header-val');
-      const mainVal = document.getElementById('global-counter-main-val');
-      const deltaText = document.getElementById('session-delta-text');
-
-      if (headerVal) headerVal.innerText = window.globalShowedUpCount;
-      if (mainVal) mainVal.innerText = window.globalShowedUpCount;
-
-      if (deltaText) {
-        if (workoutInitiatedCount !== null) {
-          const delta = Math.max(0, window.globalShowedUpCount - workoutInitiatedCount);
-          deltaText.innerHTML = `<b class="theme-text font-black">${delta}</b> ${delta === 1 ? 'person has' : 'people have'} showed up globally since you initiated your workout.`;
-        } else {
-          deltaText.innerHTML = `Start a workout to track real-time check-ins since initiating your session.`;
-        }
-      }
-    };
-
-    function autoDetectLocation() {
-      if (userState) {
-        updateLocationBadgeUI();
-        return;
-      }
-
+    function detectUserGeoLocation() {
       fetch('https://ipapi.co/json/')
         .then(res => res.json())
         .then(data => {
-          if (data && (data.region_code || data.region)) {
-            userState = data.region_code || data.region;
-            userZip = data.postal || '';
-            
-            localStorage.setItem('showUp_user_state', userState);
-            localStorage.setItem('showUp_user_zip', userZip);
-
-            document.getElementById('user-state-input').value = userState;
-            document.getElementById('user-zip-input').value = userZip;
-
-            updateLocationBadgeUI();
+          if (data && data.latitude && data.longitude) {
+            window.currentUserLocation = {
+              lat: data.latitude,
+              lng: data.longitude,
+              city: data.city || 'Local Area',
+              state: data.region_code || data.region || 'VA',
+              country: data.country_name || 'USA',
+              continent: data.continent_code === 'EU' ? 'Europe' : data.continent_code === 'AS' ? 'Asia' : 'North America'
+            };
+            if (leafletMap) {
+              leafletMap.setView([window.currentUserLocation.lat, window.currentUserLocation.lng], 4);
+            }
           }
         })
-        .catch(() => {
-          userState = 'VA';
-          localStorage.setItem('showUp_user_state', userState);
-          updateLocationBadgeUI();
+        .catch(console.warn);
+    }
+
+    window.initGlobalMap = function() {
+      const mapContainer = document.getElementById('global-map-canvas');
+      if (!mapContainer || leafletMap) return;
+
+      try {
+        leafletMap = L.map('global-map-canvas', {
+          center: [25, 0],
+          zoom: 2,
+          minZoom: 2,
+          maxZoom: 16,
+          zoomControl: false
         });
-    }
 
-    function saveLocationProfile() {
-      const stateVal = document.getElementById('user-state-input').value.trim().toUpperCase();
-      const zipVal = document.getElementById('user-zip-input').value.trim();
+        // Add sleek CartoDB Dark Matter tiles
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; OpenStreetMap &copy; CARTO',
+          subdomains: 'abcd',
+          maxZoom: 19
+        }).addTo(leafletMap);
 
-      userState = stateVal;
-      userZip = zipVal;
+        L.control.zoom({ position: 'topright' }).addTo(leafletMap);
 
-      localStorage.setItem('showUp_user_state', userState);
-      localStorage.setItem('showUp_user_zip', userZip);
+        markerClusterGroup = L.markerClusterGroup({
+          showCoverageOnHover: false,
+          maxClusterRadius: 50,
+          iconCreateFunction: function(cluster) {
+            const count = cluster.getChildCount();
+            return L.divIcon({
+              html: `<div class="custom-cluster-icon w-9 h-9 text-xs"><i class="fa-solid fa-check-double mr-1"></i>${count}</div>`,
+              className: 'custom-cluster-wrapper',
+              iconSize: L.point(36, 36)
+            });
+          }
+        });
 
-      updateLocationBadgeUI();
-      showToastNotification("Location Saved", `Region set to ${userState} (${userZip || 'No ZIP'}).`, "fa-solid fa-map-pin theme-text");
-    }
+        leafletMap.addLayer(markerClusterGroup);
 
-    function loadGoogleClientId() {
-      const input = document.getElementById('google-client-id-input');
-      if (input) {
-        input.value = googleClientId;
+        leafletMap.on('zoomend', updateMapScopeSummary);
+        window.renderGlobalHeatmap();
+      } catch (e) {
+        console.warn("Leaflet map initialization:", e);
       }
-    }
-
-    function saveGoogleClientId() {
-      const val = document.getElementById('google-client-id-input').value.trim();
-      googleClientId = val;
-      localStorage.setItem('showUp_google_client_id', googleClientId);
-      showToastNotification("OAuth Settings Saved", googleClientId ? "Custom Google Client ID saved." : "Using seamless instant sign-in mode.", "fa-brands fa-google theme-text");
-    }
-
-    function updateLocationBadgeUI() {
-      const tag = document.getElementById('user-location-tag');
-      if (tag) {
-        tag.innerText = userState ? `${userState} ${userZip ? '(' + userZip + ')' : ''}` : 'Unknown Region';
-      }
-    }
-
-    window.renderHeatmapUI = function() {
-      const container = document.getElementById('heatmap-list-container');
-      if (!container) return;
-
-      const entries = Object.entries(window.heatmapData).sort((a, b) => b[1] - a[1]);
-
-      if (entries.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-6 text-slate-600 text-xs italic">
-            Be the first to log a workout from your region today!
-          </div>
-        `;
-        return;
-      }
-
-      const totalValue = entries.reduce((acc, curr) => acc + curr[1], 0) || 1;
-
-      container.innerHTML = entries.map(([region, count]) => {
-        const pct = Math.min(100, Math.round((count / totalValue) * 100));
-        const isUserRegion = userState && region === userState.toUpperCase();
-
-        return `
-          <div class="space-y-1">
-            <div class="flex justify-between items-center text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-black text-slate-200">${region}</span>
-                ${isUserRegion ? `<span class="text-[9px] uppercase px-1.5 py-0.2 rounded theme-badge font-bold">Your Region</span>` : ''}
-              </div>
-              <span class="theme-text font-bold">${count} ${count === 1 ? 'workout' : 'workouts'} (${pct}%)</span>
-            </div>
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-              <div class="theme-bg h-full transition-all duration-500" style="width: ${pct}%"></div>
-            </div>
-          </div>
-        `;
-      }).join('');
     };
 
-    function setFontFamily(fontKey) {
-      const body = document.getElementById('app-body');
-      body.classList.remove('font-style-jakarta', 'font-style-inter', 'font-style-outfit', 'font-style-space');
-      body.classList.add(`font-style-${fontKey}`);
-
-      ['jakarta', 'inter', 'outfit', 'space'].forEach(f => {
-        const checkIcon = document.getElementById(`font-check-${f}`);
-        const fontBtn = document.getElementById(`font-btn-${f}`);
-        if (checkIcon) checkIcon.classList.add('hidden');
-        if (fontBtn) {
-          fontBtn.classList.remove('border-emerald-500', 'theme-border', 'bg-slate-900');
-          fontBtn.classList.add('border-slate-800', 'bg-slate-950');
-        }
-      });
-
-      const activeCheck = document.getElementById(`font-check-${fontKey}`);
-      const activeBtn = document.getElementById(`font-btn-${fontKey}`);
-      if (activeCheck) activeCheck.classList.remove('hidden');
-      if (activeBtn) {
-        activeBtn.classList.remove('border-slate-800', 'bg-slate-950');
-        activeBtn.classList.add('theme-border', 'bg-slate-900');
-      }
-
-      localStorage.setItem('showUp_font', fontKey);
-    }
-
-    function restoreFontPreference() {
-      const savedFont = localStorage.getItem('showUp_font') || 'jakarta';
-      setFontFamily(savedFont);
-    }
-
-    function setThemePalette(themeKey) {
-      const body = document.getElementById('app-body');
-      body.className = body.className.replace(/\btheme-\S+/g, '').trim();
-      if (themeKey !== 'emerald') {
-        body.classList.add(`theme-${themeKey}`);
-      }
-      localStorage.setItem('showUp_theme', themeKey);
-      renderCalendar();
-      renderSquads();
-    }
-
-    function restoreThemePreferences() {
-      const savedTheme = localStorage.getItem('showUp_theme') || 'emerald';
-      setThemePalette(savedTheme);
-    }
-
-    function loadPhysicalProfile() {
-      document.getElementById('user-height-input').value = userHeight;
-      document.getElementById('user-weight-input').value = userWeight;
-    }
-
-    function savePhysicalProfile() {
-      const h = parseFloat(document.getElementById('user-height-input').value) || userHeight;
-      const w = parseFloat(document.getElementById('user-weight-input').value) || userWeight;
-
-      userHeight = h;
-      userWeight = w;
-
-      localStorage.setItem('showUp_user_height', userHeight);
-      localStorage.setItem('showUp_user_weight', userWeight);
-
-      const latestEntry = weightHistory[0];
-      const todayISO = new Date().toISOString().slice(0, 10);
-
-      if (!latestEntry || latestEntry.weight !== userWeight || latestEntry.date !== todayISO) {
-        weightHistory.unshift({ date: todayISO, weight: userWeight });
-        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
-        renderWeightHistory();
-      }
-    }
-
-    function openLogWeightModal() {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      document.getElementById('weight-entry-date').value = todayISO;
-      document.getElementById('weight-entry-value').value = userWeight;
-      document.getElementById('log-weight-modal').classList.remove('hidden');
-    }
-
-    function toggleLogWeightModal() {
-      document.getElementById('log-weight-modal').classList.toggle('hidden');
-    }
-
-    function saveWeightModalEntry() {
-      const dateVal = document.getElementById('weight-entry-date').value || new Date().toISOString().slice(0, 10);
-      const wVal = parseFloat(document.getElementById('weight-entry-value').value);
-
-      if (isNaN(wVal) || wVal <= 0) {
-        showToastNotification("Invalid Weight", "Please enter a valid weight value in lbs.", "fa-solid fa-triangle-exclamation text-amber-400");
+    window.renderGlobalHeatmap = function() {
+      if (!leafletMap || !markerClusterGroup) {
+        window.initGlobalMap();
         return;
       }
 
-      userWeight = wVal;
-      document.getElementById('user-weight-input').value = userWeight;
-      localStorage.setItem('showUp_user_weight', userWeight);
+      markerClusterGroup.clearLayers();
 
-      const existingIdx = weightHistory.findIndex(item => item.date === dateVal);
-      if (existingIdx >= 0) {
-        weightHistory[existingIdx].weight = wVal;
-      } else {
-        weightHistory.push({ date: dateVal, weight: wVal });
-      }
-
-      weightHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
-      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
-
-      toggleLogWeightModal();
-      renderWeightHistory();
-      showToastNotification("Weight Saved", `Weight entry of ${wVal} lbs logged for ${dateVal}.`, "fa-solid fa-check-circle theme-text");
-    }
-
-    function renderWeightHistory() {
-      const currentValEl = document.getElementById('cal-current-weight-val');
-      const changeValEl = document.getElementById('cal-weight-change-val');
-      const container = document.getElementById('weight-history-list');
-
-      currentValEl.innerText = `${userWeight} lbs`;
-
-      if (weightHistory.length === 0) {
-        changeValEl.innerText = "0.0 lbs";
-        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>`;
-        return;
-      }
-
-      const latest = weightHistory[0].weight;
-      const oldest = weightHistory[weightHistory.length - 1].weight;
-      const diff = (latest - oldest).toFixed(1);
-
-      changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
-      changeValEl.className = `text-xl font-black ${diff < 0 ? 'theme-text' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
-
-      container.innerHTML = weightHistory.map((item, index) => `
-        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-calendar-day text-slate-500"></i>
-            <span class="text-slate-300 font-semibold">${item.date}</span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="font-bold theme-text">${item.weight} lbs</span>
-            <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 transition" title="Delete Entry">
-              <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function deleteWeightEntry(index) {
-      showConfirmDialog("Delete Weight Entry", "Are you sure you want to delete this historical weight entry?", () => {
-        weightHistory.splice(index, 1);
-        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
-        renderWeightHistory();
-      });
-    }
-
-    function openWeightTrendGraph() {
-      if (weightHistory.length < 2) {
-        showToastNotification("Insufficient Data", "Log at least 2 historical weight entries to view the weight trend line.", "fa-solid fa-chart-line theme-text");
-        return;
-      }
-
-      const svg = document.getElementById('weight-trend-svg');
-      const sortedAsc = [...weightHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      const weights = sortedAsc.map(d => d.weight);
-      const minW = Math.min(...weights);
-      const maxW = Math.max(...weights);
-      const avgW = (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1);
-
-      document.getElementById('graph-min-weight').innerText = `${minW} lbs`;
-      document.getElementById('graph-avg-weight').innerText = `${avgW} lbs`;
-      document.getElementById('graph-max-weight').innerText = `${maxW} lbs`;
-
-      const range = (maxW - minW) || 1;
-      const points = sortedAsc.map((d, i) => {
-        const x = (i / (sortedAsc.length - 1)) * 300 + 10;
-        const y = 140 - ((d.weight - minW) / range) * 120;
-        return `${x},${y}`;
+      const userIcon = L.divIcon({
+        html: `<div class="custom-user-marker"><i class="fa-solid fa-check text-[10px]"></i></div>`,
+        className: 'custom-user-marker-wrapper',
+        iconSize: L.point(24, 24)
       });
 
-      const polylinePoints = points.join(' ');
-      const strokeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-accent-color').trim() || '#10b981';
-
-      svg.innerHTML = `
-        <polyline fill="none" stroke="${strokeColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
-        ${sortedAsc.map((d, i) => {
-          const x = (i / (sortedAsc.length - 1)) * 300 + 10;
-          const y = 140 - ((d.weight - minW) / range) * 120;
-          return `<circle cx="${x}" cy="${y}" r="4" fill="${strokeColor}" stroke="#0f172a" stroke-width="2" />`;
-        }).join('')}
-      `;
-
-      document.getElementById('weight-graph-modal').classList.remove('hidden');
-    }
-
-    function toggleWeightGraphModal() {
-      document.getElementById('weight-graph-modal').classList.toggle('hidden');
-    }
-
-    function initDatePickerConstraints() {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      const dateInput = document.getElementById('workout-date-picker');
-      dateInput.max = todayISO;
-      dateInput.value = todayISO;
-      selectedWorkoutDate = todayISO;
-    }
-
-    function handleDateChange(val) {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      if (val > todayISO) {
-        showToastNotification("Invalid Date", "Future dates are not permitted for logging workout sessions.", "fa-solid fa-clock text-amber-400");
-        document.getElementById('workout-date-picker').value = todayISO;
-        selectedWorkoutDate = todayISO;
-        document.getElementById('historical-mode-banner').classList.add('hidden');
-        return;
-      }
-      selectedWorkoutDate = val;
-
-      if (val !== todayISO) {
-        document.getElementById('banner-date-label').innerText = val;
-        document.getElementById('historical-mode-banner').classList.remove('hidden');
-      } else {
-        document.getElementById('historical-mode-banner').classList.add('hidden');
-      }
-    }
-
-    function resetToTodayDate() {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      document.getElementById('workout-date-picker').value = todayISO;
-      selectedWorkoutDate = todayISO;
-      document.getElementById('historical-mode-banner').classList.add('hidden');
-    }
-
-    function initCatalog() {
-      const datalist = document.getElementById('exercise-catalog-list');
-      datalist.innerHTML = '';
-      defaultCatalog.forEach(ex => {
-        const option = document.createElement('option');
-        option.value = ex.name;
-        datalist.appendChild(option);
-      });
-    }
-
-    function handleExerciseInput(val) {
-      const match = defaultCatalog.find(c => c.name.toLowerCase() === val.toLowerCase());
-      if (match) {
-        document.getElementById('implement-select').value = match.implement;
-        document.getElementById('muscle-group-select').value = match.muscle;
-        handleImplementChange(match.implement);
-      }
-    }
-
-    function handleImplementChange(imp) {
-      const isErg = imp === "Row Erg";
-      const isSwim = imp === "Swimming";
-      const isEndurance = ["Running", "Walking", "Hiking", "Biking"].includes(imp);
-
-      document.getElementById('standard-metrics-panel').classList.toggle('hidden', isErg || isSwim || isEndurance);
-      document.getElementById('erg-metrics-panel').classList.toggle('hidden', !isErg);
-      document.getElementById('swim-metrics-panel').classList.toggle('hidden', !isSwim);
-      document.getElementById('endurance-metrics-panel').classList.toggle('hidden', !isEndurance);
-
-      if (isEndurance) {
-        document.getElementById('endurance-dist-label').innerText = imp === "Running" ? "Distance (Miles)" : `${imp} Distance (Miles)`;
-      }
-    }
-
-    function adjustWeight(delta) {
-      const input = document.getElementById('input-weight');
-      let val = parseFloat(input.value) || 0;
-      val = Math.max(0, val + delta);
-      input.value = val;
-    }
-
-    function adjustReps(delta) {
-      const input = document.getElementById('input-reps');
-      let val = parseInt(input.value) || 0;
-      val = Math.max(1, val + delta);
-      input.value = val;
-    }
-
-    function adjustErgDistance(delta) {
-      const input = document.getElementById('input-erg-distance');
-      let val = parseInt(input.value) || 0;
-      val = Math.max(50, val + delta);
-      input.value = val;
-    }
-
-    function adjustErgTime(deltaSec) {
-      const input = document.getElementById('input-erg-time');
-      const parts = (input.value || "02:00").split(':');
-      let totalSec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-      totalSec = Math.max(15, totalSec + deltaSec);
-
-      const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
-      const secs = String(totalSec % 60).padStart(2, '0');
-      input.value = `${mins}:${secs}`;
-    }
-
-    function adjustSwimDistance(delta) {
-      const input = document.getElementById('input-swim-distance');
-      let val = parseInt(input.value) || 0;
-      val = Math.max(25, val + delta);
-      input.value = val;
-    }
-
-    function adjustSwimTime(deltaSec) {
-      const input = document.getElementById('input-swim-time');
-      const parts = (input.value || "10:00").split(':');
-      let totalSec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
-      totalSec = Math.max(15, totalSec + deltaSec);
-
-      const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
-      const secs = String(totalSec % 60).padStart(2, '0');
-      input.value = `${mins}:${secs}`;
-    }
-
-    function adjustEnduranceDistance(delta) {
-      const input = document.getElementById('input-endurance-distance');
-      let val = parseFloat(input.value) || 0;
-      val = Math.max(0.1, val + delta);
-      input.value = val.toFixed(2);
-    }
-
-    function adjustEnduranceTime(deltaSec) {
-      const input = document.getElementById('input-endurance-time');
-      const parts = (input.value || "00:30:00").split(':');
-      let totalSec = (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
-      totalSec = Math.max(60, totalSec + deltaSec);
-
-      const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
-      const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
-      const secs = String(totalSec % 60).padStart(2, '0');
-      input.value = `${hrs}:${secs}`;
-    }
-
-    function logSet() {
-      const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
-      const implement = document.getElementById('implement-select').value;
-      const muscle = document.getElementById('muscle-group-select').value;
-      const rpe = parseFloat(document.getElementById('rpe-select').value) || 8;
-
-      let weight = 0, reps = 1, ergDistance = 0, ergTime = "";
-      let swimDistance = 0, swimTime = "";
-      let enduranceDistance = 0, enduranceTime = "";
-      let avgHR = 0, maxHR = 0;
-
-      if (implement === "Row Erg") {
-        ergDistance = parseInt(document.getElementById('input-erg-distance').value) || 500;
-        ergTime = document.getElementById('input-erg-time').value || "02:00";
-      } else if (implement === "Swimming") {
-        swimDistance = parseInt(document.getElementById('input-swim-distance').value) || 500;
-        swimTime = document.getElementById('input-swim-time').value || "10:00";
-      } else if (["Running", "Walking", "Hiking", "Biking"].includes(implement)) {
-        enduranceDistance = parseFloat(document.getElementById('input-endurance-distance').value) || 1.0;
-        enduranceTime = document.getElementById('input-endurance-time').value || "00:30:00";
-        avgHR = parseInt(document.getElementById('input-endurance-avghr').value) || 0;
-        maxHR = parseInt(document.getElementById('input-endurance-maxhr').value) || 0;
-      } else {
-        weight = parseFloat(document.getElementById('input-weight').value) || 0;
-        reps = parseInt(document.getElementById('input-reps').value) || 1;
-      }
-
-      const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
-      const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
-
-      if (currentSessionSets.length === 0 || workoutInitiatedCount === null) {
-        workoutInitiatedCount = window.globalShowedUpCount;
-        localStorage.setItem('showUp_session_start_global_count', workoutInitiatedCount.toString());
-      }
-
-      const setObj = {
-        id: Date.now(),
-        exerciseName,
-        implement,
-        muscle,
-        secondaryMuscles,
-        rpe,
-        weight,
-        reps,
-        ergDistance,
-        ergTime,
-        swimDistance,
-        swimTime,
-        enduranceDistance,
-        enduranceTime,
-        avgHR,
-        maxHR,
-        hr: currentHR
-      };
-
-      currentSessionSets.push(setObj);
-      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
-      renderLoggedSets();
-      updateGlobalCounterUI();
-    }
-
-    function renderLoggedSets() {
-      const container = document.getElementById('logged-sets-list');
-      document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
-
-      if (currentSessionSets.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
-        return;
-      }
-
-      container.innerHTML = currentSessionSets.map((s) => `
-        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
-            <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5 flex-wrap">
-              <span class="bg-slate-800 theme-text px-1.5 py-0.5 rounded-lg font-bold">${s.implement}</span>
-              ${s.implement === "Row Erg" ? `
-                <span>${s.ergDistance}m | ${s.ergTime}</span>
-              ` : s.implement === "Swimming" ? `
-                <span class="text-cyan-400 font-semibold">${s.swimDistance} yds | ${s.swimTime}</span>
-              ` : ["Running", "Walking", "Hiking", "Biking"].includes(s.implement) ? `
-                <span class="text-amber-400 font-semibold">${s.enduranceDistance} mi | ${s.enduranceTime}</span>
-                ${s.avgHR ? `<span class="text-rose-400 font-bold"><i class="fa-solid fa-heart-pulse"></i> ${s.avgHR} BPM</span>` : ''}
-              ` : `
-                <span>${s.weight} lbs × ${s.reps} reps</span>
-              `}
-              <span class="text-slate-500">RPE ${s.rpe}</span>
-            </div>
-          </div>
-          <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
-            <i class="fa-solid fa-trash-can text-sm"></i>
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function deleteSet(id) {
-      currentSessionSets = currentSessionSets.filter(s => s.id !== id);
-      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
-      renderLoggedSets();
-      updateGlobalCounterUI();
-    }
-
-    function evaluateAndFinishWorkout() {
-      if (currentSessionSets.length === 0) {
-        showToastNotification("Empty Session", "Please log at least one exercise set before finishing.", "fa-solid fa-dumbbell text-amber-400");
-        return;
-      }
-
-      const workoutName = document.getElementById('workout-title-input').value.trim() || "";
-      const notes = document.getElementById('workout-notes-input').value.trim() || "";
-
-      let totalVolume = 0;
-      let totalDurationMin = 0;
-
-      currentSessionSets.forEach(s => {
-        if (s.implement === "Row Erg") {
-          totalVolume += s.ergDistance;
-          const parts = (s.ergTime || "02:00").split(':');
-          totalDurationMin += (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0) / 60;
-        } else if (s.implement === "Swimming") {
-          totalVolume += s.swimDistance;
-          const parts = (s.swimTime || "10:00").split(':');
-          totalDurationMin += (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0) / 60;
-        } else if (["Running", "Walking", "Hiking", "Biking"].includes(s.implement)) {
-          totalVolume += (s.enduranceDistance * 1000);
-          const parts = (s.enduranceTime || "00:30:00").split(':');
-          if (parts.length === 3) {
-            totalDurationMin += (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + (parseInt(parts[2]) || 0) / 60;
-          }
-        } else {
-          totalVolume += (s.weight * s.reps);
-          totalDurationMin += 3;
-        }
-      });
-
-      const totalSets = currentSessionSets.length;
-      const avgRPE = currentSessionSets.reduce((acc, s) => acc + s.rpe, 0) / totalSets;
-
-      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4)).toFixed(1);
-      const anaerobicTE = Math.min(5.0, (currentSessionSets.filter(s => s.rpe >= 9).length * 0.7) + (totalVolume > 2000 ? 1.2 : 0.5)).toFixed(1);
-
-      const weightKg = userWeight * 0.453592;
-      const estimatedMinutes = Math.max(15, Math.round(totalDurationMin));
-
-      let metFactor = 5.0;
-      if (currentSessionSets.some(s => s.implement === "Running")) metFactor = 9.8;
-      else if (currentSessionSets.some(s => s.implement === "Swimming")) metFactor = 8.0;
-
-      const caloriesBurned = Math.round((metFactor * 3.5 * weightKg / 200) * estimatedMinutes);
-
-      document.getElementById('aerobic-te-score').innerText = aerobicTE;
-      document.getElementById('aerobic-te-label').innerText = aerobicTE > 3.0 ? "High Aerobic" : "Moderate";
-
-      document.getElementById('anaerobic-te-score').innerText = anaerobicTE;
-      document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic" : "Minor";
-
-      document.getElementById('calories-burned-score').innerText = caloriesBurned;
-
-      const muscleMap = {};
-      const secondaryMuscleSet = new Set();
-
-      currentSessionSets.forEach(s => {
-        let vol = s.weight * s.reps;
-        if (s.implement === "Row Erg") vol = s.ergDistance;
-        else if (s.implement === "Swimming") vol = s.swimDistance;
-        else if (["Running", "Walking", "Hiking", "Biking"].includes(s.implement)) vol = s.enduranceDistance * 100;
-
-        muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
-        if (s.secondaryMuscles && Array.isArray(s.secondaryMuscles)) {
-          s.secondaryMuscles.forEach(sec => secondaryMuscleSet.add(sec));
-        }
-      });
-
-      const muscleContainer = document.getElementById('muscle-breakdown-bars');
-      muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
-        <div class="space-y-1">
-          <div class="flex justify-between text-xs font-semibold">
-            <span class="text-slate-300">${m}</span>
-            <span class="theme-text font-bold">${Math.round(vol)} units</span>
-          </div>
-          <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-800">
-            <div class="theme-bg h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
-          </div>
-        </div>
-      `).join('');
-
-      updateAnatomicalBodyMap(muscleMap, Array.from(secondaryMuscleSet));
-
-      const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
-      const workoutObj = {
-        date: targetDate,
-        workoutName,
-        notes,
-        totalSets,
-        totalVolume,
-        aerobicTE,
-        anaerobicTE,
-        caloriesBurned,
-        sets: [...currentSessionSets]
-      };
-
-      lastEvaluatedSummary = workoutObj;
-
-      const existingIdx = completedWorkoutsHistory.findIndex(item => (typeof item === 'string' ? item : item.date) === targetDate);
-      if (existingIdx >= 0) {
-        completedWorkoutsHistory[existingIdx] = workoutObj;
-      } else {
-        completedWorkoutsHistory.push(workoutObj);
-      }
-      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
-
-      if (typeof window.incrementCloudGlobalCounter === 'function') {
-        window.incrementCloudGlobalCounter();
-      } else {
-        window.globalShowedUpCount += 1;
-        localStorage.setItem('showUp_global_counter', window.globalShowedUpCount.toString());
-        updateGlobalCounterUI();
-      }
-
-      document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
-      document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;
-
-      const notesEl = document.getElementById('summary-notes-display');
-      if (notes) {
-        notesEl.innerText = `Notes: "${notes}"`;
-        notesEl.classList.remove('hidden');
-      } else {
-        notesEl.classList.add('hidden');
-      }
-
-      document.getElementById('workout-summary-card').classList.remove('hidden');
-      document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
-
-      currentSessionSets = [];
-      workoutInitiatedCount = null;
-      localStorage.removeItem('showUp_active_workout_sets');
-      localStorage.removeItem('showUp_session_start_global_count');
-
-      renderLoggedSets();
-      renderCalendar();
-      renderMonthlyHistory();
-      updateGlobalCounterUI();
-      showToastNotification("Workout Evaluated! ✓", "Your workout session has been logged and the daily counter incremented.", "fa-solid fa-check-double theme-text");
-    }
-
-    function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
-      const muscleSvgMap = {
-        'Chest': ['body-chest'],
-        'Back': ['body-back'],
-        'Shoulders': ['body-shoulders-ant', 'body-shoulders-post'],
-        'Biceps': ['body-biceps'],
-        'Triceps': ['body-triceps'],
-        'Core/Abs': ['body-core'],
-        'Quads': ['body-quads'],
-        'Hamstrings/Glutes': ['body-hamstrings']
-      };
-
-      Object.values(muscleSvgMap).flat().forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.setAttribute('fill', '#334155');
-      });
-
-      const sortedMuscles = Object.entries(muscleMap).sort((a, b) => b[1] - a[1]);
-      if (sortedMuscles.length === 0) return;
-
-      const primaryTarget = sortedMuscles[0][0];
-
-      if (primaryTarget === "Full Body") {
-        ['body-back', 'body-hamstrings', 'body-chest'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#ef4444');
-        });
-        ['body-shoulders-ant', 'body-shoulders-post', 'body-quads', 'body-core'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#eab308');
-        });
-        return;
-      }
-
-      if (muscleSvgMap[primaryTarget]) {
-        muscleSvgMap[primaryTarget].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#ef4444');
-        });
-      }
-
-      const combinedSecondaries = new Set([
-        ...sortedMuscles.slice(1).map(m => m[0]),
-        ...explicitSecondaries
-      ]);
-
-      combinedSecondaries.forEach(m => {
-        if (m !== primaryTarget && muscleSvgMap[m]) {
-          muscleSvgMap[m].forEach(id => {
-            const el = document.getElementById(id);
-            if (el && el.getAttribute('fill') !== '#ef4444') {
-              el.setAttribute('fill', '#eab308');
-            }
-          });
-        }
-      });
-    }
-
-    function closeSummary() {
-      document.getElementById('workout-summary-card').classList.add('hidden');
-    }
-
-    function renderCalendar() {
-      const grid = document.getElementById('calendar-grid');
-      const monthYearLabel = document.getElementById('calendar-month-year-label');
-      grid.innerHTML = '';
-
-      const year = calendarDate.getFullYear();
-      const month = calendarDate.getMonth();
-
-      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      monthYearLabel.innerText = `${monthNames[month]} ${year}`;
-
-      const dayNames = ["S", "M", "T", "W", "T", "F", "S"];
-      dayNames.forEach(d => {
-        grid.innerHTML += `<div class="text-slate-500 font-bold py-1">${d}</div>`;
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < firstDay; i++) {
-        grid.innerHTML += `<div></div>`;
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const monthStr = String(month + 1).padStart(2, '0');
-        const dayStr = String(day).padStart(2, '0');
-        const dateKey = `${year}-${monthStr}-${dayStr}`;
-        
-        const isWorkedOut = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === dateKey);
-
-        grid.innerHTML += `
-          <div class="aspect-square flex items-center justify-center rounded-xl text-xs font-semibold ${isWorkedOut ? 'theme-bg font-black shadow-lg' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
-            ${day}
-          </div>
-        `;
-      }
-
-      calculateStreaks();
-    }
-
-    function calculateStreaks() {
-      if (completedWorkoutsHistory.length === 0) {
-        document.getElementById('current-streak-val').innerText = '0 days';
-        document.getElementById('best-streak-val').innerText = '0 days';
-        return;
-      }
-
-      const dates = Array.from(new Set(completedWorkoutsHistory.map(w => typeof w === 'string' ? w : w.date)))
-        .filter(Boolean)
-        .sort((a, b) => new Date(b) - new Date(a));
-
-      let currentStreak = 0;
-      let maxStreak = 0;
-      let tempStreak = 0;
-
-      const today = new Date();
-      today.setHours(0,0,0,0);
-
-      let checkDate = new Date(today);
-
-      for (let i = 0; i < dates.length; i++) {
-        const d = new Date(dates[i]);
-        d.setHours(0,0,0,0);
-        const diffDays = Math.round((checkDate - d) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0 || diffDays === 1) {
-          tempStreak++;
-          checkDate = d;
-        } else {
-          break;
-        }
-      }
-      currentStreak = tempStreak;
-
-      let streakRun = 0;
-      for (let i = 0; i < dates.length; i++) {
-        if (i === 0) {
-          streakRun = 1;
-        } else {
-          const prev = new Date(dates[i-1]);
-          const curr = new Date(dates[i]);
-          prev.setHours(0,0,0,0);
-          curr.setHours(0,0,0,0);
-          const diff = Math.round((prev - curr) / (1000 * 60 * 60 * 24));
-          if (diff === 1) {
-            streakRun++;
-          } else {
-            streakRun = 1;
-          }
-        }
-        if (streakRun > maxStreak) maxStreak = streakRun;
-      }
-
-      document.getElementById('current-streak-val').innerText = `${currentStreak} ${currentStreak === 1 ? 'day' : 'days'}`;
-      document.getElementById('best-streak-val').innerText = `${maxStreak} ${maxStreak === 1 ? 'day' : 'days'}`;
-    }
-
-    function renderMonthlyHistory() {
-      const container = document.getElementById('monthly-history-list');
-      const year = calendarDate.getFullYear();
-      const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
-      const prefix = `${year}-${monthStr}`;
-
-      const monthlyEntries = completedWorkoutsHistory.filter(item => {
-        const d = typeof item === 'string' ? item : item.date;
-        return d && d.startsWith(prefix);
-      });
-
-      document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
-
-      if (monthlyEntries.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;
-        return;
-      }
-
-      container.innerHTML = monthlyEntries.map(w => {
-        const dateStr = typeof w === 'string' ? w : w.date;
-        const nameStr = typeof w === 'object' && w.workoutName ? w.workoutName : 'Workout Session';
-        const notesStr = typeof w === 'object' && w.notes ? w.notes : '';
-        const setsList = typeof w === 'object' && w.sets ? w.sets : [];
-        const setsCount = setsList.length || '1+';
-        const cals = typeof w === 'object' && w.caloriesBurned ? `${w.caloriesBurned} kcal` : '';
-
-        return `
-          <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden transition-all">
-            <div onclick="triggerHaptic('light'); toggleWorkoutAccordion('${dateStr}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition select-none">
-              <div class="flex items-center gap-3">
-                <i id="chevron-${dateStr}" class="fa-solid fa-chevron-right text-xs text-slate-500 transition-transform"></i>
-                <div>
-                  <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-check-double theme-text"></i>
-                    <span>${nameStr}</span>
-                    <span class="text-xs font-normal text-slate-400">(${dateStr})</span>
-                  </div>
-                  <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
-                    <span>${setsCount} Sets</span>
-                    ${cals ? `<span class="text-slate-600">•</span><span class="text-rose-400 font-bold">${cals}</span>` : ''}
-                  </div>
-                </div>
+      const points = window.heatmapDataPoints || [];
+      document.getElementById('map-marker-count').innerText = `${points.length} Locations`;
+
+      points.forEach(pt => {
+        if (pt.lat && pt.lng) {
+          const marker = L.marker([pt.lat, pt.lng], { icon: userIcon });
+          marker.bindPopup(`
+            <div class="text-center font-sans space-y-1">
+              <div class="font-extrabold theme-text flex items-center justify-center gap-1">
+                <i class="fa-solid fa-check-double text-xs"></i>
+                <span>${pt.city || 'Active User'}, ${pt.state || ''}</span>
               </div>
-
-              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
-                <button onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
-                  <i class="fa-brands fa-whatsapp text-sm"></i>
-                </button>
-                <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
-                </button>
-              </div>
+              <div class="text-[10px] text-slate-400 font-semibold">${pt.country || 'Global'} (${pt.continent || 'World'})</div>
+              <span class="inline-block bg-emerald-500/15 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full mt-1">Showed Up Today</span>
             </div>
+          `);
+          markerClusterGroup.addLayer(marker);
+        }
+      });
 
-            <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
-              ${notesStr ? `<div class="text-xs text-slate-300 italic bg-slate-950/80 p-2 rounded-lg border border-slate-800 mb-2">Notes: "${notesStr}"</div>` : ''}
-              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
-              ${setsList.length === 0 ? `
-                <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
-              ` : setsList.map(s => `
-                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
-                  <div>
-                    <div class="font-bold text-slate-200">${s.exerciseName}</div>
-                    <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px] flex-wrap">
-                      <span class="bg-slate-800 theme-text px-1.5 py-0.2 rounded-lg font-bold">${s.implement}</span>
-                      ${s.implement === "Row Erg" ? `
-                        <span>${s.ergDistance}m | ${s.ergTime}</span>
-                      ` : s.implement === "Swimming" ? `
-                        <span class="text-cyan-400 font-bold">${s.swimDistance} yds | ${s.swimTime}</span>
-                      ` : ["Running", "Walking", "Hiking", "Biking"].includes(s.implement) ? `
-                        <span class="text-amber-400 font-bold">${s.enduranceDistance} mi | ${s.enduranceTime}</span>
-                      ` : `
-                        <span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>
-                      `}
-                      <span class="text-slate-500">RPE ${s.rpe}</span>
-                    </div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
+      updateMapScopeSummary();
+      renderTopRegionsBreakdown();
+    };
 
-    function toggleWorkoutAccordion(dateStr) {
-      const detailsEl = document.getElementById(`details-${dateStr}`);
-      const chevronEl = document.getElementById(`chevron-${dateStr}`);
+    function updateMapScopeSummary() {
+      if (!leafletMap) return;
+      const zoom = leafletMap.getZoom();
+      const badgeEl = document.getElementById('map-zoom-scope-badge');
+      const labelEl = document.getElementById('map-scope-summary-label');
 
-      if (detailsEl.classList.contains('hidden')) {
-        detailsEl.classList.remove('hidden');
-        if (chevronEl) chevronEl.style.transform = "rotate(90deg)";
+      if (zoom < 4) {
+        if (badgeEl) badgeEl.innerText = "Continent Scope";
+        if (labelEl) labelEl.innerText = "Summarized by Continent";
+      } else if (zoom >= 4 && zoom < 7) {
+        if (badgeEl) badgeEl.innerText = "Country Scope";
+        if (labelEl) labelEl.innerText = "Summarized by Country";
+      } else if (zoom >= 7 && zoom < 10) {
+        if (badgeEl) badgeEl.innerText = "State / Regional Scope";
+        if (labelEl) labelEl.innerText = "Summarized by State / Region";
       } else {
-        detailsEl.classList.add('hidden');
-        if (chevronEl) chevronEl.style.transform = "rotate(0deg)";
+        if (badgeEl) badgeEl.innerText = "Street / Pin Scope";
+        if (labelEl) labelEl.innerText = "Individual User Locations";
       }
     }
 
-    function deleteHistoricalWorkout(dateStr) {
-      showConfirmDialog("Delete Workout", `Are you sure you want to delete the workout entry for ${dateStr}?`, () => {
-        completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
-        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
-        renderCalendar();
-        renderMonthlyHistory();
-      });
-    }
-
-    function navigateCalendarMonth(delta) {
-      calendarDate.setMonth(calendarDate.getMonth() + delta);
-      renderCalendar();
-      renderMonthlyHistory();
-    }
-
-    function renderSquads() {
-      const container = document.getElementById('squads-list-container');
+    function renderTopRegionsBreakdown() {
+      const container = document.getElementById('map-top-regions-list');
       if (!container) return;
 
-      if (!window.squadsData || window.squadsData.length === 0) {
-        container.innerHTML = `
-          <div class="text-center py-10 bg-slate-950/60 rounded-3xl border border-slate-800/80 p-6 space-y-3">
-            <div class="w-12 h-12 rounded-2xl theme-bg-soft theme-text mx-auto flex items-center justify-center text-xl">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="space-y-1">
-              <h3 class="text-sm font-bold text-slate-200">No Squads Joined</h3>
-              <p class="text-xs text-slate-500 max-w-xs mx-auto">Create a squad and invite friends via their Gmail address to stay quietly motivated together.</p>
-            </div>
-            <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="m3-btn-primary px-4 py-2 rounded-xl text-xs font-bold transition">
-              Create First Squad
-            </button>
+      const points = window.heatmapDataPoints || [];
+      const regionCounts = {};
+      points.forEach(p => {
+        const key = p.state ? `${p.state}, ${p.country}` : (p.country || 'Global');
+        regionCounts[key] = (regionCounts[key] || 0) + 1;
+      });
+
+      const sorted = Object.entries(regionCounts).sort((a,b) => b[1] - a[1]).slice(0, 4);
+
+      container.innerHTML = sorted.map(([region, count]) => `
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between">
+          <div class="truncate pr-1">
+            <span class="text-[10px] font-bold text-slate-400 block truncate">${region}</span>
+            <span class="text-xs font-black text-slate-100">${count} showed up</span>
           </div>
-        `;
-        return;
-      }
-
-      const activeUserEmail = (JSON.parse(localStorage.getItem('showUp_user_profile') || '{}').email || '').toLowerCase();
-
-      container.innerHTML = window.squadsData.map(s => {
-        const isCreator = s.creatorEmail && activeUserEmail && s.creatorEmail.toLowerCase() === activeUserEmail;
-
-        return `
-          <div class="bg-slate-950 p-4 rounded-3xl border border-slate-800 space-y-3">
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-              <div>
-                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                  ${s.name}
-                  ${isCreator ? `<span class="text-[9px] uppercase px-2 py-0.5 rounded-md theme-badge font-black">Creator</span>` : ''}
-                </h3>
-                <p class="text-[11px] text-slate-500">${(s.members || []).length} Members • Gmail Accountability</p>
-              </div>
-
-              ${isCreator ? `
-                <button onclick="triggerHaptic('medium'); deleteEntireSquad('${s.id}')" class="text-xs text-rose-400 hover:text-rose-300 transition" title="Delete Squad">
-                  <i class="fa-solid fa-trash-can"></i>
-                </button>
-              ` : `
-                <button onclick="triggerHaptic('medium'); leaveSquad('${s.id}')" class="text-xs text-slate-500 hover:text-rose-400 transition" title="Leave Squad">
-                  <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-              `}
-            </div>
-
-            <div class="space-y-2">
-              ${(s.members || []).map(m => {
-                const canRemove = isCreator && m.email.toLowerCase() !== activeUserEmail;
-                return `
-                  <div class="flex items-center justify-between bg-slate-900/60 px-3 py-2 rounded-2xl border border-slate-800/80 text-xs">
-                    <div class="flex items-center gap-2">
-                      <div class="w-2 h-2 rounded-full ${m.status === 'Active' ? 'theme-bg' : 'bg-slate-600'}"></div>
-                      <span class="font-semibold text-slate-200">${m.name || m.email}</span>
-                      <span class="text-[10px] text-slate-500">(${m.email})</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                      <button onclick="triggerHaptic('light'); nudgeMember('${m.name}')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded-lg border border-slate-700 transition" title="Send Fistbump">
-                        👊 Fistbump
-                      </button>
-                      ${canRemove ? `
-                        <button onclick="triggerHaptic('medium'); removeMemberFromSquad('${s.id}', '${m.email}')" class="text-slate-600 hover:text-rose-400 p-1" title="Remove Member">
-                          <i class="fa-solid fa-xmark text-xs"></i>
-                        </button>
-                      ` : ''}
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-
-            ${isCreator ? `
-              <button onclick="triggerHaptic('medium'); addMemberToSquadPrompt('${s.id}')" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-2xl text-xs border border-slate-800 transition flex items-center justify-center gap-1.5">
-                <i class="fa-solid fa-user-plus theme-text"></i>
-                <span>Add Member via Gmail</span>
-              </button>
-            ` : ''}
-          </div>
-        `;
-      }).join('');
+          <i class="fa-solid fa-location-dot theme-text text-xs shrink-0"></i>
+        </div>
+      `).join('') || '<div class="col-span-4 text-center py-2 text-slate-600 italic">No locations available</div>';
     }
 
-    function openCreateSquadModal() {
-      const activeUser = JSON.parse(localStorage.getItem('showUp_user_profile') || '{}');
-      const name = prompt("Enter Squad / Circle Name:");
-      if (!name || !name.trim()) return;
+    window.refreshGlobalMap = function() {
+      if (typeof window.detectUserGeoLocation === 'function') window.detectUserGeoLocation();
+      window.renderGlobalHeatmap();
+      showToastNotification("Map Refreshed", "Latest user markers and regional clusters loaded.", "fa-solid fa-earth-americas theme-text");
+    };
 
-      const squadObj = {
-        id: 'squad-' + Date.now(),
-        name: name.trim(),
-        creatorEmail: (activeUser.email || 'user@gmail.com').toLowerCase(),
-        members: [
-          { name: activeUser.firstName || 'You', email: (activeUser.email || 'user@gmail.com').toLowerCase(), status: 'Active' }
-        ]
-      };
-
-      window.squadsData.push(squadObj);
-      localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-      
-      if (typeof window.syncSquadToCloud === 'function') {
-        window.syncSquadToCloud(squadObj);
-      }
-
-      renderSquads();
-      showToastNotification("Squad Created", `"${name}" squad successfully initialized.`, "fa-solid fa-users theme-text");
-    }
-
-    function addMemberToSquadPrompt(squadId) {
-      const squad = window.squadsData.find(s => s.id === squadId);
-      if (!squad) return;
-
-      const email = prompt("Enter friend's Gmail address:");
-      if (!email || !email.includes('@')) {
-        if (email) showToastNotification("Invalid Email", "Please enter a valid Gmail address.", "fa-solid fa-triangle-exclamation text-amber-400");
-        return;
-      }
-
-      const cleanEmail = email.trim().toLowerCase();
-      if (squad.members.some(m => m.email.toLowerCase() === cleanEmail)) {
-        showToastNotification("Already Member", "This Gmail address is already in the squad.", "fa-solid fa-circle-info theme-text");
-        return;
-      }
-
-      squad.members.push({ name: cleanEmail.split('@')[0], email: cleanEmail, status: 'Invited' });
-      localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-
-      if (typeof window.syncSquadToCloud === 'function') {
-        window.syncSquadToCloud(squad);
-      }
-
-      renderSquads();
-      showToastNotification("Member Added", `Added ${cleanEmail} to ${squad.name}.`, "fa-solid fa-user-check theme-text");
-    }
-
-    function removeMemberFromSquad(squadId, memberEmail) {
-      const squad = window.squadsData.find(s => s.id === squadId);
-      if (!squad) return;
-
-      showConfirmDialog("Remove Member", `Remove ${memberEmail} from ${squad.name}?`, () => {
-        squad.members = squad.members.filter(m => m.email.toLowerCase() !== memberEmail.toLowerCase());
-        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-
-        if (typeof window.syncSquadToCloud === 'function') {
-          window.syncSquadToCloud(squad);
+    window.switchTab = function(tabKey) {
+      ['workout', 'calendar', 'squads'].forEach(t => {
+        const view = document.getElementById(`tab-${t}-view`);
+        const navBtn = document.getElementById(`nav-btn-${t}`);
+        if (view) view.classList.add('hidden');
+        if (navBtn) {
+          navBtn.classList.remove('theme-text', 'font-bold');
+          navBtn.classList.add('text-slate-400');
         }
-
-        renderSquads();
       });
-    }
 
-    function deleteEntireSquad(squadId) {
-      showConfirmDialog("Delete Squad", "Are you sure you want to delete this squad for all members?", () => {
-        window.squadsData = window.squadsData.filter(s => s.id !== squadId);
-        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-        renderSquads();
-      });
-    }
-
-    function leaveSquad(squadId) {
-      const squad = window.squadsData.find(s => s.id === squadId);
-      if (!squad) return;
-
-      const activeEmail = (JSON.parse(localStorage.getItem('showUp_user_profile') || '{}').email || '').toLowerCase();
-      showConfirmDialog("Leave Squad", `Leave ${squad.name}?`, () => {
-        squad.members = squad.members.filter(m => m.email.toLowerCase() !== activeEmail);
-        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
-        renderSquads();
-      });
-    }
-
-    function nudgeMember(name) {
-      showToastNotification("Fistbump Sent! 👊", `You sent a live workout fistbump to ${name}.`, "fa-solid fa-hand-fist theme-text");
-    }
-
-    function initSparkline() {
-      const canvas = document.getElementById('hr-sparkline');
-      const ctx = canvas.getContext('2d');
-      
-      function draw() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (hrHistory.length > 1) {
-          ctx.beginPath();
-          ctx.strokeStyle = '#f43f5e';
-          ctx.lineWidth = 2;
-          const step = canvas.width / (hrHistory.length - 1);
-          
-          hrHistory.forEach((val, i) => {
-            const x = i * step;
-            const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          });
-          ctx.stroke();
-        }
-        requestAnimationFrame(draw);
-      }
-      draw();
-    }
-
-    async function connectHRM() {
-      if (!navigator.bluetooth) {
-        showToastNotification("Bluetooth Unavailable", "Web Bluetooth API is not supported on this browser/device.", "fa-solid fa-bluetooth text-amber-400");
-        return;
+      const activeView = document.getElementById(`tab-${tabKey}-view`);
+      const activeBtn = document.getElementById(`nav-btn-${tabKey}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400');
+        activeBtn.classList.add('theme-text', 'font-bold');
       }
 
-      try {
-        hrmDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ['heart_rate'] }]
-        });
-
-        const server = await hrmDevice.gatt.connect();
-        const service = await server.getPrimaryService('heart_rate');
-        const characteristic = await service.getCharacteristic('heart_rate_measurement');
-
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', (e) => {
-          const val = e.target.value;
-          const flags = val.getUint8(0);
-          const hrValue = (flags & 0x01) ? val.getUint16(1, true) : val.getUint8(1);
-
-          currentHR = hrValue;
-          document.getElementById('live-hr-display').innerText = currentHR;
-          document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full theme-bg inline-block"></span><span>Connected HRM</span>`;
-          
-          hrHistory.push(currentHR);
-          if (hrHistory.length > 50) hrHistory.shift();
-        });
-
-        document.getElementById('hrm-btn-text').innerText = "HRM Paired";
-        showToastNotification("HRM Connected", "Bluetooth Heart Rate Monitor connected successfully.", "fa-solid fa-bluetooth theme-text");
-      } catch (err) {
-        showToastNotification("HRM Connection Failed", err.message || "Failed to pair heart rate monitor.", "fa-solid fa-triangle-exclamation text-rose-400");
+      if (tabKey === 'squads') {
+        setTimeout(() => {
+          if (!leafletMap) window.initGlobalMap();
+          if (leafletMap) leafletMap.invalidateSize();
+        }, 150);
       }
-    }
+    };
 
-    function toggleHRSimulator() {
-      if (hrSimInterval) {
-        clearInterval(hrSimInterval);
-        hrSimInterval = null;
-        document.getElementById('btn-toggle-sim').innerText = "Simulate";
-        document.getElementById('live-hr-display').innerText = "--";
-        document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span><span>Disconnected</span>`;
-        return;
-      }
-
-      document.getElementById('btn-toggle-sim').innerText = "Stop Sim";
-      document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full theme-bg inline-block"></span><span>Simulating HR</span>`;
-      
-      hrSimInterval = setInterval(() => {
-        currentHR = Math.floor(120 + Math.random() * 40);
-        document.getElementById('live-hr-display').innerText = currentHR;
-        hrHistory.push(currentHR);
-        if (hrHistory.length > 50) hrHistory.shift();
-      }, 1000);
-    }
-
-    function toggleHRCardVisibility(forceCollapse = null) {
-      const hrBody = document.getElementById('hr-card-body');
-      const icon = document.getElementById('hr-collapse-icon');
-      const isHidden = forceCollapse !== null ? forceCollapse : !hrBody.classList.contains('hidden');
-
-      if (isHidden) {
-        hrBody.classList.add('hidden');
-        icon.className = "fa-solid fa-chevron-down text-xs";
-      } else {
-        hrBody.classList.remove('hidden');
-        icon.className = "fa-solid fa-chevron-up text-xs";
-      }
-    }
-
-    function handleGoogleSignIn() {
-      const customClientId = googleClientId || localStorage.getItem('showUp_google_client_id') || "";
-
-      // Avoid passing dummy/empty client IDs to Google OAuth endpoint which triggers the "invalid_client" screen
-      if (!customClientId || customClientId.includes('demo_client_id')) {
-        demoProfileFallback();
-        return;
-      }
-
-      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-        demoProfileFallback();
-        return;
-      }
-
-      try {
-        const client = google.accounts.oauth2.initTokenClient({
-          client_id: customClientId,
-          scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          callback: (response) => {
-            if (response.access_token) {
-              googleAccessToken = response.access_token;
-              localStorage.setItem('showUp_google_token', googleAccessToken);
-
-              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${googleAccessToken}` }
-              })
-              .then(res => res.json())
-              .then(profile => {
-                if (profile && profile.email) {
-                  const firstName = profile.given_name || profile.name || 'User';
-                  const userEmail = profile.email;
-                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-
-                  const profileObj = { firstName, email: userEmail, picture };
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-
-                  updateProfileUI(firstName, userEmail, picture);
-                  showToastNotification("Signed In", `Welcome back, ${firstName}!`, "fa-solid fa-user-check theme-text");
-                }
-              })
-              .catch(() => demoProfileFallback());
-            }
-          },
-          error_callback: (err) => {
-            console.warn("Google OAuth Error:", err);
-            demoProfileFallback();
-          }
-        });
-        client.requestAccessToken();
-      } catch (e) {
-        demoProfileFallback();
-      }
-    }
-
-    function demoProfileFallback() {
-      const demoProfile = { firstName: 'Demo Athlete', email: 'athlete@gmail.com', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
-      localStorage.setItem('showUp_user_profile', JSON.stringify(demoProfile));
-      updateProfileUI(demoProfile.firstName, demoProfile.email, demoProfile.picture);
-      showToastNotification("Signed In", "Authenticated as Demo Athlete.", "fa-solid fa-user-check theme-text");
-    }
-
-    function updateProfileUI(firstName, email, picture) {
-      if (firstName) document.getElementById('user-first-name').innerText = firstName;
-      if (email) {
-        document.getElementById('user-email').innerText = email;
-        document.getElementById('dropdown-user-email').innerText = email;
-      }
-      if (picture) document.getElementById('user-avatar').src = picture;
-
-      document.getElementById('btn-google-login').classList.add('hidden');
-      document.getElementById('google-user-profile').classList.remove('hidden');
-      renderSquads();
-    }
-
-    function restoreSavedSession() {
-      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
-      if (savedProfile) {
-        updateProfileUI(savedProfile.firstName, savedProfile.email, savedProfile.picture);
-      }
-    }
-
-    function handleLogout() {
-      googleAccessToken = null;
-      localStorage.removeItem('showUp_google_token');
-      localStorage.removeItem('showUp_user_profile');
-
-      document.getElementById('profile-dropdown-menu').classList.add('hidden');
-      document.getElementById('google-user-profile').classList.add('hidden');
-      document.getElementById('btn-google-login').classList.remove('hidden');
-
-      document.getElementById('user-first-name').innerText = 'User';
-      document.getElementById('user-email').innerText = 'user@email.com';
-      document.getElementById('dropdown-user-email').innerText = 'user@email.com';
-      document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-      
-      renderSquads();
-      showToastNotification("Logged Out", "You have signed out of your account.", "fa-solid fa-right-from-bracket theme-text");
-    }
-
-    function toggleProfileDropdown(e) {
-      if (e) e.stopPropagation();
-      document.getElementById('profile-dropdown-menu').classList.toggle('hidden');
-    }
-
-    function closeProfileDropdownOutside(e) {
-      const dropdown = document.getElementById('profile-dropdown-menu');
-      const profileBadge = document.getElementById('google-user-profile');
-      if (dropdown && !dropdown.classList.contains('hidden')) {
-        if (!profileBadge.contains(e.target)) {
-          dropdown.classList.add('hidden');
-        }
-      }
-    }
-
-    function toggleSettingsModal() {
-      document.getElementById('settings-modal').classList.toggle('hidden');
-    }
-
-    function switchTab(tabName) {
-      const workoutView = document.getElementById('tab-workout-view');
-      const calendarView = document.getElementById('tab-calendar-view');
-      const squadsView = document.getElementById('tab-squads-view');
-
-      const btnWorkout = document.getElementById('nav-btn-workout');
-      const btnCalendar = document.getElementById('nav-btn-calendar');
-      const btnSquads = document.getElementById('nav-btn-squads');
-
-      workoutView.classList.add('hidden');
-      calendarView.classList.add('hidden');
-      squadsView.classList.add('hidden');
-
-      btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
-      btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
-      btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
-
-      if (tabName === 'workout') {
-        workoutView.classList.remove('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
-      } else if (tabName === 'calendar') {
-        calendarView.classList.remove('hidden');
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
-        renderCalendar();
-        renderMonthlyHistory();
-        renderWeightHistory();
-      } else if (tabName === 'squads') {
-        squadsView.classList.remove('hidden');
-        btnSquads.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
-        renderSquads();
-        updateGlobalCounterUI();
-      }
-    }
-
-    function triggerHaptic(type = 'light') {
-      if (!('vibrate' in navigator)) return;
-      switch (type) {
-        case 'light': navigator.vibrate(12); break;
-        case 'medium': navigator.vibrate(25); break;
-        case 'heavy': navigator.vibrate([35, 50, 35]); break;
-      }
-    }
-
-    function exportJSONBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-    }
-
-    function shareWorkoutToWhatsApp(dateStr = null) {
-      const targetDate = dateStr || (lastEvaluatedSummary ? lastEvaluatedSummary.date : selectedWorkoutDate);
-      const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === targetDate) || lastEvaluatedSummary;
-      
-      if (!w) return;
-
-      const titlePart = w.workoutName ? `🏋️ *${w.workoutName}*\n` : `🏋️ *showUp Workout Summary*\n`;
-      const notesPart = w.notes ? `📝 *Notes:* ${w.notes}\n` : ``;
-      const setsCount = w.sets ? w.sets.length : w.totalSets || 0;
-      const cals = w.caloriesBurned ? `🔥 *Calories:* ${w.caloriesBurned} kcal\n` : ``;
-
-      let text = `${titlePart}` +
-                 `📅 *Date:* ${w.date || targetDate}\n` +
-                 `${notesPart}` +
-                 `📊 *Total Sets:* ${setsCount}\n` +
-                 `${cals}`;
-
-      if (w.aerobicTE && w.anaerobicTE) {
-        text += `🫁 *Aerobic Load:* ${w.aerobicTE} / 5.0\n` +
-                `⚡ *Anaerobic Load:* ${w.anaerobicTE} / 5.0\n`;
-      }
-
-      text += `\n_Compound your progress with showUp_`;
-
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-    }
-  </script>
-</body>
-</html>
+    /* ... existing functions ... */
+<!-- ... existing code -->
