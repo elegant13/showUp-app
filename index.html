@@ -11,7 +11,7 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Google Identity Services SDK for Google Drive OAuth -->
+  <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <style>
@@ -45,13 +45,13 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.4</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.5</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Google Sign-In & Interactive User Profile Display with Logout Dropdown -->
+    <!-- Google Sign-In & User Profile Display -->
     <div class="relative flex items-center gap-2">
       <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
         <!-- Clickable Avatar & User Info Container -->
@@ -256,7 +256,7 @@
         </button>
       </section>
 
-      <!-- POST-WORKOUT SUMMARY & PHYSIOLOGY EVALUATION -->
+      <!-- POST-WORKOUT SUMMARY CARD -->
       <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -305,15 +305,13 @@
 
         <div class="space-y-2">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
-          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
-            <!-- Dynamic Muscle Bars -->
-          </div>
+          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800"></div>
         </div>
       </section>
 
     </div>
 
-    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT (HIDDEN BY DEFAULT) -->
+    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT -->
     <div id="tab-calendar-view" class="hidden space-y-6">
 
       <!-- CALENDAR MODULE -->
@@ -341,7 +339,6 @@
           </div>
         </div>
 
-        <!-- REPOSITIONED CALENDAR NAVIGATOR -->
         <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
           <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
             <i class="fa-solid fa-chevron-left"></i>
@@ -352,13 +349,10 @@
           </button>
         </div>
 
-        <!-- CALENDAR GRID -->
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
-          <!-- Day Names and Tiles rendered dynamically by JS -->
-        </div>
+        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
       </section>
 
-      <!-- MONTHLY HISTORICAL WORKOUT LIST WITH EDIT/DELETE/SHARE -->
+      <!-- MONTHLY HISTORICAL WORKOUT LIST -->
       <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
@@ -368,9 +362,7 @@
           <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
         </div>
 
-        <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1">
-          <!-- Rendered dynamically -->
-        </div>
+        <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
       </section>
 
     </div>
@@ -397,7 +389,6 @@
 
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
-    // HARDCODED GOOGLE OAUTH CLIENT ID
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
 
     // APPLICATION STATE WITH LOCAL STORAGE RECOVERY
@@ -410,7 +401,6 @@
     let calendarDate = new Date();
     let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
 
-    // HAPTIC FEEDBACK ENGINE
     function triggerHaptic(type = 'light') {
       if (!('vibrate' in navigator)) return;
       switch (type) {
@@ -420,7 +410,6 @@
       }
     }
 
-    // PROFILE DROPDOWN MENU ENGINE
     function toggleProfileDropdown(e) {
       if (e) e.stopPropagation();
       const dropdown = document.getElementById('profile-dropdown-menu');
@@ -438,7 +427,6 @@
     }
 
     function handleLogout() {
-      // Clear local auth session state
       googleAccessToken = null;
       localStorage.removeItem('showUp_google_token');
       localStorage.removeItem('showUp_user_profile');
@@ -447,19 +435,16 @@
         google.accounts.oauth2.revoke(googleAccessToken, () => {});
       }
 
-      // Hide profile pill and dropdown, show login button
       document.getElementById('profile-dropdown-menu').classList.add('hidden');
       document.getElementById('google-user-profile').classList.add('hidden');
       document.getElementById('btn-google-login').classList.remove('hidden');
 
-      // Reset profile text elements
       document.getElementById('user-first-name').innerText = 'User';
       document.getElementById('user-email').innerText = 'user@email.com';
       document.getElementById('dropdown-user-email').innerText = 'user@email.com';
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
     }
 
-    // TAB SWITCHING SYSTEM
     function switchTab(tabName) {
       const workoutView = document.getElementById('tab-workout-view');
       const calendarView = document.getElementById('tab-calendar-view');
@@ -481,7 +466,6 @@
       }
     }
 
-    // EXERCISE CATALOG
     const defaultCatalog = [
       { name: "Ring Dip", implement: "Gymnastics Rings", muscle: "Chest" },
       { name: "Ring Push-Up", implement: "Gymnastics Rings", muscle: "Chest" },
@@ -497,7 +481,6 @@
       { name: "Pull-Up", implement: "Bodyweight", muscle: "Back" }
     ];
 
-    // INITIALIZE APP AND RESTORE ACTIVE SESSIONS
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
       renderLoggedSets();
@@ -507,7 +490,6 @@
     });
 
     function restoreSavedSession() {
-      // 1. Restore Google Profile Session if saved
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
       if (googleAccessToken && savedProfile) {
         document.getElementById('user-first-name').innerText = savedProfile.firstName || 'User';
@@ -573,12 +555,9 @@
       };
 
       currentSessionSets.push(setObj);
-
-      // Save active session sets locally
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
 
-      // Trigger automatic Google Drive sync after logging set
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
@@ -625,7 +604,6 @@
       }
     }
 
-    // WHATSAPP SHARING ENGINE
     function shareSetToWhatsApp(setId) {
       const set = currentSessionSets.find(s => s.id === setId);
       if (!set) return;
@@ -668,7 +646,6 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
-    // WORKOUT EVALUATION ENGINE
     function evaluateAndFinishWorkout() {
       if (currentSessionSets.length === 0) {
         alert("Please log at least one set before finishing your workout.");
@@ -732,7 +709,6 @@
       document.getElementById('workout-summary-card').classList.remove('hidden');
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
-      // Clear active workout buffer since it is now completed
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
 
@@ -749,7 +725,6 @@
       document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
-    // CALENDAR & MONTHLY HISTORY ENGINE
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
@@ -871,7 +846,6 @@
       renderMonthlyHistory();
     }
 
-    // HR TELEMETRY
     function initSparkline() {
       const canvas = document.getElementById('hr-sparkline');
       const ctx = canvas.getContext('2d');
@@ -918,21 +892,24 @@
       }, 1000);
     }
 
-    // GOOGLE OAUTH & DRIVE SYNC ENGINE
+    // UPDATED GOOGLE OAUTH WITH FULL SCOPES
     function handleGoogleSignIn() {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.file',
+        // Combined Drive File + Userinfo Profile + Userinfo Email Scopes
+        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
         callback: (response) => {
           if (response.access_token) {
             googleAccessToken = response.access_token;
             localStorage.setItem('showUp_google_token', googleAccessToken);
 
-            // Fetch user profile info and save locally
             fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
               headers: { Authorization: `Bearer ${googleAccessToken}` }
             })
-            .then(res => res.json())
+            .then(res => {
+              if (!res.ok) throw new Error("Failed to fetch userinfo");
+              return res.json();
+            })
             .then(profile => {
               if (profile) {
                 const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
@@ -942,13 +919,12 @@
                 const profileObj = { firstName, email: userEmail, picture };
                 localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
 
-                document.getElementById('user-first-name').innerText = firstName;
-                document.getElementById('user-email').innerText = userEmail;
-                document.getElementById('dropdown-user-email').innerText = userEmail;
-                document.getElementById('user-avatar').src = picture;
+                updateProfileUI(firstName, userEmail, picture);
               }
             })
-            .catch(() => {})
+            .catch((err) => {
+              console.warn("Profile details fetch warning:", err);
+            })
             .finally(() => {
               document.getElementById('btn-google-login').classList.add('hidden');
               document.getElementById('google-user-profile').classList.remove('hidden');
@@ -960,13 +936,21 @@
       client.requestAccessToken();
     }
 
+    function updateProfileUI(firstName, email, picture) {
+      if (firstName) document.getElementById('user-first-name').innerText = firstName;
+      if (email) {
+        document.getElementById('user-email').innerText = email;
+        document.getElementById('dropdown-user-email').innerText = email;
+      }
+      if (picture) document.getElementById('user-avatar').src = picture;
+    }
+
     function syncToGoogleDrive() {
       if (!googleAccessToken) return;
 
       const syncIcon = document.getElementById('sync-icon');
       syncIcon.className = "fa-solid fa-rotate text-xs fa-spin text-amber-400";
 
-      // Sync both active sets buffer and completed workouts history
       setTimeout(() => {
         renderCalendar();
         renderMonthlyHistory();
@@ -978,10 +962,6 @@
       }, 600);
     }
 
-    // UTILS
-    function scrollToTop() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
     function exportJSONBackup() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
       const downloadAnchor = document.createElement('a');
