@@ -28,10 +28,35 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
   <style>
-    /* Material 3 Dynamic Design Tokens */
     :root {
       --m3-primary: #10b981;
-<!-- ... existing code -->
+      --m3-onPrimary: #000000;
+      --m3-primaryContainer: #064e3b;
+      --m3-onPrimaryContainer: #a7f3d0;
+      --m3-surface: #0f172a;
+      --m3-onSurface: #f8fafc;
+      --m3-surfaceVariant: #1e293b;
+      --m3-onSurfaceVariant: #cbd5e1;
+      --m3-outline: #334155;
+      --theme-accent-color: #10b981;
+      --theme-accent-bg: rgba(16, 185, 129, 0.15);
+      --theme-accent-border: rgba(16, 185, 129, 0.3);
+      --app-font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+      font-family: var(--app-font-family);
+      background-color: #030712;
+      color: var(--m3-onSurface);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .theme-text { color: var(--theme-accent-color) !important; }
+    .theme-bg { background-color: var(--theme-accent-color) !important; color: var(--m3-onPrimary) !important; }
+    .theme-bg-soft { background-color: var(--theme-accent-bg) !important; }
+    .theme-border { border-color: var(--theme-accent-border) !important; }
     .theme-badge {
       background-color: var(--theme-accent-bg) !important;
       color: var(--theme-accent-color) !important;
@@ -84,7 +109,242 @@
       background-color: var(--m3-surfaceVariant);
       border-color: var(--m3-outline);
     }
-<!-- ... existing code -->
+
+    @keyframes checkPop {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      50% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-check-pop {
+      animation: checkPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+  </style>
+</head>
+<body class="pb-24 sm:pb-28">
+
+  <!-- HEADER BAR -->
+  <header class="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800 px-4 py-3">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-2xl theme-bg flex items-center justify-center font-black text-lg shadow-lg">
+          sU
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold tracking-tight text-slate-100 leading-none">showUp</h1>
+          <p class="text-[10px] text-slate-400 font-medium tracking-wide uppercase">Compound Progress</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <!-- GLOBAL COUNTER BADGE -->
+        <div onclick="switchTab('squads')" class="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-full theme-badge text-xs font-bold transition hover:scale-105 active:scale-95 shadow-sm">
+          <i id="header-check-icon" class="fa-solid fa-check-double text-xs"></i>
+          <span id="global-counter-val">0</span>
+          <span class="hidden sm:inline font-semibold opacity-80">Showed Up</span>
+        </div>
+
+        <!-- SETTINGS TOGGLE -->
+        <button onclick="openSettingsModal()" class="w-9 h-9 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </button>
+
+        <!-- GOOGLE PROFILE MENU -->
+        <div class="relative">
+          <button id="user-profile-btn" onclick="toggleProfileMenu()" class="w-9 h-9 rounded-2xl bg-slate-900 border border-slate-800 text-slate-300 flex items-center justify-center overflow-hidden transition">
+            <i id="user-avatar-icon" class="fa-solid fa-user text-xs"></i>
+            <img id="user-avatar-img" class="w-full h-full object-cover hidden" alt="User Avatar">
+          </button>
+
+          <div id="profile-dropdown" class="hidden absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl p-2 z-50 space-y-1">
+            <div class="px-3 py-2 border-b border-slate-800">
+              <p id="profile-name-text" class="text-xs font-bold text-slate-200 truncate">Guest Athlete</p>
+              <p id="profile-email-text" class="text-[10px] text-slate-400 truncate">Local Mode</p>
+            </div>
+            <button onclick="handleGoogleSignIn()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-xs text-slate-300 flex items-center gap-2">
+              <i class="fa-brands fa-google text-xs theme-text"></i>
+              <span>Google Account</span>
+            </button>
+            <button onclick="exportJSONBackup()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-800 text-xs text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-download text-xs text-amber-400"></i>
+              <span>Export Data Backup</span>
+            </button>
+            <button onclick="handleSignOut()" class="w-full text-left px-3 py-2 rounded-xl hover:bg-red-500/10 text-xs text-red-400 flex items-center gap-2">
+              <i class="fa-solid fa-right-from-bracket text-xs"></i>
+              <span>Sign Out / Local Reset</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- TAB 1: WORKOUT VIEW -->
+    <div id="tab-workout-view" class="space-y-6">
+      <!-- WORKOUT SESSION SETUP CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-dumbbell theme-text text-base"></i>
+            <h2 class="text-sm font-bold text-slate-200">Session Setup</h2>
+          </div>
+          <span id="session-timer-badge" class="text-xs font-mono theme-badge px-2.5 py-1 rounded-full font-bold">00:00:00</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Workout Title</label>
+            <input id="input-workout-title" type="text" placeholder="e.g. Morning Upper Body Hypertrophy" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Target Category</label>
+            <select id="select-workout-category" onchange="handleCategoryChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="Strength">Strength & Hypertrophy</option>
+              <option value="Running">Running</option>
+              <option value="Swimming">Swimming</option>
+              <option value="Walking">Walking</option>
+              <option value="Hiking">Hiking</option>
+              <option value="Biking">Biking</option>
+              <option value="Row Erg">Row Ergometer</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ENDURANCE METRICS PANEL -->
+        <div id="endurance-input-panel" class="hidden bg-slate-950 p-4 rounded-2xl border border-slate-800/80 space-y-3">
+          <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-stopwatch theme-text"></i>
+            <span id="endurance-panel-title">Endurance Session Metrics</span>
+          </h3>
+          
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div>
+              <label id="lbl-endurance-dist" class="text-[10px] text-slate-400 font-semibold block">Distance (Miles)</label>
+              <input id="input-endurance-dist" type="number" step="0.01" placeholder="3.5" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block">Duration (hh:mm:ss)</label>
+              <input id="input-endurance-time" type="text" placeholder="00:28:45" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block">Avg HR (BPM)</label>
+              <input id="input-endurance-avghr" type="number" placeholder="148" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block">Max HR (BPM)</label>
+              <input id="input-endurance-maxhr" type="number" placeholder="172" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+          </div>
+        </div>
+
+        <!-- EXERCISE SET LOGGER PANEL -->
+        <div id="strength-input-panel" class="bg-slate-950 p-4 rounded-2xl border border-slate-800/80 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-1">
+              <label class="text-[10px] text-slate-400 font-semibold block mb-1">Exercise</label>
+              <input id="input-exercise-name" type="text" placeholder="e.g. Bench Press" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block mb-1">Weight (lbs)</label>
+              <input id="input-set-weight" type="number" placeholder="185" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+            <div>
+              <label class="text-[10px] text-slate-400 font-semibold block mb-1">Reps</label>
+              <input id="input-set-reps" type="number" placeholder="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-xs text-slate-100">
+            </div>
+          </div>
+
+          <button onclick="addCurrentSet()" class="w-full theme-bg font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg transition active:scale-95">
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Log Set to Active Workout</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- LOGGED SETS FEED -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-list-check theme-text"></i>
+            Session Sets (<span id="session-sets-count">0</span>)
+          </h2>
+          <button onclick="clearSessionSets()" class="text-xs text-slate-400 hover:text-red-400 transition">Clear All</button>
+        </div>
+
+        <div id="session-sets-feed" class="space-y-2 min-h-[80px] flex flex-col justify-center">
+          <div class="text-center py-6 text-xs text-slate-500 italic">No sets logged in this session yet.</div>
+        </div>
+
+        <button onclick="finishAndEvaluateWorkout()" class="w-full py-3.5 rounded-2xl theme-bg font-extrabold text-xs uppercase tracking-wider shadow-xl transition active:scale-95 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check-double text-sm"></i>
+          <span>Finish & Evaluate Workout</span>
+        </button>
+      </section>
+    </div>
+
+    <!-- TAB 2: CALENDAR & HISTORY VIEW -->
+    <div id="tab-calendar-view" class="hidden space-y-6">
+      <!-- WORKOUT STREAK & CALENDAR CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-calendar-days theme-text"></i>
+              Consistency Matrix
+            </h2>
+            <p class="text-xs text-slate-400">Track consecutive workout streaks</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 font-bold block">Current Streak</span>
+              <span id="streak-current-val" class="text-base font-black theme-text">0 Days</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 font-bold block">Best Streak</span>
+              <span id="streak-best-val" class="text-base font-black text-slate-200">0 Days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY CALENDAR GRID -->
+        <div id="calendar-grid-container" class="space-y-2">
+          <!-- Calendar header and date matrix injected via JS -->
+        </div>
+      </section>
+
+      <!-- BODY WEIGHT TREND & LOGGING CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-weight-scale theme-text"></i>
+              Body Weight Trajectory
+            </h2>
+            <p class="text-xs text-slate-400">Track weight over time with historical date picker</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="openWeightGraphModal()" class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition" title="View Weight Line Graph">
+              <i class="fa-solid fa-chart-line theme-text text-sm"></i>
+            </button>
+            <button onclick="openLogWeightModal()" class="px-3 py-1.5 rounded-xl theme-bg font-bold text-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-plus text-[10px]"></i>
+              <span>Log Weight</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="weight-history-feed" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <!-- Weight log feed injected via JS -->
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 3: SQUADS & COMMUNITY VIEW -->
+    <div id="tab-squads-view" class="hidden space-y-6">
+      
       <!-- ACCURATE GLOBAL "SHOWED UP TODAY" HERO METRIC CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
@@ -171,7 +431,171 @@
 
       <!-- SQUADS MANAGEMENT SECTION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-<!-- ... existing code -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-user-group theme-text"></i>
+              My Squads
+            </h2>
+            <p class="text-xs text-slate-400">Accountability groups via Gmail identity</p>
+          </div>
+
+          <button onclick="openCreateSquadModal()" class="px-3 py-1.5 rounded-xl theme-bg font-bold text-xs flex items-center gap-1.5 shadow-lg">
+            <i class="fa-solid fa-plus text-[10px]"></i>
+            <span>Create Squad</span>
+          </button>
+        </div>
+
+        <div id="squads-feed-container" class="space-y-4">
+          <!-- Squad cards rendered via JS -->
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-950/90 backdrop-blur-2xl border-t border-slate-800/80 px-6 py-2.5">
+    <div class="max-w-md mx-auto flex items-center justify-around">
+      <button id="nav-btn-workout" onclick="switchTab('workout')" class="flex flex-col items-center gap-1 theme-text font-bold transition">
+        <i class="fa-solid fa-dumbbell text-base"></i>
+        <span class="text-[10px]">Workout</span>
+      </button>
+
+      <button id="nav-btn-calendar" onclick="switchTab('calendar')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-calendar-days text-base"></i>
+        <span class="text-[10px]">Calendar</span>
+      </button>
+
+      <button id="nav-btn-squads" onclick="switchTab('squads')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-user-group text-base"></i>
+        <span class="text-[10px]">Squads</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- SETTINGS MODAL -->
+  <div id="modal-settings" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-sliders theme-text"></i>
+          Settings & Customization
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-lg font-bold">
+          &times;
+        </button>
+      </div>
+
+      <div class="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+        <!-- COLOR PALETTE CHOICE -->
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Theme Color Palette</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button onclick="setThemePalette('emerald')" class="p-2.5 rounded-2xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Emerald
+            </button>
+            <button onclick="setThemePalette('blue')" class="p-2.5 rounded-2xl border border-blue-500/40 bg-blue-950/30 text-blue-400 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-blue-500"></span> Ocean Blue
+            </button>
+            <button onclick="setThemePalette('purple')" class="p-2.5 rounded-2xl border border-purple-500/40 bg-purple-950/30 text-purple-400 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-purple-500"></span> Purple
+            </button>
+            <button onclick="setThemePalette('red')" class="p-2.5 rounded-2xl border border-rose-500/40 bg-rose-950/30 text-rose-400 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-rose-500"></span> Crimson
+            </button>
+            <button onclick="setThemePalette('slate')" class="p-2.5 rounded-2xl border border-slate-500/40 bg-slate-900 text-slate-300 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-slate-400"></span> Monochrome
+            </button>
+            <button onclick="setThemePalette('amoled')" class="p-2.5 rounded-2xl border border-amber-500/40 bg-amber-950/30 text-amber-400 text-xs font-bold flex items-center justify-center gap-1.5">
+              <span class="w-3 h-3 rounded-full bg-amber-500"></span> Amber Dark
+            </button>
+          </div>
+        </div>
+
+        <!-- TYPOGRAPHY SELECTION -->
+        <div class="space-y-2">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">App Typography Font</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="setFontFamily('Plus Jakarta Sans')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold font-sans">Plus Jakarta</button>
+            <button onclick="setFontFamily('Inter')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Inter</button>
+            <button onclick="setFontFamily('Outfit')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Outfit</button>
+            <button onclick="setFontFamily('Space Grotesk')" class="p-2.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-200 text-xs font-bold">Space Grotesk</button>
+          </div>
+        </div>
+
+        <!-- PHYSICAL PROFILE -->
+        <div class="space-y-2 pt-2 border-t border-slate-800">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Physical Profile</label>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Height (inches)</span>
+              <input id="input-profile-height" type="number" placeholder="70" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200">
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block mb-1">Body Weight (lbs)</span>
+              <input id="input-profile-weight" type="number" placeholder="175" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-xs text-slate-200">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="saveSettings()" class="w-full py-3 rounded-xl theme-bg font-bold text-xs uppercase tracking-wider">
+        Save Preferences
+      </button>
+    </div>
+  </div>
+
+  <!-- LOG WEIGHT MODAL WITH HISTORICAL DATE PICKER -->
+  <div id="modal-log-weight" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-weight-scale theme-text"></i>
+          Log Body Weight
+        </h3>
+        <button onclick="closeLogWeightModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Date</label>
+          <input id="input-weight-date" type="date" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Body Weight (lbs)</label>
+          <input id="input-weight-val" type="number" step="0.1" placeholder="175.5" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-100">
+        </div>
+      </div>
+
+      <button onclick="submitWeightLog()" class="w-full py-3 rounded-xl theme-bg font-bold text-xs">
+        Save Weight Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- WEIGHT LINE GRAPH MODAL -->
+  <div id="modal-weight-graph" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-chart-line theme-text"></i>
+          Weight Trend Trajectory
+        </h3>
+        <button onclick="closeWeightGraphModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <div id="weight-chart-container" class="w-full h-48 bg-slate-950 rounded-2xl border border-slate-800 p-2 flex items-center justify-center">
+        <!-- SVG Line chart rendered via JS -->
+      </div>
+
+      <div id="weight-chart-stats" class="grid grid-cols-3 gap-2 text-center text-xs">
+        <!-- Min, Avg, Max weight metrics -->
+      </div>
+    </div>
+  </div>
+
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -245,7 +669,6 @@
         }
       }, (err) => console.warn("Cloud squads listener:", err));
 
-      // CLOUD HEATMAP USER LOCATIONS LISTENER
       const heatmapColRef = collection(db, 'artifacts', appId, 'public', 'data', 'heatmap_points');
       onSnapshot(heatmapColRef, (snap) => {
         const points = [];
@@ -270,7 +693,6 @@
         const counterDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'daily_counters', todayKey);
         await setDoc(counterDocRef, { count: increment(1) }, { merge: true });
 
-        // PUBLISH USER COARSE LOCATION POINT TO HEATMAP
         if (window.currentUserLocation) {
           const userLocDoc = doc(db, 'artifacts', appId, 'public', 'data', 'heatmap_points', currentUser.uid);
           await setDoc(userLocDoc, {
@@ -321,8 +743,6 @@
   </script>
 
   <script>
-    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
-
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
@@ -340,43 +760,29 @@
       ? parseInt(localStorage.getItem('showUp_session_start_global_count')) 
       : null;
 
-    let lastEvaluatedSummary = null;
-    let hrHistory = [];
-    let currentHR = 0;
-    let hrSimInterval = null;
-    let hrmDevice = null;
     let calendarDate = new Date();
-    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
     let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
-    let confirmCallback = null;
 
-    // GLOBAL MAP ENGINE VARIABLES
     let leafletMap = null;
     let markerClusterGroup = null;
     window.heatmapDataPoints = [
-      { id: 'u1', lat: 38.8951, lng: -77.0364, city: 'Washington', state: 'DC', country: 'USA', continent: 'North America', name: 'User 1' },
-      { id: 'u2', lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', country: 'USA', continent: 'North America', name: 'User 2' },
-      { id: 'u3', lat: 34.0522, lng: -118.2437, city: 'Los Angeles', state: 'CA', country: 'USA', continent: 'North America', name: 'User 3' },
-      { id: 'u4', lat: 51.5074, lng: -0.1278, city: 'London', state: 'ENG', country: 'UK', continent: 'Europe', name: 'User 4' },
-      { id: 'u5', lat: 48.8566, lng: 2.3522, city: 'Paris', state: 'IDF', country: 'France', continent: 'Europe', name: 'User 5' },
-      { id: 'u6', lat: 35.6762, lng: 139.6503, city: 'Tokyo', state: 'TK', country: 'Japan', continent: 'Asia', name: 'User 6' },
-      { id: 'u7', lat: 19.0760, lng: 72.8777, city: 'Mumbai', state: 'MH', country: 'India', continent: 'Asia', name: 'User 7' },
-      { id: 'u8', lat: -33.8688, lng: 151.2093, city: 'Sydney', state: 'NSW', country: 'Australia', continent: 'Oceania', name: 'User 8' }
+      { id: 'u1', lat: 38.8951, lng: -77.0364, city: 'Washington', state: 'DC', country: 'USA', continent: 'North America' },
+      { id: 'u2', lat: 40.7128, lng: -74.0060, city: 'New York', state: 'NY', country: 'USA', continent: 'North America' },
+      { id: 'u3', lat: 34.0522, lng: -118.2437, city: 'Los Angeles', state: 'CA', country: 'USA', continent: 'North America' },
+      { id: 'u4', lat: 51.5074, lng: -0.1278, city: 'London', state: 'ENG', country: 'UK', continent: 'Europe' },
+      { id: 'u5', lat: 48.8566, lng: 2.3522, city: 'Paris', state: 'IDF', country: 'France', continent: 'Europe' },
+      { id: 'u6', lat: 35.6762, lng: 139.6503, city: 'Tokyo', state: 'TK', country: 'Japan', continent: 'Asia' }
     ];
 
     window.currentUserLocation = { lat: 38.9, lng: -77.5, city: 'Stone Ridge', state: 'VA', country: 'USA', continent: 'North America' };
 
     window.addEventListener('DOMContentLoaded', () => {
-      initCatalog();
-      initDatePickerConstraints();
       loadPhysicalProfile();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
       renderSquads();
       updateGlobalCounterUI();
-      initSparkline();
-      restoreSavedSession();
       restoreThemePreferences();
       restoreFontPreference();
       detectUserGeoLocation();
@@ -416,7 +822,6 @@
           zoomControl: false
         });
 
-        // Add sleek CartoDB Dark Matter tiles
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
           attribution: '&copy; OpenStreetMap &copy; CARTO',
           subdomains: 'abcd',
@@ -439,7 +844,6 @@
         });
 
         leafletMap.addLayer(markerClusterGroup);
-
         leafletMap.on('zoomend', updateMapScopeSummary);
         window.renderGlobalHeatmap();
       } catch (e) {
@@ -462,7 +866,8 @@
       });
 
       const points = window.heatmapDataPoints || [];
-      document.getElementById('map-marker-count').innerText = `${points.length} Locations`;
+      const markerCountEl = document.getElementById('map-marker-count');
+      if (markerCountEl) markerCountEl.innerText = `${points.length} Locations`;
 
       points.forEach(pt => {
         if (pt.lat && pt.lng) {
@@ -498,10 +903,10 @@
         if (badgeEl) badgeEl.innerText = "Country Scope";
         if (labelEl) labelEl.innerText = "Summarized by Country";
       } else if (zoom >= 7 && zoom < 10) {
-        if (badgeEl) badgeEl.innerText = "State / Regional Scope";
+        if (badgeEl) badgeEl.innerText = "State Scope";
         if (labelEl) labelEl.innerText = "Summarized by State / Region";
       } else {
-        if (badgeEl) badgeEl.innerText = "Street / Pin Scope";
+        if (badgeEl) badgeEl.innerText = "User Pins Scope";
         if (labelEl) labelEl.innerText = "Individual User Locations";
       }
     }
@@ -527,13 +932,12 @@
           </div>
           <i class="fa-solid fa-location-dot theme-text text-xs shrink-0"></i>
         </div>
-      `).join('') || '<div class="col-span-4 text-center py-2 text-slate-600 italic">No locations available</div>';
+      `).join('') || '<div class="col-span-4 text-center py-2 text-slate-600 italic">No location data available</div>';
     }
 
     window.refreshGlobalMap = function() {
-      if (typeof window.detectUserGeoLocation === 'function') window.detectUserGeoLocation();
+      if (typeof detectUserGeoLocation === 'function') detectUserGeoLocation();
       window.renderGlobalHeatmap();
-      showToastNotification("Map Refreshed", "Latest user markers and regional clusters loaded.", "fa-solid fa-earth-americas theme-text");
     };
 
     window.switchTab = function(tabKey) {
@@ -563,5 +967,447 @@
       }
     };
 
-    /* ... existing functions ... */
-<!-- ... existing code -->
+    window.handleCategoryChange = function() {
+      const cat = document.getElementById('select-workout-category').value;
+      const endurancePanel = document.getElementById('endurance-input-panel');
+      const strengthPanel = document.getElementById('strength-input-panel');
+      const distLbl = document.getElementById('lbl-endurance-dist');
+
+      if (['Running', 'Swimming', 'Walking', 'Hiking', 'Biking', 'Row Erg'].includes(cat)) {
+        endurancePanel.classList.remove('hidden');
+        strengthPanel.classList.add('hidden');
+        if (distLbl) {
+          distLbl.innerText = cat === 'Swimming' ? 'Distance (Yards)' : cat === 'Row Erg' ? 'Distance (Meters)' : 'Distance (Miles)';
+        }
+      } else {
+        endurancePanel.classList.add('hidden');
+        strengthPanel.classList.remove('hidden');
+      }
+    };
+
+    window.addCurrentSet = function() {
+      const name = document.getElementById('input-exercise-name').value.trim() || 'General Exercise';
+      const weight = parseFloat(document.getElementById('input-set-weight').value) || 0;
+      const reps = parseInt(document.getElementById('input-set-reps').value) || 0;
+
+      if (currentSessionSets.length === 0 && !workoutInitiatedCount) {
+        workoutInitiatedCount = window.globalShowedUpCount;
+        localStorage.setItem('showUp_session_start_global_count', workoutInitiatedCount.toString());
+      }
+
+      currentSessionSets.push({ id: Date.now(), name, weight, reps, timestamp: Date.now() });
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      renderLoggedSets();
+      updateSessionDeltaUI();
+    };
+
+    function renderLoggedSets() {
+      const container = document.getElementById('session-sets-feed');
+      const countEl = document.getElementById('session-sets-count');
+
+      if (countEl) countEl.innerText = currentSessionSets.length.toString();
+      if (!container) return;
+
+      if (currentSessionSets.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500 italic">No sets logged in this session yet.</div>';
+        return;
+      }
+
+      container.innerHTML = currentSessionSets.map((s, idx) => `
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="w-6 h-6 rounded-full theme-bg text-[10px] font-black flex items-center justify-center">${idx + 1}</span>
+            <div>
+              <p class="text-xs font-extrabold text-slate-100">${s.name}</p>
+              <p class="text-[10px] text-slate-400 font-semibold">${s.weight} lbs &times; ${s.reps} reps</p>
+            </div>
+          </div>
+          <button onclick="removeSet(${s.id})" class="text-slate-500 hover:text-red-400 text-xs px-2 py-1">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    window.removeSet = function(id) {
+      currentSessionSets = currentSessionSets.filter(s => s.id !== id);
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      renderLoggedSets();
+    };
+
+    window.clearSessionSets = function() {
+      currentSessionSets = [];
+      localStorage.removeItem('showUp_active_workout_sets');
+      renderLoggedSets();
+    };
+
+    window.finishAndEvaluateWorkout = function() {
+      const title = document.getElementById('input-workout-title').value.trim() || 'Workout Session';
+      const category = document.getElementById('select-workout-category').value;
+
+      const newWorkout = {
+        id: Date.now(),
+        date: new Date().toISOString().slice(0, 10),
+        title,
+        category,
+        setsCount: currentSessionSets.length,
+        sets: [...currentSessionSets]
+      };
+
+      completedWorkoutsHistory.unshift(newWorkout);
+      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+
+      if (typeof window.incrementCloudGlobalCounter === 'function') {
+        window.incrementCloudGlobalCounter();
+      }
+
+      currentSessionSets = [];
+      workoutInitiatedCount = null;
+      localStorage.removeItem('showUp_active_workout_sets');
+      localStorage.removeItem('showUp_session_start_global_count');
+
+      renderLoggedSets();
+      renderCalendar();
+      updateSessionDeltaUI();
+      switchTab('squads');
+    };
+
+    window.updateGlobalCounterUI = function() {
+      const valHeader = document.getElementById('global-counter-val');
+      const valMain = document.getElementById('global-counter-main-val');
+
+      if (valHeader) valHeader.innerText = window.globalShowedUpCount.toString();
+      if (valMain) valMain.innerText = window.globalShowedUpCount.toString();
+
+      updateSessionDeltaUI();
+    };
+
+    function updateSessionDeltaUI() {
+      const deltaText = document.getElementById('session-delta-text');
+      if (!deltaText) return;
+
+      if (workoutInitiatedCount !== null) {
+        const delta = Math.max(0, window.globalShowedUpCount - workoutInitiatedCount);
+        deltaText.innerHTML = `<b class="theme-text">${delta} enthusiasts</b> have showed up globally since you initiated your workout.`;
+      } else {
+        deltaText.innerText = "Start a workout to track real-time check-ins since initiating your session.";
+      }
+    }
+
+    function renderCalendar() {
+      const container = document.getElementById('calendar-grid-container');
+      if (!container) return;
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      const workoutDates = new Set(completedWorkoutsHistory.map(w => w.date));
+
+      let gridHTML = `
+        <div class="flex items-center justify-between pb-2">
+          <span class="text-xs font-black text-slate-200">${calendarDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</span>
+          <div class="flex gap-1">
+            <button onclick="changeMonth(-1)" class="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+            <button onclick="changeMonth(1)" class="p-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-300"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+          </div>
+        </div>
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-500 uppercase py-1">
+          <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+        </div>
+        <div class="grid grid-cols-7 gap-1">
+      `;
+
+      for (let i = 0; i < firstDay; i++) {
+        gridHTML += `<div class="h-8"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const hasWorkout = workoutDates.has(dateStr);
+
+        gridHTML += `
+          <div class="h-8 rounded-xl flex items-center justify-center text-xs font-bold ${hasWorkout ? 'theme-bg font-black shadow-md' : 'bg-slate-950 text-slate-400 border border-slate-800/60'}">
+            ${d}
+          </div>
+        `;
+      }
+
+      gridHTML += `</div>`;
+      container.innerHTML = gridHTML;
+
+      calculateStreaks();
+    }
+
+    window.changeMonth = function(dir) {
+      calendarDate.setMonth(calendarDate.getMonth() + dir);
+      renderCalendar();
+    };
+
+    function calculateStreaks() {
+      const dates = Array.from(new Set(completedWorkoutsHistory.map(w => w.date))).sort().reverse();
+      let currentStreak = 0;
+      let bestStreak = 0;
+      let tempStreak = 0;
+
+      const today = new Date().toISOString().slice(0, 10);
+      let checkDate = new Date();
+
+      for (let i = 0; i < 365; i++) {
+        const str = checkDate.toISOString().slice(0, 10);
+        if (dates.includes(str)) {
+          currentStreak++;
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else if (i === 0) {
+          checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      const currEl = document.getElementById('streak-current-val');
+      const bestEl = document.getElementById('streak-best-val');
+      if (currEl) currEl.innerText = `${currentStreak} Days`;
+      if (bestEl) bestEl.innerText = `${Math.max(currentStreak, dates.length > 0 ? 1 : 0)} Days`;
+    }
+
+    window.openLogWeightModal = function() {
+      document.getElementById('input-weight-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('modal-log-weight').classList.remove('hidden');
+    };
+
+    window.closeLogWeightModal = function() {
+      document.getElementById('modal-log-weight').classList.add('hidden');
+    };
+
+    window.submitWeightLog = function() {
+      const date = document.getElementById('input-weight-date').value;
+      const weight = parseFloat(document.getElementById('input-weight-val').value);
+
+      if (date && weight) {
+        weightHistory = weightHistory.filter(w => w.date !== date);
+        weightHistory.push({ date, weight });
+        weightHistory.sort((a,b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+        renderWeightHistory();
+        closeLogWeightModal();
+      }
+    };
+
+    function renderWeightHistory() {
+      const container = document.getElementById('weight-history-feed');
+      if (!container) return;
+
+      if (weightHistory.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-xs text-slate-500 italic">No weight records logged yet.</div>';
+        return;
+      }
+
+      container.innerHTML = weightHistory.map(w => `
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+          <span class="font-bold text-slate-300">${w.date}</span>
+          <span class="font-extrabold theme-text">${w.weight} lbs</span>
+        </div>
+      `).join('');
+    }
+
+    window.openWeightGraphModal = function() {
+      document.getElementById('modal-weight-graph').classList.remove('hidden');
+      renderWeightGraph();
+    };
+
+    window.closeWeightGraphModal = function() {
+      document.getElementById('modal-weight-graph').classList.add('hidden');
+    };
+
+    function renderWeightGraph() {
+      const chartContainer = document.getElementById('weight-chart-container');
+      const statsContainer = document.getElementById('weight-chart-stats');
+      if (!chartContainer || !statsContainer) return;
+
+      if (weightHistory.length < 2) {
+        chartContainer.innerHTML = '<span class="text-xs text-slate-500 italic">Log at least 2 weight entries to generate trend graph.</span>';
+        statsContainer.innerHTML = '';
+        return;
+      }
+
+      const sorted = [...weightHistory].sort((a,b) => new Date(a.date) - new Date(b.date));
+      const weights = sorted.map(s => s.weight);
+      const minW = Math.min(...weights);
+      const maxW = Math.max(...weights);
+      const avgW = (weights.reduce((a,b) => a + b, 0) / weights.length).toFixed(1);
+
+      const width = 300;
+      const height = 120;
+      const padding = 20;
+
+      const points = sorted.map((item, idx) => {
+        const x = padding + (idx / (sorted.length - 1)) * (width - 2 * padding);
+        const y = height - padding - ((item.weight - minW) / (maxW - minW || 1)) * (height - 2 * padding);
+        return `${x},${y}`;
+      }).join(' ');
+
+      chartContainer.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-full">
+          <polyline fill="none" stroke="var(--theme-accent-color)" stroke-width="3" points="${points}" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      `;
+
+      statsContainer.innerHTML = `
+        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">Min</span><b class="text-slate-200">${minW} lbs</b></div>
+        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">Average</span><b class="theme-text">${avgW} lbs</b></div>
+        <div class="bg-slate-950 p-2 rounded-xl border border-slate-800"><span class="text-[10px] text-slate-400 block">Max</span><b class="text-slate-200">${maxW} lbs</b></div>
+      `;
+    }
+
+    window.renderSquads = function() {
+      const container = document.getElementById('squads-feed-container');
+      if (!container) return;
+
+      if (window.squadsData.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500 italic">No squads created yet. Tap Create Squad to form an accountability circle.</div>';
+        return;
+      }
+
+      container.innerHTML = window.squadsData.map(s => `
+        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-xs font-extrabold text-slate-100 flex items-center gap-2">
+                ${s.name}
+                <span class="text-[9px] theme-badge px-2 py-0.5 rounded-full font-bold">Active</span>
+              </h3>
+              <p class="text-[10px] text-slate-400">${s.members ? s.members.length : 1} Members</p>
+            </div>
+            <button onclick="nudgeSquad('${s.id}')" class="px-3 py-1.5 rounded-xl theme-bg text-xs font-bold flex items-center gap-1 shadow">
+              <i class="fa-solid fa-hand-back-fist"></i> Fistbump
+            </button>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    window.openCreateSquadModal = function() {
+      const name = prompt("Enter Squad Name:");
+      if (name) {
+        const newSquad = { id: `squad-${Date.now()}`, name, members: ['me@gmail.com'] };
+        window.squadsData.push(newSquad);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        if (typeof window.syncSquadToCloud === 'function') window.syncSquadToCloud(newSquad);
+        renderSquads();
+      }
+    };
+
+    window.nudgeSquad = function(id) {
+      alert("👊 Fistbump sent to squad members!");
+    };
+
+    window.openSettingsModal = function() {
+      document.getElementById('modal-settings').classList.remove('hidden');
+    };
+
+    window.closeSettingsModal = function() {
+      document.getElementById('modal-settings').classList.add('hidden');
+    };
+
+    window.setThemePalette = function(paletteKey) {
+      const root = document.documentElement;
+      if (paletteKey === 'emerald') {
+        root.style.setProperty('--theme-accent-color', '#10b981');
+        root.style.setProperty('--theme-accent-bg', 'rgba(16, 185, 129, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(16, 185, 129, 0.3)');
+      } else if (paletteKey === 'blue') {
+        root.style.setProperty('--theme-accent-color', '#3b82f6');
+        root.style.setProperty('--theme-accent-bg', 'rgba(59, 130, 246, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(59, 130, 246, 0.3)');
+      } else if (paletteKey === 'purple') {
+        root.style.setProperty('--theme-accent-color', '#a855f7');
+        root.style.setProperty('--theme-accent-bg', 'rgba(168, 85, 247, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(168, 85, 247, 0.3)');
+      } else if (paletteKey === 'red') {
+        root.style.setProperty('--theme-accent-color', '#f43f5e');
+        root.style.setProperty('--theme-accent-bg', 'rgba(244, 63, 94, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(244, 63, 94, 0.3)');
+      } else if (paletteKey === 'slate') {
+        root.style.setProperty('--theme-accent-color', '#94a3b8');
+        root.style.setProperty('--theme-accent-bg', 'rgba(148, 163, 184, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(148, 163, 184, 0.3)');
+      } else if (paletteKey === 'amoled') {
+        root.style.setProperty('--theme-accent-color', '#f59e0b');
+        root.style.setProperty('--theme-accent-bg', 'rgba(245, 158, 11, 0.15)');
+        root.style.setProperty('--theme-accent-border', 'rgba(245, 158, 11, 0.3)');
+      }
+      localStorage.setItem('showUp_theme_palette', paletteKey);
+    };
+
+    window.setFontFamily = function(fontName) {
+      document.documentElement.style.setProperty('--app-font-family', `'${fontName}', sans-serif`);
+      localStorage.setItem('showUp_font_family', fontName);
+    };
+
+    function restoreThemePreferences() {
+      const palette = localStorage.getItem('showUp_theme_palette') || 'emerald';
+      setThemePalette(palette);
+    }
+
+    function restoreFontPreference() {
+      const font = localStorage.getItem('showUp_font_family') || 'Plus Jakarta Sans';
+      setFontFamily(font);
+    }
+
+    function loadPhysicalProfile() {
+      const hEl = document.getElementById('input-profile-height');
+      const wEl = document.getElementById('input-profile-weight');
+      if (hEl) hEl.value = userHeight;
+      if (wEl) wEl.value = userWeight;
+    }
+
+    window.saveSettings = function() {
+      userHeight = parseFloat(document.getElementById('input-profile-height').value) || 70;
+      userWeight = parseFloat(document.getElementById('input-profile-weight').value) || 175;
+      localStorage.setItem('showUp_user_height', userHeight.toString());
+      localStorage.setItem('showUp_user_weight', userWeight.toString());
+      closeSettingsModal();
+    };
+
+    window.toggleProfileMenu = function() {
+      const menu = document.getElementById('profile-dropdown');
+      if (menu) menu.classList.toggle('hidden');
+    };
+
+    window.handleGoogleSignIn = function() {
+      const nameEl = document.getElementById('profile-name-text');
+      const emailEl = document.getElementById('profile-email-text');
+      if (nameEl) nameEl.innerText = "Logged In User";
+      if (emailEl) emailEl.innerText = "user@gmail.com";
+      toggleProfileMenu();
+    };
+
+    window.handleSignOut = function() {
+      const nameEl = document.getElementById('profile-name-text');
+      const emailEl = document.getElementById('profile-email-text');
+      if (nameEl) nameEl.innerText = "Guest Athlete";
+      if (emailEl) emailEl.innerText = "Local Mode";
+      toggleProfileMenu();
+    };
+
+    window.exportJSONBackup = function() {
+      const backupData = {
+        workouts: completedWorkoutsHistory,
+        weights: weightHistory,
+        squads: window.squadsData,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `showUp_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  </script>
+</body>
+</html>
