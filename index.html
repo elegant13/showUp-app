@@ -1,88 +1,196 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>showUp - Compound your progress</title>
-  
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- FontAwesome Icons -->
+
+  <!-- Google Fonts: Roboto & Google Sans style font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons & Material Symbols -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"Roboto Mono"', 'monospace'],
+          },
+          colors: {
+            m3: {
+              surface: 'var(--m3-surface)',
+              surfaceVariant: 'var(--m3-surface-variant)',
+              surfaceContainer: 'var(--m3-surface-container)',
+              surfaceContainerHigh: 'var(--m3-surface-container-high)',
+              primary: 'var(--m3-primary)',
+              primaryContainer: 'var(--m3-primary-container)',
+              onPrimary: 'var(--m3-on-primary)',
+              onPrimaryContainer: 'var(--m3-on-primary-container)',
+              secondary: 'var(--m3-secondary)',
+              secondaryContainer: 'var(--m3-secondary-container)',
+              outline: 'var(--m3-outline)',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
   <style>
-    /* iOS Safe Area Padding */
+    /* Default Material You Color Tokens (Emerald Green Accent) */
+    :root {
+      --m3-surface: #0f172a;
+      --m3-surface-variant: #1e293b;
+      --m3-surface-container: #111827;
+      --m3-surface-container-high: #1f2937;
+      --m3-primary: #10b981;
+      --m3-primary-container: #064e3b;
+      --m3-on-primary: #022c22;
+      --m3-on-primary-container: #a7f3d0;
+      --m3-secondary: #38bdf8;
+      --m3-secondary-container: #0c4a6e;
+      --m3-outline: #334155;
+    }
+
+    /* Blue Theme Tokens */
+    [data-theme-color="blue"] {
+      --m3-primary: #3b82f6;
+      --m3-primary-container: #1e3a8a;
+      --m3-on-primary: #0f172a;
+      --m3-on-primary-container: #bfdbfe;
+    }
+
+    /* Purple Theme Tokens */
+    [data-theme-color="purple"] {
+      --m3-primary: #a855f7;
+      --m3-primary-container: #581c87;
+      --m3-on-primary: #111827;
+      --m3-on-primary-container: #f3e8ff;
+    }
+
+    /* Coral Theme Tokens */
+    [data-theme-color="coral"] {
+      --m3-primary: #f43f5e;
+      --m3-primary-container: #881337;
+      --m3-on-primary: #0f172a;
+      --m3-on-primary-container: #fecdd3;
+    }
+
+    /* Obsidian AMOLED Theme Tokens */
+    [data-theme-color="amoled"] {
+      --m3-surface: #000000;
+      --m3-surface-variant: #0d0d0d;
+      --m3-surface-container: #050505;
+      --m3-surface-container-high: #121212;
+      --m3-primary: #10b981;
+      --m3-primary-container: #064e3b;
+      --m3-on-primary: #000000;
+      --m3-on-primary-container: #a7f3d0;
+      --m3-outline: #262626;
+    }
+
+    /* Density Styles */
+    body[data-density="compact"] .m3-card { padding: 0.75rem !important; }
+    body[data-density="comfortable"] .m3-card { padding: 1.5rem !important; }
+
+    /* Card Elevation Styles */
+    body[data-card-style="flat"] .m3-card {
+      background-color: var(--m3-surface-container);
+      box-shadow: none !important;
+      border: 1px solid var(--m3-outline);
+    }
+    body[data-card-style="outline"] .m3-card {
+      background-color: transparent;
+      box-shadow: none !important;
+      border: 1px solid var(--m3-outline);
+    }
+
+    /* iOS Safe Area Padding & Custom Scrollbar */
     .bottom-nav-safe {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
     }
-    
-    /* Custom scrollbar styling */
     ::-webkit-scrollbar {
       width: 6px;
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: var(--m3-surface);
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
+      background: var(--m3-outline);
+      border-radius: 9999px;
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
+
+<body id="app-body" data-theme-color="emerald" data-density="standard" data-card-style="elevated" class="bg-m3-surface text-slate-100 font-sans antialiased min-h-screen pb-36 selection:bg-m3-primary selection:text-m3-on-primary" onclick="closeProfileDropdownOutside(event)">
 
   <!-- ================= HEADER & CLOUD SYNC ================= -->
-  <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
+  <header class="sticky top-0 z-40 bg-m3-surface/90 backdrop-blur-md border-b border-m3-outline/50 px-4 py-3 flex items-center justify-between shadow-md">
     <div class="flex items-center space-x-3">
-      <div class="bg-emerald-500 text-slate-950 p-2 rounded-xl font-black tracking-wider flex items-center justify-center w-10 h-10 shadow-lg shadow-emerald-500/20">
+      <div class="bg-m3-primary text-m3-on-primary p-2.5 rounded-2xl font-black tracking-wider flex items-center justify-center w-10 h-10 shadow-md shadow-m3-primary/20">
         sU
       </div>
       <div>
-        <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+        <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v4.1</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-m3-primaryContainer text-m3-onPrimaryContainer border border-m3-primary/30">v4.3 M3</span>
         </h1>
-        <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
+        <p class="text-xs font-medium text-slate-400 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Google Sign-In & User Profile Display -->
+    <!-- Quick Action Icons & Google Profile -->
     <div class="relative flex items-center gap-2">
-      <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
+      <!-- M3 Customization Trigger Button -->
+      <button onclick="triggerHaptic('light'); openSettingsModal()" class="p-2 rounded-full bg-m3-surfaceContainerHigh text-slate-300 hover:text-white border border-m3-outline transition flex items-center justify-center active:scale-95" title="Customize UI Theme">
+        <span class="material-symbols-outlined text-lg">palette</span>
+      </button>
+
+      <!-- Google Sign-In & Profile Display -->
+      <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-m3-surfaceContainerHigh px-3 py-1.5 rounded-full border border-m3-outline shadow-sm">
         <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
-          <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
+          <img id="user-avatar" class="w-7 h-7 rounded-full border border-m3-primary object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
           
           <div class="flex flex-col text-left leading-tight">
             <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
             <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
           </div>
-          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
+          <span class="material-symbols-outlined text-sm text-slate-400 group-hover:text-slate-200 transition">expand_more</span>
         </button>
         
-        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
+        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-m3-primary hover:opacity-80 ml-1 transition p-1 border-l border-m3-outline pl-2" title="Sync with Google Drive">
           <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
 
-        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
+        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-m3-surfaceContainerHigh border border-m3-outline rounded-2xl shadow-2xl py-2 z-50 divide-y divide-m3-outline/60">
           <div class="px-3.5 py-2">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
-            <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
+            <p id="dropdown-user-email" class="text-xs font-semibold text-slate-200 truncate mt-0.5">user@email.com</p>
           </div>
           <div class="py-1">
-            <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
-              <i class="fa-solid fa-right-from-bracket text-xs"></i>
+            <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-bold text-rose-400 hover:bg-slate-800/80 transition flex items-center gap-2">
+              <span class="material-symbols-outlined text-sm">logout</span>
               <span>Log out</span>
             </button>
           </div>
         </div>
       </div>
 
-      <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-lg shadow transition-all">
+      <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl shadow transition-all active:scale-95">
         <i class="fa-brands fa-google text-red-500"></i>
         <span>Sign in</span>
       </button>
@@ -93,70 +201,76 @@
   <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
 
     <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
-    <div id="tab-workout-view" class="space-y-6">
+    <div id="tab-workout-view" class="space-y-5">
 
-      <!-- HEART RATE TELEMETRY CARD -->
-      <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl relative overflow-hidden">
+      <!-- HEART RATE TELEMETRY CARD (WITH COLLAPSE/EXPAND CAPABILITY) -->
+      <section id="hr-telemetry-card" class="m3-card bg-m3-surfaceContainer rounded-3xl p-4 border border-m3-outline shadow-lg relative overflow-hidden transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2.5">
             <span class="relative flex h-3 w-3">
               <span id="hr-pulse-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-0"></span>
               <span id="hr-pulse-dot" class="relative inline-flex rounded-full h-3 w-3 bg-slate-600"></span>
             </span>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400">Heart Rate Telemetry</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Heart Rate Telemetry</h2>
           </div>
+
           <div class="flex items-center gap-2">
-            <button id="btn-connect-hrm" onclick="triggerHaptic('medium'); connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
-              <i class="fa-solid fa-bluetooth"></i>
+            <button id="btn-connect-hrm" onclick="triggerHaptic('medium'); connectHRM()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+              <i class="fa-solid fa-bluetooth text-xs"></i>
               <span>Connect HRM</span>
             </button>
-            <button id="btn-toggle-sim" onclick="triggerHaptic('medium'); toggleHRSimulator()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium px-2.5 py-1.5 rounded-lg transition">
+            <button id="btn-toggle-sim" onclick="triggerHaptic('medium'); toggleHRSimulator()" class="bg-m3-surfaceContainerHigh hover:bg-slate-800 text-slate-300 border border-m3-outline text-xs font-medium px-2.5 py-1.5 rounded-xl transition">
               Simulate
+            </button>
+            <button id="btn-collapse-hr" onclick="triggerHaptic('light'); toggleHRCollapse()" class="p-1.5 rounded-full hover:bg-m3-surfaceContainerHigh text-slate-400 hover:text-white transition" title="Toggle Module Expansion">
+              <span id="hr-collapse-icon" class="material-symbols-outlined text-base">expand_less</span>
             </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-12 gap-4 items-center">
+        <!-- HR BODY CONTENT -->
+        <div id="hr-telemetry-body" class="grid grid-cols-12 gap-4 items-center transition-all duration-300">
           <div class="col-span-5 flex flex-col justify-center">
-            <div class="flex items-baseline gap-1">
+            <div class="flex items-baseline gap-1.5">
               <span id="live-hr-display" class="text-5xl font-black tracking-tight text-slate-100">--</span>
-              <span class="text-xs font-semibold text-slate-500 uppercase">BPM</span>
+              <span class="text-xs font-bold text-slate-400 uppercase">BPM</span>
             </div>
             <div id="live-hr-zone" class="text-xs font-bold text-slate-400 mt-1 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span>
               <span>Disconnected</span>
             </div>
           </div>
 
-          <div class="col-span-7 h-20 bg-slate-950/60 rounded-xl p-2 border border-slate-800/80 relative">
+          <div class="col-span-7 h-20 bg-m3-surface/80 rounded-2xl p-2 border border-m3-outline/80 relative">
             <canvas id="hr-sparkline" class="w-full h-full block"></canvas>
           </div>
         </div>
       </section>
 
       <!-- LOG SET ENTRY CARD -->
-      <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-plus-circle text-emerald-400"></i>
+      <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
+          <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <span class="material-symbols-outlined text-m3-primary text-lg">add_circle</span>
             Log Exercise Set
           </h2>
-          <span id="session-timer" class="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md border border-slate-700">00:00:00</span>
+          <span id="session-timer" class="text-xs font-mono bg-m3-surfaceContainerHigh text-slate-300 px-3 py-1 rounded-xl border border-m3-outline">00:00:00</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Exercise Name</label>
+            <label class="block text-xs font-bold text-slate-300 mb-1">Exercise Name</label>
             <div class="relative">
-              <input type="text" id="exercise-name-input" placeholder="e.g. Sapaate, Bethak, Dand, KB Clean & Press..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+              <input type="text" id="exercise-name-input" placeholder="e.g. Rowing, Sapaate, Bethak, Dand..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-m3-primary transition">
               <datalist id="exercise-catalog-list"></datalist>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Equipment</label>
-            <select id="implement-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <label class="block text-xs font-bold text-slate-300 mb-1">Implement / Equipment</label>
+            <select id="implement-select" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-m3-primary transition">
               <option value="Bodyweight" selected>Bodyweight</option>
+              <option value="Row Erg">Row Erg</option>
               <option value="Kettlebell">Kettlebell</option>
               <option value="Macebell / Gada">Macebell / Gada</option>
               <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
@@ -164,16 +278,15 @@
               <option value="Barbell">Barbell</option>
               <option value="Dumbbell">Dumbbell</option>
               <option value="Resistance Band">Resistance Band</option>
-              <option value="Machine">Machine</option>
               <option value="Other">Other</option>
             </select>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3.5">
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Primary Muscle Target</label>
-            <select id="muscle-group-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <label class="block text-xs font-bold text-slate-300 mb-1">Primary Muscle Target</label>
+            <select id="muscle-group-select" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-m3-primary transition">
               <option value="Full Body">Full Body / Compound</option>
               <option value="Chest">Chest</option>
               <option value="Back">Back</option>
@@ -187,8 +300,8 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Perceived Effort (RPE)</label>
-            <select id="rpe-select" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+            <label class="block text-xs font-bold text-slate-300 mb-1">Perceived Effort (RPE)</label>
+            <select id="rpe-select" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-m3-primary transition">
               <option value="6">RPE 6 - Light Effort</option>
               <option value="7">RPE 7 - Moderate Effort</option>
               <option value="8" selected>RPE 8 - Hard Effort (2 reps in tank)</option>
@@ -198,111 +311,111 @@
           </div>
         </div>
 
-        <!-- NUMERIC WEIGHT & REPS SELECTOR WITH STEP BUTTONS -->
-        <div class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+        <!-- NUMERIC WEIGHT & REPS SELECTOR -->
+        <div class="grid grid-cols-2 gap-4 bg-m3-surface/90 p-4 rounded-2xl border border-m3-outline">
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
+            <label class="block text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
             <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-m3-surfaceContainer border border-m3-outline rounded-xl py-2 text-center text-2xl font-black text-m3-primary focus:outline-none focus:border-m3-primary">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-2.5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+2.5</button>
+              <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+5</button>
             </div>
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Reps</label>
+            <label class="block text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Reps</label>
             <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-slate-900 border border-slate-700 rounded-lg py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-m3-surfaceContainer border border-m3-outline rounded-xl py-2 text-center text-2xl font-black text-m3-primary focus:outline-none focus:border-m3-primary">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">-1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded border border-slate-700 active:scale-95 transition">+5</button>
+              <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-5</button>
+              <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-1</button>
+              <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+1</button>
+              <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+5</button>
             </div>
           </div>
         </div>
 
-        <button onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 px-4 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.99] transition flex items-center justify-center gap-2">
-          <i class="fa-solid fa-check text-lg"></i>
+        <button onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-m3-primary hover:opacity-90 text-m3-on-primary font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-m3-primary/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm">
+          <span class="material-symbols-outlined text-lg">check</span>
           <span>Log Set</span>
         </button>
       </section>
 
       <!-- CURRENT WORKOUT FEED -->
-      <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-xl space-y-3">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+      <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-3">
+        <div class="flex items-center justify-between border-b border-m3-outline/60 pb-2.5">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Session Logs</h3>
-          <span id="set-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Sets</span>
+          <span id="set-count-badge" class="text-xs font-bold bg-m3-surfaceContainerHigh text-m3-primary px-2.5 py-0.5 rounded-full border border-m3-outline">0 Sets</span>
         </div>
 
-        <div id="logged-sets-list" class="space-y-2 max-h-60 overflow-y-auto pr-1">
-          <div class="text-center py-8 text-slate-600 text-xs italic">
-            No sets logged for this session yet. Pick an exercise above and hit "Log Set".
+        <div id="logged-sets-list" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+          <div class="text-center py-8 text-slate-500 text-xs italic">
+            No sets logged for this session yet. Select an exercise above and click "Log Set".
           </div>
         </div>
 
-        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
-          <i class="fa-solid fa-flag-checkered"></i>
+        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-m3-secondaryContainer hover:bg-opacity-80 text-sky-200 font-bold py-3 px-4 rounded-2xl border border-m3-secondary/30 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
+          <span class="material-symbols-outlined text-lg">flag</span>
           <span>Finish & Evaluate Workout</span>
         </button>
       </section>
 
       <!-- POST-WORKOUT SUMMARY CARD -->
-      <section id="workout-summary-card" class="hidden bg-slate-900 rounded-2xl p-5 border border-emerald-500/30 shadow-2xl space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <section id="workout-summary-card" class="hidden m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-primary/40 shadow-2xl space-y-5">
+        <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
           <div>
-            <h2 class="text-base font-black text-emerald-400 flex items-center gap-2">
-              <i class="fa-solid fa-chart-line"></i>
+            <h2 class="text-base font-black text-m3-primary flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">insights</span>
               Physiology & Training Effect Summary
             </h2>
             <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
           </div>
           <div class="flex items-center gap-2">
-            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition">
-              <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
-              <span>Share Workout</span>
+            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareFullWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+              <span>Share</span>
             </button>
-            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
-              <i class="fa-solid fa-xmark text-lg"></i>
+            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-400 hover:text-slate-200 p-1">
+              <span class="material-symbols-outlined text-lg">close</span>
             </button>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div class="bg-m3-surface p-4 rounded-2xl border border-m3-outline space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-400 uppercase">Aerobic Load</span>
-              <i class="fa-solid fa-lungs text-blue-400"></i>
+              <i class="fa-solid fa-lungs text-sky-400"></i>
             </div>
-            <div id="aerobic-te-score" class="text-3xl font-black text-blue-400">0.0</div>
+            <div id="aerobic-te-score" class="text-3xl font-black text-sky-400">0.0</div>
             <div id="aerobic-te-label" class="text-xs font-semibold text-slate-300">No Aerobic Impact</div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="aerobic-te-bar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
+            <div class="w-full bg-m3-surfaceContainerHigh h-2 rounded-full overflow-hidden">
+              <div id="aerobic-te-bar" class="bg-sky-400 h-full w-0 transition-all duration-500"></div>
             </div>
           </div>
 
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+          <div class="bg-m3-surface p-4 rounded-2xl border border-m3-outline space-y-2">
             <div class="flex items-center justify-between">
               <span class="text-xs font-bold text-slate-400 uppercase">Anaerobic Load</span>
               <i class="fa-solid fa-bolt text-amber-400"></i>
             </div>
             <div id="anaerobic-te-score" class="text-3xl font-black text-amber-400">0.0</div>
             <div id="anaerobic-te-label" class="text-xs font-semibold text-slate-300">No Anaerobic Impact</div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="anaerobic-te-bar" class="bg-amber-500 h-full w-0 transition-all duration-500"></div>
+            <div class="w-full bg-m3-surfaceContainerHigh h-2 rounded-full overflow-hidden">
+              <div id="anaerobic-te-bar" class="bg-amber-400 h-full w-0 transition-all duration-500"></div>
             </div>
           </div>
         </div>
 
         <!-- HIGH-DEFINITION ANATOMICAL BODY VECTOR VISUALIZATION -->
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 text-center">
+        <div class="bg-m3-surface p-4 rounded-2xl border border-m3-outline space-y-3 text-center">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
-          
+
           <div class="flex justify-center items-center gap-8 py-2">
             <!-- ANTERIOR VIEW SVG -->
             <div class="w-36 flex flex-col items-center">
@@ -314,7 +427,7 @@
                 <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
                 <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
               </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Anterior</span>
             </div>
 
             <!-- POSTERIOR VIEW SVG -->
@@ -326,18 +439,17 @@
                 <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
                 <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
               </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">Posterior</span>
             </div>
           </div>
 
-          <!-- Color Legend -->
-          <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
+          <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-m3-outline/60">
             <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
+              <span class="w-3 h-3 rounded-full bg-rose-500 inline-block shadow-sm"></span>
               <span class="text-slate-300 font-semibold">Primary Muscles</span>
             </div>
             <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-400 inline-block shadow-sm"></span>
               <span class="text-slate-300 font-semibold">Secondary Muscles</span>
             </div>
             <div class="flex items-center gap-1.5">
@@ -349,33 +461,33 @@
 
         <div class="space-y-2">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
-          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800"></div>
+          <div id="muscle-breakdown-bars" class="space-y-2 bg-m3-surface p-3.5 rounded-2xl border border-m3-outline"></div>
         </div>
       </section>
 
     </div>
 
     <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT -->
-    <div id="tab-calendar-view" class="hidden space-y-6">
+    <div id="tab-calendar-view" class="hidden space-y-5">
 
       <!-- CALENDAR MODULE -->
-      <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+      <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-m3-outline/60 pb-3">
           <div>
             <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-days text-emerald-400"></i>
+              <span class="material-symbols-outlined text-m3-primary text-lg">calendar_month</span>
               Workout Consistency Matrix
             </h2>
             <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
           </div>
 
           <div class="flex items-center gap-2 text-xs">
-            <div class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
+            <div class="bg-m3-surface px-3 py-1 rounded-xl border border-m3-outline flex items-center gap-1.5">
               <i class="fa-solid fa-fire text-amber-500"></i>
               <span class="text-slate-400">Streak:</span>
               <span id="current-streak-val" class="font-bold text-slate-100">0 days</span>
             </div>
-            <div class="bg-slate-950 px-2.5 py-1 rounded-lg border border-slate-800 flex items-center gap-1.5">
+            <div class="bg-m3-surface px-3 py-1 rounded-xl border border-m3-outline flex items-center gap-1.5">
               <i class="fa-solid fa-trophy text-yellow-400"></i>
               <span class="text-slate-400">Best:</span>
               <span id="best-streak-val" class="font-bold text-slate-100">0 days</span>
@@ -383,27 +495,27 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-left"></i>
+        <div class="flex items-center justify-between bg-m3-surface px-4 py-2 rounded-2xl border border-m3-outline">
+          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-m3-surfaceContainerHigh transition">
+            <span class="material-symbols-outlined text-base">chevron_left</span>
           </button>
           <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-right"></i>
+          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-m3-surfaceContainerHigh transition">
+            <span class="material-symbols-outlined text-base">chevron_right</span>
           </button>
         </div>
 
         <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
       </section>
 
-      <!-- MONTHLY HISTORICAL WORKOUT LIST WITH INTERACTIVE EXPANDABLE ACCORDION & INLINE EDITING -->
-      <section class="bg-slate-900 rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <!-- MONTHLY HISTORICAL WORKOUT LIST -->
+      <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-4">
+        <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-emerald-400"></i>
+            <span class="material-symbols-outlined text-m3-primary text-lg">history</span>
             Monthly Workouts History
           </h3>
-          <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
+          <span id="monthly-count-badge" class="text-xs font-bold bg-m3-surfaceContainerHigh text-m3-primary px-2.5 py-0.5 rounded-full border border-m3-outline">0 Workouts</span>
         </div>
 
         <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
@@ -413,20 +525,97 @@
 
   </main>
 
+  <!-- ================= MATERIAL UI CUSTOMIZATION MODAL / DRAWER ================= -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-m3-surfaceContainer border border-m3-outline rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
+        <h3 class="text-base font-extrabold text-slate-100 flex items-center gap-2">
+          <span class="material-symbols-outlined text-m3-primary text-xl">palette</span>
+          UI Theme & Customization
+        </h3>
+        <button onclick="triggerHaptic('light'); closeSettingsModal()" class="text-slate-400 hover:text-white p-1 rounded-full">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <!-- Theme Accent Picker -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Accent Palette</label>
+        <div class="grid grid-cols-5 gap-2">
+          <button onclick="setThemeAccent('emerald')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-emerald-500 transition">
+            <span class="w-6 h-6 rounded-full bg-emerald-500 shadow-sm"></span>
+            <span class="text-[10px] font-bold text-slate-300">Emerald</span>
+          </button>
+          <button onclick="setThemeAccent('blue')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-blue-500 transition">
+            <span class="w-6 h-6 rounded-full bg-blue-500 shadow-sm"></span>
+            <span class="text-[10px] font-bold text-slate-300">Pixel</span>
+          </button>
+          <button onclick="setThemeAccent('purple')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-purple-500 transition">
+            <span class="w-6 h-6 rounded-full bg-purple-500 shadow-sm"></span>
+            <span class="text-[10px] font-bold text-slate-300">Purple</span>
+          </button>
+          <button onclick="setThemeAccent('coral')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-rose-500 transition">
+            <span class="w-6 h-6 rounded-full bg-rose-500 shadow-sm"></span>
+            <span class="text-[10px] font-bold text-slate-300">Coral</span>
+          </button>
+          <button onclick="setThemeAccent('amoled')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-black border border-neutral-700 hover:border-emerald-500 transition">
+            <span class="w-6 h-6 rounded-full bg-emerald-500 border border-neutral-600"></span>
+            <span class="text-[10px] font-bold text-slate-300">Obsidian</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Density Switcher -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Layout Spacing Density</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setUIDensity('compact')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Compact</button>
+          <button onclick="setUIDensity('standard')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Standard</button>
+          <button onclick="setUIDensity('comfortable')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Comfortable</button>
+        </div>
+      </div>
+
+      <!-- Card Surface Style Selector -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Container Surface Style</label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setCardStyle('elevated')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Elevated</button>
+          <button onclick="setCardStyle('flat')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Flat Tonal</button>
+          <button onclick="setCardStyle('outline')" class="py-2 px-3 bg-m3-surface border border-m3-outline rounded-xl text-xs font-bold text-slate-200 hover:border-m3-primary transition text-center">Outlined</button>
+        </div>
+      </div>
+
+      <!-- HR Module Default Toggle -->
+      <div class="pt-2 border-t border-m3-outline/60 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold text-slate-200">HR Module Default State</p>
+          <p class="text-[10px] text-slate-400">Keep HR card collapsed by default on startup</p>
+        </div>
+        <button id="toggle-hr-default-collapsed" onclick="toggleHRDefaultPreference()" class="relative inline-flex h-6 w-11 items-center rounded-full bg-slate-700 transition">
+          <span id="toggle-hr-dot" class="inline-block h-4 w-4 transform rounded-full bg-white transition translate-x-1"></span>
+        </button>
+      </div>
+
+      <button onclick="triggerHaptic('medium'); closeSettingsModal()" class="w-full bg-m3-primary hover:opacity-90 text-m3-on-primary font-bold py-3 rounded-2xl shadow-md transition text-xs mt-2">
+        Done & Save Settings
+      </button>
+    </div>
+  </div>
+
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
-  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-m3-surface/95 backdrop-blur-md border-t border-m3-outline/60 bottom-nav-safe">
     <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
-      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
-        <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
-        <span>Workout</span>
+      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-m3-primary transition">
+        <span class="material-symbols-outlined text-xl mb-0.5">fitness_center</span>
+        <span class="font-bold">Workout</span>
       </button>
       <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
-        <span>Calendar</span>
+        <span class="material-symbols-outlined text-xl mb-0.5">calendar_month</span>
+        <span class="font-bold">Calendar</span>
       </button>
       <button onclick="triggerHaptic('medium'); exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-file-export text-lg mb-0.5"></i>
-        <span>Backup</span>
+        <span class="material-symbols-outlined text-xl mb-0.5">download</span>
+        <span class="font-bold">Backup</span>
       </button>
     </div>
   </nav>
@@ -438,6 +627,9 @@
     // APPLICATION STATE WITH LOCAL STORAGE RECOVERY
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+    let userPreferences = JSON.parse(localStorage.getItem('showUp_user_preferences') || '{"accent":"emerald","density":"standard","cardStyle":"elevated","hrDefaultCollapsed":false}');
+    let hrIsCollapsed = false;
+
     let lastEvaluatedSummary = null;
     let hrHistory = [];
     let currentHR = 0;
@@ -454,10 +646,122 @@
       }
     }
 
+    // EXERCISE CATALOG (INCLUDES ROWING & PAHLWANI TRADITIONAL EXERCISES)
+    const defaultCatalog = [
+      { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
+      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Hamstrings/Glutes", "Triceps"] },
+      { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
+      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
+      { name: "Gada 10-to-2", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] },
+      { name: "Jori Club Swings", implement: "Jori Clubs / Karlakattai", muscle: "Shoulders", secondary: ["Back", "Triceps", "Core/Abs"] },
+      { name: "Samtola Overhead Press", implement: "Bodyweight", muscle: "Full Body", secondary: ["Shoulders", "Triceps", "Core/Abs"] },
+      { name: "Gar Nal Squats (Neck Collar)", implement: "Bodyweight", muscle: "Quads", secondary: ["Back", "Core/Abs"] },
+      { name: "Rope Climbing (Rassi Chadhna)", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
+      { name: "Ring Dip", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Ring Pull-Up", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] }
+    ];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      applyUserPreferences();
+      initCatalog();
+      renderLoggedSets();
+      renderCalendar();
+      initSparkline();
+      restoreSavedSession();
+    });
+
+    // CUSTOMIZATION & PREFERENCES ENGINE
+    function applyUserPreferences() {
+      const body = document.getElementById('app-body');
+      body.setAttribute('data-theme-color', userPreferences.accent || 'emerald');
+      body.setAttribute('data-density', userPreferences.density || 'standard');
+      body.setAttribute('data-card-style', userPreferences.cardStyle || 'elevated');
+
+      // Default HR module collapse setup
+      if (userPreferences.hrDefaultCollapsed) {
+        collapseHRModule(true);
+      } else {
+        collapseHRModule(false);
+      }
+      updateHRPreferenceToggleUI();
+    }
+
+    function setThemeAccent(accentKey) {
+      userPreferences.accent = accentKey;
+      saveUserPreferences();
+      applyUserPreferences();
+    }
+
+    function setUIDensity(densityKey) {
+      userPreferences.density = densityKey;
+      saveUserPreferences();
+      applyUserPreferences();
+    }
+
+    function setCardStyle(styleKey) {
+      userPreferences.cardStyle = styleKey;
+      saveUserPreferences();
+      applyUserPreferences();
+    }
+
+    function toggleHRDefaultPreference() {
+      userPreferences.hrDefaultCollapsed = !userPreferences.hrDefaultCollapsed;
+      saveUserPreferences();
+      updateHRPreferenceToggleUI();
+    }
+
+    function updateHRPreferenceToggleUI() {
+      const toggleBtn = document.getElementById('toggle-hr-default-collapsed');
+      const toggleDot = document.getElementById('toggle-hr-dot');
+      if (userPreferences.hrDefaultCollapsed) {
+        toggleBtn.classList.replace('bg-slate-700', 'bg-m3-primary');
+        toggleDot.classList.replace('translate-x-1', 'translate-x-6');
+      } else {
+        toggleBtn.classList.replace('bg-m3-primary', 'bg-slate-700');
+        toggleDot.classList.replace('translate-x-6', 'translate-x-1');
+      }
+    }
+
+    function saveUserPreferences() {
+      localStorage.setItem('showUp_user_preferences', JSON.stringify(userPreferences));
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function toggleHRCollapse() {
+      collapseHRModule(!hrIsCollapsed);
+    }
+
+    function collapseHRModule(shouldCollapse) {
+      hrIsCollapsed = shouldCollapse;
+      const hrBody = document.getElementById('hr-telemetry-body');
+      const icon = document.getElementById('hr-collapse-icon');
+
+      if (shouldCollapse) {
+        hrBody.classList.add('hidden');
+        icon.innerText = 'expand_more';
+      } else {
+        hrBody.classList.remove('hidden');
+        icon.innerText = 'expand_less';
+      }
+    }
+
+    // PROFILE DROPDOWN & LOGOUT
     function toggleProfileDropdown(e) {
       if (e) e.stopPropagation();
-      const dropdown = document.getElementById('profile-dropdown-menu');
-      dropdown.classList.toggle('hidden');
+      document.getElementById('profile-dropdown-menu').classList.toggle('hidden');
     }
 
     function closeProfileDropdownOutside(e) {
@@ -498,45 +802,17 @@
       if (tabName === 'workout') {
         workoutView.classList.remove('hidden');
         calendarView.classList.add('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
+        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-m3-primary transition";
         btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
       } else {
         workoutView.classList.add('hidden');
         calendarView.classList.remove('hidden');
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
+        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-m3-primary transition";
         btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
         renderCalendar();
         renderMonthlyHistory();
       }
     }
-
-    // CATALOG INCLUDING SAPAATE (INDIAN BURPEE / SQUAT PUSH-UP COMBO) & ACCURATE MULTI-MUSCLE TARGETING
-    const defaultCatalog = [
-      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Hamstrings/Glutes", "Triceps"] },
-      { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
-      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
-      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
-      { name: "Gada 10-to-2", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] },
-      { name: "Jori Club Swings", implement: "Jori Clubs / Karlakattai", muscle: "Shoulders", secondary: ["Back", "Triceps", "Core/Abs"] },
-      { name: "Samtola Overhead Press", implement: "Bodyweight", muscle: "Full Body", secondary: ["Shoulders", "Triceps", "Core/Abs"] },
-      { name: "Gar Nal Squats (Neck Collar)", implement: "Bodyweight", muscle: "Quads", secondary: ["Back", "Core/Abs"] },
-      { name: "Rope Climbing (Rassi Chadhna)", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
-      { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
-      { name: "Ring Dip", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
-      { name: "Ring Pull-Up", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
-      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
-      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] }
-    ];
-
-    window.addEventListener('DOMContentLoaded', () => {
-      initCatalog();
-      renderLoggedSets();
-      renderCalendar();
-      initSparkline();
-      restoreSavedSession();
-    });
 
     function restoreSavedSession() {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
@@ -592,7 +868,6 @@
       const weight = parseFloat(document.getElementById('input-weight').value) || 0;
       const reps = parseInt(document.getElementById('input-reps').value) || 1;
 
-      // Find secondary muscles dynamically from catalog if available
       const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
       const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
 
@@ -622,25 +897,23 @@
       document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
 
       if (currentSessionSets.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs italic">No sets logged for this session yet. Select an exercise above and click "Log Set".</div>`;
         return;
       }
 
       container.innerHTML = currentSessionSets.map((s) => `
-        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex items-center justify-between">
+        <div class="bg-m3-surface p-3.5 rounded-2xl border border-m3-outline flex items-center justify-between">
           <div>
-            <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
+            <div class="text-sm font-bold text-slate-100">${s.exerciseName}</div>
             <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5">
-              <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded">${s.implement}</span>
+              <span class="bg-m3-surfaceContainerHigh text-m3-primary font-bold px-2 py-0.5 rounded-lg border border-m3-outline">${s.implement}</span>
               <span>${s.weight} lbs × ${s.reps} reps</span>
               <span class="text-slate-500">RPE ${s.rpe}</span>
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
-              <i class="fa-solid fa-trash-can text-sm"></i>
-            </button>
-          </div>
+          <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 transition">
+            <span class="material-symbols-outlined text-base">delete</span>
+          </button>
         </div>
       `).join('');
     }
@@ -721,12 +994,12 @@
       const muscleContainer = document.getElementById('muscle-breakdown-bars');
       muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
         <div class="space-y-1">
-          <div class="flex justify-between text-xs font-semibold">
+          <div class="flex justify-between text-xs font-bold">
             <span class="text-slate-300">${m}</span>
-            <span class="text-emerald-400">${vol} lbs</span>
+            <span class="text-m3-primary">${vol} lbs</span>
           </div>
-          <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-800">
-            <div class="bg-emerald-500 h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
+          <div class="w-full bg-m3-surfaceContainerHigh h-2 rounded-full overflow-hidden border border-m3-outline">
+            <div class="bg-m3-primary h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
           </div>
         </div>
       `).join('');
@@ -781,7 +1054,6 @@
         'Hamstrings/Glutes': ['body-hamstrings']
       };
 
-      // Reset all SVG shapes to default slate (#334155)
       Object.values(muscleSvgMap).flat().forEach(id => {
         const el = document.getElementById(id);
         if (el) el.setAttribute('fill', '#334155');
@@ -792,40 +1064,36 @@
 
       const primaryTarget = sortedMuscles[0][0];
 
-      // Handle Compound / Full Body Primary
       if (primaryTarget === "Full Body") {
         ['body-chest', 'body-quads', 'body-back'].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#ef4444');
+          if (el) el.setAttribute('fill', '#f43f5e');
         });
         ['body-shoulders-ant', 'body-shoulders-post', 'body-hamstrings', 'body-core', 'body-triceps'].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#eab308');
+          if (el) el.setAttribute('fill', '#facc15');
         });
         return;
       }
 
-      // Highlight Primary Muscle in Red (#ef4444)
       if (muscleSvgMap[primaryTarget]) {
         muscleSvgMap[primaryTarget].forEach(id => {
           const el = document.getElementById(id);
-          if (el) el.setAttribute('fill', '#ef4444');
+          if (el) el.setAttribute('fill', '#f43f5e');
         });
       }
 
-      // Combine secondary muscles from workout volume breakdown + exercise catalog mapping
       const combinedSecondaries = new Set([
         ...sortedMuscles.slice(1).map(m => m[0]),
         ...explicitSecondaries
       ]);
 
-      // Highlight Secondary Muscles in Yellow (#eab308)
       combinedSecondaries.forEach(m => {
         if (m !== primaryTarget && muscleSvgMap[m]) {
           muscleSvgMap[m].forEach(id => {
             const el = document.getElementById(id);
-            if (el && el.getAttribute('fill') !== '#ef4444') {
-              el.setAttribute('fill', '#eab308');
+            if (el && el.getAttribute('fill') !== '#f43f5e') {
+              el.setAttribute('fill', '#facc15');
             }
           });
         }
@@ -836,6 +1104,7 @@
       document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
+    // CALENDAR MATRIX & HISTORICAL MANAGEMENT
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
@@ -863,11 +1132,11 @@
         const monthStr = String(month + 1).padStart(2, '0');
         const dayStr = String(day).padStart(2, '0');
         const dateKey = `${year}-${monthStr}-${dayStr}`;
-        
+
         const isWorkedOut = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === dateKey);
 
         grid.innerHTML += `
-          <div class="aspect-square flex items-center justify-center rounded-lg text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
+          <div class="aspect-square flex items-center justify-center rounded-xl text-xs font-bold ${isWorkedOut ? 'bg-m3-primary text-m3-on-primary shadow-md shadow-m3-primary/20' : 'bg-m3-surface text-slate-500 border border-m3-outline'}">
             ${day}
           </div>
         `;
@@ -888,7 +1157,7 @@
       document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
 
       if (monthlyEntries.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs italic">No workout history recorded for this month.</div>`;
         return;
       }
 
@@ -899,19 +1168,19 @@
         const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
 
         return `
-          <div class="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden transition-all">
-            <div onclick="triggerHaptic('light'); toggleWorkoutAccordion('${dateStr}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition select-none">
+          <div class="bg-m3-surface rounded-2xl border border-m3-outline overflow-hidden transition-all">
+            <div onclick="triggerHaptic('light'); toggleWorkoutAccordion('${dateStr}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-m3-surfaceContainerHigh transition select-none">
               <div class="flex items-center gap-3">
-                <i id="chevron-${dateStr}" class="fa-solid fa-chevron-right text-xs text-slate-500 transition-transform"></i>
+                <span id="chevron-${dateStr}" class="material-symbols-outlined text-base text-slate-500 transition-transform">chevron_right</span>
                 <div>
                   <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-calendar-check text-emerald-400"></i>
+                    <span class="material-symbols-outlined text-m3-primary text-sm">event_available</span>
                     <span>${dateStr}</span>
                   </div>
                   <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
                     <span>${setsCount} Sets</span>
                     <span class="text-slate-600">•</span>
-                    <span class="text-emerald-400">${vol}</span>
+                    <span class="text-m3-primary font-bold">${vol}</span>
                   </div>
                 </div>
               </div>
@@ -920,29 +1189,29 @@
                 <button onclick="triggerHaptic('medium'); shareHistoricalWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
                   <i class="fa-brands fa-whatsapp text-sm"></i>
                 </button>
-                <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
-                  <i class="fa-solid fa-trash-can text-xs"></i>
+                <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-500 hover:text-rose-400 p-2 transition" title="Delete Workout">
+                  <span class="material-symbols-outlined text-base">delete</span>
                 </button>
               </div>
             </div>
 
-            <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
-              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
+            <div id="details-${dateStr}" class="hidden border-t border-m3-outline bg-m3-surfaceContainer/50 p-3 space-y-2">
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Logged Exercise Sets</div>
               ${setsList.length === 0 ? `
                 <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
               ` : setsList.map(s => `
-                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 flex items-center justify-between text-xs">
+                <div class="bg-m3-surface p-2.5 rounded-xl border border-m3-outline flex items-center justify-between text-xs">
                   <div>
                     <div class="font-bold text-slate-200">${s.exerciseName}</div>
                     <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px]">
-                      <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.2 rounded">${s.implement}</span>
+                      <span class="bg-m3-surfaceContainerHigh text-m3-primary font-bold px-1.5 py-0.2 rounded border border-m3-outline">${s.implement}</span>
                       <span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>
                       <span class="text-slate-500">RPE ${s.rpe}</span>
                     </div>
                   </div>
 
-                  <button onclick="triggerHaptic('medium'); editHistoricalSet('${dateStr}', ${s.id})" class="text-slate-500 hover:text-amber-400 p-1.5 rounded transition" title="Edit Set">
-                    <i class="fa-solid fa-pen text-xs"></i>
+                  <button onclick="triggerHaptic('medium'); editHistoricalSet('${dateStr}', ${s.id})" class="text-slate-400 hover:text-amber-400 p-1.5 rounded-lg transition" title="Edit Set">
+                    <span class="material-symbols-outlined text-base">edit</span>
                   </button>
                 </div>
               `).join('')}
@@ -1018,7 +1287,7 @@
     function initSparkline() {
       const canvas = document.getElementById('hr-sparkline');
       const ctx = canvas.getContext('2d');
-      
+
       function draw() {
         canvas.width = canvas.parentElement.clientWidth;
         canvas.height = canvas.parentElement.clientHeight;
@@ -1029,7 +1298,7 @@
           ctx.strokeStyle = '#f43f5e';
           ctx.lineWidth = 2;
           const step = canvas.width / (hrHistory.length - 1);
-          
+
           hrHistory.forEach((val, i) => {
             const x = i * step;
             const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
@@ -1121,10 +1390,10 @@
       setTimeout(() => {
         renderCalendar();
         renderMonthlyHistory();
-        syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
+        syncIcon.className = "fa-solid fa-check text-xs text-m3-primary";
 
         setTimeout(() => {
-          syncIcon.className = "fa-solid fa-rotate text-xs text-emerald-400";
+          syncIcon.className = "fa-solid fa-rotate text-xs text-m3-primary";
         }, 1500);
       }, 600);
     }
