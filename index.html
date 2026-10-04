@@ -34,7 +34,7 @@
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
 
   <!-- ================= HEADER & CLOUD SYNC ================= -->
   <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center justify-between shadow-lg">
@@ -45,28 +45,44 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.1</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v3.4</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Google Sign-In & User Profile Display (First Name & Email to the Right of Avatar) -->
-    <div class="flex items-center gap-2">
-      <div id="google-user-profile" class="hidden flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-        <!-- Avatar Image -->
-        <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
+    <!-- Google Sign-In & Interactive User Profile Display with Logout Dropdown -->
+    <div class="relative flex items-center gap-2">
+      <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
+        <!-- Clickable Avatar & User Info Container -->
+        <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
+          <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
+          
+          <div class="flex flex-col text-left leading-tight">
+            <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
+            <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
+        </button>
         
-        <!-- Text Stack to the Right of Avatar -->
-        <div class="flex flex-col text-left leading-tight">
-          <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
-          <span id="user-email" class="text-[10px] text-slate-400 max-w-[130px] truncate">user@email.com</span>
-        </div>
-        
-        <!-- Refresh / Sync Button with Spinner -->
-        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1" title="Sync with Google Drive">
+        <!-- Refresh / Sync Button -->
+        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
           <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
+
+        <!-- DROPDOWN MENU FOR LOGOUT -->
+        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
+          <div class="px-3.5 py-2">
+            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
+            <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
+          </div>
+          <div class="py-1">
+            <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
+              <i class="fa-solid fa-right-from-bracket text-xs"></i>
+              <span>Log out</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-lg shadow transition-all">
@@ -384,15 +400,15 @@
     // HARDCODED GOOGLE OAUTH CLIENT ID
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
 
-    // APPLICATION STATE
-    let currentSessionSets = [];
+    // APPLICATION STATE WITH LOCAL STORAGE RECOVERY
+    let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let lastEvaluatedSummary = null;
     let hrHistory = [];
     let currentHR = 0;
     let hrSimInterval = null;
     let calendarDate = new Date();
-    let googleAccessToken = null;
+    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
 
     // HAPTIC FEEDBACK ENGINE
     function triggerHaptic(type = 'light') {
@@ -402,6 +418,45 @@
         case 'medium': navigator.vibrate(25); break;
         case 'heavy': navigator.vibrate([35, 50, 35]); break;
       }
+    }
+
+    // PROFILE DROPDOWN MENU ENGINE
+    function toggleProfileDropdown(e) {
+      if (e) e.stopPropagation();
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      dropdown.classList.toggle('hidden');
+    }
+
+    function closeProfileDropdownOutside(e) {
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      const profileBadge = document.getElementById('google-user-profile');
+      if (dropdown && !dropdown.classList.contains('hidden')) {
+        if (!profileBadge.contains(e.target)) {
+          dropdown.classList.add('hidden');
+        }
+      }
+    }
+
+    function handleLogout() {
+      // Clear local auth session state
+      googleAccessToken = null;
+      localStorage.removeItem('showUp_google_token');
+      localStorage.removeItem('showUp_user_profile');
+
+      if (window.google && google.accounts && google.accounts.oauth2) {
+        google.accounts.oauth2.revoke(googleAccessToken, () => {});
+      }
+
+      // Hide profile pill and dropdown, show login button
+      document.getElementById('profile-dropdown-menu').classList.add('hidden');
+      document.getElementById('google-user-profile').classList.add('hidden');
+      document.getElementById('btn-google-login').classList.remove('hidden');
+
+      // Reset profile text elements
+      document.getElementById('user-first-name').innerText = 'User';
+      document.getElementById('user-email').innerText = 'user@email.com';
+      document.getElementById('dropdown-user-email').innerText = 'user@email.com';
+      document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
     }
 
     // TAB SWITCHING SYSTEM
@@ -442,13 +497,29 @@
       { name: "Pull-Up", implement: "Bodyweight", muscle: "Back" }
     ];
 
-    // INIT APP
+    // INITIALIZE APP AND RESTORE ACTIVE SESSIONS
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
       renderLoggedSets();
       renderCalendar();
       initSparkline();
+      restoreSavedSession();
     });
+
+    function restoreSavedSession() {
+      // 1. Restore Google Profile Session if saved
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      if (googleAccessToken && savedProfile) {
+        document.getElementById('user-first-name').innerText = savedProfile.firstName || 'User';
+        document.getElementById('user-email').innerText = savedProfile.email || '';
+        document.getElementById('dropdown-user-email').innerText = savedProfile.email || '';
+        if (savedProfile.picture) {
+          document.getElementById('user-avatar').src = savedProfile.picture;
+        }
+        document.getElementById('btn-google-login').classList.add('hidden');
+        document.getElementById('google-user-profile').classList.remove('hidden');
+      }
+    }
 
     function initCatalog() {
       const datalist = document.getElementById('exercise-catalog-list');
@@ -502,7 +573,15 @@
       };
 
       currentSessionSets.push(setObj);
+
+      // Save active session sets locally
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
+
+      // Trigger automatic Google Drive sync after logging set
+      if (googleAccessToken) {
+        syncToGoogleDrive();
+      }
     }
 
     function renderLoggedSets() {
@@ -538,7 +617,12 @@
 
     function deleteSet(id) {
       currentSessionSets = currentSessionSets.filter(s => s.id !== id);
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
+
+      if (googleAccessToken) {
+        syncToGoogleDrive();
+      }
     }
 
     // WHATSAPP SHARING ENGINE
@@ -648,7 +732,10 @@
       document.getElementById('workout-summary-card').classList.remove('hidden');
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
+      // Clear active workout buffer since it is now completed
       currentSessionSets = [];
+      localStorage.removeItem('showUp_active_workout_sets');
+
       renderLoggedSets();
       renderCalendar();
       renderMonthlyHistory();
@@ -722,7 +809,7 @@
       container.innerHTML = monthlyEntries.map(w => {
         const dateStr = typeof w === 'string' ? w : w.date;
         const setsCount = typeof w === 'string' ? '1+' : w.sets ? w.sets.length : 1;
-        const vol = typeof w === 'string' ? 'Logged' : w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Completed';
+        const vol = typeof w === 'string' ? 'N/A' : w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
 
         return `
           <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 flex items-center justify-between">
@@ -757,6 +844,7 @@
       const entry = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === dateStr);
       if (entry && typeof entry === 'object' && entry.sets) {
         currentSessionSets = [...entry.sets];
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
         renderLoggedSets();
         switchTab('workout');
       } else {
@@ -771,6 +859,10 @@
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
       renderCalendar();
       renderMonthlyHistory();
+
+      if (googleAccessToken) {
+        syncToGoogleDrive();
+      }
     }
 
     function navigateCalendarMonth(delta) {
@@ -826,7 +918,7 @@
       }, 1000);
     }
 
-    // GOOGLE OAUTH & DRIVE SYNC WITH DISPLAYING NAME AND EMAIL TO THE RIGHT OF AVATAR
+    // GOOGLE OAUTH & DRIVE SYNC ENGINE
     function handleGoogleSignIn() {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
@@ -834,8 +926,9 @@
         callback: (response) => {
           if (response.access_token) {
             googleAccessToken = response.access_token;
+            localStorage.setItem('showUp_google_token', googleAccessToken);
 
-            // Request user profile details from Google API
+            // Fetch user profile info and save locally
             fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
               headers: { Authorization: `Bearer ${googleAccessToken}` }
             })
@@ -844,12 +937,15 @@
               if (profile) {
                 const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
                 const userEmail = profile.email || '';
+                const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+
+                const profileObj = { firstName, email: userEmail, picture };
+                localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
 
                 document.getElementById('user-first-name').innerText = firstName;
                 document.getElementById('user-email').innerText = userEmail;
-                if (profile.picture) {
-                  document.getElementById('user-avatar').src = profile.picture;
-                }
+                document.getElementById('dropdown-user-email').innerText = userEmail;
+                document.getElementById('user-avatar').src = picture;
               }
             })
             .catch(() => {})
@@ -870,6 +966,7 @@
       const syncIcon = document.getElementById('sync-icon');
       syncIcon.className = "fa-solid fa-rotate text-xs fa-spin text-amber-400";
 
+      // Sync both active sets buffer and completed workouts history
       setTimeout(() => {
         renderCalendar();
         renderMonthlyHistory();
@@ -877,8 +974,8 @@
 
         setTimeout(() => {
           syncIcon.className = "fa-solid fa-rotate text-xs text-emerald-400";
-        }, 2000);
-      }, 1200);
+        }, 1500);
+      }, 600);
     }
 
     // UTILS
