@@ -50,7 +50,7 @@
   </script>
 
   <style>
-    /* Default Material You Color Tokens (Emerald Green Accent) */
+    /* Default Emerald Green Accent Tokens */
     :root {
       --m3-surface: #0f172a;
       --m3-surface-variant: #1e293b;
@@ -65,48 +65,71 @@
       --m3-outline: #334155;
     }
 
-    /* Blue Theme Tokens */
+    /* Pixel Blue Theme Tokens */
     [data-theme-color="blue"] {
       --m3-primary: #3b82f6;
       --m3-primary-container: #1e3a8a;
       --m3-on-primary: #0f172a;
       --m3-on-primary-container: #bfdbfe;
+      --m3-secondary: #38bdf8;
+      --m3-secondary-container: #1e293b;
     }
 
-    /* Purple Theme Tokens */
+    /* Material Purple Theme Tokens */
     [data-theme-color="purple"] {
       --m3-primary: #a855f7;
       --m3-primary-container: #581c87;
       --m3-on-primary: #111827;
       --m3-on-primary-container: #f3e8ff;
+      --m3-secondary: #c084fc;
+      --m3-secondary-container: #3b0764;
     }
 
-    /* Coral Theme Tokens */
+    /* Coral Red Theme Tokens */
     [data-theme-color="coral"] {
       --m3-primary: #f43f5e;
       --m3-primary-container: #881337;
       --m3-on-primary: #0f172a;
       --m3-on-primary-container: #fecdd3;
+      --m3-secondary: #fb7185;
+      --m3-secondary-container: #4c0519;
     }
 
-    /* Obsidian AMOLED Theme Tokens */
+    /* Monochrome Slate Theme Tokens */
+    [data-theme-color="monochrome"] {
+      --m3-surface: #0f172a;
+      --m3-surface-variant: #1e293b;
+      --m3-surface-container: #1e293b;
+      --m3-surface-container-high: #334155;
+      --m3-primary: #94a3b8;
+      --m3-primary-container: #334155;
+      --m3-on-primary: #0f172a;
+      --m3-on-primary-container: #f1f5f9;
+      --m3-secondary: #cbd5e1;
+      --m3-secondary-container: #1e293b;
+      --m3-outline: #475569;
+    }
+
+    /* Obsidian Pitch Black AMOLED Theme Tokens */
     [data-theme-color="amoled"] {
       --m3-surface: #000000;
       --m3-surface-variant: #0d0d0d;
-      --m3-surface-container: #050505;
-      --m3-surface-container-high: #121212;
-      --m3-primary: #10b981;
-      --m3-primary-container: #064e3b;
+      --m3-surface-container: #080808;
+      --m3-surface-container-high: #171717;
+      --m3-primary: #e5e5e5;
+      --m3-primary-container: #262626;
       --m3-on-primary: #000000;
-      --m3-on-primary-container: #a7f3d0;
+      --m3-on-primary-container: #ffffff;
+      --m3-secondary: #a3a3a3;
+      --m3-secondary-container: #171717;
       --m3-outline: #262626;
     }
 
-    /* Density Styles */
+    /* Density Variants */
     body[data-density="compact"] .m3-card { padding: 0.75rem !important; }
     body[data-density="comfortable"] .m3-card { padding: 1.5rem !important; }
 
-    /* Card Elevation Styles */
+    /* Container Surface Variations */
     body[data-card-style="flat"] .m3-card {
       background-color: var(--m3-surface-container);
       box-shadow: none !important;
@@ -138,7 +161,6 @@
 
 <body id="app-body" data-theme-color="emerald" data-density="standard" data-card-style="elevated" class="bg-m3-surface text-slate-100 font-sans antialiased min-h-screen pb-36 selection:bg-m3-primary selection:text-m3-on-primary" onclick="closeProfileDropdownOutside(event)">
 
-  <!-- ================= HEADER & CLOUD SYNC ================= -->
   <header class="sticky top-0 z-40 bg-m3-surface/90 backdrop-blur-md border-b border-m3-outline/50 px-4 py-3 flex items-center justify-between shadow-md">
     <div class="flex items-center space-x-3">
       <div class="bg-m3-primary text-m3-on-primary p-2.5 rounded-2xl font-black tracking-wider flex items-center justify-center w-10 h-10 shadow-md shadow-m3-primary/20">
@@ -147,7 +169,7 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-m3-primaryContainer text-m3-onPrimaryContainer border border-m3-primary/30">v4.3 M3</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-m3-primaryContainer text-m3-onPrimaryContainer border border-m3-primary/30">v4.4 M3</span>
         </h1>
         <p class="text-xs font-medium text-slate-400 tracking-wide">Compound your progress</p>
       </div>
@@ -197,13 +219,12 @@
     </div>
   </header>
 
-  <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
 
     <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
     <div id="tab-workout-view" class="space-y-5">
 
-      <!-- HEART RATE TELEMETRY CARD (WITH COLLAPSE/EXPAND CAPABILITY) -->
+      <!-- HEART RATE TELEMETRY CARD -->
       <section id="hr-telemetry-card" class="m3-card bg-m3-surfaceContainer rounded-3xl p-4 border border-m3-outline shadow-lg relative overflow-hidden transition-all duration-300">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2.5">
@@ -247,7 +268,6 @@
         </div>
       </section>
 
-      <!-- LOG SET ENTRY CARD -->
       <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-4">
         <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
           <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
@@ -268,7 +288,7 @@
 
           <div>
             <label class="block text-xs font-bold text-slate-300 mb-1">Implement / Equipment</label>
-            <select id="implement-select" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-m3-primary transition">
+            <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-m3-surface border border-m3-outline rounded-2xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-m3-primary transition">
               <option value="Bodyweight" selected>Bodyweight</option>
               <option value="Row Erg">Row Erg</option>
               <option value="Kettlebell">Kettlebell</option>
@@ -311,8 +331,9 @@
           </div>
         </div>
 
-        <!-- NUMERIC WEIGHT & REPS SELECTOR -->
-        <div class="grid grid-cols-2 gap-4 bg-m3-surface/90 p-4 rounded-2xl border border-m3-outline">
+        <!-- DYNAMIC INPUT CONTAINER: WEIGHT/REPS vs DISTANCE/DURATION FOR ROW ERG -->
+        <!-- STANDARD WEIGHT & REPS SELECTOR -->
+        <div id="standard-inputs-panel" class="grid grid-cols-2 gap-4 bg-m3-surface/90 p-4 rounded-2xl border border-m3-outline">
           <div class="space-y-2">
             <label class="block text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
             <div class="flex items-center justify-center gap-2">
@@ -340,13 +361,43 @@
           </div>
         </div>
 
+        <!-- ROW ERG SPECIFIC DISTANCE & DURATION PANEL -->
+        <div id="rowerg-inputs-panel" class="hidden grid grid-cols-2 gap-4 bg-m3-surface/90 p-4 rounded-2xl border border-m3-primary/40">
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Distance (meters)</label>
+            <div class="flex items-center justify-center gap-2">
+              <input type="number" id="input-distance" value="500" min="50" step="50" class="w-28 bg-m3-surfaceContainer border border-m3-outline rounded-xl py-2 text-center text-2xl font-black text-m3-primary focus:outline-none focus:border-m3-primary">
+            </div>
+            <div class="grid grid-cols-4 gap-1 pt-1">
+              <button onclick="triggerHaptic('light'); adjustDistance(-500)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-500m</button>
+              <button onclick="triggerHaptic('light'); adjustDistance(-100)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-100m</button>
+              <button onclick="triggerHaptic('light'); adjustDistance(100)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+100m</button>
+              <button onclick="triggerHaptic('light'); adjustDistance(500)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+500m</button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-xs font-bold text-slate-400 text-center uppercase tracking-wider">Duration (min:sec)</label>
+            <div class="flex items-center justify-center gap-1">
+              <input type="number" id="input-duration-min" value="2" min="0" placeholder="m" class="w-14 bg-m3-surfaceContainer border border-m3-outline rounded-xl py-2 text-center text-xl font-black text-m3-primary focus:outline-none focus:border-m3-primary">
+              <span class="text-xl font-black text-slate-400">:</span>
+              <input type="number" id="input-duration-sec" value="00" min="0" max="59" placeholder="s" class="w-14 bg-m3-surfaceContainer border border-m3-outline rounded-xl py-2 text-center text-xl font-black text-m3-primary focus:outline-none focus:border-m3-primary">
+            </div>
+            <div class="grid grid-cols-4 gap-1 pt-1">
+              <button onclick="triggerHaptic('light'); adjustDuration(-60)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-1m</button>
+              <button onclick="triggerHaptic('light'); adjustDuration(-30)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">-30s</button>
+              <button onclick="triggerHaptic('light'); adjustDuration(30)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+30s</button>
+              <button onclick="triggerHaptic('light'); adjustDuration(60)" class="bg-m3-surfaceContainerHigh hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-m3-outline active:scale-95 transition">+1m</button>
+            </div>
+          </div>
+        </div>
+
         <button onclick="triggerHaptic('heavy'); logSet()" class="w-full bg-m3-primary hover:opacity-90 text-m3-on-primary font-bold py-3.5 px-4 rounded-2xl shadow-md shadow-m3-primary/20 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm">
           <span class="material-symbols-outlined text-lg">check</span>
           <span>Log Set</span>
         </button>
       </section>
 
-      <!-- CURRENT WORKOUT FEED -->
       <section class="m3-card bg-m3-surfaceContainer rounded-3xl p-5 border border-m3-outline shadow-lg space-y-3">
         <div class="flex items-center justify-between border-b border-m3-outline/60 pb-2.5">
           <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Current Session Logs</h3>
@@ -359,7 +410,8 @@
           </div>
         </div>
 
-        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-m3-secondaryContainer hover:bg-opacity-80 text-sky-200 font-bold py-3 px-4 rounded-2xl border border-m3-secondary/30 active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
+        <!-- FINISH & EVALUATE WORKOUT BUTTON CONFORMING DYNAMICALLY TO SELECTED THEME ACCENT -->
+        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full bg-m3-primaryContainer hover:opacity-90 text-m3-onPrimaryContainer font-extrabold py-3.5 px-4 rounded-2xl border border-m3-primary/40 shadow-md active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm mt-3">
           <span class="material-symbols-outlined text-lg">flag</span>
           <span>Finish & Evaluate Workout</span>
         </button>
@@ -525,7 +577,6 @@
 
   </main>
 
-  <!-- ================= MATERIAL UI CUSTOMIZATION MODAL / DRAWER ================= -->
   <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-m3-surfaceContainer border border-m3-outline rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
       <div class="flex items-center justify-between border-b border-m3-outline/60 pb-3">
@@ -538,29 +589,33 @@
         </button>
       </div>
 
-      <!-- Theme Accent Picker -->
+      <!-- Theme Accent Picker Including Slate Gray & Pure AMOLED Black -->
       <div class="space-y-2">
         <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Accent Palette</label>
-        <div class="grid grid-cols-5 gap-2">
-          <button onclick="setThemeAccent('emerald')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-emerald-500 transition">
-            <span class="w-6 h-6 rounded-full bg-emerald-500 shadow-sm"></span>
-            <span class="text-[10px] font-bold text-slate-300">Emerald</span>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="setThemeAccent('emerald')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-m3-surface border border-m3-outline hover:border-emerald-500 transition">
+            <span class="w-5 h-5 rounded-full bg-emerald-500 shadow-sm shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Emerald</span>
           </button>
-          <button onclick="setThemeAccent('blue')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-blue-500 transition">
-            <span class="w-6 h-6 rounded-full bg-blue-500 shadow-sm"></span>
-            <span class="text-[10px] font-bold text-slate-300">Pixel</span>
+          <button onclick="setThemeAccent('blue')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-m3-surface border border-m3-outline hover:border-blue-500 transition">
+            <span class="w-5 h-5 rounded-full bg-blue-500 shadow-sm shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Pixel Blue</span>
           </button>
-          <button onclick="setThemeAccent('purple')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-purple-500 transition">
-            <span class="w-6 h-6 rounded-full bg-purple-500 shadow-sm"></span>
-            <span class="text-[10px] font-bold text-slate-300">Purple</span>
+          <button onclick="setThemeAccent('purple')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-m3-surface border border-m3-outline hover:border-purple-500 transition">
+            <span class="w-5 h-5 rounded-full bg-purple-500 shadow-sm shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Purple</span>
           </button>
-          <button onclick="setThemeAccent('coral')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-m3-surface border border-m3-outline hover:border-rose-500 transition">
-            <span class="w-6 h-6 rounded-full bg-rose-500 shadow-sm"></span>
-            <span class="text-[10px] font-bold text-slate-300">Coral</span>
+          <button onclick="setThemeAccent('coral')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-m3-surface border border-m3-outline hover:border-rose-500 transition">
+            <span class="w-5 h-5 rounded-full bg-rose-500 shadow-sm shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Coral Red</span>
           </button>
-          <button onclick="setThemeAccent('amoled')" class="flex flex-col items-center gap-1 p-2 rounded-2xl bg-black border border-neutral-700 hover:border-emerald-500 transition">
-            <span class="w-6 h-6 rounded-full bg-emerald-500 border border-neutral-600"></span>
-            <span class="text-[10px] font-bold text-slate-300">Obsidian</span>
+          <button onclick="setThemeAccent('monochrome')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-m3-surface border border-m3-outline hover:border-slate-400 transition">
+            <span class="w-5 h-5 rounded-full bg-slate-400 shadow-sm shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Slate Gray</span>
+          </button>
+          <button onclick="setThemeAccent('amoled')" class="flex items-center gap-2.5 p-2.5 rounded-2xl bg-black border border-neutral-700 hover:border-neutral-400 transition">
+            <span class="w-5 h-5 rounded-full bg-neutral-200 border border-neutral-600 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-300">Obsidian Black</span>
           </button>
         </div>
       </div>
@@ -602,7 +657,7 @@
     </div>
   </div>
 
-  <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
+  <!-- FIXED BOTTOM NAVIGATION -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-m3-surface/95 backdrop-blur-md border-t border-m3-outline/60 bottom-nav-safe">
     <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
       <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-m3-primary transition">
@@ -620,7 +675,6 @@
     </div>
   </nav>
 
-  <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
 
@@ -683,7 +737,6 @@
       body.setAttribute('data-density', userPreferences.density || 'standard');
       body.setAttribute('data-card-style', userPreferences.cardStyle || 'elevated');
 
-      // Default HR module collapse setup
       if (userPreferences.hrDefaultCollapsed) {
         collapseHRModule(true);
       } else {
@@ -843,6 +896,23 @@
       if (match) {
         document.getElementById('implement-select').value = match.implement;
         document.getElementById('muscle-group-select').value = match.muscle;
+        handleImplementChange(match.implement);
+      } else if (val.toLowerCase().includes('row') || val.toLowerCase().includes('erg')) {
+        document.getElementById('implement-select').value = 'Row Erg';
+        handleImplementChange('Row Erg');
+      }
+    }
+
+    function handleImplementChange(implementVal) {
+      const standardPanel = document.getElementById('standard-inputs-panel');
+      const rowErgPanel = document.getElementById('rowerg-inputs-panel');
+
+      if (implementVal === 'Row Erg') {
+        standardPanel.classList.add('hidden');
+        rowErgPanel.classList.remove('hidden');
+      } else {
+        rowErgPanel.classList.add('hidden');
+        standardPanel.classList.remove('hidden');
       }
     }
 
@@ -860,28 +930,79 @@
       input.value = val;
     }
 
+    function adjustDistance(delta) {
+      const input = document.getElementById('input-distance');
+      let val = parseInt(input.value) || 0;
+      val = Math.max(50, val + delta);
+      input.value = val;
+    }
+
+    function adjustDuration(deltaSeconds) {
+      const minInput = document.getElementById('input-duration-min');
+      const secInput = document.getElementById('input-duration-sec');
+
+      let currentSecs = (parseInt(minInput.value) || 0) * 60 + (parseInt(secInput.value) || 0);
+      currentSecs = Math.max(0, currentSecs + deltaSeconds);
+
+      const mins = Math.floor(currentSecs / 60);
+      const secs = currentSecs % 60;
+
+      minInput.value = mins;
+      secInput.value = String(secs).padStart(2, '0');
+    }
+
     function logSet() {
       const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
       const implement = document.getElementById('implement-select').value;
       const muscle = document.getElementById('muscle-group-select').value;
       const rpe = parseFloat(document.getElementById('rpe-select').value) || 8;
-      const weight = parseFloat(document.getElementById('input-weight').value) || 0;
-      const reps = parseInt(document.getElementById('input-reps').value) || 1;
 
-      const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
-      const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
+      const isRowErg = (implement === 'Row Erg');
+      let setObj = null;
 
-      const setObj = {
-        id: Date.now(),
-        exerciseName,
-        implement,
-        muscle,
-        secondaryMuscles,
-        rpe,
-        weight,
-        reps,
-        hr: currentHR
-      };
+      if (isRowErg) {
+        const distance = parseInt(document.getElementById('input-distance').value) || 500;
+        const durationMin = parseInt(document.getElementById('input-duration-min').value) || 0;
+        const durationSec = parseInt(document.getElementById('input-duration-sec').value) || 0;
+        const durationFormatted = `${durationMin}:${String(durationSec).padStart(2, '0')}`;
+
+        const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
+        const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : ["Biceps", "Core/Abs", "Quads"];
+
+        setObj = {
+          id: Date.now(),
+          exerciseName,
+          implement,
+          muscle: muscle || "Back",
+          secondaryMuscles,
+          rpe,
+          isErg: true,
+          distance,
+          duration: durationFormatted,
+          weight: 0,
+          reps: 1,
+          hr: currentHR
+        };
+      } else {
+        const weight = parseFloat(document.getElementById('input-weight').value) || 0;
+        const reps = parseInt(document.getElementById('input-reps').value) || 1;
+
+        const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
+        const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
+
+        setObj = {
+          id: Date.now(),
+          exerciseName,
+          implement,
+          muscle,
+          secondaryMuscles,
+          rpe,
+          isErg: false,
+          weight,
+          reps,
+          hr: currentHR
+        };
+      }
 
       currentSessionSets.push(setObj);
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
@@ -907,7 +1028,7 @@
             <div class="text-sm font-bold text-slate-100">${s.exerciseName}</div>
             <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5">
               <span class="bg-m3-surfaceContainerHigh text-m3-primary font-bold px-2 py-0.5 rounded-lg border border-m3-outline">${s.implement}</span>
-              <span>${s.weight} lbs × ${s.reps} reps</span>
+              ${s.isErg ? `<span><b>${s.distance}</b> m in <b>${s.duration}</b></span>` : `<span>${s.weight} lbs × ${s.reps} reps</span>`}
               <span class="text-slate-500">RPE ${s.rpe}</span>
             </div>
           </div>
@@ -963,11 +1084,12 @@
         return;
       }
 
-      const totalVolume = currentSessionSets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+      const totalVolume = currentSessionSets.reduce((acc, s) => acc + (s.isErg ? (s.distance * 0.5) : (s.weight * s.reps)), 0);
       const totalSets = currentSessionSets.length;
       const avgRPE = currentSessionSets.reduce((acc, s) => acc + s.rpe, 0) / totalSets;
 
-      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4)).toFixed(1);
+      const hasRowing = currentSessionSets.some(s => s.isErg || s.implement === 'Row Erg');
+      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4) + (hasRowing ? 0.9 : 0)).toFixed(1);
       const anaerobicTE = Math.min(5.0, (currentSessionSets.filter(s => s.rpe >= 9).length * 0.7) + (totalVolume > 2000 ? 1.2 : 0.5)).toFixed(1);
 
       document.getElementById('aerobic-te-score').innerText = aerobicTE;
@@ -978,12 +1100,11 @@
       document.getElementById('anaerobic-te-bar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
       document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic Impact" : "Minor Anaerobic Impact";
 
-      // Compute primary & secondary muscle tonnage
       const muscleMap = {};
       const secondaryMuscleSet = new Set();
 
       currentSessionSets.forEach(s => {
-        const vol = s.weight * s.reps;
+        const vol = s.isErg ? s.distance : (s.weight * s.reps);
         muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
 
         if (s.secondaryMuscles && Array.isArray(s.secondaryMuscles)) {
@@ -996,7 +1117,7 @@
         <div class="space-y-1">
           <div class="flex justify-between text-xs font-bold">
             <span class="text-slate-300">${m}</span>
-            <span class="text-m3-primary">${vol} lbs</span>
+            <span class="text-m3-primary">${vol.toLocaleString()} ${hasRowing ? 'm / lbs' : 'lbs'}</span>
           </div>
           <div class="w-full bg-m3-surfaceContainerHigh h-2 rounded-full overflow-hidden border border-m3-outline">
             <div class="bg-m3-primary h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
@@ -1041,7 +1162,6 @@
       }
     }
 
-    // ACCURATE ANATOMICAL VECTOR COLORING WITH SECONDARY MUSCLE BACKFALL
     function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
       const muscleSvgMap = {
         'Chest': ['body-chest'],
@@ -1104,7 +1224,6 @@
       document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
-    // CALENDAR MATRIX & HISTORICAL MANAGEMENT
     function renderCalendar() {
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
@@ -1165,7 +1284,7 @@
         const dateStr = typeof w === 'string' ? w : w.date;
         const setsList = typeof w === 'object' && w.sets ? w.sets : [];
         const setsCount = setsList.length || '1+';
-        const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} lbs` : 'Logged';
+        const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} units` : 'Logged';
 
         return `
           <div class="bg-m3-surface rounded-2xl border border-m3-outline overflow-hidden transition-all">
@@ -1205,7 +1324,7 @@
                     <div class="font-bold text-slate-200">${s.exerciseName}</div>
                     <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px]">
                       <span class="bg-m3-surfaceContainerHigh text-m3-primary font-bold px-1.5 py-0.2 rounded border border-m3-outline">${s.implement}</span>
-                      <span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>
+                      ${s.isErg ? `<span><b class="text-slate-100">${s.distance}</b>m in <b class="text-slate-100">${s.duration}</b></span>` : `<span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>`}
                       <span class="text-slate-500">RPE ${s.rpe}</span>
                     </div>
                   </div>
@@ -1242,20 +1361,28 @@
       const setObj = workout.sets.find(s => s.id === setId);
       if (!setObj) return;
 
-      const newWeight = prompt(`Edit Weight (lbs) for ${setObj.exerciseName}:`, setObj.weight);
-      if (newWeight === null) return;
+      if (setObj.isErg) {
+        const newDist = prompt(`Edit Distance (meters) for ${setObj.exerciseName}:`, setObj.distance);
+        if (newDist === null) return;
+        const newDur = prompt(`Edit Duration (min:sec) for ${setObj.exerciseName}:`, setObj.duration);
+        if (newDur === null) return;
 
-      const newReps = prompt(`Edit Reps for ${setObj.exerciseName}:`, setObj.reps);
-      if (newReps === null) return;
+        setObj.distance = parseInt(newDist) || 500;
+        setObj.duration = newDur;
+      } else {
+        const newWeight = prompt(`Edit Weight (lbs) for ${setObj.exerciseName}:`, setObj.weight);
+        if (newWeight === null) return;
+        const newReps = prompt(`Edit Reps for ${setObj.exerciseName}:`, setObj.reps);
+        if (newReps === null) return;
+
+        setObj.weight = parseFloat(newWeight) || 0;
+        setObj.reps = parseInt(newReps) || 1;
+      }
 
       const newRPE = prompt(`Edit Perceived Effort RPE (6-10) for ${setObj.exerciseName}:`, setObj.rpe);
-      if (newRPE === null) return;
+      if (newRPE !== null) setObj.rpe = parseFloat(newRPE) || 8;
 
-      setObj.weight = parseFloat(newWeight) || 0;
-      setObj.reps = parseInt(newReps) || 1;
-      setObj.rpe = parseFloat(newRPE) || 8;
-
-      workout.totalVolume = workout.sets.reduce((acc, s) => acc + (s.weight * s.reps), 0);
+      workout.totalVolume = workout.sets.reduce((acc, s) => acc + (s.isErg ? (s.distance * 0.5) : (s.weight * s.reps)), 0);
 
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
       renderMonthlyHistory();
