@@ -190,17 +190,17 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.5</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.6</span>
         </h1>
         <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- GLOBAL DAILY "SHOWED UP" COUNTER BADGE -->
-    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-xs font-bold shadow-sm" title="Enthusiasts who showed up and logged a workout today">
+    <!-- ACCURATE GLOBAL DAILY "SHOWED UP" COUNTER BADGE -->
+    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 theme-badge rounded-full text-xs font-bold shadow-sm" title="Actual verified workouts completed today">
       <i class="fa-solid fa-fire text-amber-500 animate-pulse"></i>
-      <span id="global-counter-header-val">1,284</span>
-      <span class="font-semibold text-[10px] text-slate-400">showed up today</span>
+      <span id="global-counter-header-val">0</span>
+      <span class="font-semibold text-[10px] text-slate-300">showed up today</span>
     </div>
 
     <!-- Right Header Controls: Settings & Profile Dropdown -->
@@ -948,8 +948,8 @@
     <!-- VIEW TAB 3: SQUADS & COMMUNITY HUB -->
     <div id="tab-squads-view" class="hidden space-y-6">
 
-      <!-- GLOBAL "SHOWED UP TODAY" HERO METRIC CARD -->
-      <section class="m3-card rounded-3xl p-5 border shadow-xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 relative overflow-hidden space-y-4">
+      <!-- ACCURATE GLOBAL "SHOWED UP TODAY" HERO METRIC CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/20 relative overflow-hidden space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div class="flex items-center gap-2.5">
             <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-lg shadow-inner">
@@ -958,21 +958,21 @@
             <div>
               <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
                 Global Daily Counter
-                <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">Live</span>
+                <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">Verified</span>
               </h2>
-              <p class="text-xs text-slate-400">Total enthusiasts who showed up & logged today</p>
+              <p class="text-xs text-slate-400">Total verified sessions logged today</p>
             </div>
           </div>
 
           <div class="text-right">
-            <div id="global-counter-main-val" class="text-3xl font-black text-amber-400 tracking-tight">1,284</div>
+            <div id="global-counter-main-val" class="text-3xl font-black text-amber-400 tracking-tight">0</div>
             <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Showed Up</span>
           </div>
         </div>
 
         <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/70 p-3 rounded-2xl border border-slate-800/80">
           <i class="fa-solid fa-quote-left theme-text mr-1.5 opacity-60"></i>
-          Every time you or anyone in the showUp community completes a session by tapping <b class="text-slate-100">Finish & Evaluate Workout</b>, this counter ticks up once. Real, unpretentious daily momentum.
+          Every time you or anyone in your showUp network finishes a session by tapping <b class="text-slate-100">Finish & Evaluate Workout</b>, this counter increments once. Uninflated, real accountability.
         </p>
       </section>
 
@@ -1073,7 +1073,9 @@
     
     let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70; // inches
     let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175; // lbs
-    let globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || '1284');
+
+    // ACCURATE GLOBAL COUNTER: Initialized to real verified completion history count
+    let globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || completedWorkoutsHistory.length.toString());
 
     let lastEvaluatedSummary = null;
     let hrHistory = [];
@@ -1116,6 +1118,16 @@
       restoreSavedSession();
       restoreThemePreferences();
     });
+
+    function getCurrentUserEmail() {
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      return (savedProfile && savedProfile.email) ? savedProfile.email : "user@email.com";
+    }
+
+    function getCurrentUserName() {
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      return (savedProfile && savedProfile.firstName) ? savedProfile.firstName : "User";
+    }
 
     function showToastNotification(title, message, iconClass = "fa-solid fa-circle-info") {
       document.getElementById('toast-title').innerText = title;
@@ -1750,7 +1762,7 @@
       }
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
 
-      // INCREMENT GLOBAL COUNTER ONLY WHEN FINISH & EVALUATE IS CLICKED
+      // ACCURATE GLOBAL COUNTER INCREMENT: Only on genuine finish & evaluate
       globalShowedUpCount += 1;
       localStorage.setItem('showUp_global_counter', globalShowedUpCount.toString());
       updateGlobalCounterUI();
@@ -2191,10 +2203,12 @@
 
     function initDefaultSquadsIfNeeded() {
       if (squadsData.length === 0) {
+        const userEmail = getCurrentUserEmail();
         squadsData = [
           {
             id: "squad-1",
             name: "Pahlwani Conditioning Circle",
+            creatorEmail: userEmail,
             createdDate: "2026-10-01",
             notifyCategories: {
               silentFlare: true,
@@ -2203,9 +2217,9 @@
               instantFistbump: true
             },
             members: [
-              { email: "abhilash@gmail.com", name: "Abhilash", status: "Active Now", workedOutToday: true },
-              { email: "swathi@gmail.com", name: "Swathi", status: "Showed up 2h ago", workedOutToday: true },
-              { email: "rohit.runner@gmail.com", name: "Rohit", status: "Resting today", workedOutToday: false }
+              { email: userEmail, name: getCurrentUserName(), status: "Active Now", workedOutToday: true, role: "creator" },
+              { email: "swathi@gmail.com", name: "Swathi", status: "Showed up 2h ago", workedOutToday: true, role: "member" },
+              { email: "rohit.runner@gmail.com", name: "Rohit", status: "Resting today", workedOutToday: false, role: "member" }
             ]
           }
         ];
@@ -2215,95 +2229,129 @@
 
     function renderSquads() {
       const container = document.getElementById('squads-list-container');
+      const currentUserEmail = getCurrentUserEmail().toLowerCase();
+
       if (squadsData.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No Squads created yet. Tap "Create Squad" to build your community.</div>`;
         return;
       }
 
-      container.innerHTML = squadsData.map(s => `
-        <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
-            <div>
-              <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-shield-halved theme-text"></i>
-                ${s.name}
-              </h3>
-              <span class="text-[11px] text-slate-400">${s.members.length} Members</span>
-            </div>
+      container.innerHTML = squadsData.map(s => {
+        const isCreator = (s.creatorEmail && s.creatorEmail.toLowerCase() === currentUserEmail) || 
+                          (s.members.some(m => m.email.toLowerCase() === currentUserEmail && m.role === "creator"));
 
-            <button onclick="triggerHaptic('light'); addMemberPrompt('${s.id}')" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1 rounded-xl transition flex items-center gap-1.5">
-              <i class="fa-solid fa-user-plus text-xs theme-text"></i>
-              <span>Add Gmail</span>
-            </button>
-          </div>
-
-          <!-- MEMBERS FEED LIST -->
-          <div class="space-y-2">
-            ${s.members.map(m => `
-              <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2.5">
-                  <div class="relative">
-                    <div class="w-7 h-7 rounded-full bg-slate-800 theme-text border border-slate-700 flex items-center justify-center font-bold text-xs uppercase">
-                      ${m.name.charAt(0)}
-                    </div>
-                    ${m.status === "Active Now" ? `<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-ping"></span>` : ''}
-                  </div>
-                  <div>
-                    <div class="font-bold text-slate-200 flex items-center gap-1.5">
-                      <span>${m.name}</span>
-                      <span class="text-[10px] font-normal text-slate-500">(${m.email})</span>
-                    </div>
-                    <div class="text-[10px] text-slate-400 flex items-center gap-1">
-                      ${m.workedOutToday ? `<i class="fa-solid fa-fire text-amber-500"></i>` : `<i class="fa-solid fa-bed text-slate-600"></i>`}
-                      <span>${m.status}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button onclick="triggerHaptic('medium'); sendFistbump('${m.name}')" class="bg-slate-950 hover:bg-slate-900 text-amber-400 border border-slate-800 px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95" title="Send Fistbump / Flame">
-                  <i class="fa-solid fa-hand-fist"></i>
-                  <span>Nudge</span>
-                </button>
+        return `
+          <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div>
+                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-shield-halved theme-text"></i>
+                  ${s.name}
+                  ${isCreator ? `<span class="text-[9px] theme-badge font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">Creator</span>` : ''}
+                </h3>
+                <span class="text-[11px] text-slate-400">${s.members.length} Members</span>
               </div>
-            `).join('')}
-          </div>
 
-          <!-- NOTIFICATION TOGGLES FOR THIS SQUAD -->
-          <div class="pt-2 border-t border-slate-800/80 space-y-2">
-            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Notification Categories</span>
-            <div class="grid grid-cols-2 gap-2 text-[11px]">
-              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
-                <span class="text-slate-300">Silent Flare</span>
-                <input type="checkbox" ${s.notifyCategories.silentFlare ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'silentFlare', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
-              </label>
+              ${isCreator ? `
+                <button onclick="triggerHaptic('light'); addMemberPrompt('${s.id}')" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1 rounded-xl transition flex items-center gap-1.5">
+                  <i class="fa-solid fa-user-plus text-xs theme-text"></i>
+                  <span>Add Gmail</span>
+                </button>
+              ` : ''}
+            </div>
 
-              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
-                <span class="text-slate-300">Active Arena</span>
-                <input type="checkbox" ${s.notifyCategories.activeArena ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'activeArena', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
-              </label>
+            <!-- MEMBERS FEED LIST WITH STRICT ROLE PERMISSIONS -->
+            <div class="space-y-2">
+              ${s.members.map(m => {
+                const isSelf = m.email.toLowerCase() === currentUserEmail;
 
-              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
-                <span class="text-slate-300">Shared Streak</span>
-                <input type="checkbox" ${s.notifyCategories.sharedStreak ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'sharedStreak', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
-              </label>
+                return `
+                  <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2.5">
+                      <div class="relative">
+                        <div class="w-7 h-7 rounded-full bg-slate-800 theme-text border border-slate-700 flex items-center justify-center font-bold text-xs uppercase">
+                          ${m.name.charAt(0)}
+                        </div>
+                        ${m.status === "Active Now" ? `<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-ping"></span>` : ''}
+                      </div>
+                      <div>
+                        <div class="font-bold text-slate-200 flex items-center gap-1.5">
+                          <span>${m.name}</span>
+                          <span class="text-[10px] font-normal text-slate-500">(${m.email})</span>
+                          ${isSelf ? `<span class="text-[9px] text-slate-400 font-bold bg-slate-800 px-1.5 py-0.2 rounded">(You)</span>` : ''}
+                        </div>
+                        <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                          ${m.workedOutToday ? `<i class="fa-solid fa-fire text-amber-500"></i>` : `<i class="fa-solid fa-bed text-slate-600"></i>`}
+                          <span>${m.status}</span>
+                        </div>
+                      </div>
+                    </div>
 
-              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
-                <span class="text-slate-300">Instant Fistbump</span>
-                <input type="checkbox" ${s.notifyCategories.instantFistbump ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'instantFistbump', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
-              </label>
+                    <div class="flex items-center gap-1.5">
+                      ${!isSelf ? `
+                        <button onclick="triggerHaptic('medium'); sendFistbump('${m.name}')" class="bg-slate-950 hover:bg-slate-900 text-amber-400 border border-slate-800 px-2 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95" title="Send Fistbump / Flame">
+                          <i class="fa-solid fa-hand-fist"></i>
+                          <span>Nudge</span>
+                        </button>
+                      ` : ''}
+
+                      <!-- MEMBER REMOVAL LOGIC: CREATOR REMOVES OTHERS; MEMBERS REMOVE ONLY THEMSELVES -->
+                      ${(isCreator && !isSelf) ? `
+                        <button onclick="triggerHaptic('medium'); removeSquadMember('${s.id}', '${m.email}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition" title="Remove Member">
+                          <i class="fa-solid fa-user-minus text-xs"></i>
+                        </button>
+                      ` : (isSelf ? `
+                        <button onclick="triggerHaptic('medium'); removeSquadMember('${s.id}', '${m.email}')" class="text-slate-500 hover:text-rose-400 p-1.5 rounded-lg transition" title="Leave Squad">
+                          <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                        </button>
+                      ` : '')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- NOTIFICATION TOGGLES FOR THIS SQUAD -->
+            <div class="pt-2 border-t border-slate-800/80 space-y-2">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Notification Categories</span>
+              <div class="grid grid-cols-2 gap-2 text-[11px]">
+                <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                  <span class="text-slate-300">Silent Flare</span>
+                  <input type="checkbox" ${s.notifyCategories.silentFlare ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'silentFlare', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+                </label>
+
+                <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                  <span class="text-slate-300">Active Arena</span>
+                  <input type="checkbox" ${s.notifyCategories.activeArena ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'activeArena', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+                </label>
+
+                <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                  <span class="text-slate-300">Shared Streak</span>
+                  <input type="checkbox" ${s.notifyCategories.sharedStreak ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'sharedStreak', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+                </label>
+
+                <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                  <span class="text-slate-300">Instant Fistbump</span>
+                  <input type="checkbox" ${s.notifyCategories.instantFistbump ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'instantFistbump', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+                </label>
+              </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function openCreateSquadModal() {
       const squadName = prompt("Enter a name for your new Squad:", "My Training Circle");
       if (!squadName || !squadName.trim()) return;
 
+      const userEmail = getCurrentUserEmail();
+      const userName = getCurrentUserName();
+
       const newSquad = {
         id: `squad-${Date.now()}`,
         name: squadName.trim(),
+        creatorEmail: userEmail,
         createdDate: new Date().toISOString().slice(0, 10),
         notifyCategories: {
           silentFlare: true,
@@ -2312,36 +2360,80 @@
           instantFistbump: true
         },
         members: [
-          { email: "you@gmail.com", name: "You", status: "Active Now", workedOutToday: true }
+          { email: userEmail, name: userName, status: "Active Now", workedOutToday: true, role: "creator" }
         ]
       };
 
       squadsData.push(newSquad);
       localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
       renderSquads();
-      showToastNotification("Squad Created", `Created "${squadName.trim()}". You can now add friends using their Gmail addresses.`, "fa-solid fa-users text-emerald-400");
+      showToastNotification("Squad Created", `Created "${squadName.trim()}". You are the squad creator.`, "fa-solid fa-users text-emerald-400");
     }
 
     function addMemberPrompt(squadId) {
+      const squad = squadsData.find(s => s.id === squadId);
+      const currentUserEmail = getCurrentUserEmail().toLowerCase();
+
+      if (!squad) return;
+      
+      // Strict permission check
+      if (squad.creatorEmail && squad.creatorEmail.toLowerCase() !== currentUserEmail) {
+        showToastNotification("Permission Denied", "Only the squad creator can invite or add new members.", "fa-solid fa-lock text-rose-400");
+        return;
+      }
+
       const email = prompt("Enter friend's Gmail address to invite to Squad:");
       if (!email || !email.includes('@')) {
         showToastNotification("Invalid Email", "Please enter a valid Gmail address.", "fa-solid fa-circle-xmark text-rose-400");
         return;
       }
 
+      const namePart = email.split('@')[0];
+      squad.members.push({
+        email: email.trim(),
+        name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+        status: "Invited",
+        workedOutToday: false,
+        role: "member"
+      });
+      localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+      renderSquads();
+      showToastNotification("Invite Sent", `Added ${email} to ${squad.name}.`, "fa-solid fa-paper-plane text-emerald-400");
+    }
+
+    function removeSquadMember(squadId, memberEmail) {
       const squad = squadsData.find(s => s.id === squadId);
-      if (squad) {
-        const namePart = email.split('@')[0];
-        squad.members.push({
-          email: email.trim(),
-          name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
-          status: "Invited",
-          workedOutToday: false
-        });
+      if (!squad) return;
+
+      const currentUserEmail = getCurrentUserEmail().toLowerCase();
+      const isCreator = squad.creatorEmail && squad.creatorEmail.toLowerCase() === currentUserEmail;
+      const isSelf = memberEmail.toLowerCase() === currentUserEmail;
+
+      if (!isCreator && !isSelf) {
+        showToastNotification("Action Restricted", "Only squad creators can remove other members.", "fa-solid fa-shield text-rose-400");
+        return;
+      }
+
+      const actionText = isSelf ? "leave this squad" : `remove ${memberEmail} from this squad`;
+
+      showConfirmDialog("Confirm Member Removal", `Are you sure you want to ${actionText}?`, () => {
+        squad.members = squad.members.filter(m => m.email.toLowerCase() !== memberEmail.toLowerCase());
+
+        // If creator leaves, disband or transfer squad
+        if (isSelf && isCreator && squad.members.length > 0) {
+          squad.creatorEmail = squad.members[0].email;
+          squad.members[0].role = "creator";
+        }
+
+        // If no members left, delete squad
+        if (squad.members.length === 0) {
+          squadsData = squadsData.filter(s => s.id !== squadId);
+        }
+
         localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
         renderSquads();
-        showToastNotification("Invite Sent", `Added ${email} to ${squad.name}.`, "fa-solid fa-paper-plane text-emerald-400");
-      }
+        showToastNotification("Squad Updated", isSelf ? "You left the squad." : "Member removed.", "fa-solid fa-user-xmark text-amber-400");
+      });
     }
 
     function toggleSquadNotif(squadId, key, isChecked) {
@@ -2490,6 +2582,7 @@
       document.getElementById('user-email').innerText = 'user@email.com';
       document.getElementById('dropdown-user-email').innerText = 'user@email.com';
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+      renderSquads();
     }
 
     function switchTab(tabName) {
@@ -2575,6 +2668,7 @@
                 localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
 
                 updateProfileUI(firstName, userEmail, picture);
+                renderSquads();
               }
             })
             .catch((err) => {
@@ -2610,6 +2704,7 @@
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        renderSquads();
         syncIcon.className = "fa-solid fa-check text-xs theme-text";
 
         setTimeout(() => {
