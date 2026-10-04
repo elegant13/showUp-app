@@ -130,7 +130,7 @@
       color: var(--m3-onSurface);
     }
 
-    /* Dynamic Accent Classes */
+    /* Dynamic Accent Utilities */
     .theme-text { color: var(--theme-accent-color) !important; }
     .theme-bg { background-color: var(--theme-accent-color) !important; color: var(--m3-onPrimary) !important; }
     .theme-bg-soft { background-color: var(--theme-accent-bg) !important; }
@@ -190,20 +190,28 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.3</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.5</span>
         </h1>
         <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- Right Header Controls: Settings & Google Profile -->
+    <!-- GLOBAL DAILY "SHOWED UP" COUNTER BADGE -->
+    <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-xs font-bold shadow-sm" title="Enthusiasts who showed up and logged a workout today">
+      <i class="fa-solid fa-fire text-amber-500 animate-pulse"></i>
+      <span id="global-counter-header-val">1,284</span>
+      <span class="font-semibold text-[10px] text-slate-400">showed up today</span>
+    </div>
+
+    <!-- Right Header Controls: Settings & Profile Dropdown -->
     <div class="relative flex items-center gap-2">
       <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
         <i class="fa-solid fa-sliders text-sm"></i>
       </button>
 
+      <!-- GOOGLE USER PROFILE & HAMBURGER MENU INCLUDING BACKUP -->
       <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-        <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
+        <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account & Backup Menu">
           <img id="user-avatar" class="w-7 h-7 rounded-full border theme-border object-cover shrink-0 group-hover:brightness-110 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
           
           <div class="flex flex-col text-left leading-tight">
@@ -217,11 +225,20 @@
           <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
         </button>
 
-        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-48 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
+        <!-- DROPDOWN MENU WITH BACKUP OPTION -->
+        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
           <div class="px-3.5 py-2">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
             <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
           </div>
+
+          <div class="py-1">
+            <button onclick="triggerHaptic('medium'); exportJSONBackup(); toggleProfileDropdown(event);" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2.5">
+              <i class="fa-solid fa-file-export theme-text text-sm"></i>
+              <span>Export JSON Backup</span>
+            </button>
+          </div>
+
           <div class="py-1">
             <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
               <i class="fa-solid fa-right-from-bracket text-xs"></i>
@@ -329,6 +346,14 @@
             <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
           </div>
         </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Backup Options</label>
+          <button onclick="exportJSONBackup(); toggleSettingsModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-bold py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-file-export theme-text"></i>
+            <span>Export JSON Data Backup</span>
+          </button>
+        </div>
       </div>
 
       <button onclick="toggleSettingsModal()" class="w-full m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition">
@@ -389,7 +414,6 @@
         </button>
       </div>
 
-      <!-- LINE GRAPH CONTAINER -->
       <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
         <div class="h-56 w-full relative">
           <svg id="weight-trend-svg" class="w-full h-full overflow-visible" viewBox="0 0 320 160" preserveAspectRatio="none">
@@ -824,10 +848,10 @@
 
     </div>
 
-    <!-- VIEW TAB 2: CALENDAR, HISTORICAL WORKOUT MANAGEMENT & ISOLATED WEIGHT TRACKER -->
+    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT -->
     <div id="tab-calendar-view" class="hidden space-y-6">
 
-      <!-- HISTORICAL BODY WEIGHT PROGRESS CARD (WITH DATE PICKER MODAL & CLICKABLE LINE GRAPH ICON) -->
+      <!-- HISTORICAL BODY WEIGHT PROGRESS CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -921,6 +945,103 @@
 
     </div>
 
+    <!-- VIEW TAB 3: SQUADS & COMMUNITY HUB -->
+    <div id="tab-squads-view" class="hidden space-y-6">
+
+      <!-- GLOBAL "SHOWED UP TODAY" HERO METRIC CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl bg-gradient-to-br from-slate-900 via-slate-900 to-amber-950/30 relative overflow-hidden space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center text-lg shadow-inner">
+              <i class="fa-solid fa-fire animate-pulse"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+                Global Daily Counter
+                <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full font-bold">Live</span>
+              </h2>
+              <p class="text-xs text-slate-400">Total enthusiasts who showed up & logged today</p>
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div id="global-counter-main-val" class="text-3xl font-black text-amber-400 tracking-tight">1,284</div>
+            <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Showed Up</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed bg-slate-950/70 p-3 rounded-2xl border border-slate-800/80">
+          <i class="fa-solid fa-quote-left theme-text mr-1.5 opacity-60"></i>
+          Every time you or anyone in the showUp community completes a session by tapping <b class="text-slate-100">Finish & Evaluate Workout</b>, this counter ticks up once. Real, unpretentious daily momentum.
+        </p>
+      </section>
+
+      <!-- SQUADS MANAGEMENT SECTION -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-users theme-text"></i>
+              My Squads & Accountability Circles
+            </h2>
+            <p class="text-xs text-slate-400">Connect via Gmail addresses to stay quietly motivated</p>
+          </div>
+
+          <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="theme-badge text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Squad</span>
+          </button>
+        </div>
+
+        <div id="squads-list-container" class="space-y-4">
+          <!-- Dynamic Squad Cards Rendered Here -->
+        </div>
+      </section>
+
+      <!-- NOTIFICATION CATEGORIES INFORMATION CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-3">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-bell theme-text"></i>
+          Non-Obtrusive Notification Categories
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+            <div class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-ghost text-purple-400"></i>
+              <span>Silent Flare</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Low-priority, quiet alert when a squad member taps "Start Workout". No loud buzzing.</p>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+            <div class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-dot text-emerald-400"></i>
+              <span>Active Arena</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Zero push notifications outside the app. A subtle pulse ring appears on active member avatars when opening showUp.</p>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+            <div class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-fire text-amber-400"></i>
+              <span>Shared Squad Streak</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">Single daily summary notification celebrating squad completion milestones (e.g. "3 of 4 showed up today!").</p>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+            <div class="font-bold text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-hand-fist text-rose-400"></i>
+              <span>Instant Fistbump / Nudge</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">1-tap interactive flame/fistbump that vibrates your friend's phone while they are working out.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
   </main>
 
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
@@ -934,9 +1055,9 @@
         <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
         <span>Calendar</span>
       </button>
-      <button onclick="triggerHaptic('medium'); exportJSONBackup()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-file-export text-lg mb-0.5"></i>
-        <span>Backup</span>
+      <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+        <i class="fa-solid fa-users text-lg mb-0.5"></i>
+        <span>Squads</span>
       </button>
     </div>
   </nav>
@@ -948,9 +1069,11 @@
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
+    let squadsData = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
     
     let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70; // inches
     let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175; // lbs
+    let globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || '1284');
 
     let lastEvaluatedSummary = null;
     let hrHistory = [];
@@ -983,9 +1106,12 @@
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
+      initDefaultSquadsIfNeeded();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
+      renderSquads();
+      updateGlobalCounterUI();
       initSparkline();
       restoreSavedSession();
       restoreThemePreferences();
@@ -1041,6 +1167,11 @@
         localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
         renderWeightHistory();
       }
+    }
+
+    function updateGlobalCounterUI() {
+      document.getElementById('global-counter-header-val').innerText = globalShowedUpCount.toLocaleString();
+      document.getElementById('global-counter-main-val').innerText = globalShowedUpCount.toLocaleString();
     }
 
     function openLogWeightModal() {
@@ -1301,7 +1432,6 @@
         document.getElementById('endurance-dist-label').innerText = `Distance (${implementVal} Miles)`;
         endurancePanel.classList.remove('hidden');
         
-        // Auto-fill HR from active telemetry session if fields are currently empty
         if (hrHistory.length > 0) {
           const avgInput = document.getElementById('input-endurance-avghr');
           const maxInput = document.getElementById('input-endurance-maxhr');
@@ -1414,7 +1544,6 @@
         avgHR = parseInt(document.getElementById('input-endurance-avghr').value) || 0;
         maxHR = parseInt(document.getElementById('input-endurance-maxhr').value) || 0;
 
-        // Auto calculate from active telemetry if fields were left blank
         if (!avgHR && hrHistory.length > 0) {
           avgHR = Math.round(hrHistory.reduce((a, b) => a + b, 0) / hrHistory.length);
         }
@@ -1620,6 +1749,11 @@
         completedWorkoutsHistory.push(workoutObj);
       }
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+
+      // INCREMENT GLOBAL COUNTER ONLY WHEN FINISH & EVALUATE IS CLICKED
+      globalShowedUpCount += 1;
+      localStorage.setItem('showUp_global_counter', globalShowedUpCount.toString());
+      updateGlobalCounterUI();
 
       document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
       document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;
@@ -2055,6 +2189,173 @@
       }, 1000);
     }
 
+    function initDefaultSquadsIfNeeded() {
+      if (squadsData.length === 0) {
+        squadsData = [
+          {
+            id: "squad-1",
+            name: "Pahlwani Conditioning Circle",
+            createdDate: "2026-10-01",
+            notifyCategories: {
+              silentFlare: true,
+              activeArena: true,
+              sharedStreak: true,
+              instantFistbump: true
+            },
+            members: [
+              { email: "abhilash@gmail.com", name: "Abhilash", status: "Active Now", workedOutToday: true },
+              { email: "swathi@gmail.com", name: "Swathi", status: "Showed up 2h ago", workedOutToday: true },
+              { email: "rohit.runner@gmail.com", name: "Rohit", status: "Resting today", workedOutToday: false }
+            ]
+          }
+        ];
+        localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+      }
+    }
+
+    function renderSquads() {
+      const container = document.getElementById('squads-list-container');
+      if (squadsData.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No Squads created yet. Tap "Create Squad" to build your community.</div>`;
+        return;
+      }
+
+      container.innerHTML = squadsData.map(s => `
+        <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <div>
+              <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved theme-text"></i>
+                ${s.name}
+              </h3>
+              <span class="text-[11px] text-slate-400">${s.members.length} Members</span>
+            </div>
+
+            <button onclick="triggerHaptic('light'); addMemberPrompt('${s.id}')" class="bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1 rounded-xl transition flex items-center gap-1.5">
+              <i class="fa-solid fa-user-plus text-xs theme-text"></i>
+              <span>Add Gmail</span>
+            </button>
+          </div>
+
+          <!-- MEMBERS FEED LIST -->
+          <div class="space-y-2">
+            ${s.members.map(m => `
+              <div class="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2.5">
+                  <div class="relative">
+                    <div class="w-7 h-7 rounded-full bg-slate-800 theme-text border border-slate-700 flex items-center justify-center font-bold text-xs uppercase">
+                      ${m.name.charAt(0)}
+                    </div>
+                    ${m.status === "Active Now" ? `<span class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-ping"></span>` : ''}
+                  </div>
+                  <div>
+                    <div class="font-bold text-slate-200 flex items-center gap-1.5">
+                      <span>${m.name}</span>
+                      <span class="text-[10px] font-normal text-slate-500">(${m.email})</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                      ${m.workedOutToday ? `<i class="fa-solid fa-fire text-amber-500"></i>` : `<i class="fa-solid fa-bed text-slate-600"></i>`}
+                      <span>${m.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <button onclick="triggerHaptic('medium'); sendFistbump('${m.name}')" class="bg-slate-950 hover:bg-slate-900 text-amber-400 border border-slate-800 px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1 active:scale-95" title="Send Fistbump / Flame">
+                  <i class="fa-solid fa-hand-fist"></i>
+                  <span>Nudge</span>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- NOTIFICATION TOGGLES FOR THIS SQUAD -->
+          <div class="pt-2 border-t border-slate-800/80 space-y-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">Notification Categories</span>
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                <span class="text-slate-300">Silent Flare</span>
+                <input type="checkbox" ${s.notifyCategories.silentFlare ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'silentFlare', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+              </label>
+
+              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                <span class="text-slate-300">Active Arena</span>
+                <input type="checkbox" ${s.notifyCategories.activeArena ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'activeArena', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+              </label>
+
+              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                <span class="text-slate-300">Shared Streak</span>
+                <input type="checkbox" ${s.notifyCategories.sharedStreak ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'sharedStreak', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+              </label>
+
+              <label class="flex items-center justify-between bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+                <span class="text-slate-300">Instant Fistbump</span>
+                <input type="checkbox" ${s.notifyCategories.instantFistbump ? 'checked' : ''} onchange="toggleSquadNotif('${s.id}', 'instantFistbump', this.checked)" class="accent-emerald-500 w-3.5 h-3.5">
+              </label>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openCreateSquadModal() {
+      const squadName = prompt("Enter a name for your new Squad:", "My Training Circle");
+      if (!squadName || !squadName.trim()) return;
+
+      const newSquad = {
+        id: `squad-${Date.now()}`,
+        name: squadName.trim(),
+        createdDate: new Date().toISOString().slice(0, 10),
+        notifyCategories: {
+          silentFlare: true,
+          activeArena: true,
+          sharedStreak: true,
+          instantFistbump: true
+        },
+        members: [
+          { email: "you@gmail.com", name: "You", status: "Active Now", workedOutToday: true }
+        ]
+      };
+
+      squadsData.push(newSquad);
+      localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+      renderSquads();
+      showToastNotification("Squad Created", `Created "${squadName.trim()}". You can now add friends using their Gmail addresses.`, "fa-solid fa-users text-emerald-400");
+    }
+
+    function addMemberPrompt(squadId) {
+      const email = prompt("Enter friend's Gmail address to invite to Squad:");
+      if (!email || !email.includes('@')) {
+        showToastNotification("Invalid Email", "Please enter a valid Gmail address.", "fa-solid fa-circle-xmark text-rose-400");
+        return;
+      }
+
+      const squad = squadsData.find(s => s.id === squadId);
+      if (squad) {
+        const namePart = email.split('@')[0];
+        squad.members.push({
+          email: email.trim(),
+          name: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+          status: "Invited",
+          workedOutToday: false
+        });
+        localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+        renderSquads();
+        showToastNotification("Invite Sent", `Added ${email} to ${squad.name}.`, "fa-solid fa-paper-plane text-emerald-400");
+      }
+    }
+
+    function toggleSquadNotif(squadId, key, isChecked) {
+      const squad = squadsData.find(s => s.id === squadId);
+      if (squad && squad.notifyCategories) {
+        squad.notifyCategories[key] = isChecked;
+        localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+      }
+    }
+
+    function sendFistbump(memberName) {
+      showToastNotification("Fistbump Sent 🔥", `Sent a motivational nudge to ${memberName}!`, "fa-solid fa-hand-fist text-amber-400");
+    }
+
     function shareWorkoutToWhatsApp(dateStr = null) {
       const targetDate = dateStr || (lastEvaluatedSummary ? lastEvaluatedSummary.date : selectedWorkoutDate);
       const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === targetDate) || lastEvaluatedSummary;
@@ -2081,7 +2382,7 @@
       if (w.sets && w.sets.length > 0) {
         text += `\n*Logged Sets:*\n`;
         w.sets.forEach((s, idx) => {
-          const hrStr = s.avgHR || s.maxHR ? ` (❤️️ ${s.avgHR || '--'}/${s.maxHR || '--'} BPM)` : '';
+          const hrStr = s.avgHR || s.maxHR ? ` (❤ ${s.avgHR || '--'}/${s.maxHR || '--'} BPM)` : '';
           if (["Running", "Walking", "Hiking", "Biking"].includes(s.implement)) {
             text += `${idx + 1}. ${s.exerciseName}: ${s.enduranceDistance} mi | ${s.enduranceTime}${hrStr}\n`;
           } else if (s.implement === "Swimming") {
@@ -2194,22 +2495,33 @@
     function switchTab(tabName) {
       const workoutView = document.getElementById('tab-workout-view');
       const calendarView = document.getElementById('tab-calendar-view');
+      const squadsView = document.getElementById('tab-squads-view');
+
       const btnWorkout = document.getElementById('nav-btn-workout');
       const btnCalendar = document.getElementById('nav-btn-calendar');
+      const btnSquads = document.getElementById('nav-btn-squads');
+
+      workoutView.classList.add('hidden');
+      calendarView.classList.add('hidden');
+      squadsView.classList.add('hidden');
+
+      btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+      btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+      btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
 
       if (tabName === 'workout') {
         workoutView.classList.remove('hidden');
-        calendarView.classList.add('hidden');
         btnWorkout.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
-      } else {
-        workoutView.classList.add('hidden');
+      } else if (tabName === 'calendar') {
         calendarView.classList.remove('hidden');
         btnCalendar.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+      } else if (tabName === 'squads') {
+        squadsView.classList.remove('hidden');
+        btnSquads.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
+        renderSquads();
       }
     }
 
@@ -2307,13 +2619,21 @@
     }
 
     function exportJSONBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
+      const backupObj = {
+        workoutsHistory: completedWorkoutsHistory,
+        weightHistory: weightHistory,
+        squads: squadsData,
+        physicalProfile: { height: userHeight, weight: userWeight },
+        globalShowedUpCount: globalShowedUpCount
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupObj, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
       downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
+      showToastNotification("Backup Generated", "JSON data backup file has been generated and downloaded.", "fa-solid fa-file-export text-emerald-400");
     }
   </script>
 </body>
