@@ -207,13 +207,13 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v6.0</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v6.1</span>
         </h1>
         <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
       </div>
     </div>
 
-    <!-- ACCURATE GLOBAL DAILY "SHOWED UP" COUNTER BADGE WITH THEME SHARP CHECKMARK -->
+    <!-- ACCURATE GLOBAL DAILY "SHOWED UP" COUNTER BADGE -->
     <div class="hidden sm:flex items-center gap-2 px-3 py-1 theme-badge rounded-full text-xs font-bold shadow-sm" title="Real-time verified workouts completed today">
       <div id="header-check-wrapper" class="flex items-center justify-center">
         <i id="header-check-icon" class="fa-solid fa-check-double theme-text text-sm transition-transform duration-300"></i>
@@ -228,7 +228,7 @@
         <i class="fa-solid fa-sliders text-sm"></i>
       </button>
 
-      <!-- GOOGLE USER PROFILE & HAMBURGER MENU INCLUDING BACKUP -->
+      <!-- GOOGLE USER PROFILE & DROPDOWN MENU -->
       <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
         <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account & Backup Menu">
           <img id="user-avatar" class="w-7 h-7 rounded-full border theme-border object-cover shrink-0 group-hover:brightness-110 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
@@ -239,12 +239,7 @@
           </div>
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
         </button>
-        
-        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="theme-text ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
-          <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
-        </button>
 
-        <!-- DROPDOWN MENU WITH BACKUP OPTION -->
         <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
           <div class="px-3.5 py-2">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
@@ -276,7 +271,7 @@
 
   <!-- ================= CUSTOM TOAST NOTIFICATION MODAL ================= -->
   <div id="toast-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-150 text-center">
+    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative text-center">
       <div class="w-12 h-12 rounded-2xl theme-bg-soft theme-text mx-auto flex items-center justify-center text-xl">
         <i id="toast-icon" class="fa-solid fa-circle-info"></i>
       </div>
@@ -292,7 +287,7 @@
 
   <!-- ================= CUSTOM CONFIRMATION MODAL ================= -->
   <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-150 text-center">
+    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative text-center">
       <div class="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-400 mx-auto flex items-center justify-center text-xl">
         <i class="fa-solid fa-triangle-exclamation"></i>
       </div>
@@ -342,7 +337,7 @@
             <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.5" min="50" max="500" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold theme-text focus:outline-none focus:border-emerald-500 transition">
           </div>
         </div>
-        <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking with a date picker is available in the Calendar tab.</p>
+        <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
       </div>
 
       <div class="space-y-4">
@@ -421,7 +416,7 @@
 
   <!-- ================= LOG WEIGHT ENTRY MODAL WITH DATE PICKER ================= -->
   <div id="log-weight-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
+    <div class="m3-card rounded-3xl border p-5 w-full max-w-sm shadow-2xl space-y-4 relative">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-weight-scale theme-text"></i>
@@ -457,7 +452,7 @@
 
   <!-- ================= WEIGHT TREND LINE GRAPH MODAL ================= -->
   <div id="weight-graph-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-5 w-full max-w-lg shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
+    <div class="m3-card rounded-3xl border p-5 w-full max-w-lg shadow-2xl space-y-4 relative">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <div>
           <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
@@ -1128,7 +1123,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, updateDoc, increment, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, increment, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'showup-app';
     const firebaseConfig = typeof __firebase_config !== 'undefined' 
@@ -1161,7 +1156,7 @@
         }
       });
     } catch (e) {
-      console.warn("Cloud sync initialization fallback: local mode enabled.");
+      console.warn("Cloud sync fallback: local mode enabled.", e);
     }
 
     const todayKey = new Date().toISOString().slice(0, 10);
@@ -1276,7 +1271,26 @@
     let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
     let confirmCallback = null;
 
-    /* ... existing catalog ... */
+    const defaultCatalog = [
+      { name: "Running", implement: "Running", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Swimming Laps", implement: "Swimming", muscle: "Full Body", secondary: ["Back", "Shoulders", "Core/Abs"] },
+      { name: "Outdoor Biking", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Trail Hiking", implement: "Hiking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Rowing (Concept2 Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
+      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "Hindu Squats (Bethak)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Hindu Push-Ups (Dand)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
+      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Triceps"] },
+      { name: "Mace Swings (Gada 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
+      { name: "Gada 10-to-2", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] },
+      { name: "Jori Club Swings", implement: "Jori Clubs / Karlakattai", muscle: "Shoulders", secondary: ["Back", "Triceps", "Core/Abs"] },
+      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Ring Pull-Ups", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] }
+    ];
 
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
@@ -1293,11 +1307,37 @@
       restoreFontPreference();
     });
 
-    /* ... existing helper functions ... */
+    function showToastNotification(title, message, iconClass = "fa-solid fa-circle-info") {
+      document.getElementById('toast-title').innerText = title;
+      document.getElementById('toast-message').innerText = message;
+      document.getElementById('toast-icon').className = iconClass;
+      document.getElementById('toast-modal').classList.remove('hidden');
+    }
+
+    function closeToastModal() {
+      document.getElementById('toast-modal').classList.add('hidden');
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      document.getElementById('confirm-title').innerText = title;
+      document.getElementById('confirm-message').innerText = message;
+      confirmCallback = onConfirm;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function handleConfirmResult(confirmed) {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      if (confirmed && typeof confirmCallback === 'function') {
+        confirmCallback();
+      }
+      confirmCallback = null;
+    }
 
     window.updateGlobalCounterUI = function() {
-      document.getElementById('global-counter-header-val').innerText = window.globalShowedUpCount.toLocaleString();
-      document.getElementById('global-counter-main-val').innerText = window.globalShowedUpCount.toLocaleString();
+      const headerVal = document.getElementById('global-counter-header-val');
+      const mainVal = document.getElementById('global-counter-main-val');
+      if (headerVal) headerVal.innerText = window.globalShowedUpCount.toLocaleString();
+      if (mainVal) mainVal.innerText = window.globalShowedUpCount.toLocaleString();
 
       const deltaTextEl = document.getElementById('session-delta-text');
       if (deltaTextEl) {
@@ -1310,13 +1350,354 @@
       }
     };
 
+    function setFontFamily(fontKey) {
+      const body = document.getElementById('app-body');
+      body.classList.remove('font-style-jakarta', 'font-style-inter', 'font-style-outfit', 'font-style-space');
+      body.classList.add(`font-style-${fontKey}`);
+
+      ['jakarta', 'inter', 'outfit', 'space'].forEach(f => {
+        const checkIcon = document.getElementById(`font-check-${f}`);
+        const fontBtn = document.getElementById(`font-btn-${f}`);
+        if (checkIcon) checkIcon.classList.add('hidden');
+        if (fontBtn) {
+          fontBtn.classList.remove('border-emerald-500', 'theme-border', 'bg-slate-900');
+          fontBtn.classList.add('border-slate-800', 'bg-slate-950');
+        }
+      });
+
+      const activeCheck = document.getElementById(`font-check-${fontKey}`);
+      const activeBtn = document.getElementById(`font-btn-${fontKey}`);
+      if (activeCheck) activeCheck.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('border-slate-800', 'bg-slate-950');
+        activeBtn.classList.add('theme-border', 'bg-slate-900');
+      }
+
+      localStorage.setItem('showUp_font', fontKey);
+    }
+
+    function restoreFontPreference() {
+      const savedFont = localStorage.getItem('showUp_font') || 'jakarta';
+      setFontFamily(savedFont);
+    }
+
+    function setThemePalette(themeKey) {
+      const body = document.getElementById('app-body');
+      body.className = body.className.replace(/\btheme-\S+/g, '').trim();
+      if (themeKey !== 'emerald') {
+        body.classList.add(`theme-${themeKey}`);
+      }
+      localStorage.setItem('showUp_theme', themeKey);
+      renderCalendar();
+      renderSquads();
+    }
+
+    function restoreThemePreferences() {
+      const savedTheme = localStorage.getItem('showUp_theme') || 'emerald';
+      setThemePalette(savedTheme);
+
+      const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
+      document.getElementById('pref-hr-collapsed').checked = savedHRCollapsed;
+      if (savedHRCollapsed) {
+        toggleHRCardVisibility(true);
+      }
+    }
+
+    function loadPhysicalProfile() {
+      document.getElementById('user-height-input').value = userHeight;
+      document.getElementById('user-weight-input').value = userWeight;
+    }
+
+    function savePhysicalProfile() {
+      const h = parseFloat(document.getElementById('user-height-input').value) || userHeight;
+      const w = parseFloat(document.getElementById('user-weight-input').value) || userWeight;
+
+      userHeight = h;
+      userWeight = w;
+
+      localStorage.setItem('showUp_user_height', userHeight);
+      localStorage.setItem('showUp_user_weight', userWeight);
+
+      const latestEntry = weightHistory[0];
+      const todayISO = new Date().toISOString().slice(0, 10);
+
+      if (!latestEntry || latestEntry.weight !== userWeight || latestEntry.date !== todayISO) {
+        weightHistory.unshift({ date: todayISO, weight: userWeight });
+        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+        renderWeightHistory();
+      }
+    }
+
+    function openLogWeightModal() {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      document.getElementById('weight-entry-date').value = todayISO;
+      document.getElementById('weight-entry-value').value = userWeight;
+      document.getElementById('log-weight-modal').classList.remove('hidden');
+    }
+
+    function toggleLogWeightModal() {
+      document.getElementById('log-weight-modal').classList.toggle('hidden');
+    }
+
+    function saveWeightModalEntry() {
+      const dateVal = document.getElementById('weight-entry-date').value || new Date().toISOString().slice(0, 10);
+      const wVal = parseFloat(document.getElementById('weight-entry-value').value);
+
+      if (isNaN(wVal) || wVal <= 0) {
+        showToastNotification("Invalid Weight", "Please enter a valid weight value in lbs.", "fa-solid fa-triangle-exclamation text-amber-400");
+        return;
+      }
+
+      userWeight = wVal;
+      document.getElementById('user-weight-input').value = userWeight;
+      localStorage.setItem('showUp_user_weight', userWeight);
+
+      const existingIdx = weightHistory.findIndex(item => item.date === dateVal);
+      if (existingIdx >= 0) {
+        weightHistory[existingIdx].weight = wVal;
+      } else {
+        weightHistory.push({ date: dateVal, weight: wVal });
+      }
+
+      weightHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+
+      toggleLogWeightModal();
+      renderWeightHistory();
+      showToastNotification("Weight Saved", `Weight entry of ${wVal} lbs logged for ${dateVal}.`, "fa-solid fa-check-circle theme-text");
+    }
+
+    function renderWeightHistory() {
+      const currentValEl = document.getElementById('cal-current-weight-val');
+      const changeValEl = document.getElementById('cal-weight-change-val');
+      const container = document.getElementById('weight-history-list');
+
+      currentValEl.innerText = `${userWeight} lbs`;
+
+      if (weightHistory.length === 0) {
+        changeValEl.innerText = "0.0 lbs";
+        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>`;
+        return;
+      }
+
+      const latest = weightHistory[0].weight;
+      const oldest = weightHistory[weightHistory.length - 1].weight;
+      const diff = (latest - oldest).toFixed(1);
+
+      changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
+      changeValEl.className = `text-xl font-black ${diff < 0 ? 'theme-text' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
+
+      container.innerHTML = weightHistory.map((item, index) => `
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-calendar-day text-slate-500"></i>
+            <span class="text-slate-300 font-semibold">${item.date}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-bold theme-text">${item.weight} lbs</span>
+            <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 transition" title="Delete Entry">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteWeightEntry(index) {
+      showConfirmDialog("Delete Weight Entry", "Are you sure you want to delete this historical weight entry?", () => {
+        weightHistory.splice(index, 1);
+        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+        renderWeightHistory();
+      });
+    }
+
+    function openWeightTrendGraph() {
+      if (weightHistory.length < 2) {
+        showToastNotification("Insufficient Data", "Log at least 2 historical weight entries to view the weight trend line.", "fa-solid fa-chart-line theme-text");
+        return;
+      }
+
+      const svg = document.getElementById('weight-trend-svg');
+      const sortedAsc = [...weightHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      const weights = sortedAsc.map(d => d.weight);
+      const minW = Math.min(...weights);
+      const maxW = Math.max(...weights);
+      const avgW = (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1);
+
+      document.getElementById('graph-min-weight').innerText = `${minW} lbs`;
+      document.getElementById('graph-avg-weight').innerText = `${avgW} lbs`;
+      document.getElementById('graph-max-weight').innerText = `${maxW} lbs`;
+
+      const range = (maxW - minW) || 1;
+      const points = sortedAsc.map((d, i) => {
+        const x = (i / (sortedAsc.length - 1)) * 300 + 10;
+        const y = 140 - ((d.weight - minW) / range) * 120;
+        return `${x},${y}`;
+      });
+
+      const polylinePoints = points.join(' ');
+      const strokeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-accent-color').trim() || '#10b981';
+
+      svg.innerHTML = `
+        <polyline fill="none" stroke="${strokeColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${polylinePoints}" />
+        ${sortedAsc.map((d, i) => {
+          const x = (i / (sortedAsc.length - 1)) * 300 + 10;
+          const y = 140 - ((d.weight - minW) / range) * 120;
+          return `<circle cx="${x}" cy="${y}" r="4" fill="${strokeColor}" stroke="#0f172a" stroke-width="2" />`;
+        }).join('')}
+      `;
+
+      document.getElementById('weight-graph-modal').classList.remove('hidden');
+    }
+
+    function toggleWeightGraphModal() {
+      document.getElementById('weight-graph-modal').classList.toggle('hidden');
+    }
+
+    function initDatePickerConstraints() {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      const dateInput = document.getElementById('workout-date-picker');
+      dateInput.max = todayISO;
+      dateInput.value = todayISO;
+      selectedWorkoutDate = todayISO;
+    }
+
+    function handleDateChange(val) {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      if (val > todayISO) {
+        showToastNotification("Invalid Date", "Future dates are not permitted for logging workout sessions.", "fa-solid fa-clock text-amber-400");
+        document.getElementById('workout-date-picker').value = todayISO;
+        selectedWorkoutDate = todayISO;
+        document.getElementById('historical-mode-banner').classList.add('hidden');
+        return;
+      }
+      selectedWorkoutDate = val;
+
+      if (val !== todayISO) {
+        document.getElementById('banner-date-label').innerText = val;
+        document.getElementById('historical-mode-banner').classList.remove('hidden');
+      } else {
+        document.getElementById('historical-mode-banner').classList.add('hidden');
+      }
+    }
+
+    function resetToTodayDate() {
+      const todayISO = new Date().toISOString().slice(0, 10);
+      document.getElementById('workout-date-picker').value = todayISO;
+      selectedWorkoutDate = todayISO;
+      document.getElementById('historical-mode-banner').classList.add('hidden');
+    }
+
+    function initCatalog() {
+      const datalist = document.getElementById('exercise-catalog-list');
+      datalist.innerHTML = '';
+      defaultCatalog.forEach(ex => {
+        const option = document.createElement('option');
+        option.value = ex.name;
+        datalist.appendChild(option);
+      });
+    }
+
+    function handleExerciseInput(val) {
+      const match = defaultCatalog.find(c => c.name.toLowerCase() === val.toLowerCase());
+      if (match) {
+        document.getElementById('implement-select').value = match.implement;
+        document.getElementById('muscle-group-select').value = match.muscle;
+        handleImplementChange(match.implement);
+      }
+    }
+
+    function handleImplementChange(imp) {
+      const isErg = imp === "Row Erg";
+      const isSwim = imp === "Swimming";
+      const isEndurance = ["Running", "Walking", "Hiking", "Biking"].includes(imp);
+
+      document.getElementById('standard-metrics-panel').classList.toggle('hidden', isErg || isSwim || isEndurance);
+      document.getElementById('erg-metrics-panel').classList.toggle('hidden', !isErg);
+      document.getElementById('swim-metrics-panel').classList.toggle('hidden', !isSwim);
+      document.getElementById('endurance-metrics-panel').classList.toggle('hidden', !isEndurance);
+
+      if (isEndurance) {
+        document.getElementById('endurance-dist-label').innerText = imp === "Running" ? "Distance (Miles)" : `${imp} Distance (Miles)`;
+      }
+    }
+
+    function adjustWeight(delta) {
+      const input = document.getElementById('input-weight');
+      let val = parseFloat(input.value) || 0;
+      val = Math.max(0, val + delta);
+      input.value = val;
+    }
+
+    function adjustReps(delta) {
+      const input = document.getElementById('input-reps');
+      let val = parseInt(input.value) || 0;
+      val = Math.max(1, val + delta);
+      input.value = val;
+    }
+
+    function adjustErgDistance(delta) {
+      const input = document.getElementById('input-erg-distance');
+      let val = parseInt(input.value) || 0;
+      val = Math.max(50, val + delta);
+      input.value = val;
+    }
+
+    function adjustErgTime(deltaSec) {
+      const input = document.getElementById('input-erg-time');
+      const parts = (input.value || "02:00").split(':');
+      let totalSec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+      totalSec = Math.max(15, totalSec + deltaSec);
+
+      const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const secs = String(totalSec % 60).padStart(2, '0');
+      input.value = `${mins}:${secs}`;
+    }
+
+    function adjustSwimDistance(delta) {
+      const input = document.getElementById('input-swim-distance');
+      let val = parseInt(input.value) || 0;
+      val = Math.max(25, val + delta);
+      input.value = val;
+    }
+
+    function adjustSwimTime(deltaSec) {
+      const input = document.getElementById('input-swim-time');
+      const parts = (input.value || "10:00").split(':');
+      let totalSec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+      totalSec = Math.max(15, totalSec + deltaSec);
+
+      const mins = String(Math.floor(totalSec / 60)).padStart(2, '0');
+      const secs = String(totalSec % 60).padStart(2, '0');
+      input.value = `${mins}:${secs}`;
+    }
+
+    function adjustEnduranceDistance(delta) {
+      const input = document.getElementById('input-endurance-distance');
+      let val = parseFloat(input.value) || 0;
+      val = Math.max(0.1, val + delta);
+      input.value = val.toFixed(2);
+    }
+
+    function adjustEnduranceTime(deltaSec) {
+      const input = document.getElementById('input-endurance-time');
+      const parts = (input.value || "00:30:00").split(':');
+      let totalSec = (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+      totalSec = Math.max(60, totalSec + deltaSec);
+
+      const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+      const secs = String(totalSec % 60).padStart(2, '0');
+      input.value = `${hrs}:${mins}:${secs}`;
+    }
+
     function logSet() {
       const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
       const implement = document.getElementById('implement-select').value;
       const muscle = document.getElementById('muscle-group-select').value;
       const rpe = parseFloat(document.getElementById('rpe-select').value) || 8;
 
-      /* ... set metric extraction ... */
       let weight = 0, reps = 1, ergDistance = 0, ergTime = "";
       let swimDistance = 0, swimTime = "";
       let enduranceDistance = 0, enduranceTime = "";
@@ -1341,7 +1722,6 @@
       const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
       const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
 
-      // RECORD GLOBAL COUNTER AT WORKOUT INITIATION (FIRST LOGGED SET)
       if (currentSessionSets.length === 0 || workoutInitiatedCount === null) {
         workoutInitiatedCount = window.globalShowedUpCount;
         localStorage.setItem('showUp_session_start_global_count', workoutInitiatedCount.toString());
@@ -1373,8 +1753,49 @@
       updateGlobalCounterUI();
     }
 
+    function renderLoggedSets() {
+      const container = document.getElementById('logged-sets-list');
+      document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
+
+      if (currentSessionSets.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
+        return;
+      }
+
+      container.innerHTML = currentSessionSets.map((s) => `
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+          <div>
+            <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
+            <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5 flex-wrap">
+              <span class="bg-slate-800 theme-text px-1.5 py-0.5 rounded-lg font-bold">${s.implement}</span>
+              ${s.implement === "Row Erg" ? `
+                <span>${s.ergDistance}m | ${s.ergTime}</span>
+              ` : s.implement === "Swimming" ? `
+                <span class="text-cyan-400 font-semibold">${s.swimDistance} yds | ${s.swimTime}</span>
+              ` : ["Running", "Walking", "Hiking", "Biking"].includes(s.implement) ? `
+                <span class="text-amber-400 font-semibold">${s.enduranceDistance} mi | ${s.enduranceTime}</span>
+                ${s.avgHR ? `<span class="text-rose-400 font-bold"><i class="fa-solid fa-heart-pulse"></i> ${s.avgHR} BPM</span>` : ''}
+              ` : `
+                <span>${s.weight} lbs × ${s.reps} reps</span>
+              `}
+              <span class="text-slate-500">RPE ${s.rpe}</span>
+            </div>
+          </div>
+          <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
+            <i class="fa-solid fa-trash-can text-sm"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function deleteSet(id) {
+      currentSessionSets = currentSessionSets.filter(s => s.id !== id);
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      renderLoggedSets();
+      updateGlobalCounterUI();
+    }
+
     function evaluateAndFinishWorkout() {
-      /* ... workout evaluation logic ... */
       if (currentSessionSets.length === 0) {
         showToastNotification("Empty Session", "Please log at least one exercise set before finishing.", "fa-solid fa-dumbbell text-amber-400");
         return;
@@ -1430,6 +1851,36 @@
 
       document.getElementById('calories-burned-score').innerText = caloriesBurned;
 
+      const muscleMap = {};
+      const secondaryMuscleSet = new Set();
+
+      currentSessionSets.forEach(s => {
+        let vol = s.weight * s.reps;
+        if (s.implement === "Row Erg") vol = s.ergDistance;
+        else if (s.implement === "Swimming") vol = s.swimDistance;
+        else if (["Running", "Walking", "Hiking", "Biking"].includes(s.implement)) vol = s.enduranceDistance * 100;
+
+        muscleMap[s.muscle] = (muscleMap[s.muscle] || 0) + vol;
+        if (s.secondaryMuscles && Array.isArray(s.secondaryMuscles)) {
+          s.secondaryMuscles.forEach(sec => secondaryMuscleSet.add(sec));
+        }
+      });
+
+      const muscleContainer = document.getElementById('muscle-breakdown-bars');
+      muscleContainer.innerHTML = Object.entries(muscleMap).map(([m, vol]) => `
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs font-semibold">
+            <span class="text-slate-300">${m}</span>
+            <span class="theme-text font-bold">${Math.round(vol)} units</span>
+          </div>
+          <div class="w-full bg-slate-900 h-1.5 rounded-full overflow-hidden border border-slate-800">
+            <div class="theme-bg h-full" style="width: ${Math.min(100, (vol / (totalVolume || 1)) * 100)}%"></div>
+          </div>
+        </div>
+      `).join('');
+
+      updateAnatomicalBodyMap(muscleMap, Array.from(secondaryMuscleSet));
+
       const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
       const workoutObj = {
         date: targetDate,
@@ -1453,7 +1904,6 @@
       }
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
 
-      // TRIGGER CLOUD & LOCAL INCREMENT WITH CHECK ANIMATION
       if (typeof window.incrementCloudGlobalCounter === 'function') {
         window.incrementCloudGlobalCounter();
       } else {
@@ -1465,10 +1915,17 @@
       document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
       document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;
 
+      const notesEl = document.getElementById('summary-notes-display');
+      if (notes) {
+        notesEl.innerText = `Notes: "${notes}"`;
+        notesEl.classList.remove('hidden');
+      } else {
+        notesEl.classList.add('hidden');
+      }
+
       document.getElementById('workout-summary-card').classList.remove('hidden');
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
-      // RESET SESSION TRACKER ON COMPLETION
       currentSessionSets = [];
       workoutInitiatedCount = null;
       localStorage.removeItem('showUp_active_workout_sets');
@@ -1481,36 +1938,746 @@
       showToastNotification("Workout Evaluated! ✓", "Your workout session has been logged and the daily counter incremented.", "fa-solid fa-check-double theme-text");
     }
 
-    function setFontFamily(fontKey) {
-      const body = document.getElementById('app-body');
-      body.classList.remove('font-style-jakarta', 'font-style-inter', 'font-style-outfit', 'font-style-space');
-      body.classList.add(`font-style-${fontKey}`);
+    function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
+      const muscleSvgMap = {
+        'Chest': ['body-chest'],
+        'Back': ['body-back'],
+        'Shoulders': ['body-shoulders-ant', 'body-shoulders-post'],
+        'Biceps': ['body-biceps'],
+        'Triceps': ['body-triceps'],
+        'Core/Abs': ['body-core'],
+        'Quads': ['body-quads'],
+        'Hamstrings/Glutes': ['body-hamstrings']
+      };
 
-      ['jakarta', 'inter', 'outfit', 'space'].forEach(f => {
-        const checkIcon = document.getElementById(`font-check-${f}`);
-        const fontBtn = document.getElementById(`font-btn-${f}`);
-        if (checkIcon) checkIcon.classList.add('hidden');
-        if (fontBtn) {
-          fontBtn.classList.remove('border-emerald-500', 'theme-border', 'bg-slate-900');
-          fontBtn.classList.add('border-slate-800', 'bg-slate-950');
-        }
+      Object.values(muscleSvgMap).flat().forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('fill', '#334155');
       });
 
-      const activeCheck = document.getElementById(`font-check-${fontKey}`);
-      const activeBtn = document.getElementById(`font-btn-${fontKey}`);
-      if (activeCheck) activeCheck.classList.remove('hidden');
-      if (activeBtn) {
-        activeBtn.classList.remove('border-slate-800', 'bg-slate-950');
-        activeBtn.classList.add('theme-border', 'bg-slate-900');
+      const sortedMuscles = Object.entries(muscleMap).sort((a, b) => b[1] - a[1]);
+      if (sortedMuscles.length === 0) return;
+
+      const primaryTarget = sortedMuscles[0][0];
+
+      if (primaryTarget === "Full Body") {
+        ['body-back', 'body-hamstrings', 'body-chest'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('fill', '#ef4444');
+        });
+        ['body-shoulders-ant', 'body-shoulders-post', 'body-quads', 'body-core'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('fill', '#eab308');
+        });
+        return;
       }
 
-      localStorage.setItem('showUp_font', fontKey);
+      if (muscleSvgMap[primaryTarget]) {
+        muscleSvgMap[primaryTarget].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.setAttribute('fill', '#ef4444');
+        });
+      }
+
+      const combinedSecondaries = new Set([
+        ...sortedMuscles.slice(1).map(m => m[0]),
+        ...explicitSecondaries
+      ]);
+
+      combinedSecondaries.forEach(m => {
+        if (m !== primaryTarget && muscleSvgMap[m]) {
+          muscleSvgMap[m].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.getAttribute('fill') !== '#ef4444') {
+              el.setAttribute('fill', '#eab308');
+            }
+          });
+        }
+      });
     }
 
-    function restoreFontPreference() {
-      const savedFont = localStorage.getItem('showUp_font') || 'jakarta';
-      setFontFamily(savedFont);
+    function closeSummary() {
+      document.getElementById('workout-summary-card').classList.add('hidden');
     }
 
-    /* ... remaining functions ... */
-<!-- ... existing code -->
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const monthYearLabel = document.getElementById('calendar-month-year-label');
+      grid.innerHTML = '';
+
+      const year = calendarDate.getFullYear();
+      const month = calendarDate.getMonth();
+
+      const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      monthYearLabel.innerText = `${monthNames[month]} ${year}`;
+
+      const dayNames = ["S", "M", "T", "W", "T", "F", "S"];
+      dayNames.forEach(d => {
+        grid.innerHTML += `<div class="text-slate-500 font-bold py-1">${d}</div>`;
+      });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateKey = `${year}-${monthStr}-${dayStr}`;
+        
+        const isWorkedOut = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === dateKey);
+
+        grid.innerHTML += `
+          <div class="aspect-square flex items-center justify-center rounded-xl text-xs font-semibold ${isWorkedOut ? 'theme-bg font-black shadow-lg' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
+            ${day}
+          </div>
+        `;
+      }
+
+      calculateStreaks();
+    }
+
+    function calculateStreaks() {
+      if (completedWorkoutsHistory.length === 0) {
+        document.getElementById('current-streak-val').innerText = '0 days';
+        document.getElementById('best-streak-val').innerText = '0 days';
+        return;
+      }
+
+      const dates = Array.from(new Set(completedWorkoutsHistory.map(w => typeof w === 'string' ? w : w.date)))
+        .filter(Boolean)
+        .sort((a, b) => new Date(b) - new Date(a));
+
+      let currentStreak = 0;
+      let maxStreak = 0;
+      let tempStreak = 0;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      let checkDate = new Date(today);
+
+      for (let i = 0; i < dates.length; i++) {
+        const d = new Date(dates[i]);
+        d.setHours(0,0,0,0);
+        const diffDays = Math.round((checkDate - d) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0 || diffDays === 1) {
+          tempStreak++;
+          checkDate = d;
+        } else {
+          break;
+        }
+      }
+      currentStreak = tempStreak;
+
+      let streakRun = 0;
+      for (let i = 0; i < dates.length; i++) {
+        if (i === 0) {
+          streakRun = 1;
+        } else {
+          const prev = new Date(dates[i-1]);
+          const curr = new Date(dates[i]);
+          prev.setHours(0,0,0,0);
+          curr.setHours(0,0,0,0);
+          const diff = Math.round((prev - curr) / (1000 * 60 * 60 * 24));
+          if (diff === 1) {
+            streakRun++;
+          } else {
+            streakRun = 1;
+          }
+        }
+        if (streakRun > maxStreak) maxStreak = streakRun;
+      }
+
+      document.getElementById('current-streak-val').innerText = `${currentStreak} ${currentStreak === 1 ? 'day' : 'days'}`;
+      document.getElementById('best-streak-val').innerText = `${maxStreak} ${maxStreak === 1 ? 'day' : 'days'}`;
+    }
+
+    function renderMonthlyHistory() {
+      const container = document.getElementById('monthly-history-list');
+      const year = calendarDate.getFullYear();
+      const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
+      const prefix = `${year}-${monthStr}`;
+
+      const monthlyEntries = completedWorkoutsHistory.filter(item => {
+        const d = typeof item === 'string' ? item : item.date;
+        return d && d.startsWith(prefix);
+      });
+
+      document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
+
+      if (monthlyEntries.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;
+        return;
+      }
+
+      container.innerHTML = monthlyEntries.map(w => {
+        const dateStr = typeof w === 'string' ? w : w.date;
+        const nameStr = typeof w === 'object' && w.workoutName ? w.workoutName : 'Workout Session';
+        const notesStr = typeof w === 'object' && w.notes ? w.notes : '';
+        const setsList = typeof w === 'object' && w.sets ? w.sets : [];
+        const setsCount = setsList.length || '1+';
+        const cals = typeof w === 'object' && w.caloriesBurned ? `${w.caloriesBurned} kcal` : '';
+
+        return `
+          <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden transition-all">
+            <div onclick="triggerHaptic('light'); toggleWorkoutAccordion('${dateStr}')" class="p-3.5 flex items-center justify-between cursor-pointer hover:bg-slate-900/60 transition select-none">
+              <div class="flex items-center gap-3">
+                <i id="chevron-${dateStr}" class="fa-solid fa-chevron-right text-xs text-slate-500 transition-transform"></i>
+                <div>
+                  <div class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-check-double theme-text"></i>
+                    <span>${nameStr}</span>
+                    <span class="text-xs font-normal text-slate-400">(${dateStr})</span>
+                  </div>
+                  <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
+                    <span>${setsCount} Sets</span>
+                    ${cals ? `<span class="text-slate-600">•</span><span class="text-rose-400 font-bold">${cals}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                <button onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
+                  <i class="fa-brands fa-whatsapp text-sm"></i>
+                </button>
+                <button onclick="triggerHaptic('light'); deleteHistoricalWorkout('${dateStr}')" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Workout">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
+              ${notesStr ? `<div class="text-xs text-slate-300 italic bg-slate-950/80 p-2 rounded-lg border border-slate-800 mb-2">Notes: "${notesStr}"</div>` : ''}
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
+              ${setsList.length === 0 ? `
+                <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
+              ` : setsList.map(s => `
+                <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between text-xs">
+                  <div>
+                    <div class="font-bold text-slate-200">${s.exerciseName}</div>
+                    <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px] flex-wrap">
+                      <span class="bg-slate-800 theme-text px-1.5 py-0.2 rounded-lg font-bold">${s.implement}</span>
+                      ${s.implement === "Row Erg" ? `
+                        <span>${s.ergDistance}m | ${s.ergTime}</span>
+                      ` : s.implement === "Swimming" ? `
+                        <span class="text-cyan-400 font-bold">${s.swimDistance} yds | ${s.swimTime}</span>
+                      ` : ["Running", "Walking", "Hiking", "Biking"].includes(s.implement) ? `
+                        <span class="text-amber-400 font-bold">${s.enduranceDistance} mi | ${s.enduranceTime}</span>
+                      ` : `
+                        <span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>
+                      `}
+                      <span class="text-slate-500">RPE ${s.rpe}</span>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleWorkoutAccordion(dateStr) {
+      const detailsEl = document.getElementById(`details-${dateStr}`);
+      const chevronEl = document.getElementById(`chevron-${dateStr}`);
+
+      if (detailsEl.classList.contains('hidden')) {
+        detailsEl.classList.remove('hidden');
+        if (chevronEl) chevronEl.style.transform = "rotate(90deg)";
+      } else {
+        detailsEl.classList.add('hidden');
+        if (chevronEl) chevronEl.style.transform = "rotate(0deg)";
+      }
+    }
+
+    function deleteHistoricalWorkout(dateStr) {
+      showConfirmDialog("Delete Workout", `Are you sure you want to delete the workout entry for ${dateStr}?`, () => {
+        completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
+        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+        renderCalendar();
+        renderMonthlyHistory();
+      });
+    }
+
+    function navigateCalendarMonth(delta) {
+      calendarDate.setMonth(calendarDate.getMonth() + delta);
+      renderCalendar();
+      renderMonthlyHistory();
+    }
+
+    function renderSquads() {
+      const container = document.getElementById('squads-list-container');
+      if (!container) return;
+
+      if (!window.squadsData || window.squadsData.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 bg-slate-950/60 rounded-3xl border border-slate-800/80 p-6 space-y-3">
+            <div class="w-12 h-12 rounded-2xl theme-bg-soft theme-text mx-auto flex items-center justify-center text-xl">
+              <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-slate-200">No Squads Joined</h3>
+              <p class="text-xs text-slate-500 max-w-xs mx-auto">Create a squad and invite friends via their Gmail address to stay quietly motivated together.</p>
+            </div>
+            <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="m3-btn-primary px-4 py-2 rounded-xl text-xs font-bold transition">
+              Create First Squad
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const activeUserEmail = (JSON.parse(localStorage.getItem('showUp_user_profile') || '{}').email || '').toLowerCase();
+
+      container.innerHTML = window.squadsData.map(s => {
+        const isCreator = s.creatorEmail && activeUserEmail && s.creatorEmail.toLowerCase() === activeUserEmail;
+
+        return `
+          <div class="bg-slate-950 p-4 rounded-3xl border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+              <div>
+                <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                  ${s.name}
+                  ${isCreator ? `<span class="text-[9px] uppercase px-2 py-0.5 rounded-md theme-badge font-black">Creator</span>` : ''}
+                </h3>
+                <p class="text-[11px] text-slate-500">${(s.members || []).length} Members • Gmail Accountability</p>
+              </div>
+
+              ${isCreator ? `
+                <button onclick="triggerHaptic('medium'); deleteEntireSquad('${s.id}')" class="text-xs text-rose-400 hover:text-rose-300 transition" title="Delete Squad">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              ` : `
+                <button onclick="triggerHaptic('medium'); leaveSquad('${s.id}')" class="text-xs text-slate-500 hover:text-rose-400 transition" title="Leave Squad">
+                  <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+              `}
+            </div>
+
+            <div class="space-y-2">
+              ${(s.members || []).map(m => {
+                const canRemove = isCreator && m.email.toLowerCase() !== activeUserEmail;
+                return `
+                  <div class="flex items-center justify-between bg-slate-900/60 px-3 py-2 rounded-2xl border border-slate-800/80 text-xs">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 rounded-full ${m.status === 'Active' ? 'theme-bg' : 'bg-slate-600'}"></div>
+                      <span class="font-semibold text-slate-200">${m.name || m.email}</span>
+                      <span class="text-[10px] text-slate-500">(${m.email})</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <button onclick="triggerHaptic('light'); nudgeMember('${m.name}')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded-lg border border-slate-700 transition" title="Send Fistbump">
+                        👊 Fistbump
+                      </button>
+                      ${canRemove ? `
+                        <button onclick="triggerHaptic('medium'); removeMemberFromSquad('${s.id}', '${m.email}')" class="text-slate-600 hover:text-rose-400 p-1" title="Remove Member">
+                          <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                      ` : ''}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            ${isCreator ? `
+              <button onclick="triggerHaptic('medium'); addMemberToSquadPrompt('${s.id}')" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-2xl text-xs border border-slate-800 transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-user-plus theme-text"></i>
+                <span>Add Member via Gmail</span>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openCreateSquadModal() {
+      const activeUser = JSON.parse(localStorage.getItem('showUp_user_profile') || '{}');
+      const name = prompt("Enter Squad / Circle Name:");
+      if (!name || !name.trim()) return;
+
+      const squadObj = {
+        id: 'squad-' + Date.now(),
+        name: name.trim(),
+        creatorEmail: (activeUser.email || 'user@gmail.com').toLowerCase(),
+        members: [
+          { name: activeUser.firstName || 'You', email: (activeUser.email || 'user@gmail.com').toLowerCase(), status: 'Active' }
+        ]
+      };
+
+      window.squadsData.push(squadObj);
+      localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+      
+      if (typeof window.syncSquadToCloud === 'function') {
+        window.syncSquadToCloud(squadObj);
+      }
+
+      renderSquads();
+      showToastNotification("Squad Created", `"${name}" squad successfully initialized.`, "fa-solid fa-users theme-text");
+    }
+
+    function addMemberToSquadPrompt(squadId) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const email = prompt("Enter friend's Gmail address:");
+      if (!email || !email.includes('@')) {
+        if (email) showToastNotification("Invalid Email", "Please enter a valid Gmail address.", "fa-solid fa-triangle-exclamation text-amber-400");
+        return;
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      if (squad.members.some(m => m.email.toLowerCase() === cleanEmail)) {
+        showToastNotification("Already Member", "This Gmail address is already in the squad.", "fa-solid fa-circle-info theme-text");
+        return;
+      }
+
+      squad.members.push({ name: cleanEmail.split('@')[0], email: cleanEmail, status: 'Invited' });
+      localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+
+      if (typeof window.syncSquadToCloud === 'function') {
+        window.syncSquadToCloud(squad);
+      }
+
+      renderSquads();
+      showToastNotification("Member Added", `Added ${cleanEmail} to ${squad.name}.`, "fa-solid fa-user-check theme-text");
+    }
+
+    function removeMemberFromSquad(squadId, memberEmail) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (!squad) return;
+
+      showConfirmDialog("Remove Member", `Remove ${memberEmail} from ${squad.name}?`, () => {
+        squad.members = squad.members.filter(m => m.email.toLowerCase() !== memberEmail.toLowerCase());
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+
+        if (typeof window.syncSquadToCloud === 'function') {
+          window.syncSquadToCloud(squad);
+        }
+
+        renderSquads();
+      });
+    }
+
+    function deleteEntireSquad(squadId) {
+      showConfirmDialog("Delete Squad", "Are you sure you want to delete this squad for all members?", () => {
+        window.squadsData = window.squadsData.filter(s => s.id !== squadId);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        renderSquads();
+      });
+    }
+
+    function leaveSquad(squadId) {
+      const squad = window.squadsData.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const activeEmail = (JSON.parse(localStorage.getItem('showUp_user_profile') || '{}').email || '').toLowerCase();
+      showConfirmDialog("Leave Squad", `Leave ${squad.name}?`, () => {
+        squad.members = squad.members.filter(m => m.email.toLowerCase() !== activeEmail);
+        localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+        renderSquads();
+      });
+    }
+
+    function nudgeMember(name) {
+      showToastNotification("Fistbump Sent! 👊", `You sent a live workout fistbump to ${name}.`, "fa-solid fa-hand-fist theme-text");
+    }
+
+    function initSparkline() {
+      const canvas = document.getElementById('hr-sparkline');
+      const ctx = canvas.getContext('2d');
+      
+      function draw() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (hrHistory.length > 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2;
+          const step = canvas.width / (hrHistory.length - 1);
+          
+          hrHistory.forEach((val, i) => {
+            const x = i * step;
+            const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          });
+          ctx.stroke();
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    async function connectHRM() {
+      if (!navigator.bluetooth) {
+        showToastNotification("Bluetooth Unavailable", "Web Bluetooth API is not supported on this browser/device.", "fa-solid fa-bluetooth text-amber-400");
+        return;
+      }
+
+      try {
+        hrmDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['heart_rate'] }]
+        });
+
+        const server = await hrmDevice.gatt.connect();
+        const service = await server.getPrimaryService('heart_rate');
+        const characteristic = await service.getCharacteristic('heart_rate_measurement');
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', (e) => {
+          const val = e.target.value;
+          const flags = val.getUint8(0);
+          const hrValue = (flags & 0x01) ? val.getUint16(1, true) : val.getUint8(1);
+
+          currentHR = hrValue;
+          document.getElementById('live-hr-display').innerText = currentHR;
+          document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full theme-bg inline-block"></span><span>Connected HRM</span>`;
+          
+          hrHistory.push(currentHR);
+          if (hrHistory.length > 50) hrHistory.shift();
+        });
+
+        document.getElementById('hrm-btn-text').innerText = "HRM Paired";
+        showToastNotification("HRM Connected", "Bluetooth Heart Rate Monitor connected successfully.", "fa-solid fa-bluetooth theme-text");
+      } catch (err) {
+        showToastNotification("HRM Connection Failed", err.message || "Failed to pair heart rate monitor.", "fa-solid fa-triangle-exclamation text-rose-400");
+      }
+    }
+
+    function toggleHRSimulator() {
+      if (hrSimInterval) {
+        clearInterval(hrSimInterval);
+        hrSimInterval = null;
+        document.getElementById('btn-toggle-sim').innerText = "Simulate";
+        document.getElementById('live-hr-display').innerText = "--";
+        document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span><span>Disconnected</span>`;
+        return;
+      }
+
+      document.getElementById('btn-toggle-sim').innerText = "Stop Sim";
+      document.getElementById('live-hr-zone').innerHTML = `<span class="w-2 h-2 rounded-full theme-bg inline-block"></span><span>Simulating HR</span>`;
+      
+      hrSimInterval = setInterval(() => {
+        currentHR = Math.floor(120 + Math.random() * 40);
+        document.getElementById('live-hr-display').innerText = currentHR;
+        hrHistory.push(currentHR);
+        if (hrHistory.length > 50) hrHistory.shift();
+      }, 1000);
+    }
+
+    function toggleHRCardVisibility(forceCollapse = null) {
+      const hrBody = document.getElementById('hr-card-body');
+      const icon = document.getElementById('hr-collapse-icon');
+      const isHidden = forceCollapse !== null ? forceCollapse : !hrBody.classList.contains('hidden');
+
+      if (isHidden) {
+        hrBody.classList.add('hidden');
+        icon.className = "fa-solid fa-chevron-down text-xs";
+      } else {
+        hrBody.classList.remove('hidden');
+        icon.className = "fa-solid fa-chevron-up text-xs";
+      }
+    }
+
+    function toggleHRCollapsePref(isCollapsed) {
+      localStorage.setItem('showUp_hr_collapsed', JSON.stringify(isCollapsed));
+      toggleHRCardVisibility(isCollapsed);
+    }
+
+    function handleGoogleSignIn() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        demoProfileFallback();
+        return;
+      }
+
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+          callback: (response) => {
+            if (response.access_token) {
+              googleAccessToken = response.access_token;
+              localStorage.setItem('showUp_google_token', googleAccessToken);
+
+              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${googleAccessToken}` }
+              })
+              .then(res => res.json())
+              .then(profile => {
+                if (profile && profile.email) {
+                  const firstName = profile.given_name || profile.name || 'User';
+                  const userEmail = profile.email;
+                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+
+                  const profileObj = { firstName, email: userEmail, picture };
+                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+
+                  updateProfileUI(firstName, userEmail, picture);
+                  showToastNotification("Signed In", `Welcome back, ${firstName}!`, "fa-solid fa-user-check theme-text");
+                }
+              })
+              .catch(() => demoProfileFallback());
+            }
+          },
+          error_callback: () => demoProfileFallback()
+        });
+        client.requestAccessToken();
+      } catch (e) {
+        demoProfileFallback();
+      }
+    }
+
+    function demoProfileFallback() {
+      const demoProfile = { firstName: 'Demo Athlete', email: 'athlete@gmail.com', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
+      localStorage.setItem('showUp_user_profile', JSON.stringify(demoProfile));
+      updateProfileUI(demoProfile.firstName, demoProfile.email, demoProfile.picture);
+      showToastNotification("Signed In (Demo)", "Authenticated as Demo Athlete.", "fa-solid fa-user-check theme-text");
+    }
+
+    function updateProfileUI(firstName, email, picture) {
+      if (firstName) document.getElementById('user-first-name').innerText = firstName;
+      if (email) {
+        document.getElementById('user-email').innerText = email;
+        document.getElementById('dropdown-user-email').innerText = email;
+      }
+      if (picture) document.getElementById('user-avatar').src = picture;
+
+      document.getElementById('btn-google-login').classList.add('hidden');
+      document.getElementById('google-user-profile').classList.remove('hidden');
+      renderSquads();
+    }
+
+    function restoreSavedSession() {
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      if (savedProfile) {
+        updateProfileUI(savedProfile.firstName, savedProfile.email, savedProfile.picture);
+      }
+    }
+
+    function handleLogout() {
+      googleAccessToken = null;
+      localStorage.removeItem('showUp_google_token');
+      localStorage.removeItem('showUp_user_profile');
+
+      document.getElementById('profile-dropdown-menu').classList.add('hidden');
+      document.getElementById('google-user-profile').classList.add('hidden');
+      document.getElementById('btn-google-login').classList.remove('hidden');
+
+      document.getElementById('user-first-name').innerText = 'User';
+      document.getElementById('user-email').innerText = 'user@email.com';
+      document.getElementById('dropdown-user-email').innerText = 'user@email.com';
+      document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+      
+      renderSquads();
+      showToastNotification("Logged Out", "You have signed out of your account.", "fa-solid fa-right-from-bracket theme-text");
+    }
+
+    function toggleProfileDropdown(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('profile-dropdown-menu').classList.toggle('hidden');
+    }
+
+    function closeProfileDropdownOutside(e) {
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      const profileBadge = document.getElementById('google-user-profile');
+      if (dropdown && !dropdown.classList.contains('hidden')) {
+        if (!profileBadge.contains(e.target)) {
+          dropdown.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleSettingsModal() {
+      document.getElementById('settings-modal').classList.toggle('hidden');
+    }
+
+    function switchTab(tabName) {
+      const workoutView = document.getElementById('tab-workout-view');
+      const calendarView = document.getElementById('tab-calendar-view');
+      const squadsView = document.getElementById('tab-squads-view');
+
+      const btnWorkout = document.getElementById('nav-btn-workout');
+      const btnCalendar = document.getElementById('nav-btn-calendar');
+      const btnSquads = document.getElementById('nav-btn-squads');
+
+      workoutView.classList.add('hidden');
+      calendarView.classList.add('hidden');
+      squadsView.classList.add('hidden');
+
+      btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+      btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+      btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+
+      if (tabName === 'workout') {
+        workoutView.classList.remove('hidden');
+        btnWorkout.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
+      } else if (tabName === 'calendar') {
+        calendarView.classList.remove('hidden');
+        btnCalendar.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
+        renderCalendar();
+        renderMonthlyHistory();
+        renderWeightHistory();
+      } else if (tabName === 'squads') {
+        squadsView.classList.remove('hidden');
+        btnSquads.className = "flex flex-col items-center justify-center py-1 theme-text transition font-bold";
+        renderSquads();
+        updateGlobalCounterUI();
+      }
+    }
+
+    function triggerHaptic(type = 'light') {
+      if (!('vibrate' in navigator)) return;
+      switch (type) {
+        case 'light': navigator.vibrate(12); break;
+        case 'medium': navigator.vibrate(25); break;
+        case 'heavy': navigator.vibrate([35, 50, 35]); break;
+      }
+    }
+
+    function exportJSONBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedWorkoutsHistory));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `showUp_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function shareWorkoutToWhatsApp(dateStr = null) {
+      const targetDate = dateStr || (lastEvaluatedSummary ? lastEvaluatedSummary.date : selectedWorkoutDate);
+      const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === targetDate) || lastEvaluatedSummary;
+      
+      if (!w) return;
+
+      const titlePart = w.workoutName ? `🏋️ *${w.workoutName}*\n` : `🏋️ *showUp Workout Summary*\n`;
+      const notesPart = w.notes ? `📝 *Notes:* ${w.notes}\n` : ``;
+      const setsCount = w.sets ? w.sets.length : w.totalSets || 0;
+      const cals = w.caloriesBurned ? `🔥 *Calories:* ${w.caloriesBurned} kcal\n` : ``;
+
+      let text = `${titlePart}` +
+                 `📅 *Date:* ${w.date || targetDate}\n` +
+                 `${notesPart}` +
+                 `📊 *Total Sets:* ${setsCount}\n` +
+                 `${cals}`;
+
+      if (w.aerobicTE && w.anaerobicTE) {
+        text += `🫁 *Aerobic Load:* ${w.aerobicTE} / 5.0\n` +
+                `⚡ *Anaerobic Load:* ${w.anaerobicTE} / 5.0\n`;
+      }
+
+      text += `\n_Compound your progress with showUp_`;
+
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  </script>
+</body>
+</html>
