@@ -312,11 +312,73 @@
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-sliders theme-text"></i>
-          Settings & Physical Profile
+          Settings & Customization
         </h2>
         <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300 p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
+      </div>
+
+      <!-- COLOR PALETTE CUSTOMIZATION -->
+      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-palette theme-text"></i>
+          Color Palette Theme
+        </h3>
+        
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="triggerHaptic('light'); setThemePalette('emerald')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-emerald-500 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-emerald-500 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">Emerald</span>
+          </button>
+          <button onclick="triggerHaptic('light'); setThemePalette('blue')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-blue-500 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-blue-500 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">Ocean</span>
+          </button>
+          <button onclick="triggerHaptic('light'); setThemePalette('purple')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-purple-500 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-purple-500 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">Purple</span>
+          </button>
+          <button onclick="triggerHaptic('light'); setThemePalette('red')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-rose-500 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-rose-500 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">Crimson</span>
+          </button>
+          <button onclick="triggerHaptic('light'); setThemePalette('slate')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-sky-500 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-sky-400 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">Cyber</span>
+          </button>
+          <button onclick="triggerHaptic('light'); setThemePalette('amoled')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 flex items-center gap-2 hover:border-slate-300 transition text-left">
+            <span class="w-4 h-4 rounded-full bg-slate-100 shrink-0"></span>
+            <span class="text-xs font-bold text-slate-200">AMOLED</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TYPOGRAPHY FONT SELECTION -->
+      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-font theme-text"></i>
+          Typography Font Family
+        </h3>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button id="font-btn-jakarta" onclick="triggerHaptic('light'); setFontFamily('jakarta')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-jakarta hover:border-emerald-500 transition flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200">Plus Jakarta</span>
+            <i id="font-check-jakarta" class="fa-solid fa-check text-xs theme-text hidden"></i>
+          </button>
+          <button id="font-btn-inter" onclick="triggerHaptic('light'); setFontFamily('inter')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-inter hover:border-emerald-500 transition flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200">Inter</span>
+            <i id="font-check-inter" class="fa-solid fa-check text-xs theme-text hidden"></i>
+          </button>
+          <button id="font-btn-outfit" onclick="triggerHaptic('light'); setFontFamily('outfit')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-outfit hover:border-emerald-500 transition flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200">Outfit</span>
+            <i id="font-check-outfit" class="fa-solid fa-check text-xs theme-text hidden"></i>
+          </button>
+          <button id="font-btn-space" onclick="triggerHaptic('light'); setFontFamily('space')" class="p-2.5 rounded-xl border border-slate-800 bg-slate-900 text-left font-style-space hover:border-emerald-500 transition flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200">Space Grotesk</span>
+            <i id="font-check-space" class="fa-solid fa-check text-xs theme-text hidden"></i>
+          </button>
+        </div>
       </div>
 
       <!-- PHYSICAL PROFILE INPUTS -->
@@ -1007,6 +1069,26 @@
         </div>
       </section>
 
+      <!-- GMAIL SQUADS CONTAINER -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-users theme-text"></i>
+              Gmail Circles & Squads
+            </h2>
+            <p class="text-xs text-slate-400">Accountability groups connected via Google Auth</p>
+          </div>
+
+          <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="theme-badge text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create Squad</span>
+          </button>
+        </div>
+
+        <div id="squads-list-container" class="space-y-4"></div>
+      </section>
+
     </div>
 
   </main>
@@ -1168,9 +1250,54 @@
   </script>
 
   <script>
+    /* ================= GLOBAL APPLICATION STATE ================= */
+    let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
+    let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+    let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
+    
+    // Purge any legacy default squads cached from prior sessions
+    let storedSquads = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
+    window.squadsData = storedSquads.filter(s => s.name !== "Pahlwani Conditioning Circle");
+    localStorage.setItem('showUp_squads_data', JSON.stringify(window.squadsData));
+
+    window.globalShowedUpCount = parseInt(localStorage.getItem('showUp_global_counter') || '0', 10);
+    
+    let workoutInitiatedCount = localStorage.getItem('showUp_session_start_global_count') ? parseInt(localStorage.getItem('showUp_session_start_global_count'), 10) : null;
+    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
+    let calendarDate = new Date();
+    
+    let userHeight = parseFloat(localStorage.getItem('showUp_user_height') || '70');
+    let userWeight = parseFloat(localStorage.getItem('showUp_user_weight') || '175');
     let userState = localStorage.getItem('showUp_user_state') || '';
     let userZip = localStorage.getItem('showUp_user_zip') || '';
+    
+    let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
+    const GOOGLE_CLIENT_ID = "1083928173612-demo_client_id.apps.googleusercontent.com"; // Configuration fallback
+
+    let currentHR = 0;
+    let hrHistory = [];
+    let hrmDevice = null;
+    let hrSimInterval = null;
+    let lastEvaluatedSummary = null;
+    let pendingConfirmAction = null;
     window.heatmapData = {};
+
+    /* Exercise Catalog */
+    const defaultCatalog = [
+      { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Hiking", implement: "Hiking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Biking", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Swimming", implement: "Swimming", muscle: "Full Body", secondary: ["Back", "Shoulders", "Core/Abs"] },
+      { name: "Row Ergometer", implement: "Row Erg", muscle: "Back", secondary: ["Quads", "Biceps", "Core/Abs"] },
+      { name: "Push Ups", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Pull Ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps"] },
+      { name: "Barbell Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Deadlift", implement: "Barbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
+      { name: "Kettlebell Swing", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
+      { name: "Mace 360 Spin", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs"] }
+    ];
 
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
@@ -1188,6 +1315,50 @@
       restoreThemePreferences();
       restoreFontPreference();
     });
+
+    function showToastNotification(title, message, iconClass = "fa-solid fa-circle-info theme-text") {
+      document.getElementById('toast-title').innerText = title;
+      document.getElementById('toast-message').innerText = message;
+      document.getElementById('toast-icon').className = iconClass;
+      document.getElementById('toast-modal').classList.remove('hidden');
+    }
+
+    function closeToastModal() {
+      document.getElementById('toast-modal').classList.add('hidden');
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      document.getElementById('confirm-title').innerText = title;
+      document.getElementById('confirm-message').innerText = message;
+      pendingConfirmAction = onConfirm;
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    }
+
+    function handleConfirmResult(result) {
+      document.getElementById('confirm-modal').classList.add('hidden');
+      if (result && typeof pendingConfirmAction === 'function') {
+        pendingConfirmAction();
+      }
+      pendingConfirmAction = null;
+    }
+
+    window.updateGlobalCounterUI = function() {
+      const headerVal = document.getElementById('global-counter-header-val');
+      const mainVal = document.getElementById('global-counter-main-val');
+      const deltaText = document.getElementById('session-delta-text');
+
+      if (headerVal) headerVal.innerText = window.globalShowedUpCount;
+      if (mainVal) mainVal.innerText = window.globalShowedUpCount;
+
+      if (deltaText) {
+        if (workoutInitiatedCount !== null) {
+          const delta = Math.max(0, window.globalShowedUpCount - workoutInitiatedCount);
+          deltaText.innerHTML = `<b class="theme-text font-black">${delta}</b> ${delta === 1 ? 'person has' : 'people have'} showed up globally since you initiated your workout.`;
+        } else {
+          deltaText.innerHTML = `Start a workout to track real-time check-ins since initiating your session.`;
+        }
+      }
+    };
 
     function autoDetectLocation() {
       if (userState) {
@@ -1322,12 +1493,6 @@
     function restoreThemePreferences() {
       const savedTheme = localStorage.getItem('showUp_theme') || 'emerald';
       setThemePalette(savedTheme);
-
-      const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
-      document.getElementById('pref-hr-collapsed').checked = savedHRCollapsed;
-      if (savedHRCollapsed) {
-        toggleHRCardVisibility(true);
-      }
     }
 
     function loadPhysicalProfile() {
@@ -1616,7 +1781,7 @@
       const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
       const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
       const secs = String(totalSec % 60).padStart(2, '0');
-      input.value = `${hrs}:${mins}:${secs}`;
+      input.value = `${hrs}:${secs}`;
     }
 
     function logSet() {
@@ -2412,11 +2577,6 @@
         hrBody.classList.remove('hidden');
         icon.className = "fa-solid fa-chevron-up text-xs";
       }
-    }
-
-    function toggleHRCollapsePref(isCollapsed) {
-      localStorage.setItem('showUp_hr_collapsed', JSON.stringify(isCollapsed));
-      toggleHRCardVisibility(isCollapsed);
     }
 
     function handleGoogleSignIn() {
