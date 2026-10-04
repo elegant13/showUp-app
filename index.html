@@ -190,7 +190,7 @@
       <div>
         <h1 class="text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.7</span>
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full theme-badge">v5.8</span>
         </h1>
         <p class="text-xs font-semibold theme-text tracking-wide">Compound your progress</p>
       </div>
@@ -1071,6 +1071,10 @@
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
     let squadsData = JSON.parse(localStorage.getItem('showUp_squads_data') || '[]');
     
+    // SANITIZE & PURGE LEGACY DEFAULT SQUADS FROM LOCALSTORAGE
+    squadsData = squadsData.filter(s => s.id !== 'squad-pahlwani' && s.name !== 'Pahlwani Conditioning Circle');
+    localStorage.setItem('showUp_squads_data', JSON.stringify(squadsData));
+
     let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70; // inches
     let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175; // lbs
 
