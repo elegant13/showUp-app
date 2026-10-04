@@ -132,7 +132,7 @@
       <div>
         <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
           showUp
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v4.7</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">v4.9</span>
         </h1>
         <p class="text-xs font-semibold text-emerald-400/90 tracking-wide">Compound your progress</p>
       </div>
@@ -140,7 +140,7 @@
 
     <!-- Right Header Controls: Settings & Profile -->
     <div class="relative flex items-center gap-2">
-      <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Settings">
+      <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
         <i class="fa-solid fa-sliders text-sm"></i>
       </button>
 
@@ -180,17 +180,38 @@
     </div>
   </header>
 
-  <!-- ================= SETTINGS MODAL ================= -->
+  <!-- ================= SETTINGS & PHYSICAL PROFILE MODAL ================= -->
   <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-6 relative">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-palette text-emerald-400"></i>
-          Material You Settings
+          <i class="fa-solid fa-sliders text-emerald-400"></i>
+          Settings & Physical Profile
         </h2>
         <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300 p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
+      </div>
+
+      <!-- PHYSICAL PROFILE METRICS (HEIGHT & WEIGHT) -->
+      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+          <i class="fa-solid fa-weight-scale text-emerald-400"></i>
+          Physical Profile (For Calorie Calculations)
+        </h3>
+        
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (inches)</label>
+            <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
+            <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.5" min="50" max="500" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
       </div>
 
       <div class="space-y-4">
@@ -269,7 +290,7 @@
         </div>
       </section>
 
-      <!-- LOG SET ENTRY CARD WITH OPTIONAL WORKOUT NAME & NOTES -->
+      <!-- LOG SET ENTRY CARD -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div class="flex items-center gap-2">
@@ -442,7 +463,7 @@
         </button>
       </section>
 
-      <!-- POST-WORKOUT SUMMARY CARD -->
+      <!-- POST-WORKOUT SUMMARY CARD INCLUDING ESTIMATED CALORIES BURNED -->
       <section id="workout-summary-card" class="hidden m3-card rounded-3xl p-5 border shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -453,7 +474,6 @@
             <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
           </div>
           <div class="flex items-center gap-2">
-            <!-- TEXT-ONLY WHATSAPP SHARE BUTTON -->
             <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition">
               <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
               <span>Share via WhatsApp</span>
@@ -466,29 +486,33 @@
 
         <div id="summary-notes-display" class="hidden bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 italic"></div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase">Aerobic Load</span>
+        <!-- TRI-METRIC BOARD: AEROBIC, ANAEROBIC, AND ESTIMATED CALORIES BURNED -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+              <span>Aerobic</span>
               <i class="fa-solid fa-lungs text-blue-400"></i>
             </div>
-            <div id="aerobic-te-score" class="text-3xl font-black text-blue-400">0.0</div>
-            <div id="aerobic-te-label" class="text-xs font-semibold text-slate-300">No Aerobic Impact</div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="aerobic-te-bar" class="bg-blue-500 h-full w-0 transition-all duration-500"></div>
-            </div>
+            <div id="aerobic-te-score" class="text-2xl font-black text-blue-400">0.0</div>
+            <div id="aerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
           </div>
 
-          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold text-slate-400 uppercase">Anaerobic Load</span>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+              <span>Anaerobic</span>
               <i class="fa-solid fa-bolt text-amber-400"></i>
             </div>
-            <div id="anaerobic-te-score" class="text-3xl font-black text-amber-400">0.0</div>
-            <div id="anaerobic-te-label" class="text-xs font-semibold text-slate-300">No Anaerobic Impact</div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="anaerobic-te-bar" class="bg-amber-500 h-full w-0 transition-all duration-500"></div>
+            <div id="anaerobic-te-score" class="text-2xl font-black text-amber-400">0.0</div>
+            <div id="anaerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+              <span>Calories</span>
+              <i class="fa-solid fa-fire text-rose-500"></i>
             </div>
+            <div id="calories-burned-score" class="text-2xl font-black text-rose-400">0</div>
+            <div class="text-[10px] font-semibold text-slate-400">Est. kcal</div>
           </div>
         </div>
 
@@ -545,8 +569,48 @@
 
     </div>
 
-    <!-- VIEW TAB 2: CALENDAR & HISTORICAL WORKOUT MANAGEMENT -->
+    <!-- VIEW TAB 2: CALENDAR, HISTORICAL WORKOUT MANAGEMENT & ISOLATED WEIGHT TRACKER -->
     <div id="tab-calendar-view" class="hidden space-y-6">
+
+      <!-- HISTORICAL BODY WEIGHT PROGRESS CARD (ISOLATED ONLY IN CALENDAR VIEW) -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-weight-scale text-emerald-400"></i>
+              Body Weight Tracking & History
+            </h2>
+            <p class="text-xs text-slate-400">Historical weight progress timeline</p>
+          </div>
+
+          <button onclick="triggerHaptic('medium'); logBodyWeightEntry()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>Log Weight</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Current Weight</div>
+              <div id="cal-current-weight-val" class="text-xl font-black text-emerald-400">-- lbs</div>
+            </div>
+            <i class="fa-solid fa-user-check text-slate-700 text-lg"></i>
+          </div>
+
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-[10px] font-bold text-slate-500 uppercase">Weight Change</div>
+              <div id="cal-weight-change-val" class="text-xl font-black text-slate-300">0.0 lbs</div>
+            </div>
+            <i class="fa-solid fa-chart-line text-slate-700 text-lg"></i>
+          </div>
+        </div>
+
+        <div id="weight-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>
+        </div>
+      </section>
 
       <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
@@ -625,6 +689,11 @@
 
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+    let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
+    
+    let userHeight = parseFloat(localStorage.getItem('showUp_user_height')) || 70; // inches
+    let userWeight = parseFloat(localStorage.getItem('showUp_user_weight')) || 175; // lbs
+
     let lastEvaluatedSummary = null;
     let hrHistory = [];
     let currentHR = 0;
@@ -654,12 +723,100 @@
     window.addEventListener('DOMContentLoaded', () => {
       initCatalog();
       initDatePickerConstraints();
+      loadPhysicalProfile();
       renderLoggedSets();
       renderCalendar();
+      renderWeightHistory();
       initSparkline();
       restoreSavedSession();
       restoreThemePreferences();
     });
+
+    function loadPhysicalProfile() {
+      document.getElementById('user-height-input').value = userHeight;
+      document.getElementById('user-weight-input').value = userWeight;
+    }
+
+    function savePhysicalProfile() {
+      const h = parseFloat(document.getElementById('user-height-input').value) || userHeight;
+      const w = parseFloat(document.getElementById('user-weight-input').value) || userWeight;
+
+      userHeight = h;
+      userWeight = w;
+
+      localStorage.setItem('showUp_user_height', userHeight);
+      localStorage.setItem('showUp_user_weight', userWeight);
+
+      // Automatically add to weight history if different from latest entry
+      const latestEntry = weightHistory[0];
+      const todayISO = new Date().toISOString().slice(0, 10);
+
+      if (!latestEntry || latestEntry.weight !== userWeight || latestEntry.date !== todayISO) {
+        weightHistory.unshift({ date: todayISO, weight: userWeight });
+        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+        renderWeightHistory();
+      }
+    }
+
+    function logBodyWeightEntry() {
+      const inputVal = prompt("Enter body weight (lbs):", userWeight);
+      if (inputVal === null) return;
+
+      const w = parseFloat(inputVal);
+      if (isNaN(w) || w <= 0) return;
+
+      userWeight = w;
+      document.getElementById('user-weight-input').value = userWeight;
+      localStorage.setItem('showUp_user_weight', userWeight);
+
+      const todayISO = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
+      weightHistory.unshift({ date: todayISO, weight: userWeight });
+      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+
+      renderWeightHistory();
+    }
+
+    function renderWeightHistory() {
+      const currentValEl = document.getElementById('cal-current-weight-val');
+      const changeValEl = document.getElementById('cal-weight-change-val');
+      const container = document.getElementById('weight-history-list');
+
+      currentValEl.innerText = `${userWeight} lbs`;
+
+      if (weightHistory.length === 0) {
+        changeValEl.innerText = "0.0 lbs";
+        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>`;
+        return;
+      }
+
+      const latest = weightHistory[0].weight;
+      const oldest = weightHistory[weightHistory.length - 1].weight;
+      const diff = (latest - oldest).toFixed(1);
+
+      changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
+      changeValEl.className = `text-xl font-black ${diff < 0 ? 'text-emerald-400' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
+
+      container.innerHTML = weightHistory.map((item, index) => `
+        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-calendar-day text-slate-500"></i>
+            <span class="text-slate-300 font-semibold">${item.date}</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-emerald-400">${item.weight} lbs</span>
+            <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 transition" title="Delete Entry">
+              <i class="fa-solid fa-xmark text-xs"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteWeightEntry(index) {
+      weightHistory.splice(index, 1);
+      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+      renderWeightHistory();
+    }
 
     function initDatePickerConstraints() {
       const todayISO = new Date().toISOString().slice(0, 10);
@@ -695,7 +852,7 @@
       document.getElementById('historical-mode-banner').classList.add('hidden');
     }
 
-    // TEXT-ONLY WHATSAPP SHARE ENGINE INCLUDING WORKOUT NAME & NOTES
+    // TEXT-ONLY WHATSAPP SHARE ENGINE INCLUDING WORKOUT NAME, NOTES, & ESTIMATED CALORIES
     function shareWorkoutToWhatsApp(dateStr = null) {
       const targetDate = dateStr || (lastEvaluatedSummary ? lastEvaluatedSummary.date : selectedWorkoutDate);
       const w = completedWorkoutsHistory.find(item => (typeof item === 'string' ? item : item.date) === targetDate) || lastEvaluatedSummary;
@@ -706,11 +863,13 @@
       const notesPart = w.notes ? `📝 *Notes:* ${w.notes}\n` : ``;
       const setsCount = w.sets ? w.sets.length : w.totalSets || 0;
       const vol = w.totalVolume ? `${w.totalVolume.toLocaleString()} units` : 'Logged';
+      const cals = w.caloriesBurned ? `🔥 *Calories:* ${w.caloriesBurned} kcal\n` : ``;
 
       let text = `${titlePart}` +
                  `📅 *Date:* ${w.date || targetDate}\n` +
                  `${notesPart}` +
-                 `📊 *Total Sets:* ${setsCount} | *Volume:* ${vol}\n`;
+                 `📊 *Total Sets:* ${setsCount} | *Volume:* ${vol}\n` +
+                 `${cals}`;
 
       if (w.aerobicTE && w.anaerobicTE) {
         text += `🫁 *Aerobic Load:* ${w.aerobicTE} / 5.0\n` +
@@ -839,6 +998,7 @@
         btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
         renderCalendar();
         renderMonthlyHistory();
+        renderWeightHistory();
       }
     }
 
@@ -967,7 +1127,7 @@
             <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5">
               <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded-lg">${s.implement}</span>
               ${s.implement === "Row Erg" ? `
-                <span>${s.ergDistance}m \vert{}${s.ergTime}</span>
+                <span>${s.ergDistance}m | ${s.ergTime}</span>
               ` : `
                 <span>${s.weight} lbs × ${s.reps} reps</span>
               `}
@@ -993,6 +1153,7 @@
       }
     }
 
+    // CALORIE BURNING & PHYSIOLOGY EVALUATION ENGINE
     function evaluateAndFinishWorkout() {
       if (currentSessionSets.length === 0) {
         alert("Please log at least one set before finishing your workout.");
@@ -1009,13 +1170,20 @@
       const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4)).toFixed(1);
       const anaerobicTE = Math.min(5.0, (currentSessionSets.filter(s => s.rpe >= 9).length * 0.7) + (totalVolume > 2000 ? 1.2 : 0.5)).toFixed(1);
 
+      // Calorie Estimation formula using METs, Weight (kg), and Workout Volume
+      const weightKg = userWeight * 0.453592;
+      const estimatedMinutes = Math.max(15, totalSets * 3); // ~3 min per set including rest
+      const avgMET = Math.min(10.0, 4.0 + (avgRPE * 0.5) + (currentHR > 0 ? (currentHR - 100) * 0.04 : 0));
+      
+      const caloriesBurned = Math.round((avgMET * 3.5 * weightKg / 200) * estimatedMinutes);
+
       document.getElementById('aerobic-te-score').innerText = aerobicTE;
-      document.getElementById('aerobic-te-bar').style.width = `${(aerobicTE / 5.0) * 100}%`;
-      document.getElementById('aerobic-te-label').innerText = aerobicTE > 3.0 ? "High Aerobic Impact" : "Moderate Aerobic Impact";
+      document.getElementById('aerobic-te-label').innerText = aerobicTE > 3.0 ? "High Aerobic" : "Moderate";
 
       document.getElementById('anaerobic-te-score').innerText = anaerobicTE;
-      document.getElementById('anaerobic-te-bar').style.width = `${(anaerobicTE / 5.0) * 100}%`;
-      document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic Impact" : "Minor Anaerobic Impact";
+      document.getElementById('anaerobic-te-label').innerText = anaerobicTE > 3.0 ? "High Anaerobic" : "Minor";
+
+      document.getElementById('calories-burned-score').innerText = caloriesBurned;
 
       const muscleMap = {};
       const secondaryMuscleSet = new Set();
@@ -1053,6 +1221,7 @@
         totalVolume,
         aerobicTE,
         anaerobicTE,
+        caloriesBurned,
         sets: [...currentSessionSets]
       };
 
@@ -1066,7 +1235,6 @@
       }
       localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
 
-      // Display summary card title and notes
       document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
       document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;
 
@@ -1218,6 +1386,7 @@
         const setsList = typeof w === 'object' && w.sets ? w.sets : [];
         const setsCount = setsList.length || '1+';
         const vol = typeof w === 'object' && w.totalVolume ? `${w.totalVolume.toLocaleString()} units` : 'Logged';
+        const cals = typeof w === 'object' && w.caloriesBurned ? `${w.caloriesBurned} kcal` : '';
 
         return `
           <div class="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden transition-all">
@@ -1234,6 +1403,7 @@
                     <span>${setsCount} Sets</span>
                     <span class="text-slate-600">•</span>
                     <span class="text-emerald-400">${vol}</span>
+                    ${cals ? `<span class="text-slate-600">•</span><span class="text-rose-400">${cals}</span>` : ''}
                   </div>
                 </div>
               </div>
@@ -1452,6 +1622,7 @@
       setTimeout(() => {
         renderCalendar();
         renderMonthlyHistory();
+        renderWeightHistory();
         syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
 
         setTimeout(() => {
