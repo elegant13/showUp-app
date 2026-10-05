@@ -860,6 +860,54 @@
     </div>
   </div>
 
+  <!-- ================= JOIN SQUAD WITH CODE MODAL ================= -->
+  <div id="join-squad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
+            Join a Squad
+          </h2>
+          <p class="text-xs text-slate-400">Enter your squad's invite or joining code</p>
+        </div>
+        <button onclick="closeJoinSquadModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Squad Joining Code *</label>
+          <div class="relative">
+            <input type="text" id="join-squad-code-input" placeholder="e.g. SHOWUP-7X9P" maxlength="25" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-14 py-2.5 text-xs font-mono font-bold uppercase tracking-wider text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+            <button type="button" onclick="pasteJoinCodeFromClipboard()" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20" title="Paste from clipboard">
+              Paste
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Ask your squad creator or teammate for their unique squad code.</p>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2.5">
+          <i class="fa-solid fa-shield-halved text-emerald-400 text-sm mt-0.5"></i>
+          <div>
+            <span class="font-bold text-slate-200">Real-Time Accountability:</span>
+            <p class="mt-0.5">Once joined, you will receive unobtrusive notifications whenever squad mates show up to work out.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeJoinSquadModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); submitJoinSquadByCode()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
+          Join Squad
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= TRANSFER CREATOR ROLE BEFORE LEAVING MODAL ================= -->
   <div id="transfer-creator-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
@@ -1962,6 +2010,10 @@
             </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="triggerHaptic('light'); openJoinSquadModal()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Join a squad with a joining code">
+              <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
+              <span>Join Squad</span>
+            </button>
             <button onclick="triggerHaptic('light'); openCreateSquadModal()" class="m3-btn-primary text-xs font-bold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 active:scale-95 transition">
               <i class="fa-solid fa-plus"></i>
               <span>Create Squad</span>
@@ -4451,6 +4503,8 @@
         workouts: completedWorkoutsHistory,
         weightHistory: weightHistory,
         squads: getSquads(),
+        squadInvites: getSquadInvites(),
+        globalSquadRegistry: getGlobalSquadRegistry(),
         activeSession: currentSessionSets
       };
 
@@ -4486,6 +4540,12 @@
             if (Array.isArray(data.weightHistory)) {
               weightHistory = data.weightHistory;
               localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+            }
+            if (Array.isArray(data.squadInvites)) {
+              localStorage.setItem('showUp_squad_invites', JSON.stringify(data.squadInvites));
+            }
+            if (Array.isArray(data.globalSquadRegistry)) {
+              localStorage.setItem('showUp_global_squad_registry', JSON.stringify(data.globalSquadRegistry));
             }
             if (data.profile) {
               if (data.profile.height) {
@@ -5374,6 +5434,18 @@
 
       localStorage.setItem('showUp_squads', JSON.stringify(squads));
       updateSquadBeacon();
+
+      // Check URL parameters for direct squad joining code (?join=CODE or ?squadCode=CODE)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const joinCode = urlParams.get('join') || urlParams.get('squadCode') || urlParams.get('code');
+        if (joinCode) {
+          setTimeout(() => {
+            switchTab('squads');
+            openJoinSquadModal(joinCode);
+          }, 350);
+        }
+      } catch (e) {}
     }
 
     function assignBackupCreator(squadId, memberId) {
@@ -5618,33 +5690,477 @@
       showToast(`Ended active workout session for ${member.rawName || member.name}. Recorded as completed today.`, "info");
     }
 
+    function isCustomerLoggedIn() {
+      const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      const token = localStorage.getItem('showUp_google_token') || googleAccessToken;
+      if (token) return true;
+      if (profile && profile.email && profile.email !== 'you@showup.app' && profile.email !== 'user@showup.app') {
+        return true;
+      }
+      return false;
+    }
+
+    function getGlobalSquadRegistry() {
+      try {
+        return JSON.parse(localStorage.getItem('showUp_global_squad_registry') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveSquadToGlobalRegistry(squad) {
+      if (!squad || !squad.id) return;
+      const reg = getGlobalSquadRegistry();
+      const idx = reg.findIndex(s => s.id === squad.id || (squad.inviteCode && s.inviteCode === squad.inviteCode));
+      if (idx >= 0) {
+        reg[idx] = { ...reg[idx], ...squad };
+      } else {
+        reg.push(squad);
+      }
+      localStorage.setItem('showUp_global_squad_registry', JSON.stringify(reg));
+    }
+
+    function getSquadInvites() {
+      try {
+        return JSON.parse(localStorage.getItem('showUp_squad_invites') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function recordSquadInvite(invite) {
+      if (!invite || !invite.targetEmail) return;
+      const invites = getSquadInvites();
+      const idx = invites.findIndex(i => i.squadId === invite.squadId && i.targetEmail.toLowerCase() === invite.targetEmail.toLowerCase());
+      if (idx >= 0) {
+        invites[idx] = invite;
+      } else {
+        invites.unshift(invite);
+      }
+      localStorage.setItem('showUp_squad_invites', JSON.stringify(invites));
+    }
+
+    function getPendingSquadInvites() {
+      const user = getAppUser();
+      const userEmail = (user.email || '').toLowerCase().trim();
+      if (!userEmail || userEmail === 'you@showup.app' || userEmail === 'user@showup.app') {
+        return [];
+      }
+
+      const existingSquads = getSquads();
+      const allInvites = getSquadInvites();
+      const globalRegistry = getGlobalSquadRegistry();
+      const matchingInvites = [];
+
+      // 1. Check explicit invite records
+      allInvites.forEach(inv => {
+        if (inv.targetEmail && inv.targetEmail.toLowerCase() === userEmail && inv.status === 'pending') {
+          const alreadyInSquad = existingSquads.some(s => s.id === inv.squadId && s.members.some(m => (m.id === user.id || (m.email && m.email.toLowerCase() === userEmail))));
+          if (!alreadyInSquad && !matchingInvites.some(i => i.squadId === inv.squadId)) {
+            matchingInvites.push(inv);
+          }
+        }
+      });
+
+      // 2. Check global registry for any squads where user is invited
+      globalRegistry.forEach(sq => {
+        if (sq.members && Array.isArray(sq.members)) {
+          const isInvited = sq.members.some(m => m.email && m.email.toLowerCase() === userEmail && !m.isCreator);
+          const alreadyInSquad = existingSquads.some(s => s.id === sq.id && s.members.some(m => (m.id === user.id || (m.email && m.email.toLowerCase() === userEmail))));
+          const alreadyInList = matchingInvites.some(inv => inv.squadId === sq.id);
+          if (isInvited && !alreadyInSquad && !alreadyInList) {
+            matchingInvites.push({
+              id: 'invite_' + sq.id,
+              squadId: sq.id,
+              squadName: sq.name,
+              squadMotto: sq.motto,
+              squadIcon: sq.icon || 'dumbbell',
+              squadAccent: sq.accent || 'emerald',
+              inviteCode: sq.inviteCode,
+              inviterName: sq.creatorName || 'Squad Creator',
+              inviterEmail: sq.creatorId,
+              targetEmail: userEmail,
+              invitedAt: sq.createdAt || new Date().toISOString(),
+              status: 'pending'
+            });
+          }
+        }
+      });
+
+      return matchingInvites;
+    }
+
+    function acceptSquadInvite(inviteId) {
+      const user = getAppUser();
+      const userEmail = (user.email || '').toLowerCase().trim();
+      const invites = getSquadInvites();
+      const invite = invites.find(i => i.id === inviteId) || getPendingSquadInvites().find(i => i.id === inviteId);
+
+      if (!invite) {
+        showToast("Invitation not found or expired.", "error");
+        return;
+      }
+
+      // Update invite status
+      invite.status = 'accepted';
+      invite.acceptedAt = new Date().toISOString();
+      localStorage.setItem('showUp_squad_invites', JSON.stringify(invites));
+
+      // Find the squad in global registry or local squads
+      const squads = getSquads();
+      const globalReg = getGlobalSquadRegistry();
+      let targetSquad = squads.find(s => s.id === invite.squadId) || globalReg.find(s => s.id === invite.squadId || (invite.inviteCode && s.inviteCode === invite.inviteCode));
+
+      if (!targetSquad) {
+        targetSquad = {
+          id: invite.squadId || ('squad_' + Date.now()),
+          name: invite.squadName || 'Fitness Squad',
+          motto: invite.squadMotto || 'Consistency in motion',
+          icon: invite.squadIcon || 'dumbbell',
+          accent: invite.squadAccent || 'emerald',
+          inviteCode: invite.inviteCode || ('SHOWUP-' + Math.random().toString(36).substring(2, 6).toUpperCase()),
+          isCollapsed: false,
+          createdAt: invite.invitedAt || new Date().toISOString(),
+          creatorId: invite.inviterEmail || 'creator',
+          creatorName: invite.inviterName || 'Squad Creator',
+          notificationPreferences: {
+            inAppPill: true,
+            beaconPulse: true,
+            hapticPulse: true,
+            soundChime: true,
+            browserNotify: false
+          },
+          members: []
+        };
+      }
+
+      // Add current user if not already in members
+      const memberIndex = targetSquad.members.findIndex(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
+      if (memberIndex >= 0) {
+        targetSquad.members[memberIndex].id = user.id;
+        targetSquad.members[memberIndex].name = user.name;
+        targetSquad.members[memberIndex].rawName = user.rawName;
+        targetSquad.members[memberIndex].email = user.email;
+        targetSquad.members[memberIndex].avatar = user.picture;
+        targetSquad.members[memberIndex].inviteStatus = 'accepted';
+        targetSquad.members[memberIndex].lastActive = 'Just joined';
+      } else {
+        targetSquad.members.push({
+          id: user.id,
+          name: user.name,
+          rawName: user.rawName,
+          email: user.email,
+          avatar: user.picture,
+          isCreator: false,
+          isBackupCreator: false,
+          isWorkingOut: false,
+          currentWorkout: null,
+          lastActive: 'Just joined'
+        });
+      }
+
+      // Ensure squad is in user's squads list
+      const existingSquadIndex = squads.findIndex(s => s.id === targetSquad.id);
+      if (existingSquadIndex >= 0) {
+        squads[existingSquadIndex] = targetSquad;
+      } else {
+        squads.unshift(targetSquad);
+      }
+
+      saveSquads(squads);
+      saveSquadToGlobalRegistry(targetSquad);
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      updateSquadBeacon();
+
+      showToast(`🎉 Joined "${targetSquad.name}"! You are now an active member.`, "success");
+
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        syncToGoogleDrive(false);
+      }
+    }
+
+    function declineSquadInvite(inviteId) {
+      const invites = getSquadInvites();
+      const invite = invites.find(i => i.id === inviteId);
+      if (invite) {
+        invite.status = 'declined';
+        invite.declinedAt = new Date().toISOString();
+        localStorage.setItem('showUp_squad_invites', JSON.stringify(invites));
+      }
+      renderSquadsTab();
+      showToast("Invitation declined.", "info");
+    }
+
+    function openJoinSquadModal(prefillCode = '') {
+      const input = document.getElementById('join-squad-code-input');
+      if (input) {
+        input.value = prefillCode ? prefillCode.toUpperCase().trim() : '';
+      }
+      document.getElementById('join-squad-modal').classList.remove('hidden');
+      if (input) {
+        setTimeout(() => input.focus(), 150);
+      }
+    }
+
+    function closeJoinSquadModal() {
+      document.getElementById('join-squad-modal').classList.add('hidden');
+    }
+
+    function pasteJoinCodeFromClipboard() {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then(text => {
+          if (text) {
+            const input = document.getElementById('join-squad-code-input');
+            if (input) input.value = text.trim().toUpperCase();
+            showToast("Pasted code from clipboard", "info");
+          }
+        }).catch(() => {
+          showToast("Please type your code into the box.", "info");
+        });
+      }
+    }
+
+    function submitJoinSquadByCode() {
+      const input = document.getElementById('join-squad-code-input');
+      if (!input) return;
+
+      const rawCode = input.value.trim().toUpperCase();
+      if (!rawCode) {
+        showToast("Please enter a valid squad joining code.", "warning");
+        input.focus();
+        return;
+      }
+
+      const user = getAppUser();
+      const userEmail = (user.email || '').toLowerCase().trim();
+      const squads = getSquads();
+      const globalReg = getGlobalSquadRegistry();
+
+      // 1. Check if already in user's squads
+      const existingInUserSquads = squads.find(s => (s.inviteCode && s.inviteCode.toUpperCase() === rawCode));
+      if (existingInUserSquads) {
+        const isMember = existingInUserSquads.members.some(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
+        if (isMember) {
+          showToast(`You are already a member of "${existingInUserSquads.name}"!`, "info");
+          closeJoinSquadModal();
+          return;
+        } else {
+          existingInUserSquads.members.push({
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: false,
+            isBackupCreator: false,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Just joined'
+          });
+          saveSquads(squads);
+          saveSquadToGlobalRegistry(existingInUserSquads);
+          closeJoinSquadModal();
+          renderSquadsTab();
+          updateGlobalStatsUI();
+          updateSquadBeacon();
+          showToast(`🎉 Joined "${existingInUserSquads.name}"!`, "success");
+          if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+            syncToGoogleDrive(false);
+          }
+          return;
+        }
+      }
+
+      // 2. Check in global registry
+      const matchInRegistry = globalReg.find(s => s.inviteCode && s.inviteCode.toUpperCase() === rawCode);
+      if (matchInRegistry) {
+        const squadToImport = JSON.parse(JSON.stringify(matchInRegistry));
+        const memberIdx = squadToImport.members.findIndex(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
+        if (memberIdx >= 0) {
+          squadToImport.members[memberIdx].id = user.id;
+          squadToImport.members[memberIdx].name = user.name;
+          squadToImport.members[memberIdx].rawName = user.rawName;
+          squadToImport.members[memberIdx].email = user.email;
+          squadToImport.members[memberIdx].avatar = user.picture;
+          squadToImport.members[memberIdx].lastActive = 'Just joined';
+        } else {
+          squadToImport.members.push({
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: false,
+            isBackupCreator: false,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Just joined'
+          });
+        }
+        squads.unshift(squadToImport);
+        saveSquads(squads);
+        closeJoinSquadModal();
+        renderSquadsTab();
+        updateGlobalStatsUI();
+        updateSquadBeacon();
+        showToast(`🎉 Joined "${squadToImport.name}" with code ${rawCode}!`, "success");
+        if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+          syncToGoogleDrive(false);
+        }
+        return;
+      }
+
+      // 3. New external join code -> construct squad with this code
+      const newJoinedSquad = {
+        id: 'squad_joined_' + Date.now(),
+        name: `Squad ${rawCode.replace(/^SHOWUP-?/, '') || rawCode}`,
+        motto: 'Consistency in motion • Stronger together',
+        icon: 'dumbbell',
+        accent: 'emerald',
+        inviteCode: rawCode,
+        isCollapsed: false,
+        createdAt: new Date().toISOString(),
+        creatorId: 'creator_' + rawCode,
+        creatorName: 'Squad Leader',
+        notificationPreferences: {
+          inAppPill: true,
+          beaconPulse: true,
+          hapticPulse: true,
+          soundChime: true,
+          browserNotify: false
+        },
+        members: [
+          {
+            id: 'creator_' + rawCode,
+            name: 'Squad Leader',
+            rawName: 'Squad Leader',
+            email: '',
+            avatar: null,
+            isCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Active today'
+          },
+          {
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: false,
+            isBackupCreator: false,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Just joined'
+          }
+        ]
+      };
+
+      squads.unshift(newJoinedSquad);
+      saveSquads(squads);
+      saveSquadToGlobalRegistry(newJoinedSquad);
+      closeJoinSquadModal();
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      updateSquadBeacon();
+      showToast(`🎉 Successfully joined squad with code ${rawCode}!`, "success");
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        syncToGoogleDrive(false);
+      }
+    }
+
     function renderSquadsTab() {
       const container = document.getElementById('squads-list-container');
       if (!container) return;
 
       const squads = getSquads();
       const user = getAppUser();
+      const isLoggedIn = isCustomerLoggedIn();
+      const pendingInvites = isLoggedIn ? getPendingSquadInvites() : [];
+      let invitesHtml = '';
+
+      if (isLoggedIn && pendingInvites.length > 0) {
+        invitesHtml = `
+          <!-- LOGGED-IN CUSTOMER PENDING SQUAD INVITATIONS (REQ 11) -->
+          <div id="pending-squad-invites-card" class="m3-card rounded-3xl p-5 border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 shadow-xl space-y-3.5">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/30 shadow-sm">
+                  <i class="fa-solid fa-envelope-open-text"></i>
+                </span>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                    <span>Squad Invitations</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">${pendingInvites.length} Pending</span>
+                  </h3>
+                  <p class="text-[11px] text-slate-400">You were invited to join these squads</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-2.5">
+              ${pendingInvites.map(inv => `
+                <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-emerald-500/40 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 flex items-center justify-center text-base flex-shrink-0">
+                      <i class="fa-solid fa-${inv.squadIcon || 'dumbbell'}"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs font-bold text-slate-100">${escapeHtml(inv.squadName)}</span>
+                        <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">Code: ${escapeHtml(inv.inviteCode)}</span>
+                      </div>
+                      <p class="text-[11px] text-slate-400 mt-0.5 truncate">
+                        Invited by <span class="text-slate-200 font-semibold">${escapeHtml(inv.inviterName || 'Squad Creator')}</span>
+                        ${inv.inviterEmail ? `<span class="text-slate-500">(${escapeHtml(inv.inviterEmail)})</span>` : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <button onclick="triggerHaptic('light'); declineSquadInvite('${inv.id}')" class="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs font-semibold px-3 py-1.5 rounded-xl transition">
+                      Decline
+                    </button>
+                    <button onclick="triggerHaptic('medium'); acceptSquadInvite('${inv.id}')" class="m3-btn-primary text-xs font-bold px-3.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+                      <i class="fa-solid fa-check"></i>
+                      <span>Join Squad</span>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
 
       if (squads.length === 0) {
         container.innerHTML = `
+          ${invitesHtml}
           <div class="m3-card rounded-3xl p-8 border border-slate-800 text-center space-y-4">
             <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mx-auto border border-emerald-500/20">
               <i class="fa-solid fa-people-group"></i>
             </div>
             <div>
-              <h3 class="text-base font-bold text-slate-100">No Squads Active Yet</h3>
-              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Create your first squad, invite workout partners, and experience real-time quiet accountability notifications.</p>
+              <h3 class="text-base font-bold text-slate-100">No Active Squads Yet</h3>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Create your first squad or enter a joining code from a teammate to experience real-time quiet accountability notifications.</p>
             </div>
-            <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="m3-btn-primary font-bold px-5 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20">
-              <i class="fa-solid fa-plus"></i>
-              <span>Create Your First Squad</span>
-            </button>
+            <div class="flex items-center justify-center gap-2.5 flex-wrap">
+              <button onclick="triggerHaptic('medium'); openJoinSquadModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 transition active:scale-95">
+                <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
+                <span>Join with Code</span>
+              </button>
+              <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="m3-btn-primary font-bold px-5 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition active:scale-95">
+                <i class="fa-solid fa-plus"></i>
+                <span>Create Your First Squad</span>
+              </button>
+            </div>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = squads.map(sq => {
+      const squadsHtml = squads.map(sq => {
         const isUserCreator = (sq.creatorId === user.id) || sq.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
         const userMember = sq.members.find(m => m.id === user.id || m.email === user.email);
         const isUserBackupCreator = !isUserCreator && (userMember?.isBackupCreator || (sq.backupCreatorId === user.id));
@@ -5922,6 +6438,8 @@
           </div>
         `;
       }).join('');
+
+      container.innerHTML = (invitesHtml ? invitesHtml : '') + squadsHtml;
     }
 
     function getInitials(name) {
@@ -6039,6 +6557,7 @@
 
       squads.unshift(newSquad);
       saveSquads(squads);
+      saveSquadToGlobalRegistry(newSquad);
       closeCreateSquadModal();
       renderSquadsTab();
       updateGlobalStatsUI();
@@ -6351,6 +6870,21 @@
 
       // Functional dispatch: launch client email client or SMS
       if (email) {
+        recordSquadInvite({
+          id: 'invite_' + Date.now(),
+          squadId: squad.id,
+          squadName: squad.name,
+          squadMotto: squad.motto,
+          squadIcon: squad.icon,
+          squadAccent: squad.accent,
+          inviteCode: squad.inviteCode,
+          inviterName: squad.creatorName || getAppUser().rawName,
+          inviterEmail: getAppUser().email,
+          targetEmail: email.toLowerCase(),
+          targetName: name,
+          invitedAt: new Date().toISOString(),
+          status: 'pending'
+        });
         sendSquadInviteEmail(squad, newMember);
       } else if (phone) {
         sendSquadInviteSMS(squad, newMember);
@@ -6358,6 +6892,7 @@
 
       squad.members.push(newMember);
       saveSquads(squads);
+      saveSquadToGlobalRegistry(squad);
       closeAddMemberModal();
       renderSquadsTab();
       updateGlobalStatsUI();
