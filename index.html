@@ -202,6 +202,15 @@
     }
 
     /* UNIVERSAL THEME PALETTE ACCENT MAPPINGS ACROSS ALL UI ASSETS */
+    .m3-counter-text {
+      color: var(--m3-primary-light, var(--m3-primary)) !important;
+      background: linear-gradient(135deg, var(--m3-primary-light, var(--m3-primary)) 0%, var(--m3-primary) 50%, var(--m3-onPrimaryContainer, var(--m3-primary)) 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      filter: drop-shadow(0 0 16px color-mix(in srgb, var(--m3-primary) 35%, transparent));
+    }
+
     .m3-accent-text,
     .theme-accent-text,
     .text-emerald-400,
@@ -1109,7 +1118,7 @@
         </div>
 
         <div class="flex items-baseline justify-between">
-          <div id="gdrive-modal-filesize" class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono tracking-tight">
+          <div id="gdrive-modal-filesize" class="text-2xl font-black font-mono tracking-tight m3-counter-text">
             -- KB
           </div>
           <span id="gdrive-modal-exact-bytes" class="text-[11px] font-mono text-slate-400 font-semibold">(-- bytes)</span>
@@ -1168,7 +1177,7 @@
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
     <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (REQ 5) -->
-    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-950 shadow-xl relative overflow-hidden transition-all">
+    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 border border-[var(--m3-primary)]/30 bg-gradient-to-r from-[var(--m3-primary)]/10 via-slate-900 to-slate-950 shadow-xl relative overflow-hidden transition-all">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
@@ -1697,7 +1706,7 @@
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div class="flex items-center gap-2">
-            <i class="fa-solid fa-earth-americas text-emerald-400 text-sm"></i>
+            <i class="fa-solid fa-earth-americas m3-accent-text text-sm"></i>
             <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Global Daily Workouts</span>
           </div>
           <span class="text-[10px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full flex items-center gap-1.5" title="Resets strictly to 0 after 23:59 Eastern Time">
@@ -1707,7 +1716,7 @@
         </div>
 
         <div class="py-4 text-center">
-          <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight font-mono">
+          <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black tracking-tight font-mono m3-counter-text">
             0
           </div>
           <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Workouts Completed Today</p>
@@ -1717,8 +1726,8 @@
         <div class="pt-3 border-t border-slate-800/80 text-center">
           <p id="global-active-sentence" class="text-xs text-slate-300 font-medium flex items-center justify-center gap-2">
             <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--m3-primary)] opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--m3-primary)]"></span>
             </span>
             <span id="global-active-sentence-text">0 athletes are actively working out right now across all squads.</span>
           </p>
@@ -1730,7 +1739,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
           <div>
             <div class="flex items-center gap-2">
-              <i class="fa-solid fa-map-location-dot text-emerald-400 text-sm"></i>
+              <i class="fa-solid fa-map-location-dot m3-accent-text text-sm"></i>
               <h3 class="text-sm font-bold text-slate-100 tracking-tight">Active Workout Map</h3>
             </div>
             <p class="text-[11px] text-slate-400 mt-0.5">Real-time zip codes where athletes are actively lifting or completed workouts today</p>
