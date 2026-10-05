@@ -242,8 +242,14 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
-            <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.5" min="50" max="500" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-medium text-slate-400">Current Weight (lbs)</label>
+              <button type="button" onclick="triggerHaptic('light'); openWeightNumpadModal('user-weight-input', 'Current Weight (lbs)', savePhysicalProfile)" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/30 transition" title="Open tactile Number Pad">
+                <i class="fa-solid fa-calculator text-[10px]"></i>
+                <span>Numpad</span>
+              </button>
+            </div>
+            <input type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" id="user-weight-input" placeholder="e.g. 175" onclick="triggerHaptic('light'); openWeightNumpadModal('user-weight-input', 'Current Weight (lbs)', savePhysicalProfile)" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition cursor-pointer" title="Click to open Number Pad">
           </div>
         </div>
         <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
@@ -295,6 +301,31 @@
             <span class="text-xs text-slate-300">Keep HR Module Collapsed</span>
             <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
           </div>
+        </div>
+
+        <!-- WORKOUT & SQUADS DATA BACKUP & RESTORE SECTION -->
+        <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-database text-emerald-400"></i>
+              Data Backup & Restore
+            </h3>
+            <span id="settings-backup-status-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700">Offline Device</span>
+          </div>
+
+          <p id="settings-backup-desc" class="text-[11px] text-slate-400">Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.</p>
+
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Export manual backup file">
+              <i class="fa-solid fa-download text-emerald-400"></i>
+              <span>Back Up to Device</span>
+            </button>
+            <button type="button" onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Restore workouts and squads from a file">
+              <i class="fa-solid fa-upload text-blue-400"></i>
+              <span>Restore from File</span>
+            </button>
+          </div>
+          <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
         </div>
       </div>
 
@@ -394,7 +425,7 @@
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Squad Name *</label>
-          <input type="text" id="new-squad-name" placeholder="e.g. Dawn Patrol, Iron Collective" maxlength="30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+          <input type="text" id="new-squad-name" placeholder="e.g. Dawn Patrol, Morning Crew" maxlength="30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
         </div>
 
         <div>
@@ -659,20 +690,7 @@
         </div>
       </div>
 
-      <!-- QUICK SAMPLE ADDS -->
-      <div class="pt-1">
-        <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Or Quick Add Workout Buddy:</label>
-        <div class="grid grid-cols-2 gap-2">
-          <button type="button" onclick="quickAddSampleMember('Liam Chen', 'liam@iron.dev')" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-left p-2.5 rounded-xl transition group">
-            <div class="text-xs font-bold text-slate-200 group-hover:text-emerald-400">+ Liam Chen</div>
-            <div class="text-[10px] text-slate-500">Powerlifter</div>
-          </button>
-          <button type="button" onclick="quickAddSampleMember('Maya Patel', 'maya@power.fit')" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-left p-2.5 rounded-xl transition group">
-            <div class="text-xs font-bold text-slate-200 group-hover:text-emerald-400">+ Maya Patel</div>
-            <div class="text-[10px] text-slate-500">Calisthenics</div>
-          </button>
-        </div>
-      </div>
+
 
       <div class="flex items-center gap-2 pt-2">
         <button type="button" onclick="closeAddMemberModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
@@ -685,36 +703,60 @@
     </div>
   </div>
 
-  <!-- ================= SET USER ZIP CODE MODAL ================= -->
-  <div id="user-zip-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-sm shadow-2xl space-y-5 relative">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-location-dot text-emerald-400"></i>
-            Workout Zip Code
-          </h2>
-          <p class="text-xs text-slate-400">Ground your workouts on the global heat map</p>
+  <!-- ================= TACTILE WEIGHT NUMBER PAD MODAL ================= -->
+  <div id="weight-numpad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border border-slate-800 p-5 w-full max-w-xs shadow-2xl space-y-4 relative select-none">
+      
+      <!-- NUMPAD HEADER -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-calculator text-emerald-400 text-sm"></i>
+          <h2 id="numpad-modal-title" class="text-xs font-bold text-slate-100 uppercase tracking-wider">Input Weight</h2>
         </div>
-        <button onclick="closeUserZipModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
+        <button onclick="closeWeightNumpadModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-sm"></i>
         </button>
       </div>
 
-      <div class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">5-Digit US Zip Code</label>
-          <input type="text" id="input-user-zip" placeholder="e.g. 10001, 90210, 78701" maxlength="5" pattern="[0-9]{5}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 font-mono font-bold text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition text-center tracking-widest text-lg">
+      <!-- READOUT DISPLAY -->
+      <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800/90 text-right">
+        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Target Weight</span>
+        <div class="flex items-baseline justify-end gap-1.5">
+          <span id="numpad-display-val" class="font-mono text-3xl font-black text-emerald-400 tracking-tight">0</span>
+          <span id="numpad-display-unit" class="text-xs font-bold text-slate-400 font-mono">lbs</span>
         </div>
-        <p class="text-[11px] text-slate-400">Whenever you log workouts, your session is plotted to this regional heat map node.</p>
       </div>
 
-      <div class="flex items-center gap-2 pt-2">
-        <button type="button" onclick="closeUserZipModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
-          Cancel
+      <!-- NUMBER PAD GRID -->
+      <div class="grid grid-cols-4 gap-2">
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('1')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">1</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('2')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">2</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('3')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">3</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadQuickAdjust(5)" class="h-12 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30 active:scale-95 transition">+5</button>
+
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('4')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">4</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('5')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">5</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('6')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">6</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadQuickAdjust(2.5)" class="h-12 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30 active:scale-95 transition">+2.5</button>
+
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('7')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">7</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('8')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">8</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('9')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">9</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadQuickAdjust(-2.5)" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono font-bold text-xs border border-slate-800 active:scale-95 transition">-2.5</button>
+
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('.')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">.</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadInput('0')" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-100 font-mono font-bold text-lg border border-slate-800 active:scale-95 transition">0</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadBackspace()" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-400 font-bold text-base border border-slate-800 active:scale-95 transition" title="Backspace">⌫</button>
+        <button type="button" onclick="triggerHaptic('light'); numpadQuickAdjust(-5)" class="h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono font-bold text-xs border border-slate-800 active:scale-95 transition">-5</button>
+      </div>
+
+      <!-- FOOTER ACTIONS -->
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="triggerHaptic('light'); numpadClear()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition">
+          Clear
         </button>
-        <button type="button" onclick="triggerHaptic('medium'); saveUserZipSubmit()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
-          Save Zip Code
+        <button type="button" onclick="triggerHaptic('medium'); numpadConfirm()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-emerald-500/20">
+          Set Weight
         </button>
       </div>
     </div>
@@ -722,6 +764,39 @@
 
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
+
+    <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (REQ 5) -->
+    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-slate-900 to-slate-950 shadow-xl relative overflow-hidden transition-all">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 id="backup-banner-title" class="text-xs font-bold text-slate-100">Protect Your Workout & Squad Data</h3>
+              <span id="backup-banner-badge" class="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Sign-in Recommended</span>
+            </div>
+            <p id="backup-banner-desc" class="text-[11px] text-slate-400 mt-0.5">Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <button id="backup-banner-google-btn" onclick="triggerHaptic('medium'); handleGoogleLogin()" class="m3-btn-primary text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+            <i class="fa-brands fa-google text-xs"></i>
+            <span>Sign In for Auto-Backup</span>
+          </button>
+          <button onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Export manual backup file to device">
+            <i class="fa-solid fa-download text-xs text-emerald-400"></i>
+            <span>Device Backup</span>
+          </button>
+          <button onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Restore workouts & squads from a backup file">
+            <i class="fa-solid fa-upload text-xs text-blue-400"></i>
+            <span>Restore File</span>
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
     <div id="tab-workout-view" class="space-y-6">
@@ -866,9 +941,15 @@
         <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) -->
         <div id="standard-metrics-panel" class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Weight (lbs / kg)</label>
+              <button type="button" onclick="triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight (lbs / kg)')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/30 transition" title="Open tactile Number Pad">
+                <i class="fa-solid fa-calculator text-[10px]"></i>
+                <span>Numpad</span>
+              </button>
+            </div>
             <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-24 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+              <input type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" id="input-weight" value="0" onclick="triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight (lbs / kg)')" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer" title="Click to open Number Pad">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
               <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
@@ -1253,13 +1334,16 @@
             <p class="text-[11px] text-slate-400 mt-0.5">Live regional zip code density of active and completed workouts</p>
           </div>
 
-          <!-- USER ZIP CODE SELECTOR -->
+          <!-- IP-BASED LOCATION BADGE (AUTOMATIC - NO USER INPUT) -->
           <div class="flex items-center gap-2">
-            <button onclick="triggerHaptic('light'); openUserZipModal()" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 group" title="Click to change your workout zip code">
-              <span class="text-slate-500">Your Zip:</span>
-              <span id="display-user-zip" class="font-mono font-bold text-emerald-400">10001</span>
-              <i class="fa-solid fa-pen-to-square text-[10px] text-slate-500 group-hover:text-emerald-400"></i>
-            </button>
+            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Zip code automatically established from your network IP address">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span class="text-slate-500">IP Location:</span>
+              <span id="display-user-zip" class="font-mono font-bold text-emerald-400">Detecting...</span>
+            </div>
           </div>
         </div>
 
@@ -1450,9 +1534,11 @@
       restoreThemePreferences();
       restoreFontPreferences();
       initSquads();
+      detectUserZipFromIP();
       checkAndResetDailyETCounter();
       renderHeatMap();
       updateGlobalStatsUI();
+      updateCloudBackupUI();
     });
 
     window.addEventListener('online', () => {
@@ -1460,6 +1546,124 @@
         syncToGoogleDrive(true);
       }
     });
+
+    // ================= TACTILE WEIGHT NUMBER PAD CONTROLLER (REQ 1) =================
+    let numpadTargetInputId = null;
+    let numpadCurrentVal = "0";
+    let numpadCallback = null;
+
+    function openWeightNumpadModal(targetInputId, title, callback) {
+      numpadTargetInputId = targetInputId || null;
+      numpadCallback = typeof callback === 'function' ? callback : null;
+
+      let initialVal = "0";
+      if (targetInputId) {
+        const el = document.getElementById(targetInputId);
+        if (el && el.value !== undefined && el.value !== '') {
+          initialVal = String(parseFloat(el.value) || 0);
+        }
+      } else if (title && title.toLowerCase().includes('body')) {
+        initialVal = String(userWeight || 0);
+      }
+
+      numpadCurrentVal = initialVal;
+      const titleEl = document.getElementById('numpad-modal-title');
+      if (titleEl) titleEl.innerText = title || 'Input Weight';
+
+      const unitEl = document.getElementById('numpad-display-unit');
+      if (unitEl) {
+        unitEl.innerText = (title && title.toLowerCase().includes('kg')) ? 'kg' : 'lbs';
+      }
+
+      updateNumpadDisplay();
+      const modal = document.getElementById('weight-numpad-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeWeightNumpadModal() {
+      const modal = document.getElementById('weight-numpad-modal');
+      if (modal) modal.classList.add('hidden');
+      numpadTargetInputId = null;
+      numpadCallback = null;
+    }
+
+    function updateNumpadDisplay() {
+      const displayEl = document.getElementById('numpad-display-val');
+      if (displayEl) {
+        displayEl.innerText = numpadCurrentVal || '0';
+      }
+    }
+
+    function numpadInput(char) {
+      if (char === '.') {
+        if (numpadCurrentVal.includes('.')) return;
+        if (!numpadCurrentVal || numpadCurrentVal === '0') {
+          numpadCurrentVal = '0.';
+        } else {
+          numpadCurrentVal += '.';
+        }
+      } else {
+        if (numpadCurrentVal === '0') {
+          numpadCurrentVal = String(char);
+        } else {
+          if (numpadCurrentVal.length < 6) {
+            numpadCurrentVal += String(char);
+          }
+        }
+      }
+      updateNumpadDisplay();
+    }
+
+    function numpadBackspace() {
+      if (numpadCurrentVal.length <= 1) {
+        numpadCurrentVal = '0';
+      } else {
+        numpadCurrentVal = numpadCurrentVal.slice(0, -1);
+        if (numpadCurrentVal === '' || numpadCurrentVal === '-') {
+          numpadCurrentVal = '0';
+        }
+      }
+      updateNumpadDisplay();
+    }
+
+    function numpadClear() {
+      numpadCurrentVal = '0';
+      updateNumpadDisplay();
+    }
+
+    function numpadQuickAdjust(delta) {
+      let val = parseFloat(numpadCurrentVal) || 0;
+      val = Math.max(0, Math.round((val + delta) * 10) / 10);
+      numpadCurrentVal = String(val);
+      updateNumpadDisplay();
+    }
+
+    function numpadConfirm() {
+      const finalNum = parseFloat(numpadCurrentVal) || 0;
+
+      if (numpadTargetInputId) {
+        const input = document.getElementById(numpadTargetInputId);
+        if (input) {
+          input.value = finalNum;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      if (typeof numpadCallback === 'function') {
+        numpadCallback(finalNum);
+      }
+
+      closeWeightNumpadModal();
+      showToast(`Weight set to ${finalNum}!`, "success");
+    }
+
+    function triggerManualFileRestore() {
+      const fileInput = document.getElementById('manual-backup-file-input');
+      if (fileInput) {
+        fileInput.click();
+      }
+    }
 
     function loadPhysicalProfile() {
       document.getElementById('user-height-input').value = userHeight;
@@ -1487,21 +1691,23 @@
     }
 
     function logBodyWeightEntry() {
-      const inputVal = prompt("Enter body weight (lbs):", userWeight);
-      if (inputVal === null) return;
+      openWeightNumpadModal('user-weight-input', 'Log Body Weight (lbs)', (finalVal) => {
+        if (isNaN(finalVal) || finalVal <= 0) return;
 
-      const w = parseFloat(inputVal);
-      if (isNaN(w) || w <= 0) return;
+        userWeight = finalVal;
+        const input = document.getElementById('user-weight-input');
+        if (input) input.value = userWeight;
+        localStorage.setItem('showUp_user_weight', userWeight);
 
-      userWeight = w;
-      document.getElementById('user-weight-input').value = userWeight;
-      localStorage.setItem('showUp_user_weight', userWeight);
+        const todayISO = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
+        weightHistory.unshift({ date: todayISO, weight: userWeight });
+        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
 
-      const todayISO = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
-      weightHistory.unshift({ date: todayISO, weight: userWeight });
-      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
-
-      renderWeightHistory();
+        renderWeightHistory();
+        if (googleAccessToken) {
+          syncToGoogleDrive(true);
+        }
+      });
     }
 
     function renderWeightHistory() {
@@ -2448,7 +2654,58 @@
       document.getElementById('dropdown-user-email').innerText = 'user@email.com';
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
+      updateCloudBackupUI();
       showToast("Signed out of Google Account", "info");
+    }
+
+    function handleGoogleLogin() {
+      handleGoogleSignIn();
+    }
+
+    function updateCloudBackupUI() {
+      const bannerBadge = document.getElementById('backup-banner-badge');
+      const bannerTitle = document.getElementById('backup-banner-title');
+      const bannerDesc = document.getElementById('backup-banner-desc');
+      const bannerGoogleBtn = document.getElementById('backup-banner-google-btn');
+      const settingsBadge = document.getElementById('settings-backup-status-badge');
+      const settingsDesc = document.getElementById('settings-backup-desc');
+
+      const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      const email = profile?.email || '';
+
+      if (googleAccessToken) {
+        if (bannerBadge) {
+          bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+          bannerBadge.innerText = "Auto-Sync Enabled";
+        }
+        if (bannerTitle) bannerTitle.innerText = "Google Drive Auto-Backup Active";
+        if (bannerDesc) bannerDesc.innerText = `Connected as ${email || 'Google User'}. Workouts, weight tracking, and squads are safely synced to Google Drive.`;
+        if (bannerGoogleBtn) {
+          bannerGoogleBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-xs"></i><span>Sync Now</span>`;
+          bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); syncToGoogleDrive(false); };
+        }
+        if (settingsBadge) {
+          settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+          settingsBadge.innerText = "Drive Synced";
+        }
+        if (settingsDesc) settingsDesc.innerText = `Workouts & squads auto-syncing to Google Drive (${email || 'Connected'}). You can also export or restore local files below.`;
+      } else {
+        if (bannerBadge) {
+          bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20";
+          bannerBadge.innerText = "Sign-in Recommended";
+        }
+        if (bannerTitle) bannerTitle.innerText = "Protect Your Workout & Squad Data";
+        if (bannerDesc) bannerDesc.innerText = "Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.";
+        if (bannerGoogleBtn) {
+          bannerGoogleBtn.innerHTML = `<i class="fa-brands fa-google text-xs"></i><span>Sign In for Auto-Backup</span>`;
+          bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); handleGoogleSignIn(); };
+        }
+        if (settingsBadge) {
+          settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
+          settingsBadge.innerText = "Offline Device";
+        }
+        if (settingsDesc) settingsDesc.innerText = "Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.";
+      }
     }
 
     function switchTab(tabName) {
@@ -2650,6 +2907,7 @@
               .finally(async () => {
                 document.getElementById('btn-google-login').classList.add('hidden');
                 document.getElementById('google-user-profile').classList.remove('hidden');
+                updateCloudBackupUI();
 
                 // If local storage has 0 workouts, check if Drive has a backup to restore
                 if (completedWorkoutsHistory.length === 0) {
@@ -2698,6 +2956,7 @@
         },
         workouts: completedWorkoutsHistory,
         weightHistory: weightHistory,
+        squads: getSquads(),
         activeSession: currentSessionSets
       };
 
@@ -2758,7 +3017,7 @@
               body: JSON.stringify({
                 name: BACKUP_FILENAME,
                 mimeType: 'application/json',
-                description: 'showUp Workout & Physical Progress Data Backup'
+                description: 'showUp Workout & Squads Progress Data Backup'
               })
             }
           );
@@ -2793,7 +3052,7 @@
         localStorage.setItem('showUp_last_drive_sync', nowIso);
 
         if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
-        if (!isSilent) showToast("Successfully backed up to Google Drive!", "success");
+        if (!isSilent) showToast("Successfully backed up workouts and squads to Google Drive!", "success");
 
         setTimeout(() => {
           if (syncIcon) syncIcon.className = "fa-solid fa-rotate text-xs text-emerald-400";
@@ -2848,6 +3107,7 @@
 
         const backupData = await downloadRes.json();
         let restoredCount = 0;
+        let restoredSquadsCount = 0;
 
         if (backupData.workouts && Array.isArray(backupData.workouts)) {
           completedWorkoutsHistory = backupData.workouts;
@@ -2872,13 +3132,36 @@
           loadPhysicalProfile();
         }
 
+        if (backupData.squads && Array.isArray(backupData.squads)) {
+          const cleanSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+          const user = getAppUser();
+          cleanSquads.forEach(sq => {
+            if (!sq.members) sq.members = [];
+            const match = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+            if (match) {
+              match.id = user.id;
+              match.name = user.name;
+              match.rawName = user.rawName;
+              match.email = user.email;
+              if (user.picture) match.avatar = user.picture;
+            }
+          });
+          saveSquads(cleanSquads);
+          restoredSquadsCount = cleanSquads.length;
+        }
+
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        renderSquadsTab();
+        updateSquadBeacon();
+        updateGlobalStatsUI();
+        renderHeatMap();
 
         localStorage.setItem('showUp_last_drive_sync', new Date().toISOString());
 
-        showToast(`Restored ${restoredCount} workout${restoredCount === 1 ? '' : 's'} from Google Drive!`, "success");
+        const squadMsg = restoredSquadsCount > 0 ? ` and ${restoredSquadsCount} squad${restoredSquadsCount === 1 ? '' : 's'}` : '';
+        showToast(`Restored ${restoredCount} workout${restoredCount === 1 ? '' : 's'}${squadMsg} from Google Drive!`, "success");
 
       } catch (err) {
         console.error("Google Drive restore error:", err);
@@ -2897,6 +3180,7 @@
         },
         workouts: completedWorkoutsHistory,
         weightHistory: weightHistory,
+        squads: getSquads(),
         activeSession: currentSessionSets
       };
 
@@ -2907,7 +3191,7 @@
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
-      showToast("Offline JSON backup exported successfully!", "success");
+      showToast("Offline JSON backup with squads exported successfully!", "success");
     }
 
     function importJSONBackup(event) {
@@ -2919,6 +3203,7 @@
         try {
           const data = JSON.parse(e.target.result);
           let count = 0;
+          let squadsCount = 0;
 
           if (Array.isArray(data)) {
             completedWorkoutsHistory = data;
@@ -2943,13 +3228,36 @@
               }
               loadPhysicalProfile();
             }
+            if (Array.isArray(data.squads)) {
+              const cleanSquads = data.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+              const user = getAppUser();
+              cleanSquads.forEach(sq => {
+                if (!sq.members) sq.members = [];
+                const match = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+                if (match) {
+                  match.id = user.id;
+                  match.name = user.name;
+                  match.rawName = user.rawName;
+                  match.email = user.email;
+                  if (user.picture) match.avatar = user.picture;
+                }
+              });
+              saveSquads(cleanSquads);
+              squadsCount = cleanSquads.length;
+            }
           }
 
           localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
           renderCalendar();
           renderMonthlyHistory();
           renderWeightHistory();
-          showToast(`Imported ${count} workouts from JSON backup!`, "success");
+          renderSquadsTab();
+          updateSquadBeacon();
+          updateGlobalStatsUI();
+          renderHeatMap();
+
+          const squadMsg = squadsCount > 0 ? ` and ${squadsCount} squad${squadsCount === 1 ? '' : 's'}` : '';
+          showToast(`Imported ${count} workout${count === 1 ? '' : 's'}${squadMsg} from JSON backup!`, "success");
 
           if (googleAccessToken) {
             syncToGoogleDrive(true);
@@ -2991,9 +3299,85 @@
       return localStorage.getItem('showUp_user_zip') || '10001';
     }
 
-    function setUserZip(zip) {
+    function setUserZip(zip, city) {
+      if (!zip) return;
       localStorage.setItem('showUp_user_zip', zip);
+      localStorage.setItem('showUp_user_ip_zip', zip);
+      if (city) localStorage.setItem('showUp_user_ip_city', city);
       selectedHeatMapZip = zip;
+
+      // Ensure user's current IP zip code exists in heat map data
+      const data = getHeatMapZipData();
+      let userNode = data.find(item => item.zip === zip);
+      if (!userNode) {
+        userNode = {
+          zip: zip,
+          city: city || 'Your Area',
+          x: 450,
+          y: 140,
+          completedToday: 1,
+          activeCount: 0
+        };
+        data.push(userNode);
+        saveHeatMapZipData(data);
+      } else if (city && (!userNode.city || userNode.city === 'Your Gym Area')) {
+        userNode.city = city;
+        saveHeatMapZipData(data);
+      }
+    }
+
+    async function detectUserZipFromIP() {
+      const displayUserZip = document.getElementById('display-user-zip');
+      const cachedZip = localStorage.getItem('showUp_user_ip_zip');
+      const cachedCity = localStorage.getItem('showUp_user_ip_city');
+
+      if (cachedZip && displayUserZip) {
+        displayUserZip.innerText = cachedCity ? `${cachedZip} (${cachedCity})` : cachedZip;
+      }
+
+      try {
+        // Fast, reliable public IP geolocation (returns postal code based on network IP)
+        const res = await fetch('https://ipwho.is/').catch(() => null);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.postal) {
+            const cleanZip = String(data.postal).trim();
+            const cityStr = data.city ? `${data.city}, ${data.region_code || ''}` : '';
+            setUserZip(cleanZip, cityStr);
+            if (displayUserZip) {
+              displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
+            }
+            renderHeatMap();
+            return;
+          }
+        }
+
+        // Secondary fallback IP service
+        const res2 = await fetch('https://freeipapi.com/api/json').catch(() => null);
+        if (res2 && res2.ok) {
+          const data2 = await res2.json();
+          if (data2 && data2.zipCode) {
+            const cleanZip = String(data2.zipCode).trim();
+            const cityStr = data2.cityName ? `${data2.cityName}, ${data2.regionName || ''}` : '';
+            setUserZip(cleanZip, cityStr);
+            if (displayUserZip) {
+              displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
+            }
+            renderHeatMap();
+            return;
+          }
+        }
+
+        if (!cachedZip) {
+          setUserZip('10001', 'New York, NY (Default IP Node)');
+          if (displayUserZip) displayUserZip.innerText = '10001 (Auto IP)';
+        }
+      } catch (e) {
+        console.warn("IP Geolocation detection error:", e);
+        if (displayUserZip && !cachedZip) {
+          displayUserZip.innerText = getUserZip();
+        }
+      }
     }
 
     function getHeatMapZipData() {
@@ -3253,30 +3637,13 @@
     }
 
     function openUserZipModal() {
-      const input = document.getElementById('input-user-zip');
-      if (input) input.value = getUserZip();
-      document.getElementById('user-zip-modal').classList.remove('hidden');
+      // Zip code is established via IP address automatically
+      detectUserZipFromIP();
+      showToast("Zip code is established automatically based on your network IP address.", "info");
     }
 
-    function closeUserZipModal() {
-      document.getElementById('user-zip-modal').classList.add('hidden');
-    }
-
-    function saveUserZipSubmit() {
-      const input = document.getElementById('input-user-zip');
-      let val = input.value.trim().replace(/\D/g, '');
-      if (val.length !== 5) {
-        showToast("Please enter a valid 5-digit US zip code", "warning");
-        input.focus();
-        return;
-      }
-
-      setUserZip(val);
-      getHeatMapZipData(); // Ensures it exists in registry
-      closeUserZipModal();
-      renderHeatMap();
-      showToast(`Workout zip code updated to ${val}!`, "success");
-    }
+    function closeUserZipModal() {}
+    function saveUserZipSubmit() {}
 
     // ================= SQUADS CORE STATE & ACTIONS =================
     function getAppUser() {
@@ -3305,101 +3672,144 @@
       let squads = JSON.parse(localStorage.getItem('showUp_squads') || 'null');
       const user = getAppUser();
 
-      if (!squads || !Array.isArray(squads) || squads.length === 0) {
-        // Starter squad with delivered email invites and active teammate session
-        squads = [
-          {
-            id: 'squad_iron_collective',
-            name: 'Iron Collective',
-            motto: 'Show up, stay consistent, compound gains daily.',
-            icon: 'dumbbell',
-            accent: 'emerald',
-            inviteCode: 'IRON-9821',
-            isCollapsed: false,
-            createdAt: new Date().toISOString(),
-            creatorId: user.id,
-            creatorName: user.rawName,
-            notificationPreferences: {
-              inAppPill: true,
-              beaconPulse: true,
-              hapticPulse: true,
-              soundChime: true,
-              browserNotify: false
-            },
-            members: [
-              {
-                id: user.id,
-                name: user.name,
-                rawName: user.rawName,
-                email: user.email,
-                avatar: user.picture,
-                isCreator: true,
-                isWorkingOut: false,
-                currentWorkout: null,
-                lastActive: 'Just now'
-              },
-              {
-                id: 'member_marcus',
-                name: 'Marcus Vance',
-                rawName: 'Marcus Vance',
-                email: 'marcus@iron.dev',
-                invitedByEmail: true,
-                inviteEmail: 'marcus@iron.dev',
-                inviteStatus: 'delivered',
-                inviteDeliveredAt: 'Today, 9:15 AM',
-                avatar: null,
-                isCreator: false,
-                isWorkingOut: true,
-                currentWorkout: 'Heavy Deadlift & Lats',
-                workoutStartedAt: new Date(Date.now() - 8 * 60000).toISOString(),
-                lastActive: 'Active now'
-              },
-              {
-                id: 'member_elena',
-                name: 'Elena Rostova',
-                rawName: 'Elena Rostova',
-                email: 'elena@power.fit',
-                invitedByEmail: true,
-                inviteEmail: 'elena@power.fit',
-                inviteStatus: 'delivered',
-                inviteDeliveredAt: 'Yesterday, 4:20 PM',
-                avatar: null,
-                isCreator: false,
-                isWorkingOut: false,
-                currentWorkout: null,
-                lastActive: '2h ago'
-              },
-              {
-                id: 'member_jordan',
-                name: 'Jordan Lee',
-                rawName: 'Jordan Lee',
-                email: 'jordan@strength.io',
-                avatar: null,
-                isCreator: false,
-                isWorkingOut: false,
-                currentWorkout: null,
-                lastActive: 'Yesterday'
-              }
-            ]
-          }
-        ];
-        localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      // Avoid display of sample squads (Requirement 3: strictly avoid sample squads)
+      if (Array.isArray(squads)) {
+        squads = squads.filter(sq => sq && sq.id !== 'squad_iron_collective' && sq.name !== 'Iron Collective');
       } else {
-        // Ensure current user is mapped correctly in squads
-        squads.forEach(sq => {
-          const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
-          if (userMember) {
-            userMember.id = user.id;
-            userMember.name = user.name;
-            userMember.rawName = user.rawName;
-            userMember.email = user.email;
-            if (user.picture) userMember.avatar = user.picture;
-          }
-        });
-        localStorage.setItem('showUp_squads', JSON.stringify(squads));
+        squads = [];
       }
 
+      // Ensure current user is mapped correctly in squads and backup creator requirements
+      squads.forEach(sq => {
+        if (!sq.members) sq.members = [];
+        const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+        if (userMember) {
+          userMember.id = user.id;
+          userMember.name = user.name;
+          userMember.rawName = user.rawName;
+          userMember.email = user.email;
+          if (user.picture) userMember.avatar = user.picture;
+        }
+
+        // Maintain backup creator role flags
+        if (sq.backupCreatorId) {
+          sq.members.forEach(m => {
+            m.isBackupCreator = (m.id === sq.backupCreatorId);
+          });
+        }
+      });
+
+      localStorage.setItem('showUp_squads', JSON.stringify(squads));
       updateSquadBeacon();
+    }
+
+    function assignBackupCreator(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const isUserCreator = (squad.creatorId === user.id) || squad.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
+      if (!isUserCreator) {
+        showToast("Only the squad creator can assign the backup creator role.", "error");
+        return;
+      }
+
+      const targetMember = squad.members.find(m => m.id === memberId);
+      if (!targetMember) return;
+
+      squad.backupCreatorId = targetMember.id;
+      squad.backupCreatorName = targetMember.rawName || targetMember.name;
+      squad.backupCreatorEmail = targetMember.email || '';
+
+      squad.members.forEach(m => {
+        m.isBackupCreator = (m.id === targetMember.id);
+      });
+
+      saveSquads(squads);
+      renderSquadsTab();
+      if (googleAccessToken) {
+        syncToGoogleDrive(true);
+      }
+      showToast(`Assigned ${targetMember.rawName || targetMember.name} as Backup Creator for "${squad.name}".`, "success");
+    }
+
+    function promptAssignFirstBackupCreator(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const candidates = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+      if (candidates.length === 0) {
+        openAddMemberModal(squadId);
+        showToast("Invite at least one teammate to assign as Backup Creator.", "info");
+        return;
+      }
+
+      if (candidates.length === 1) {
+        assignBackupCreator(squadId, candidates[0].id);
+        return;
+      }
+
+      const names = candidates.map((c, i) => `${i + 1}. ${c.rawName || c.name}`).join('\n');
+      const choice = prompt(`Designate a Backup Creator to protect "${squad.name}":\n\n${names}\n\nEnter number (1-${candidates.length}):`, "1");
+      if (!choice) return;
+      const idx = parseInt(choice, 10) - 1;
+      if (idx >= 0 && idx < candidates.length) {
+        assignBackupCreator(squadId, candidates[idx].id);
+      }
+    }
+
+    function pickUpMantlePrompt(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const userMember = squad.members.find(m => m.id === user.id || m.email === user.email);
+      const isBackup = userMember?.isBackupCreator || (squad.backupCreatorId === user.id);
+
+      if (!isBackup) {
+        showToast("Only the designated Backup Creator can pick up the mantle.", "warning");
+        return;
+      }
+
+      const confirmMsg = `👑 PICK UP THE MANTLE\n\nAre you sure you want to assume primary Creator leadership of "${squad.name}"?\n\nThis will promote you to primary Squad Creator with full squad management and backup controls in case the original creator lost their data.`;
+      if (!confirm(confirmMsg)) return;
+
+      // Demote previous primary creator
+      squad.members.forEach(m => {
+        if (m.isCreator) m.isCreator = false;
+      });
+
+      // Promote backup creator to primary creator
+      if (userMember) {
+        userMember.isCreator = true;
+        userMember.isBackupCreator = false;
+      }
+      squad.creatorId = user.id;
+      squad.creatorName = user.rawName || user.name;
+      squad.backupCreatorId = null;
+      squad.backupCreatorName = null;
+
+      saveSquads(squads);
+      renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
+      if (googleAccessToken) {
+        syncToGoogleDrive(true);
+      }
+
+      showToast(`👑 You have picked up the mantle! You are now the primary Creator of "${squad.name}".`, "success");
+
+      // Check if other members exist and prompt to appoint a new backup creator
+      const remainingOthers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+      if (remainingOthers.length > 0) {
+        setTimeout(() => {
+          showToast("Remember to assign a new Backup Creator among remaining members.", "warning");
+        }, 2200);
+      }
     }
 
     function getSquads() {
@@ -3558,6 +3968,12 @@
 
       container.innerHTML = squads.map(sq => {
         const isUserCreator = (sq.creatorId === user.id) || sq.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
+        const userMember = sq.members.find(m => m.id === user.id || m.email === user.email);
+        const isUserBackupCreator = !isUserCreator && (userMember?.isBackupCreator || (sq.backupCreatorId === user.id));
+        const otherMembers = sq.members.filter(m => m.id !== user.id && m.email !== user.email);
+        const hasBackupCreatorAssigned = sq.backupCreatorId && sq.members.some(m => m.id === sq.backupCreatorId);
+        const needsBackupCreatorWarning = isUserCreator && otherMembers.length > 0 && !hasBackupCreatorAssigned;
+
         const prefs = sq.notificationPreferences || { inAppPill: true, beaconPulse: true, hapticPulse: true, soundChime: true, browserNotify: false };
         const isCollapsed = !!sq.isCollapsed;
         const activeMembersInSquad = sq.members.filter(m => m.isWorkingOut);
@@ -3585,7 +4001,9 @@
                     <h3 class="text-base font-extrabold text-slate-100 tracking-tight truncate">${escapeHtml(sq.name)}</h3>
                     ${isUserCreator 
                       ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1"><i class="fa-solid fa-crown text-[9px]"></i> Creator</span>`
-                      : `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Member</span>`
+                      : isUserBackupCreator
+                        ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 flex items-center gap-1"><i class="fa-solid fa-shield-halved text-[9px]"></i> Backup Creator</span>`
+                        : `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Member</span>`
                     }
                   </div>
                   <p class="text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
@@ -3594,6 +4012,14 @@
 
               <!-- ACTION BUTTONS -->
               <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- SUCCESSION: SECONDARY CREATOR CAN PICK UP THE MANTLE IF CREATOR DATA IS LOST (REQ 2) -->
+                ${isUserBackupCreator ? `
+                  <button onclick="triggerHaptic('heavy'); pickUpMantlePrompt('${sq.id}')" class="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-md shadow-amber-500/10" title="Assume primary squad creator role if creator lost backup">
+                    <i class="fa-solid fa-crown text-xs text-amber-400"></i>
+                    <span>Pick Up The Mantle</span>
+                  </button>
+                ` : ''}
+
                 <!-- COLLAPSE / EXPAND TOGGLE -->
                 <button onclick="triggerHaptic('light'); toggleSquadCollapse('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="${isCollapsed ? 'Expand squad details' : 'Collapse squad card'}">
                   <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} text-xs text-slate-400"></i>
@@ -3636,6 +4062,24 @@
                 }
               </div>
             </div>
+
+            <!-- MANDATORY BACKUP CREATOR REQUIREMENT BANNER (REQ 2) -->
+            ${needsBackupCreatorWarning ? `
+              <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm flex-shrink-0 border border-amber-500/30">
+                    <i class="fa-solid fa-shield-halved"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <span class="font-bold text-amber-300 block">Backup Creator Required</span>
+                    <span class="text-[11px] text-amber-400/80 block">Assign a secondary creator to preserve the squad if your device or backup file is lost.</span>
+                  </div>
+                </div>
+                <button onclick="triggerHaptic('light'); promptAssignFirstBackupCreator('${sq.id}')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-xl text-xs flex-shrink-0 transition shadow-md shadow-amber-500/10">
+                  Assign Backup Creator
+                </button>
+              </div>
+            ` : ''}
 
             <!-- COLLAPSED SUMMARY VIEW -->
             ${isCollapsed ? `
@@ -3689,6 +4133,7 @@
                 <div class="space-y-2">
                   ${sq.members.map(m => {
                     const isThisUser = (m.id === user.id || m.email === user.email);
+                    const isMemberBackupCreator = m.isBackupCreator || (sq.backupCreatorId === m.id);
                     const initials = getInitials(m.rawName || m.name);
                     const showDeliveryBadge = isUserCreator && (m.invitedByEmail || m.inviteStatus === 'delivered');
                     
@@ -3718,7 +4163,9 @@
                               </span>
                               ${m.isCreator 
                                 ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-0.5"><i class="fa-solid fa-crown text-[8px]"></i> Creator</span>`
-                                : ''
+                                : isMemberBackupCreator
+                                  ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30 flex items-center gap-0.5" title="Secondary / Backup Creator"><i class="fa-solid fa-shield-halved text-[8px]"></i> Backup Creator</span>`
+                                  : ''
                               }
                               <!-- VISIBLE EMAIL DELIVERY BADGE FOR CREATOR AGAINST MEMBER NAME -->
                               ${showDeliveryBadge ? `
@@ -3749,12 +4196,27 @@
 
                         <!-- PERMISSION-BASED ACTION CONTROLS -->
                         <div class="flex items-center gap-1.5 flex-shrink-0">
+                          <!-- CREATOR CONTROLS OVER MEMBERS (ASSIGN BACKUP CREATOR / REMOVE) -->
                           ${isUserCreator && !isThisUser
-                            ? `<button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
+                            ? `
+                              ${isMemberBackupCreator
+                                ? `<span class="text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-1 rounded-xl flex items-center gap-1" title="Assigned Backup Creator"><i class="fa-solid fa-shield-check text-[9px]"></i> Assigned Backup</span>`
+                                : `<button onclick="triggerHaptic('light'); assignBackupCreator('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-slate-300 hover:text-sky-300 bg-slate-900 hover:bg-sky-500/10 border border-slate-700 hover:border-sky-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1" title="Assign backup creator role to ${escapeHtml(m.rawName || m.name)}"><i class="fa-regular fa-star text-[9px] text-sky-400"></i> Make Backup</button>`
+                              }
+                              <button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
                                 <i class="fa-solid fa-user-minus text-xs"></i>
-                               </button>`
+                              </button>
+                            `
                             : ''
                           }
+
+                          <!-- BACKUP CREATOR CONTROLS ON OWN ROW -->
+                          ${isThisUser && isUserBackupCreator
+                            ? `<button onclick="triggerHaptic('heavy'); pickUpMantlePrompt('${sq.id}')" class="text-[10px] font-bold text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-xl hover:bg-amber-500/20 transition flex items-center gap-1" title="Assume primary creator leadership"><i class="fa-solid fa-crown text-[9px] text-amber-400"></i> Pick Up Mantle</button>`
+                            : ''
+                          }
+
+                          <!-- PRIMARY CREATOR CONTROLS ON OWN ROW -->
                           ${isThisUser && isUserCreator && sq.members.length > 1
                             ? `<button onclick="triggerHaptic('light'); handleCreatorLeave('${sq.id}')" class="text-[10px] text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 px-2 py-1 rounded-xl transition" title="Transfer creator role">
                                 Transfer Role
@@ -4078,6 +4540,9 @@
       const squad = squads.find(s => s.id === currentActiveSquadId);
       if (!squad) return;
 
+      const isFirstTeammate = (squad.members.length === 1);
+      const shouldBeBackup = isFirstTeammate || !squad.backupCreatorId;
+
       // Ensure delivery tracking metadata is created and logged for email invitations
       const newMember = {
         id: 'member_' + Date.now(),
@@ -4090,17 +4555,30 @@
         inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         avatar: null,
         isCreator: false,
+        isBackupCreator: shouldBeBackup,
         isWorkingOut: false,
         currentWorkout: null,
         lastActive: 'Just invited'
       };
+
+      if (shouldBeBackup) {
+        squad.backupCreatorId = newMember.id;
+        squad.backupCreatorName = newMember.rawName;
+      }
 
       squad.members.push(newMember);
       saveSquads(squads);
       closeAddMemberModal();
       renderSquadsTab();
       updateGlobalStatsUI();
-      showToast(`Added ${name}! Invitation email delivered to ${email}.`, "success");
+      if (shouldBeBackup) {
+        showToast(`Added ${name} as designated Backup Creator! Email invitation delivered to ${email}.`, "success");
+      } else {
+        showToast(`Added ${name}! Invitation email delivered to ${email}.`, "success");
+      }
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        syncToGoogleDrive(false);
+      }
     }
 
     function quickAddSampleMember(name, handle) {
@@ -4170,7 +4648,7 @@
       const willBrowser = document.getElementById('pref-browser').checked;
 
       if (willPill) {
-        showSquadNotificationPill({ rawName: "Marcus Vance", avatar: null }, "Heavy Incline Press");
+        showSquadNotificationPill({ rawName: "Teammate", avatar: null }, "Heavy Incline Press");
       }
       if (willHaptic) {
         triggerSquadHaptic();
@@ -4179,7 +4657,7 @@
         playUnobtrusiveChime();
       }
       if (willBrowser) {
-        sendBrowserNotification("ShowUp Squad", "Marcus Vance started: Heavy Incline Press");
+        sendBrowserNotification("ShowUp Squad", "Teammate started: Heavy Incline Press");
       }
     }
 
@@ -4197,23 +4675,8 @@
       let otherMembers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
 
       if (otherMembers.length === 0) {
-        const sample = {
-          id: 'member_marcus',
-          name: 'Marcus Vance',
-          rawName: 'Marcus Vance',
-          email: 'marcus@iron.dev',
-          invitedByEmail: true,
-          inviteEmail: 'marcus@iron.dev',
-          inviteStatus: 'delivered',
-          inviteDeliveredAt: 'Today, 9:15 AM',
-          avatar: null,
-          isCreator: false,
-          isWorkingOut: false,
-          currentWorkout: null,
-          lastActive: 'Just now'
-        };
-        squad.members.push(sample);
-        otherMembers = [sample];
+        showToast("Invite at least one teammate to this squad first to simulate workouts.", "info");
+        return;
       }
 
       const member = otherMembers[Math.floor(Math.random() * otherMembers.length)];
