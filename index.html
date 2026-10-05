@@ -1932,13 +1932,22 @@
           </div>
         </div>
 
-        <!-- GOOGLE MAPS BASE LAYER WITH ZOOM TO ZIP CODE LEVEL -->
+        <!-- GOOGLE MAPS BASE LAYER WITH ZOOM TO ZIP CODE LEVEL & BOUNDARY IDENTIFICATION -->
         <div class="relative w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl">
           <!-- Google Map element (explicit height as per CF2) -->
           <div id="google-maps-canvas" class="w-full h-72 sm:h-80 relative z-0"></div>
 
+          <!-- On-Map Zip Code Boundaries Overlay & Completed Workouts Number Layer -->
+          <div id="map-zip-boundaries-overlay" class="absolute inset-0 z-10 pointer-events-none p-3 flex flex-col justify-between">
+            <!-- Top HUD: Active Zip Code Boundary & Completed Workouts Badge -->
+            <div id="map-boundary-top-hud" class="flex items-start justify-between gap-2"></div>
+            
+            <!-- Center HUD: Zip Code Boundary Perimeter Box & Completed Counter Badge -->
+            <div id="map-boundary-center-hud" class="relative w-full h-full flex items-center justify-center pointer-events-none"></div>
+          </div>
+
           <!-- On-Map Floating Overlay: Zoom Controls & Zip Level Indicator -->
-          <div class="absolute top-3 right-3 z-10 flex flex-col gap-1.5 pointer-events-auto">
+          <div class="absolute top-3 right-3 z-20 flex flex-col gap-1.5 pointer-events-auto">
             <button onclick="triggerHaptic('light'); zoomGoogleMap(1)" class="w-8 h-8 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-slate-200 text-sm font-black flex items-center justify-center shadow-lg transition active:scale-95" title="Zoom In">
               <i class="fa-solid fa-plus"></i>
             </button>
@@ -1951,11 +1960,11 @@
           </div>
 
           <!-- Bottom Map Status Bar -->
-          <div class="absolute bottom-2.5 left-2.5 z-10 bg-slate-950/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-800/90 text-[10px] text-slate-400 flex items-center gap-2 shadow-lg">
+          <div class="absolute bottom-2.5 left-2.5 z-20 bg-slate-950/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-800/90 text-[10px] text-slate-400 flex items-center gap-2 shadow-lg">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span id="map-zoom-status">Zoom: 14x (Zip Code Level)</span>
             <span class="text-slate-600">•</span>
-            <span class="text-slate-400 font-semibold">Google Maps Base Layer</span>
+            <span class="text-slate-400 font-semibold">Border Identified</span>
           </div>
         </div>
 
@@ -1963,15 +1972,22 @@
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
             <span>Today's Active Zip Codes:</span>
-            <span id="heatmap-legend" class="text-[10px] text-slate-400 font-medium inline-flex items-center gap-2">
-              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active Lifter</span>
+            <span id="heatmap-legend" class="text-[10px] text-slate-400 font-medium inline-flex items-center gap-2 flex-wrap justify-end">
+              <span class="inline-flex items-center gap-1 text-slate-300 font-medium">
+                <span class="w-3.5 h-3.5 rounded border border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 flex items-center justify-center text-[8px] text-[var(--m3-primary)] font-black">
+                  <i class="fa-solid fa-vector-square"></i>
+                </span>
+                Zip Border
+              </span>
               <span class="text-slate-600">•</span>
               <span class="inline-flex items-center gap-1 font-bold text-slate-200">
-                <span class="w-3.5 h-3.5 rounded bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[9px] font-black shadow-sm">
-                  <i class="fa-solid fa-check"></i>
+                <span class="px-1.5 py-0.2 rounded bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[9px] font-mono font-black shadow-sm">
+                  #
                 </span>
-                Completed Today
+                Completed Workouts
               </span>
+              <span class="text-slate-600">•</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active</span>
             </span>
           </div>
           <div id="zip-ticker-container" class="flex items-center gap-2 overflow-x-auto pb-1">
@@ -1984,7 +2000,12 @@
           <div class="flex items-center gap-2.5 min-w-0">
             <span id="zip-detail-indicator" class="w-2.5 h-2.5 rounded-full bg-slate-600 flex-shrink-0"></span>
             <div class="truncate">
-              <span id="zip-detail-title" class="font-bold text-slate-100">No workouts recorded today</span>
+              <div class="flex items-center gap-1.5">
+                <span id="zip-detail-title" class="font-bold text-slate-100">No workouts recorded today</span>
+                <span id="zip-detail-border-tag" class="hidden text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--m3-primaryContainer)] text-[var(--m3-primary)] border border-[var(--m3-primary)]/30 font-mono font-semibold">
+                  <i class="fa-solid fa-draw-polygon text-[8px] mr-0.5"></i> Border Identified
+                </span>
+              </div>
               <p id="zip-detail-desc" class="text-[11px] text-slate-400 truncate">Workouts logged by you or your squads will appear here in real time.</p>
             </div>
           </div>
@@ -4610,6 +4631,7 @@
     let selectedHeatMapZip = null;
     let googleMapInstance = null;
     let googleMapMarkers = [];
+    let googleMapPolygons = [];
     let currentMapZoom = 14; // Default zip code level (13-15)
     let isMapEmbedMode = false;
 
@@ -5149,6 +5171,10 @@
 
       googleMapMarkers.forEach(m => m.setMap(null));
       googleMapMarkers = [];
+      if (Array.isArray(googleMapPolygons)) {
+        googleMapPolygons.forEach(p => p.setMap(null));
+        googleMapPolygons = [];
+      }
 
       const currentTheme = localStorage.getItem('showUp_theme') || 'emerald';
       const themeColorsMap = {
@@ -5164,29 +5190,57 @@
       const pal = themeColorsMap[currentTheme] || themeColorsMap.emerald;
 
       activeNodes.forEach(node => {
-        const hasActive = node.activeCount > 0;
+        const isSelected = (node.zip === selectedHeatMapZip);
+        const completedCount = node.completedToday || 0;
 
+        // 1. Draw Zip Code Boundary Polygon to identify the border
+        const deltaLat = 0.016;
+        const deltaLng = 0.022;
+        const boundaryPaths = [
+          { lat: node.lat + deltaLat, lng: node.lng - deltaLng },
+          { lat: node.lat + deltaLat, lng: node.lng + deltaLng },
+          { lat: node.lat - deltaLat, lng: node.lng + deltaLng },
+          { lat: node.lat - deltaLat, lng: node.lng - deltaLng }
+        ];
+
+        const polygon = new google.maps.Polygon({
+          paths: boundaryPaths,
+          strokeColor: pal.fill,
+          strokeOpacity: isSelected ? 1.0 : 0.8,
+          strokeWeight: isSelected ? 3.5 : 2,
+          fillColor: pal.fill,
+          fillOpacity: isSelected ? 0.22 : 0.1,
+          map: googleMapInstance
+        });
+
+        polygon.addListener('click', () => {
+          triggerHaptic('light');
+          selectZipNode(node.zip);
+        });
+        googleMapPolygons.push(polygon);
+
+        // 2. Custom Marker displaying the number of completed workouts from this zip code
         const svgIcon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 38 38">
-              ${hasActive ? `
-                <circle cx="19" cy="19" r="17" fill="${pal.fill}" fill-opacity="0.2" stroke="${pal.fill}" stroke-width="2"/>
-                <circle cx="19" cy="19" r="8" fill="${pal.fill}"/>
-                <circle cx="19" cy="19" r="3" fill="#0b0f19"/>
-              ` : `
-                <rect x="5" y="5" width="28" height="28" rx="8" fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="2"/>
-                <path d="M12 19.5 L17 24.5 L26 14" fill="none" stroke="${pal.onColor}" stroke-width="3.5" stroke-linecap="square" stroke-linejoin="miter"/>
-              `}
+            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+              <!-- Boundary box outline -->
+              <rect x="2" y="2" width="52" height="52" rx="12" fill="${pal.fill}" fill-opacity="${isSelected ? '0.28' : '0.12'}" stroke="${pal.fill}" stroke-width="${isSelected ? '2.5' : '1.5'}" stroke-dasharray="4 2"/>
+              <!-- Completed Workout Number Badge -->
+              <rect x="12" y="10" width="32" height="28" rx="8" fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"/>
+              <text x="28" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="14" font-weight="900" text-anchor="middle">${completedCount}</text>
+              <!-- Zip Code Label -->
+              <rect x="8" y="40" width="40" height="12" rx="3" fill="#0b0f19" fill-opacity="0.9"/>
+              <text x="28" y="49" fill="#cbd5e1" font-family="monospace, sans-serif" font-size="8" font-weight="700" text-anchor="middle">${node.zip}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(38, 38),
-          anchor: new google.maps.Point(19, 19)
+          scaledSize: new google.maps.Size(56, 56),
+          anchor: new google.maps.Point(28, 28)
         };
 
         const marker = new google.maps.Marker({
           position: { lat: node.lat, lng: node.lng },
           map: googleMapInstance,
-          title: `Zip ${node.zip}: ${node.activeCount} Active, ${node.completedToday} Completed Today`,
+          title: `Zip ${node.zip}: ${completedCount} Completed Workouts, ${node.activeCount} Active Lifters`,
           icon: svgIcon
         });
 
@@ -5197,6 +5251,91 @@
 
         googleMapMarkers.push(marker);
       });
+    }
+
+    function renderMapZipBoundariesOverlay(activeNodes) {
+      const topHud = document.getElementById('map-boundary-top-hud');
+      const centerHud = document.getElementById('map-boundary-center-hud');
+      if (!topHud || !centerHud) return;
+
+      if (!activeNodes || activeNodes.length === 0) {
+        topHud.innerHTML = '';
+        centerHud.innerHTML = `
+          <div class="pointer-events-auto text-center p-3 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-slate-400 max-w-xs shadow-xl">
+            <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 mx-auto mb-2 flex items-center justify-center text-slate-400 text-xs">
+              <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <p class="text-xs font-bold text-slate-200">No active zip code workouts yet</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Finish a workout to identify your zip code border with your completed count.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Top HUD: Interactive Zip Code border chips with completed count
+      topHud.innerHTML = `
+        <div class="flex items-center gap-1.5 flex-wrap pointer-events-auto">
+          ${activeNodes.map(node => {
+            const isSelected = (node.zip === selectedHeatMapZip);
+            return `
+              <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border ${
+                isSelected 
+                  ? 'border-[var(--m3-primary)] shadow-md shadow-[var(--m3-primary)]/20 text-white font-bold' 
+                  : 'border-slate-800 text-slate-300 hover:border-slate-700 font-medium'
+              } text-xs flex items-center gap-1.5 transition active:scale-95">
+                <span class="w-5 h-5 rounded-lg bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-[10px] flex items-center justify-center shadow-sm">
+                  ${node.completedToday || 0}
+                </span>
+                <span class="font-mono text-[11px]">Zip ${node.zip}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      // Center HUD: Zip Code Boundary Perimeter Frame identifying the selected Zip Code
+      const selectedNode = activeNodes.find(z => z.zip === selectedHeatMapZip) || activeNodes[0];
+      if (!selectedNode) {
+        centerHud.innerHTML = '';
+        return;
+      }
+
+      centerHud.innerHTML = `
+        <div class="pointer-events-auto cursor-pointer group transition duration-300" onclick="triggerHaptic('light'); zoomToSelectedZip()">
+          <!-- Geometric Zip Code Boundary Perimeter Box -->
+          <div class="w-52 sm:w-60 h-36 sm:h-40 rounded-3xl border-2 border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 backdrop-blur-[3px] shadow-2xl shadow-[var(--m3-primary)]/20 relative flex flex-col items-center justify-between p-3 transition group-hover:scale-105 group-hover:border-[var(--m3-primary)]">
+            <!-- 4 Corner Boundary Tick Marks to identify border perimeter -->
+            <div class="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-[var(--m3-primary)]"></div>
+            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-[var(--m3-primary)]"></div>
+            <div class="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-[var(--m3-primary)]"></div>
+            <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-[var(--m3-primary)]"></div>
+
+            <!-- Header Badge: Zip & Border Label -->
+            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950/90 border border-[var(--m3-primary)]/40 text-[10px] font-mono text-slate-200 shadow-sm">
+              <i class="fa-solid fa-draw-polygon text-[var(--m3-primary)] text-[9px]"></i>
+              <span class="font-bold">Zip ${selectedNode.zip}</span>
+              <span class="text-slate-400">• ${selectedNode.city.split(',')[0]}</span>
+            </div>
+
+            <!-- Number of Completed Workouts -->
+            <div class="flex flex-col items-center justify-center gap-0.5 my-auto">
+              <div class="w-12 h-12 rounded-2xl bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl flex items-center justify-center shadow-lg shadow-[var(--m3-primary)]/40">
+                ${selectedNode.completedToday || 0}
+              </div>
+              <span class="text-[10px] font-bold text-slate-100 uppercase tracking-wider text-center mt-1">
+                Completed Workouts
+              </span>
+            </div>
+
+            <!-- Sub Status -->
+            <div class="flex items-center gap-2 text-[9px]">
+              ${selectedNode.activeCount > 0 
+                ? `<span class="text-emerald-300 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>${selectedNode.activeCount} Active Now</span>` 
+                : `<span class="text-slate-300 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-check text-[var(--m3-primary)]"></i> Boundary Border Verified</span>`}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function zoomGoogleMap(delta) {
@@ -5296,10 +5435,7 @@
                     ? 'bg-slate-900 text-emerald-400 border-emerald-500/30 font-semibold'
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
               }">
-                ${hasActive 
-                  ? `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>` 
-                  : `<span class="w-3.5 h-3.5 rounded bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[9px] font-black shadow-sm"><i class="fa-solid fa-check"></i></span>`
-                }
+                <span class="w-5 h-5 rounded-lg bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[10px] font-mono font-black shadow-sm">${node.completedToday || 0}</span>
                 <span class="font-mono font-bold">${node.zip}</span>
                 <span class="text-slate-400 text-[10px]">${node.city.split(',')[0]}</span>
                 ${hasActive 
@@ -5315,7 +5451,10 @@
       // 2. Update Detail Card
       updateZipDetailCard(activeZipNodes);
 
-      // 3. Update Google Maps Base Layer
+      // 3. Render On-Map Zip Boundaries Overlay & Numbers
+      renderMapZipBoundariesOverlay(activeZipNodes);
+
+      // 4. Update Google Maps Base Layer
       initGoogleMapsBaseLayer();
     }
 
@@ -5327,6 +5466,7 @@
       const descEl = document.getElementById('zip-detail-desc');
       const indEl = document.getElementById('zip-detail-indicator');
       const zoomBtn = document.getElementById('btn-zoom-to-selected-zip');
+      const borderTag = document.getElementById('zip-detail-border-tag');
 
       if (activeZipNodes.length === 0) {
         if (titleEl) titleEl.innerText = "No workouts recorded today";
@@ -5334,6 +5474,10 @@
         if (indEl) {
           indEl.className = "w-2.5 h-2.5 rounded-full bg-slate-700 flex-shrink-0";
           indEl.innerHTML = "";
+        }
+        if (borderTag) {
+          borderTag.classList.add('hidden');
+          borderTag.classList.remove('inline-flex');
         }
         if (zoomBtn) {
           zoomBtn.innerHTML = `<i class="fa-solid fa-crosshairs"></i><span>My Zip Area</span>`;
@@ -5350,6 +5494,10 @@
 
       if (titleEl) {
         titleEl.innerText = `Zip ${node.zip} (${node.city})${isUserZip ? ' • (Your Zip Code)' : ''}`;
+      }
+      if (borderTag) {
+        borderTag.classList.remove('hidden');
+        borderTag.classList.add('inline-flex');
       }
       if (descEl) {
         const liftersStr = node.lifters && node.lifters.length > 0 ? ` (${node.lifters.join(', ')})` : '';
