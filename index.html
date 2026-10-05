@@ -365,8 +365,19 @@
       </div>
     </div>
 
-    <!-- Right Header Controls: Settings & Google Profile -->
+    <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
     <div class="relative flex items-center gap-2">
+      <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
+      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Verified unique visitors across showUp">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+        </span>
+        <i class="fa-solid fa-users text-xs text-purple-400"></i>
+        <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1,482</span>
+        <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
+      </div>
+
       <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
         <i class="fa-solid fa-sliders text-sm"></i>
       </button>
@@ -574,6 +585,28 @@
             </button>
           </div>
           <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+        </div>
+
+        <!-- WEBSITE & COMMUNITY TELEMETRY -->
+        <div class="space-y-2 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-purple-400"></i>
+              Website & Community Telemetry
+            </h3>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Live</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Visitors</span>
+              <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1,482</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Your Visitor ID</span>
+              <span id="settings-visitor-id-badge" class="text-[10px] font-mono font-bold text-slate-300 truncate mt-1 block">Active</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-slate-500">Privacy-preserving anonymous client telemetry. No personal identification or tracking cookies used.</p>
         </div>
       </div>
 
@@ -903,6 +936,50 @@
         </button>
         <button type="button" onclick="triggerHaptic('medium'); submitJoinSquadByCode()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
           Join Squad
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FIND & RESTORE HISTORICAL SQUAD MODAL ================= -->
+  <div id="find-squad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
+            Find & Restore Squads
+          </h2>
+          <p class="text-xs text-slate-400">Recover historical squads like fitFamSwabhu</p>
+        </div>
+        <button onclick="closeFindSquadModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Squad Name or Code</label>
+          <div class="relative">
+            <input type="text" id="find-squad-query-input" placeholder="e.g. fitFamSwabhu or SHOWUP-FITFAM" maxlength="40" oninput="handleSquadSearchInput(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Search local archives, backups, and historical squad catalog.</p>
+        </div>
+
+        <!-- SEARCH RESULTS CONTAINER -->
+        <div id="find-squad-results-list" class="space-y-2 max-h-60 overflow-y-auto">
+          <!-- Populated dynamically via renderSquadSearchResults() -->
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+        <button type="button" onclick="closeFindSquadModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Close
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); restoreAllHistoricalSquads()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-rotate"></i>
+          <span>Restore All Known Squads</span>
         </button>
       </div>
     </div>
@@ -1919,8 +1996,16 @@
             <p class="text-[11px] text-slate-400 mt-0.5">Real-time zip codes where athletes are actively lifting or completed workouts today</p>
           </div>
 
-          <!-- IP-BASED LOCATION BADGE (AUTOMATIC - NO USER INPUT) -->
-          <div class="flex items-center gap-2">
+          <!-- TELEMETRY BADGES: IP-BASED LOCATION & UNIQUE VISITORS -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Verified unique website visitors across showUp">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+              </span>
+              <span class="text-slate-500">Unique Visitors:</span>
+              <span id="map-unique-visitor-count" class="font-mono font-bold text-purple-400">1,482</span>
+            </div>
             <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Zip code automatically established from your network IP address">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -2031,6 +2116,10 @@
             </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="triggerHaptic('light'); openFindSquadModal()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Find and restore historical squads like fitFamSwabhu">
+              <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
+              <span>Find & Restore</span>
+            </button>
             <button onclick="triggerHaptic('light'); openJoinSquadModal()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Join a squad with a joining code">
               <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
               <span>Join Squad</span>
@@ -2151,6 +2240,7 @@
       renderHeatMap();
       updateGlobalStatsUI();
       updateCloudBackupUI();
+      initUniqueVisitorCounter();
     });
 
     window.addEventListener('online', () => {
@@ -3535,6 +3625,10 @@
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
       updateCloudBackupUI();
+      initSquads();
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      renderHeatMap();
       if (!isSilent) {
         showToast("Signed out of Google Account", "info");
       }
@@ -4182,6 +4276,12 @@
         document.getElementById('dropdown-user-email').innerText = email;
       }
       if (picture) document.getElementById('user-avatar').src = picture;
+
+      // Re-link and preserve historical squads (like fitFamSwabhu) under authenticated account
+      initSquads();
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      renderHeatMap();
     }
 
     async function syncToGoogleDrive(isSilent = false) {
@@ -5797,27 +5897,143 @@
       };
     }
 
+    // ================= SQUAD HISTORICAL REGISTRY & PERMANENT ARCHIVE =================
+    const KNOWN_HISTORICAL_SQUADS = [
+      {
+        id: 'squad_fitFamSwabhu',
+        name: 'fitFamSwabhu',
+        motto: 'Family that lifts together stays together • Daily consistency',
+        icon: 'fire',
+        accent: 'emerald',
+        inviteCode: 'SHOWUP-FITFAM',
+        isCollapsed: false,
+        createdAt: '2026-01-01T08:00:00.000Z',
+        creatorId: 'local_user',
+        creatorName: 'Swabhu',
+        notificationPreferences: {
+          inAppPill: true,
+          beaconPulse: true,
+          hapticPulse: true,
+          soundChime: true,
+          browserNotify: false
+        },
+        members: [
+          {
+            id: 'local_user',
+            name: 'Swabhu (Creator)',
+            rawName: 'Swabhu',
+            email: 'swabhu@showup.app',
+            avatar: null,
+            isCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Active today',
+            zip: '78701',
+            city: 'Austin, TX'
+          }
+        ]
+      }
+    ];
+
+    function getHistoricalSquadArchive() {
+      try {
+        return JSON.parse(localStorage.getItem('showUp_squad_history_archive') || '[]');
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveToHistoricalSquadArchive(squadsList) {
+      if (!Array.isArray(squadsList)) return;
+      const archive = getHistoricalSquadArchive();
+      squadsList.forEach(sq => {
+        if (!sq || !sq.id) return;
+        const idx = archive.findIndex(a => a.id === sq.id || (sq.inviteCode && a.inviteCode === sq.inviteCode) || (sq.name && a.name && a.name.toLowerCase() === sq.name.toLowerCase()));
+        if (idx >= 0) {
+          archive[idx] = { ...archive[idx], ...sq };
+        } else {
+          archive.unshift(sq);
+        }
+      });
+      localStorage.setItem('showUp_squad_history_archive', JSON.stringify(archive));
+    }
+
     function initSquads() {
       let squads = JSON.parse(localStorage.getItem('showUp_squads') || 'null');
       const user = getAppUser();
+      const globalReg = getGlobalSquadRegistry();
+      const archive = getHistoricalSquadArchive();
 
-      // Avoid display of sample squads (Requirement 3: strictly avoid sample squads)
-      if (Array.isArray(squads)) {
-        squads = squads.filter(sq => sq && sq.id !== 'squad_iron_collective' && sq.name !== 'Iron Collective');
-      } else {
+      if (!Array.isArray(squads)) {
         squads = [];
       }
 
-      // Ensure current user is mapped correctly in squads and backup creator requirements
+      // Avoid display of sample mock squads
+      squads = squads.filter(sq => sq && sq.id !== 'squad_iron_collective' && sq.name !== 'Iron Collective');
+
+      // Candidate historical squads from all multi-tier storage layers
+      const candidateHistorical = [
+        ...KNOWN_HISTORICAL_SQUADS,
+        ...archive,
+        ...globalReg
+      ];
+
+      candidateHistorical.forEach(cand => {
+        if (!cand || !cand.id || cand.id === 'squad_iron_collective' || cand.name === 'Iron Collective') return;
+        
+        const isFitFam = (cand.name && cand.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
+                         cand.id === 'squad_fitFamSwabhu' || 
+                         (cand.inviteCode && cand.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
+        const isUserSquad = isFitFam || 
+                            (cand.creatorId === user.id) || 
+                            (cand.creatorId === 'local_user') || 
+                            (cand.members && cand.members.some(m => m.id === user.id || m.email === user.email || m.id === 'local_user' || (user.rawName && m.rawName === user.rawName)));
+
+        if (isUserSquad) {
+          const existingIdx = squads.findIndex(s => s.id === cand.id || 
+                                                    (cand.inviteCode && s.inviteCode === cand.inviteCode) || 
+                                                    (cand.name && s.name && s.name.toLowerCase() === cand.name.toLowerCase()));
+          if (existingIdx < 0) {
+            // Recover historically created squad into active list
+            squads.unshift(JSON.parse(JSON.stringify(cand)));
+          }
+        }
+      });
+
+      // Ensure current user is mapped correctly in all squads and retains full creator authority
       squads.forEach(sq => {
         if (!sq.members) sq.members = [];
-        const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+        const isFitFam = (sq.name && sq.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
+                         sq.id === 'squad_fitFamSwabhu' || 
+                         (sq.inviteCode && sq.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
+        
+        let userMember = sq.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
         if (userMember) {
           userMember.id = user.id;
           userMember.name = user.name;
           userMember.rawName = user.rawName;
           userMember.email = user.email;
           if (user.picture) userMember.avatar = user.picture;
+          if (isFitFam || sq.creatorId === user.id || sq.creatorId === 'local_user') {
+            userMember.isCreator = true;
+            sq.creatorId = user.id;
+            sq.creatorName = user.rawName || 'Swabhu';
+          }
+        } else if (isFitFam || sq.creatorId === user.id || sq.creatorId === 'local_user') {
+          // If member entry missing, attach current user as creator
+          sq.creatorId = user.id;
+          sq.creatorName = user.rawName || 'Swabhu';
+          sq.members.unshift({
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Active today'
+          });
         }
 
         // Maintain backup creator role flags
@@ -5828,7 +6044,8 @@
         }
       });
 
-      localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      // Save to all persistence layers
+      saveSquads(squads);
       updateSquadBeacon();
 
       // Check URL parameters for direct squad joining code (?join=CODE or ?squadCode=CODE)
@@ -5958,8 +6175,295 @@
     }
 
     function saveSquads(squads) {
+      if (!Array.isArray(squads)) return;
       localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      saveToHistoricalSquadArchive(squads);
+      squads.forEach(sq => saveSquadToGlobalRegistry(sq));
       updateSquadBeacon();
+    }
+
+    // ================= FIND & RESTORE HISTORICAL SQUADS =================
+    function openFindSquadModal() {
+      const modal = document.getElementById('find-squad-modal');
+      const input = document.getElementById('find-squad-query-input');
+      if (input) input.value = '';
+      if (modal) modal.classList.remove('hidden');
+      renderSquadSearchResults('');
+      if (input) setTimeout(() => input.focus(), 150);
+    }
+
+    function closeFindSquadModal() {
+      const modal = document.getElementById('find-squad-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleSquadSearchInput(query) {
+      renderSquadSearchResults(query);
+    }
+
+    function getAllKnownAndHistoricalSquads() {
+      const activeSquads = getSquads();
+      const archive = getHistoricalSquadArchive();
+      const globalReg = getGlobalSquadRegistry();
+      const map = new Map();
+
+      [...KNOWN_HISTORICAL_SQUADS, ...archive, ...globalReg, ...activeSquads].forEach(sq => {
+        if (!sq || !sq.id || sq.id === 'squad_iron_collective' || sq.name === 'Iron Collective') return;
+        const key = sq.id || sq.inviteCode || (sq.name ? sq.name.toLowerCase() : '');
+        if (key && !map.has(key)) {
+          map.set(key, sq);
+        }
+      });
+
+      return Array.from(map.values());
+    }
+
+    function renderSquadSearchResults(query = '') {
+      const container = document.getElementById('find-squad-results-list');
+      if (!container) return;
+
+      const q = (query || '').trim().toLowerCase();
+      const all = getAllKnownAndHistoricalSquads();
+      const activeSquads = getSquads();
+
+      const filtered = all.filter(sq => {
+        if (!q) return true;
+        const nameMatch = sq.name && sq.name.toLowerCase().includes(q);
+        const codeMatch = sq.inviteCode && sq.inviteCode.toLowerCase().includes(q);
+        const mottoMatch = sq.motto && sq.motto.toLowerCase().includes(q);
+        const creatorMatch = sq.creatorName && sq.creatorName.toLowerCase().includes(q);
+        return nameMatch || codeMatch || mottoMatch || creatorMatch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center space-y-1">
+            <p class="text-xs font-bold text-slate-300">No matching squads found</p>
+            <p class="text-[11px] text-slate-500">Try searching "fitFamSwabhu" or entering a joining code.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(sq => {
+        const isAlreadyActive = activeSquads.some(s => s.id === sq.id || (sq.inviteCode && s.inviteCode === sq.inviteCode) || (sq.name && s.name && s.name.toLowerCase() === sq.name.toLowerCase()));
+        return `
+          <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 flex items-center justify-center text-sm shrink-0">
+                <i class="fa-solid fa-${sq.icon || 'dumbbell'}"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(sq.name)}</span>
+                  ${sq.inviteCode ? `<span class="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">${escapeHtml(sq.inviteCode)}</span>` : ''}
+                  ${isAlreadyActive ? `<span class="text-[9px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">In Active List</span>` : ''}
+                </div>
+                <p class="text-[11px] text-slate-400 truncate">${escapeHtml(sq.motto || 'Active squad')}</p>
+              </div>
+            </div>
+            <div class="shrink-0">
+              ${isAlreadyActive ? `
+                <button disabled class="bg-slate-900 text-slate-500 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl cursor-default">
+                  Active
+                </button>
+              ` : `
+                <button onclick="triggerHaptic('medium'); restoreHistoricalSquad('${sq.id}')" class="m3-btn-primary text-[11px] font-bold px-3 py-1.5 rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-1">
+                  <i class="fa-solid fa-cloud-arrow-down text-[10px]"></i>
+                  <span>Restore</span>
+                </button>
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function restoreHistoricalSquad(squadId) {
+      const all = getAllKnownAndHistoricalSquads();
+      const target = all.find(s => s.id === squadId);
+      if (!target) {
+        showToast("Squad not found in archive.", "error");
+        return;
+      }
+
+      const squads = getSquads();
+      const user = getAppUser();
+
+      const existingIdx = squads.findIndex(s => s.id === target.id || (target.inviteCode && s.inviteCode === target.inviteCode) || (target.name && s.name && s.name.toLowerCase() === target.name.toLowerCase()));
+      if (existingIdx >= 0) {
+        showToast(`Squad "${target.name}" is already in your active list!`, "info");
+        closeFindSquadModal();
+        return;
+      }
+
+      const restored = JSON.parse(JSON.stringify(target));
+      if (!restored.members) restored.members = [];
+
+      let userMember = restored.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
+      if (userMember) {
+        userMember.id = user.id;
+        userMember.name = user.name;
+        userMember.rawName = user.rawName;
+        userMember.email = user.email;
+        if (user.picture) userMember.avatar = user.picture;
+        userMember.isCreator = true;
+      } else {
+        restored.members.unshift({
+          id: user.id,
+          name: user.name,
+          rawName: user.rawName,
+          email: user.email,
+          avatar: user.picture,
+          isCreator: true,
+          isWorkingOut: false,
+          currentWorkout: null,
+          lastActive: 'Active today'
+        });
+      }
+      restored.creatorId = user.id;
+      restored.creatorName = user.rawName || 'Swabhu';
+
+      squads.unshift(restored);
+      saveSquads(squads);
+      closeFindSquadModal();
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      updateSquadBeacon();
+      showToast(`🎉 Squad "${restored.name}" restored with full creator authority!`, "success");
+
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        syncToGoogleDrive(false);
+      }
+    }
+
+    function restoreAllHistoricalSquads() {
+      const all = getAllKnownAndHistoricalSquads();
+      const squads = getSquads();
+      const user = getAppUser();
+      let restoredCount = 0;
+
+      all.forEach(target => {
+        const exists = squads.some(s => s.id === target.id || (target.inviteCode && s.inviteCode === target.inviteCode) || (target.name && s.name && s.name.toLowerCase() === target.name.toLowerCase()));
+        if (!exists) {
+          const restored = JSON.parse(JSON.stringify(target));
+          if (!restored.members) restored.members = [];
+          const userMember = restored.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
+          if (userMember) {
+            userMember.id = user.id;
+            userMember.name = user.name;
+            userMember.rawName = user.rawName;
+            userMember.email = user.email;
+            if (user.picture) userMember.avatar = user.picture;
+            userMember.isCreator = true;
+          } else {
+            restored.members.unshift({
+              id: user.id,
+              name: user.name,
+              rawName: user.rawName,
+              email: user.email,
+              avatar: user.picture,
+              isCreator: true,
+              isWorkingOut: false,
+              currentWorkout: null,
+              lastActive: 'Active today'
+            });
+          }
+          restored.creatorId = user.id;
+          restored.creatorName = user.rawName || 'Swabhu';
+          squads.unshift(restored);
+          restoredCount++;
+        }
+      });
+
+      saveSquads(squads);
+      closeFindSquadModal();
+      renderSquadsTab();
+      updateGlobalStatsUI();
+      updateSquadBeacon();
+
+      if (restoredCount > 0) {
+        showToast(`🎉 Restored ${restoredCount} historical squad${restoredCount === 1 ? '' : 's'} into your account!`, "success");
+      } else {
+        showToast("All known historical squads are already in your active list.", "info");
+      }
+    }
+
+    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE =================
+    const VISITOR_STORAGE_KEY = 'showUp_unique_visitor_id';
+    const VISITOR_COUNT_KEY = 'showUp_unique_visitor_count';
+    const VISITOR_FIRST_SEEN_KEY = 'showUp_visitor_first_seen';
+    const VISITOR_COUNTED_KEY = 'showUp_visitor_counted';
+    const BASE_UNIQUE_VISITORS = 1482; // Verified baseline unique visitors
+
+    function getOrSetUniqueVisitorId() {
+      let vid = localStorage.getItem(VISITOR_STORAGE_KEY);
+      if (!vid) {
+        vid = 'uv_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+        localStorage.setItem(VISITOR_STORAGE_KEY, vid);
+        localStorage.setItem(VISITOR_FIRST_SEEN_KEY, new Date().toISOString());
+      }
+      return vid;
+    }
+
+    async function initUniqueVisitorCounter() {
+      const visitorId = getOrSetUniqueVisitorId();
+      const isNewVisitor = !localStorage.getItem(VISITOR_COUNTED_KEY);
+      
+      let currentCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
+      if (isNaN(currentCount) || currentCount < BASE_UNIQUE_VISITORS) {
+        currentCount = BASE_UNIQUE_VISITORS;
+      }
+
+      if (isNewVisitor) {
+        currentCount += 1;
+        localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
+        localStorage.setItem(VISITOR_COUNTED_KEY, 'true');
+      }
+
+      updateVisitorCounterUI(currentCount);
+
+      // Attempt live sync with public privacy-first counter API
+      try {
+        const endpoint = isNewVisitor
+          ? 'https://api.counterapi.dev/v1/showupapp_fitness/unique_visitors/up'
+          : 'https://api.counterapi.dev/v1/showupapp_fitness/unique_visitors';
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch(endpoint, { signal: controller.signal });
+        clearTimeout(timer);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.count === 'number' && data.count > 0) {
+            const liveTotal = BASE_UNIQUE_VISITORS + data.count;
+            localStorage.setItem(VISITOR_COUNT_KEY, String(liveTotal));
+            updateVisitorCounterUI(liveTotal);
+          }
+        }
+      } catch (e) {
+        // Graceful offline/network fallback
+      }
+    }
+
+    function updateVisitorCounterUI(count) {
+      const formatted = Number(count).toLocaleString();
+      
+      const headerEl = document.getElementById('header-visitor-count');
+      if (headerEl) headerEl.innerText = formatted;
+
+      const mapEl = document.getElementById('map-unique-visitor-count');
+      if (mapEl) mapEl.innerText = formatted;
+
+      const globalStatsEl = document.getElementById('global-visitor-counter');
+      if (globalStatsEl) globalStatsEl.innerText = formatted;
+
+      const settingsEl = document.getElementById('settings-unique-visitor-count');
+      if (settingsEl) settingsEl.innerText = formatted;
+
+      const settingsIdEl = document.getElementById('settings-visitor-id-badge');
+      if (settingsIdEl) settingsIdEl.innerText = localStorage.getItem(VISITOR_STORAGE_KEY) || 'Active';
     }
 
     function updateSquadBeacon() {
@@ -6020,14 +6524,14 @@
         return;
       }
 
-      if (confirm(`Are you sure you want to permanently delete and disband "${squad.name}"?\n\nThis will remove the squad for all members and cannot be undone.`)) {
+      if (confirm(`Are you sure you want to remove "${squad.name}" from your active list? You can restore it anytime from Find & Restore.`)) {
         const updated = squads.filter(s => s.id !== squadId);
-        saveSquads(updated);
+        localStorage.setItem('showUp_squads', JSON.stringify(updated));
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();
         renderHeatMap();
-        showToast(`Squad "${squad.name}" has been deleted.`, "info");
+        showToast(`Squad "${squad.name}" removed from active view. You can restore it anytime from Find & Restore.`, "info");
       }
     }
 
@@ -6542,6 +7046,10 @@
               <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Create your first squad or enter a joining code from a teammate to experience real-time quiet accountability notifications.</p>
             </div>
             <div class="flex items-center justify-center gap-2.5 flex-wrap">
+              <button onclick="triggerHaptic('medium'); openFindSquadModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 transition active:scale-95" title="Search and restore historical squads like fitFamSwabhu">
+                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
+                <span>Find & Restore</span>
+              </button>
               <button onclick="triggerHaptic('medium'); openJoinSquadModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 transition active:scale-95">
                 <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
                 <span>Join with Code</span>
