@@ -5078,15 +5078,171 @@
       { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] }
     ];
 
+    // ================= HIERARCHICAL ZOOM LEVEL AGGREGATION ENGINE =================
+    const US_STATE_NAMES = {
+      'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+      'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+      'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+      'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+      'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+      'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+      'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+      'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+      'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+      'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+      'DC': 'District of Columbia'
+    };
+
+    function parseLocationHierarchy(cityStr, zip) {
+      let stateCode = 'US';
+      let stateName = 'General Area';
+      let country = 'United States';
+      let countryCode = 'USA';
+
+      if (cityStr && cityStr.includes(',')) {
+        const parts = cityStr.split(',').map(s => s.trim());
+        if (parts.length >= 2) {
+          const stateCand = parts[1].substring(0, 2).toUpperCase();
+          if (US_STATE_NAMES[stateCand]) {
+            stateCode = stateCand;
+            stateName = US_STATE_NAMES[stateCand];
+          }
+        }
+      }
+      return { stateCode, stateName, country, countryCode };
+    }
+
+    function getAggregatedNodesForZoom(zoom, activeNodes) {
+      if (!activeNodes || activeNodes.length === 0) return [];
+
+      // Tier 1: Local Zip Code Level (zoom >= 11) - Individual Zip Code Borders & Real Numbers
+      if (zoom >= 11) {
+        return activeNodes.map(n => ({
+          type: 'zip',
+          id: n.zip,
+          label: `Zip ${n.zip}`,
+          subLabel: n.city,
+          shortTitle: `Zip ${n.zip}`,
+          lat: n.lat,
+          lng: n.lng,
+          activeCount: n.activeCount || 0,
+          completedToday: n.completedToday || 0,
+          isUserZip: !!n.isUserZip,
+          lifters: n.lifters || [],
+          originalNodes: [n]
+        }));
+      }
+
+      // Tier 2: State / General Area Level (5 <= zoom < 11) - Regional State Aggregations
+      if (zoom >= 5) {
+        const stateMap = new Map();
+        activeNodes.forEach(node => {
+          const geo = parseLocationHierarchy(node.city, node.zip);
+          const stateKey = geo.stateCode;
+          if (!stateMap.has(stateKey)) {
+            stateMap.set(stateKey, {
+              type: 'state',
+              id: stateKey,
+              stateCode: stateKey,
+              stateName: geo.stateName,
+              label: `${geo.stateName} (${stateKey})`,
+              subLabel: 'State / General Area Level',
+              shortTitle: stateKey,
+              lats: [],
+              lngs: [],
+              activeCount: 0,
+              completedToday: 0,
+              isUserZip: false,
+              lifters: [],
+              originalNodes: []
+            });
+          }
+          const s = stateMap.get(stateKey);
+          s.lats.push(node.lat);
+          s.lngs.push(node.lng);
+          s.activeCount += (node.activeCount || 0);
+          s.completedToday += (node.completedToday || 0);
+          if (node.isUserZip) s.isUserZip = true;
+          if (Array.isArray(node.lifters)) {
+            node.lifters.forEach(l => { if (!s.lifters.includes(l)) s.lifters.push(l); });
+          }
+          s.originalNodes.push(node);
+        });
+
+        return Array.from(stateMap.values()).map(s => ({
+          type: 'state',
+          id: s.id,
+          label: s.label,
+          subLabel: `${s.originalNodes.length} Active Zip${s.originalNodes.length > 1 ? 's' : ''} in ${s.stateName}`,
+          shortTitle: s.shortTitle,
+          lat: s.lats.reduce((a, b) => a + b, 0) / s.lats.length,
+          lng: s.lngs.reduce((a, b) => a + b, 0) / s.lngs.length,
+          activeCount: s.activeCount,
+          completedToday: s.completedToday,
+          isUserZip: s.isUserZip,
+          lifters: s.lifters,
+          originalNodes: s.originalNodes
+        }));
+      }
+
+      // Tier 3: Country / Continental Level (zoom < 5) - National Aggregations
+      const countryMap = new Map();
+      activeNodes.forEach(node => {
+        const geo = parseLocationHierarchy(node.city, node.zip);
+        const countryKey = geo.countryCode;
+        if (!countryMap.has(countryKey)) {
+          countryMap.set(countryKey, {
+            type: 'country',
+            id: countryKey,
+            countryName: geo.country,
+            label: geo.country,
+            subLabel: 'Country / Continental Level',
+            shortTitle: countryKey,
+            lats: [],
+            lngs: [],
+            activeCount: 0,
+            completedToday: 0,
+            isUserZip: false,
+            lifters: [],
+            originalNodes: []
+          });
+        }
+        const c = countryMap.get(countryKey);
+        c.lats.push(node.lat);
+        c.lngs.push(node.lng);
+        c.activeCount += (node.activeCount || 0);
+        c.completedToday += (node.completedToday || 0);
+        if (node.isUserZip) c.isUserZip = true;
+        if (Array.isArray(node.lifters)) {
+          node.lifters.forEach(l => { if (!c.lifters.includes(l)) c.lifters.push(l); });
+        }
+        c.originalNodes.push(node);
+      });
+
+      return Array.from(countryMap.values()).map(c => ({
+        type: 'country',
+        id: c.id,
+        label: c.label,
+        subLabel: `${c.originalNodes.length} Zip Codes across Country`,
+        shortTitle: c.shortTitle,
+        lat: c.lats.reduce((a, b) => a + b, 0) / c.lats.length,
+        lng: c.lngs.reduce((a, b) => a + b, 0) / c.lngs.length,
+        activeCount: c.activeCount,
+        completedToday: c.completedToday,
+        isUserZip: c.isUserZip,
+        lifters: c.lifters,
+        originalNodes: c.originalNodes
+      }));
+    }
+
     function updateMapZoomStatusUI(zoom) {
       const zoomStatusEl = document.getElementById('map-zoom-status');
       if (!zoomStatusEl) return;
-      let levelDesc = "Zip Code Level";
-      if (zoom >= 16) levelDesc = "Street Level";
-      else if (zoom >= 13) levelDesc = "Zip Code Level";
-      else if (zoom >= 10) levelDesc = "City / Metro Level";
-      else if (zoom >= 6) levelDesc = "State Level";
-      else levelDesc = "Regional View";
+      let levelDesc = "Zip Code Level (Border Identified)";
+      if (zoom >= 15) levelDesc = "Street Level (Border Identified)";
+      else if (zoom >= 11) levelDesc = "Zip Code Level (Border Identified)";
+      else if (zoom >= 5) levelDesc = "State / General Area Level";
+      else levelDesc = "Country / Continental Level";
       zoomStatusEl.innerText = `Zoom: ${zoom}x (${levelDesc})`;
     }
 
@@ -5120,6 +5276,7 @@
             googleMapInstance.addListener('zoom_changed', () => {
               currentMapZoom = googleMapInstance.getZoom();
               updateMapZoomStatusUI(currentMapZoom);
+              renderHeatMap();
             });
           } else {
             googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
@@ -5143,7 +5300,16 @@
       const canvas = document.getElementById('google-maps-canvas');
       if (!canvas) return;
 
-      const query = zip ? `Zip+Code+${encodeURIComponent(zip)}+${encodeURIComponent(city || '')}` : `${lat},${lng}`;
+      let query = `${lat},${lng}`;
+      if (zoom >= 11 && zip) {
+        query = `Zip+Code+${encodeURIComponent(zip)}+${encodeURIComponent(city || '')}`;
+      } else if (zoom >= 5 && city) {
+        const geo = parseLocationHierarchy(city, zip);
+        query = `${encodeURIComponent(geo.stateName)}+USA`;
+      } else {
+        query = `United+States`;
+      }
+
       const existingIframe = document.getElementById('google-maps-iframe');
       const targetSrc = `https://maps.google.com/maps?q=${query}&t=m&z=${zoom}&output=embed`;
 
@@ -5189,13 +5355,23 @@
       };
       const pal = themeColorsMap[currentTheme] || themeColorsMap.emerald;
 
-      activeNodes.forEach(node => {
-        const isSelected = (node.zip === selectedHeatMapZip);
+      const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
+
+      aggNodes.forEach(node => {
+        const isSelected = (node.id === selectedHeatMapZip || (node.originalNodes && node.originalNodes.some(on => on.zip === selectedHeatMapZip)));
         const completedCount = node.completedToday || 0;
 
-        // 1. Draw Zip Code Boundary Polygon to identify the border
-        const deltaLat = 0.016;
-        const deltaLng = 0.022;
+        // 1. Draw Adaptive Boundary Polygon based on Zoom Hierarchy
+        let deltaLat = 0.016;
+        let deltaLng = 0.022;
+        if (node.type === 'state') {
+          deltaLat = 1.2;
+          deltaLng = 1.8;
+        } else if (node.type === 'country') {
+          deltaLat = 4.5;
+          deltaLng = 7.0;
+        }
+
         const boundaryPaths = [
           { lat: node.lat + deltaLat, lng: node.lng - deltaLng },
           { lat: node.lat + deltaLat, lng: node.lng + deltaLng },
@@ -5206,8 +5382,8 @@
         const polygon = new google.maps.Polygon({
           paths: boundaryPaths,
           strokeColor: pal.fill,
-          strokeOpacity: isSelected ? 1.0 : 0.8,
-          strokeWeight: isSelected ? 3.5 : 2,
+          strokeOpacity: isSelected ? 1.0 : 0.75,
+          strokeWeight: isSelected ? (node.type === 'zip' ? 3.5 : 4) : 2,
           fillColor: pal.fill,
           fillOpacity: isSelected ? 0.22 : 0.1,
           map: googleMapInstance
@@ -5215,38 +5391,39 @@
 
         polygon.addListener('click', () => {
           triggerHaptic('light');
-          selectZipNode(node.zip);
+          selectZipNode(node.id);
         });
         googleMapPolygons.push(polygon);
 
-        // 2. Custom Marker displaying the number of completed workouts from this zip code
+        // 2. Custom SVG Marker displaying the exact workouts completed
+        const tagLabel = node.type === 'zip' ? node.id : (node.shortTitle || node.id);
         const svgIcon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
               <!-- Boundary box outline -->
-              <rect x="2" y="2" width="52" height="52" rx="12" fill="${pal.fill}" fill-opacity="${isSelected ? '0.28' : '0.12'}" stroke="${pal.fill}" stroke-width="${isSelected ? '2.5' : '1.5'}" stroke-dasharray="4 2"/>
+              <rect x="2" y="2" width="56" height="56" rx="14" fill="${pal.fill}" fill-opacity="${isSelected ? '0.28' : '0.12'}" stroke="${pal.fill}" stroke-width="${isSelected ? '2.5' : '1.5'}" stroke-dasharray="${node.type === 'zip' ? '4 2' : '6 3'}"/>
               <!-- Completed Workout Number Badge -->
-              <rect x="12" y="10" width="32" height="28" rx="8" fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"/>
-              <text x="28" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="14" font-weight="900" text-anchor="middle">${completedCount}</text>
-              <!-- Zip Code Label -->
-              <rect x="8" y="40" width="40" height="12" rx="3" fill="#0b0f19" fill-opacity="0.9"/>
-              <text x="28" y="49" fill="#cbd5e1" font-family="monospace, sans-serif" font-size="8" font-weight="700" text-anchor="middle">${node.zip}</text>
+              <rect x="14" y="10" width="32" height="28" rx="8" fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"/>
+              <text x="30" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="14" font-weight="900" text-anchor="middle">${completedCount}</text>
+              <!-- Region / Zip Code Label -->
+              <rect x="6" y="42" width="48" height="13" rx="3.5" fill="#0b0f19" fill-opacity="0.92"/>
+              <text x="30" y="52" fill="#cbd5e1" font-family="monospace, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">${tagLabel}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(56, 56),
-          anchor: new google.maps.Point(28, 28)
+          scaledSize: new google.maps.Size(60, 60),
+          anchor: new google.maps.Point(30, 30)
         };
 
         const marker = new google.maps.Marker({
           position: { lat: node.lat, lng: node.lng },
           map: googleMapInstance,
-          title: `Zip ${node.zip}: ${completedCount} Completed Workouts, ${node.activeCount} Active Lifters`,
+          title: `${node.label}: ${completedCount} Completed Workouts by Logged-in Athletes`,
           icon: svgIcon
         });
 
         marker.addListener('click', () => {
           triggerHaptic('light');
-          selectZipNode(node.zip);
+          selectZipNode(node.id);
         });
 
         googleMapMarkers.push(marker);
@@ -5258,27 +5435,29 @@
       const centerHud = document.getElementById('map-boundary-center-hud');
       if (!topHud || !centerHud) return;
 
-      if (!activeNodes || activeNodes.length === 0) {
+      const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
+
+      if (!aggNodes || aggNodes.length === 0) {
         topHud.innerHTML = '';
         centerHud.innerHTML = `
           <div class="pointer-events-auto text-center p-3 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-slate-400 max-w-xs shadow-xl">
             <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 mx-auto mb-2 flex items-center justify-center text-slate-400 text-xs">
               <i class="fa-solid fa-map-location-dot"></i>
             </div>
-            <p class="text-xs font-bold text-slate-200">No active zip code workouts yet</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">Finish a workout to identify your zip code border with your completed count.</p>
+            <p class="text-xs font-bold text-slate-200">No active workouts logged today</p>
+            <p class="text-[10px] text-slate-400 mt-0.5">Finish a workout to put your area on the live map!</p>
           </div>
         `;
         return;
       }
 
-      // Top HUD: Interactive Zip Code border chips with completed count
+      // Top HUD: Interactive chips reflecting the current zoom level (Zip -> State -> Country)
       topHud.innerHTML = `
         <div class="flex items-center gap-1.5 flex-wrap pointer-events-auto">
-          ${activeNodes.map(node => {
-            const isSelected = (node.zip === selectedHeatMapZip);
+          ${aggNodes.map(node => {
+            const isSelected = (node.id === selectedHeatMapZip || (node.originalNodes && node.originalNodes.some(on => on.zip === selectedHeatMapZip)));
             return `
-              <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border ${
+              <button onclick="triggerHaptic('light'); selectZipNode('${node.id}')" class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border ${
                 isSelected 
                   ? 'border-[var(--m3-primary)] shadow-md shadow-[var(--m3-primary)]/20 text-white font-bold' 
                   : 'border-slate-800 text-slate-300 hover:border-slate-700 font-medium'
@@ -5286,44 +5465,54 @@
                 <span class="w-5 h-5 rounded-lg bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-[10px] flex items-center justify-center shadow-sm">
                   ${node.completedToday || 0}
                 </span>
-                <span class="font-mono text-[11px]">Zip ${node.zip}</span>
+                <span class="font-mono text-[11px]">${node.type === 'zip' ? `Zip ${node.id}` : node.label}</span>
               </button>
             `;
           }).join('')}
         </div>
       `;
 
-      // Center HUD: Zip Code Boundary Perimeter Frame identifying the selected Zip Code
-      const selectedNode = activeNodes.find(z => z.zip === selectedHeatMapZip) || activeNodes[0];
+      // Center HUD: Adaptive Boundary Perimeter Frame identifying the selected Region/Zip
+      const selectedNode = aggNodes.find(z => z.id === selectedHeatMapZip || (z.originalNodes && z.originalNodes.some(on => on.zip === selectedHeatMapZip))) || aggNodes[0];
       if (!selectedNode) {
         centerHud.innerHTML = '';
         return;
       }
 
+      let borderBadgeText = `Zip ${selectedNode.id}`;
+      let borderSubtext = selectedNode.subLabel;
+      let levelLabel = 'Workouts Completed Today';
+      if (selectedNode.type === 'state') {
+        borderBadgeText = `State Area: ${selectedNode.label}`;
+        levelLabel = `State Workouts Completed`;
+      } else if (selectedNode.type === 'country') {
+        borderBadgeText = `Country: ${selectedNode.label}`;
+        levelLabel = `National Workouts Completed`;
+      }
+
       centerHud.innerHTML = `
         <div class="pointer-events-auto cursor-pointer group transition duration-300" onclick="triggerHaptic('light'); zoomToSelectedZip()">
-          <!-- Geometric Zip Code Boundary Perimeter Box -->
-          <div class="w-52 sm:w-60 h-36 sm:h-40 rounded-3xl border-2 border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 backdrop-blur-[3px] shadow-2xl shadow-[var(--m3-primary)]/20 relative flex flex-col items-center justify-between p-3 transition group-hover:scale-105 group-hover:border-[var(--m3-primary)]">
-            <!-- 4 Corner Boundary Tick Marks to identify border perimeter -->
+          <!-- Geometric Boundary Perimeter Box -->
+          <div class="w-52 sm:w-64 h-36 sm:h-40 rounded-3xl border-2 border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 backdrop-blur-[3px] shadow-2xl shadow-[var(--m3-primary)]/20 relative flex flex-col items-center justify-between p-3 transition group-hover:scale-105 group-hover:border-[var(--m3-primary)]">
+            <!-- 4 Corner Boundary Tick Marks -->
             <div class="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-[var(--m3-primary)]"></div>
             <div class="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-[var(--m3-primary)]"></div>
             <div class="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-[var(--m3-primary)]"></div>
             <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-[var(--m3-primary)]"></div>
 
-            <!-- Header Badge: Zip & Border Label -->
-            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950/90 border border-[var(--m3-primary)]/40 text-[10px] font-mono text-slate-200 shadow-sm">
-              <i class="fa-solid fa-draw-polygon text-[var(--m3-primary)] text-[9px]"></i>
-              <span class="font-bold">Zip ${selectedNode.zip}</span>
-              <span class="text-slate-400">• ${selectedNode.city.split(',')[0]}</span>
+            <!-- Header Badge: Region & Level Label -->
+            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950/90 border border-[var(--m3-primary)]/40 text-[10px] font-mono text-slate-200 shadow-sm max-w-[90%] truncate">
+              <i class="fa-solid fa-draw-polygon text-[var(--m3-primary)] text-[9px] flex-shrink-0"></i>
+              <span class="font-bold truncate">${borderBadgeText}</span>
             </div>
 
-            <!-- Number of Completed Workouts -->
+            <!-- Number of Completed Workouts by Logged-in Athletes -->
             <div class="flex flex-col items-center justify-center gap-0.5 my-auto">
               <div class="w-12 h-12 rounded-2xl bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl flex items-center justify-center shadow-lg shadow-[var(--m3-primary)]/40">
                 ${selectedNode.completedToday || 0}
               </div>
-              <span class="text-[10px] font-bold text-slate-100 uppercase tracking-wider text-center mt-1">
-                Completed Workouts
+              <span class="text-[10px] font-bold text-slate-100 uppercase tracking-wider text-center mt-1 truncate max-w-[180px]">
+                ${levelLabel}
               </span>
             </div>
 
@@ -5331,7 +5520,7 @@
             <div class="flex items-center gap-2 text-[9px]">
               ${selectedNode.activeCount > 0 
                 ? `<span class="text-emerald-300 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>${selectedNode.activeCount} Active Now</span>` 
-                : `<span class="text-slate-300 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-check text-[var(--m3-primary)]"></i> Boundary Border Verified</span>`}
+                : `<span class="text-slate-300 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-check text-[var(--m3-primary)]"></i> Verified Athlete Log</span>`}
             </div>
           </div>
         </div>
@@ -5343,11 +5532,13 @@
       if (googleMapInstance && !isMapEmbedMode) {
         googleMapInstance.setZoom(currentMapZoom);
         updateMapZoomStatusUI(currentMapZoom);
+        renderHeatMap();
       } else {
         const activeNodes = getActiveAndCompletedZipNodes();
         const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
         const coords = getZipCoordinates(targetZip);
         renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, targetZip, coords.city);
+        renderHeatMap();
       }
     }
 
@@ -5369,7 +5560,7 @@
     }
 
     function zoomToSelectedZip() {
-      currentMapZoom = 14; // Zip code level
+      currentMapZoom = 14; // Snap to Zip code level
       const activeNodes = getActiveAndCompletedZipNodes();
       const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
       const coords = getZipCoordinates(targetZip);
@@ -5381,16 +5572,25 @@
       } else {
         renderGoogleMapsEmbed(coords.lat, coords.lng, 14, targetZip, coords.city);
       }
+      renderHeatMap();
       showToast(`Zoomed to Zip Code ${targetZip} (14x Level)`, "info");
     }
 
-    function selectZipNode(zipCode) {
-      selectedHeatMapZip = zipCode;
-      const coords = getZipCoordinates(zipCode);
+    function selectZipNode(nodeId) {
+      selectedHeatMapZip = nodeId;
+      const activeNodes = getActiveAndCompletedZipNodes();
+      const node = activeNodes.find(n => n.zip === nodeId) || activeNodes.find(n => {
+        const geo = parseLocationHierarchy(n.city, n.zip);
+        return geo.stateCode === nodeId || geo.countryCode === nodeId;
+      });
+
+      const zipToPan = node ? node.zip : (nodeId.length === 5 ? nodeId : getUserZip());
+      const coords = getZipCoordinates(zipToPan);
+
       if (googleMapInstance && !isMapEmbedMode) {
         googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
       } else {
-        renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, zipCode, coords.city);
+        renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, zipToPan, coords.city);
       }
       renderHeatMap();
     }
@@ -5405,30 +5605,30 @@
         displayUserZip.innerText = userCity ? `${userZip} (${userCity.split(',')[0]})` : userZip;
       }
 
-      // ONLY get zip codes where users are working out or have worked out already for the day
+      // ONLY get zip codes where logged-in athletes are working out or completed today
       const activeZipNodes = getActiveAndCompletedZipNodes();
+      const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeZipNodes);
 
-      if (!selectedHeatMapZip || !activeZipNodes.some(n => n.zip === selectedHeatMapZip)) {
+      if (!selectedHeatMapZip || (!activeZipNodes.some(n => n.zip === selectedHeatMapZip) && !aggNodes.some(a => a.id === selectedHeatMapZip))) {
         selectedHeatMapZip = activeZipNodes.length > 0 ? activeZipNodes[0].zip : userZip;
       }
 
-      // 1. Render Zip Ticker Pills
+      // 1. Render Ticker Pills (Zoom-adaptive: Zip Codes, States, or Country)
       if (tickerContainer) {
-        if (activeZipNodes.length === 0) {
+        if (aggNodes.length === 0) {
           tickerContainer.innerHTML = `
             <div class="text-[11px] text-slate-500 italic py-1 px-1 flex items-center gap-1.5">
               <i class="fa-solid fa-circle-info text-slate-600"></i>
-              <span>No workouts recorded today yet. Log your first workout to put your zip code on the map!</span>
+              <span>No workouts recorded today yet. Log your first workout to put your area on the map!</span>
             </div>
           `;
         } else {
-          tickerContainer.innerHTML = activeZipNodes.map(node => {
-            const isSelected = node.zip === selectedHeatMapZip;
-            const isUserZip = node.isUserZip;
+          tickerContainer.innerHTML = aggNodes.map(node => {
+            const isSelected = (node.id === selectedHeatMapZip || (node.originalNodes && node.originalNodes.some(on => on.zip === selectedHeatMapZip)));
             const hasActive = node.activeCount > 0;
 
             return `
-              <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1.5 rounded-xl border text-[11px] whitespace-nowrap transition flex items-center gap-1.5 ${
+              <button onclick="triggerHaptic('light'); selectZipNode('${node.id}')" class="px-2.5 py-1.5 rounded-xl border text-[11px] whitespace-nowrap transition flex items-center gap-1.5 ${
                 isSelected 
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm font-bold' 
                   : hasActive
@@ -5436,8 +5636,8 @@
                     : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
               }">
                 <span class="w-5 h-5 rounded-lg bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[10px] font-mono font-black shadow-sm">${node.completedToday || 0}</span>
-                <span class="font-mono font-bold">${node.zip}</span>
-                <span class="text-slate-400 text-[10px]">${node.city.split(',')[0]}</span>
+                <span class="font-mono font-bold">${node.type === 'zip' ? node.id : node.label}</span>
+                ${node.type === 'zip' ? `<span class="text-slate-400 text-[10px]">${node.subLabel.split(',')[0]}</span>` : ''}
                 ${hasActive 
                   ? `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-bold flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-emerald-400 animate-ping"></span>${node.activeCount} Live</span>` 
                   : `<span class="text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--m3-primaryContainer)] text-[var(--m3-primary)] border border-[var(--m3-primary)]/30 font-bold flex items-center gap-1"><i class="fa-solid fa-check text-[8px] font-black"></i>${node.completedToday} Done</span>`
@@ -5470,7 +5670,7 @@
 
       if (activeZipNodes.length === 0) {
         if (titleEl) titleEl.innerText = "No workouts recorded today";
-        if (descEl) descEl.innerText = `Only zip codes with active lifters or completed workouts today are displayed. Your zip code (${userZip}) will activate when you log a set.`;
+        if (descEl) descEl.innerText = `Only workouts logged by you or your squad today are displayed. Your zip code (${userZip}) will activate when you complete a set.`;
         if (indEl) {
           indEl.className = "w-2.5 h-2.5 rounded-full bg-slate-700 flex-shrink-0";
           indEl.innerHTML = "";
@@ -5486,22 +5686,36 @@
         return;
       }
 
-      const node = activeZipNodes.find(z => z.zip === selectedHeatMapZip) || activeZipNodes[0];
+      const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeZipNodes);
+      const node = aggNodes.find(z => z.id === selectedHeatMapZip || (z.originalNodes && z.originalNodes.some(on => on.zip === selectedHeatMapZip))) || aggNodes[0];
       if (!node) return;
 
       const isUserZip = node.isUserZip;
       const hasActive = node.activeCount > 0;
 
       if (titleEl) {
-        titleEl.innerText = `Zip ${node.zip} (${node.city})${isUserZip ? ' • (Your Zip Code)' : ''}`;
+        if (node.type === 'zip') {
+          titleEl.innerText = `Zip ${node.id} (${node.subLabel})${isUserZip ? ' • (Your Zip Code)' : ''}`;
+        } else if (node.type === 'state') {
+          titleEl.innerText = `${node.label} • State / General Area Level`;
+        } else {
+          titleEl.innerText = `${node.label} • Country / Continental Level`;
+        }
       }
       if (borderTag) {
         borderTag.classList.remove('hidden');
         borderTag.classList.add('inline-flex');
+        if (node.type === 'zip') {
+          borderTag.innerHTML = `<i class="fa-solid fa-draw-polygon text-[8px] mr-0.5"></i> Zip Border`;
+        } else if (node.type === 'state') {
+          borderTag.innerHTML = `<i class="fa-solid fa-map text-[8px] mr-0.5"></i> State Area`;
+        } else {
+          borderTag.innerHTML = `<i class="fa-solid fa-earth-americas text-[8px] mr-0.5"></i> Country Area`;
+        }
       }
       if (descEl) {
         const liftersStr = node.lifters && node.lifters.length > 0 ? ` (${node.lifters.join(', ')})` : '';
-        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today • ${node.activeCount || 0} Lifters Active Right Now${liftersStr}`;
+        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today by Logged-in Athletes • ${node.activeCount || 0} Lifters Active Right Now${liftersStr}`;
       }
       if (indEl) {
         if (hasActive) {
@@ -5513,7 +5727,7 @@
         }
       }
       if (zoomBtn) {
-        zoomBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass-location"></i><span>Zoom to Zip</span>`;
+        zoomBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass-location"></i><span>Zoom to Level</span>`;
         zoomBtn.onclick = () => { triggerHaptic('light'); zoomToSelectedZip(); };
       }
     }
@@ -6424,31 +6638,45 @@
             ` : ''}
 
             <!-- COLLAPSED SUMMARY VIEW -->
-            ${isCollapsed ? `
-              <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <div class="flex -space-x-2 overflow-hidden flex-shrink-0">
-                    ${sq.members.slice(0, 4).map(m => `
-                      <div class="inline-flex h-7 w-7 rounded-xl ring-2 ring-slate-950 bg-slate-900 text-[10px] text-slate-200 font-bold items-center justify-center border border-slate-700">
-                        ${getInitials(m.rawName || m.name)}
-                      </div>
-                    `).join('')}
+            ${isCollapsed ? (() => {
+              const currentETDate = getETDateKey();
+              const userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+              const userCompleted = userHistory.some(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+              const showedUpCount = sq.members.filter(mem => {
+                const isMe = (mem.id === user.id || mem.email === user.email);
+                return isMe ? userCompleted : !!(mem.completedToday && mem.completedDate === currentETDate);
+              }).length;
+              const toBeSeenCount = sq.members.length - showedUpCount;
+
+              return `
+                <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="flex -space-x-2 overflow-hidden flex-shrink-0">
+                      ${sq.members.slice(0, 4).map(m => `
+                        <div class="inline-flex h-7 w-7 rounded-xl ring-2 ring-slate-950 bg-slate-900 text-[10px] text-slate-200 font-bold items-center justify-center border border-slate-700">
+                          ${getInitials(m.rawName || m.name)}
+                        </div>
+                      `).join('')}
+                    </div>
+                    <div class="truncate">
+                      <span class="text-slate-200 font-semibold">${sq.members.length} members</span>
+                      <span class="text-slate-500 mx-1.5">•</span>
+                      <span class="text-emerald-400 font-semibold">${showedUpCount} Showed Up</span>
+                      <span class="text-slate-500 mx-1">•</span>
+                      <span class="text-slate-400">${toBeSeenCount} To be seen</span>
+                      ${activeMembersInSquad.length > 0 
+                        ? `<span class="text-emerald-400 font-semibold ml-1.5"><i class="fa-solid fa-bolt text-[10px]"></i> ${activeMembersInSquad.length} lifting now</span>`
+                        : ''
+                      }
+                    </div>
                   </div>
-                  <div class="truncate">
-                    <span class="text-slate-200 font-semibold">${sq.members.length} members</span>
-                    <span class="text-slate-500 mx-1.5">•</span>
-                    ${activeMembersInSquad.length > 0 
-                      ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt text-[10px]"></i> ${activeMembersInSquad.length} lifting now</span>`
-                      : `<span class="text-slate-500">All resting</span>`
-                    }
-                  </div>
+                  <button onclick="triggerHaptic('light'); toggleSquadCollapse('${sq.id}')" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 flex-shrink-0">
+                    <span>View Details</span>
+                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                  </button>
                 </div>
-                <button onclick="triggerHaptic('light'); toggleSquadCollapse('${sq.id}')" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 flex-shrink-0">
-                  <span>View Details</span>
-                  <i class="fa-solid fa-chevron-down text-[10px]"></i>
-                </button>
-              </div>
-            ` : `
+              `;
+            })() : `
               <!-- UNOBTRUSIVE NOTIFICATIONS STATUS PILL ROW -->
               <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[11px]">
                 <span class="text-slate-400 font-medium flex items-center gap-1.5">
@@ -6478,6 +6706,13 @@
                     const isMemberBackupCreator = m.isBackupCreator || (sq.backupCreatorId === m.id);
                     const initials = getInitials(m.rawName || m.name);
                     const showDeliveryBadge = isUserCreator && (m.invitedByEmail || m.inviteStatus === 'delivered');
+                    
+                    const currentETDate = getETDateKey();
+                    const userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+                    const userCompletedToday = userHistory.some(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+                    const hasCompletedToday = isThisUser 
+                      ? userCompletedToday 
+                      : !!(m.completedToday && m.completedDate === currentETDate);
                     
                     return `
                       <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
@@ -6523,21 +6758,33 @@
                                 </span>
                               ` : ''}
                             </div>
-                            <div class="mt-0.5 flex items-center gap-2 flex-wrap">
-                              ${m.isWorkingOut 
-                                ? `<div class="flex items-center gap-2">
-                                    <p class="text-[11px] font-semibold text-emerald-400 flex items-center gap-1 truncate">
-                                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                      Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
-                                    </p>
-                                    <!-- CLOSE SIMULATED WORKOUT ACTION ON MEMBER CARD -->
-                                    <button onclick="triggerHaptic('light'); stopSpecificMemberWorkout('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1" title="Close and finish this active workout session">
-                                      <i class="fa-solid fa-xmark text-[9px]"></i>
-                                      <span>Close Session</span>
-                                    </button>
-                                   </div>`
-                                : `<p class="text-[11px] text-slate-400 truncate">Status: ${escapeHtml(m.lastActive || 'Resting')}</p>`
-                              }
+                            <div class="mt-1 flex items-center gap-2 flex-wrap">
+                              <!-- ATHLETE STATUS: "Showed Up" if completed workout today, else "To be seen" -->
+                              ${hasCompletedToday ? `
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-sm">
+                                  <i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i>
+                                  <span>Showed Up</span>
+                                </span>
+                              ` : `
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
+                                  <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
+                                  <span>To be seen</span>
+                                </span>
+                              `}
+
+                              ${m.isWorkingOut ? `
+                                <div class="flex items-center gap-1.5">
+                                  <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
+                                  </span>
+                                  <!-- CLOSE SIMULATED WORKOUT ACTION ON MEMBER CARD -->
+                                  <button onclick="triggerHaptic('light'); stopSpecificMemberWorkout('${sq.id}', '${m.id}')" class="text-[9px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1" title="Close and finish this active workout session">
+                                    <i class="fa-solid fa-xmark text-[8px]"></i>
+                                    <span>Close Session</span>
+                                  </button>
+                                </div>
+                              ` : ''}
                             </div>
                           </div>
                         </div>
