@@ -82,6 +82,16 @@
       --m3-onSecondaryContainer: #ffedd5;
     }
 
+    .theme-orange {
+      --m3-primary: #f97316;
+      --m3-onPrimary: #431407;
+      --m3-primaryContainer: #c2410c;
+      --m3-onPrimaryContainer: #ffedd5;
+      --m3-secondary: #ea580c;
+      --m3-secondaryContainer: #7c2d12;
+      --m3-onSecondaryContainer: #fed7aa;
+    }
+
     .theme-slate {
       --m3-primary: #94a3b8;
       --m3-onPrimary: #0f172a;
@@ -205,6 +215,16 @@
               <span>Log out</span>
             </button>
           </div>
+          <div class="py-1 border-t border-slate-800/80">
+            <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-1.5 text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2">
+              <i class="fa-solid fa-user-shield text-[10px] text-slate-400"></i>
+              <span>Privacy Policy</span>
+            </a>
+            <a href="terms.html" target="_blank" class="w-full text-left px-3.5 py-1.5 text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2">
+              <i class="fa-solid fa-file-contract text-[10px] text-slate-400"></i>
+              <span>Terms of Service</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -285,13 +305,14 @@
       <div class="space-y-4">
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Theme Palette Accent</label>
-          <div class="grid grid-cols-6 gap-2">
-            <button onclick="setThemePalette('emerald')" class="h-9 rounded-xl bg-emerald-500 border-2 border-white/80 active:scale-95 transition"></button>
-            <button onclick="setThemePalette('blue')" class="h-9 rounded-xl bg-blue-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition"></button>
-            <button onclick="setThemePalette('purple')" class="h-9 rounded-xl bg-purple-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition"></button>
-            <button onclick="setThemePalette('red')" class="h-9 rounded-xl bg-rose-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition"></button>
-            <button onclick="setThemePalette('slate')" class="h-9 rounded-xl bg-slate-500 border-2 border-transparent hover:border-white/80 active:scale-95 transition"></button>
-            <button onclick="setThemePalette('amoled')" class="h-9 rounded-xl bg-black border-2 border-slate-700 hover:border-white/80 active:scale-95 transition" title="AMOLED Black"></button>
+          <div class="grid grid-cols-7 gap-2" id="theme-palette-grid">
+            <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" class="h-9 rounded-xl bg-emerald-500 border-2 border-transparent active:scale-95 transition" title="Emerald"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" class="h-9 rounded-xl bg-orange-500 border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" class="h-9 rounded-xl bg-blue-500 border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" class="h-9 rounded-xl bg-purple-500 border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" class="h-9 rounded-xl bg-rose-500 border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" class="h-9 rounded-xl bg-slate-500 border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" class="h-9 rounded-xl bg-black border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
           </div>
         </div>
 
@@ -352,6 +373,16 @@
             </button>
           </div>
           <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+        </div>
+      </div>
+
+      <!-- LEGAL & PRIVACY FOOTER -->
+      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+        <span>showUp Fitness</span>
+        <div class="flex items-center gap-3">
+          <a href="privacy.html" target="_blank" class="hover:text-emerald-400 transition underline underline-offset-2">Privacy Policy</a>
+          <span>•</span>
+          <a href="terms.html" target="_blank" class="hover:text-emerald-400 transition underline underline-offset-2">Terms of Service</a>
         </div>
       </div>
 
@@ -1633,6 +1664,7 @@
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
   <script>
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
@@ -2719,6 +2751,27 @@
         body.classList.add(`theme-${themeKey}`);
       }
       localStorage.setItem('showUp_theme', themeKey);
+      updateThemeButtonsUI(themeKey);
+    }
+
+    function updateThemeButtonsUI(activeTheme) {
+      const container = document.getElementById('theme-palette-grid');
+      if (!container) return;
+      const buttons = container.querySelectorAll('button[data-theme]');
+      buttons.forEach(btn => {
+        const theme = btn.getAttribute('data-theme');
+        if (theme === activeTheme) {
+          btn.classList.remove('border-transparent', 'border-slate-700');
+          btn.classList.add('border-white', 'ring-2', 'ring-white/50');
+        } else {
+          btn.classList.remove('border-white', 'ring-2', 'ring-white/50');
+          if (theme === 'amoled') {
+            btn.classList.add('border-slate-700');
+          } else {
+            btn.classList.add('border-transparent');
+          }
+        }
+      });
     }
 
     function restoreThemePreferences() {
@@ -2726,7 +2779,8 @@
       setThemePalette(savedTheme);
 
       const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
-      document.getElementById('pref-hr-collapsed').checked = savedHRCollapsed;
+      const prefHrEl = document.getElementById('pref-hr-collapsed');
+      if (prefHrEl) prefHrEl.checked = savedHRCollapsed;
       if (savedHRCollapsed) {
         toggleHRCardVisibility(true);
       }
@@ -2776,7 +2830,7 @@
       }
     }
 
-    function handleLogout() {
+    function handleLogout(isSilent = false) {
       if (googleAccessToken && window.google?.accounts?.oauth2) {
         try {
           google.accounts.oauth2.revoke(googleAccessToken, () => {});
@@ -2787,6 +2841,13 @@
       googleAccessToken = null;
       localStorage.removeItem('showUp_google_token');
       localStorage.removeItem('showUp_user_profile');
+      localStorage.removeItem('showUp_session_expiry');
+
+      if (window.google?.accounts?.id) {
+        try {
+          google.accounts.id.disableAutoSelect();
+        } catch (e) {}
+      }
 
       document.getElementById('profile-dropdown-menu').classList.add('hidden');
       document.getElementById('google-user-profile').classList.add('hidden');
@@ -2798,7 +2859,9 @@
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
       updateCloudBackupUI();
-      showToast("Signed out of Google Account", "info");
+      if (!isSilent) {
+        showToast("Signed out of Google Account", "info");
+      }
     }
 
     function handleGoogleLogin() {
@@ -3019,31 +3082,152 @@
       }
     }
 
+    function parseJwtPayload(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        console.error("JWT parse error:", e);
+        return null;
+      }
+    }
+
     function restoreSavedSession() {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
-      if (googleAccessToken && savedProfile) {
-        document.getElementById('user-first-name').innerText = savedProfile.firstName || 'User';
-        document.getElementById('user-email').innerText = savedProfile.email || '';
-        document.getElementById('dropdown-user-email').innerText = savedProfile.email || '';
-        if (savedProfile.picture) {
-          document.getElementById('user-avatar').src = savedProfile.picture;
-        }
+      let sessionExpiry = parseInt(localStorage.getItem('showUp_session_expiry') || '0', 10);
+      const now = Date.now();
+
+      // If user had an existing logged-in profile without an explicit expiry timestamp, establish 1-week window
+      if (savedProfile && (!sessionExpiry || isNaN(sessionExpiry))) {
+        sessionExpiry = now + SESSION_DURATION_MS;
+        localStorage.setItem('showUp_session_expiry', String(sessionExpiry));
+      }
+
+      if (savedProfile && sessionExpiry > now) {
+        // Active 1-week session: immediately restore profile UI so user never has to re-login
+        updateProfileUI(savedProfile.firstName, savedProfile.email, savedProfile.picture);
         document.getElementById('btn-google-login').classList.add('hidden');
         document.getElementById('google-user-profile').classList.remove('hidden');
+        updateCloudBackupUI();
 
-        // Test token validity in background
+        // Check and silently refresh Google Drive OAuth token in background without annoying popups
+        attemptSilentTokenRefresh();
+      } else if (savedProfile && sessionExpiry <= now) {
+        // 1-week session duration expired
+        console.info("1-week session expired. Requiring fresh login.");
+        handleLogout(true);
+      } else {
+        // No session: attempt seamless Chrome Profile auto-select via Google One Tap
+        tryGoogleOneTap();
+      }
+    }
+
+    function attemptSilentTokenRefresh() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        setTimeout(() => {
+          if (typeof google !== 'undefined' && google.accounts?.oauth2) {
+            attemptSilentTokenRefresh();
+          }
+        }, 1200);
+        return;
+      }
+
+      if (googleAccessToken) {
         fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${googleAccessToken}` }
         })
         .then(res => {
-          if (res.status === 401) {
-            console.warn("Stored Google OAuth token has expired. Session cleared.");
-            handleLogout();
+          if (res.ok) {
+            updateCloudBackupUI();
+          } else if (res.status === 401) {
+            requestTokenSilently();
           }
         })
-        .catch(err => {
-          console.warn("Session check notice:", err);
+        .catch(() => {
+          updateCloudBackupUI();
         });
+      } else {
+        requestTokenSilently();
+      }
+    }
+
+    function requestTokenSilently() {
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: getGoogleClientId(),
+          scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+          prompt: '', // Silent request without popup or re-consent
+          callback: (response) => {
+            if (response && response.access_token) {
+              googleAccessToken = response.access_token;
+              localStorage.setItem('showUp_google_token', googleAccessToken);
+              // Extend 1-week session validity
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+              updateCloudBackupUI();
+            }
+          },
+          error_callback: (err) => {
+            console.log("Silent token refresh info:", err);
+          }
+        });
+        client.requestAccessToken({ prompt: '' });
+      } catch (err) {
+        console.warn("Silent token request skipped:", err);
+      }
+    }
+
+    function tryGoogleOneTap() {
+      if (window.location.protocol === 'file:') return;
+      const checkAndRun = () => {
+        if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        if (savedProfile) return;
+
+        try {
+          google.accounts.id.initialize({
+            client_id: getGoogleClientId(),
+            auto_select: true, // Seamlessly continue if user is logged into their Chrome profile
+            callback: (response) => {
+              if (response && response.credential) {
+                const profile = parseJwtPayload(response.credential);
+                if (profile) {
+                  const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
+                  const userEmail = profile.email || '';
+                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+                  const profileObj = { firstName, email: userEmail, picture };
+
+                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+                  localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+
+                  updateProfileUI(firstName, userEmail, picture);
+                  document.getElementById('btn-google-login').classList.add('hidden');
+                  document.getElementById('google-user-profile').classList.remove('hidden');
+                  showToast(`Welcome back, ${firstName}!`, "success");
+
+                  requestTokenSilently();
+                }
+              }
+            }
+          });
+          google.accounts.id.prompt((notification) => {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              console.log("One Tap status:", notification.getNotDisplayedReason?.() || notification.getSkippedReason?.());
+            }
+          });
+        } catch (e) {
+          console.warn("One Tap initialization warning:", e);
+        }
+      };
+
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) {
+        setTimeout(checkAndRun, 1500);
+      } else {
+        checkAndRun();
       }
     }
 
@@ -3157,6 +3341,8 @@
             if (response.access_token) {
               googleAccessToken = response.access_token;
               localStorage.setItem('showUp_google_token', googleAccessToken);
+              // Set session active for 1 week
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
 
               fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${googleAccessToken}` }
@@ -3197,7 +3383,8 @@
           },
         });
 
-        client.requestAccessToken({ prompt: 'consent' });
+        // Use prompt: '' so Google does NOT force the unverified missing Privacy Policy / Terms warning dialog repeatedly
+        client.requestAccessToken({ prompt: '' });
       } catch (err) {
         console.error("Failed to initialize Google Token Client:", err);
         showToast(`Auth Initialization failed: ${err.message}`, "error");
@@ -3249,8 +3436,15 @@
         );
 
         if (searchRes.status === 401) {
-          handleLogout();
-          showToast("Google authorization expired. Please sign in again.", "warning");
+          console.warn("Drive token expired during sync. Silently refreshing token...");
+          googleAccessToken = null;
+          localStorage.removeItem('showUp_google_token');
+          if (!isSilent) {
+            showToast("Google authorization expired. Reconnecting...", "info");
+            handleGoogleSignIn();
+          } else {
+            requestTokenSilently();
+          }
           return;
         }
 
@@ -3365,8 +3559,15 @@
         );
 
         if (searchRes.status === 401) {
-          handleLogout();
-          showToast("Google authorization expired. Please sign in again.", "warning");
+          console.warn("Drive token expired during restore. Silently refreshing token...");
+          googleAccessToken = null;
+          localStorage.removeItem('showUp_google_token');
+          if (!isAutoCheck) {
+            showToast("Google authorization expired. Reconnecting...", "info");
+            handleGoogleSignIn();
+          } else {
+            requestTokenSilently();
+          }
           return;
         }
 
