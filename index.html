@@ -19,6 +19,9 @@
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
+  <!-- Google Maps JavaScript API (Base Layer) -->
+  <script src="https://maps.googleapis.com/maps/api/js?v=weekly&loading=async" async defer></script>
+
   <!-- App Favicon & Touch Icon -->
   <link rel="icon" type="image/png" href="logo.png">
   <link rel="apple-touch-icon" href="logo.png">
@@ -1677,15 +1680,15 @@
         </div>
       </section>
 
-      <!-- 2. GLOBAL HEAT MAP (BY ZIP CODE) -->
+      <!-- 2. GLOBAL WORKOUT MAP (GOOGLE MAPS BASE LAYER) -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
           <div>
             <div class="flex items-center gap-2">
               <i class="fa-solid fa-map-location-dot text-emerald-400 text-sm"></i>
-              <h3 class="text-sm font-bold text-slate-100 tracking-tight">Global Workout Heat Map</h3>
+              <h3 class="text-sm font-bold text-slate-100 tracking-tight">Active Workout Map (Google Maps)</h3>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Live regional zip code density of active and completed workouts</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Real-time zip codes where athletes are actively lifting or completed workouts today</p>
           </div>
 
           <!-- IP-BASED LOCATION BADGE (AUTOMATIC - NO USER INPUT) -->
@@ -1695,71 +1698,63 @@
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span class="text-slate-500">IP Location:</span>
+              <span class="text-slate-500">Your Zip:</span>
               <span id="display-user-zip" class="font-mono font-bold text-emerald-400">Detecting...</span>
             </div>
           </div>
         </div>
 
-        <!-- SVG HEAT MAP VISUALIZATION -->
-        <div class="relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
-          <svg id="global-zip-heatmap-svg" viewBox="0 0 600 300" class="w-full h-56 sm:h-64 select-none">
-            <defs>
-              <radialGradient id="heat-glow-emerald" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="var(--m3-primary)" stop-opacity="0.85" />
-                <stop offset="60%" stop-color="var(--m3-primary)" stop-opacity="0.25" />
-                <stop offset="100%" stop-color="var(--m3-primary)" stop-opacity="0" />
-              </radialGradient>
-              <radialGradient id="heat-glow-amber" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.75" />
-                <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.2" />
-                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
-              </radialGradient>
-            </defs>
+        <!-- GOOGLE MAPS BASE LAYER WITH ZOOM TO ZIP CODE LEVEL -->
+        <div class="relative w-full rounded-2xl border border-slate-800 bg-slate-950 overflow-hidden shadow-2xl">
+          <!-- Google Map element (explicit height as per CF2) -->
+          <div id="google-maps-canvas" class="w-full h-72 sm:h-80 relative z-0"></div>
 
-            <!-- Coordinate Grid -->
-            <g stroke="#1e293b" stroke-width="0.5" stroke-dasharray="3 3">
-              <line x1="100" y1="0" x2="100" y2="300" />
-              <line x1="200" y1="0" x2="200" y2="300" />
-              <line x1="300" y1="0" x2="300" y2="300" />
-              <line x1="400" y1="0" x2="400" y2="300" />
-              <line x1="500" y1="0" x2="500" y2="300" />
-              <line x1="0" y1="100" x2="600" y2="100" />
-              <line x1="0" y1="200" x2="600" y2="200" />
-            </g>
+          <!-- On-Map Floating Overlay: Zoom Controls & Zip Level Indicator -->
+          <div class="absolute top-3 right-3 z-10 flex flex-col gap-1.5 pointer-events-auto">
+            <button onclick="triggerHaptic('light'); zoomGoogleMap(1)" class="w-8 h-8 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-slate-200 text-sm font-black flex items-center justify-center shadow-lg transition active:scale-95" title="Zoom In">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <button onclick="triggerHaptic('light'); zoomGoogleMap(-1)" class="w-8 h-8 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-slate-200 text-sm font-black flex items-center justify-center shadow-lg transition active:scale-95" title="Zoom Out">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <button onclick="triggerHaptic('light'); zoomToUserZipLevel()" class="w-8 h-8 rounded-xl bg-slate-900/95 hover:bg-slate-800 border border-emerald-500/40 text-emerald-400 text-xs font-black flex items-center justify-center shadow-lg transition active:scale-95" title="Snap to Zip Code Level">
+              <i class="fa-solid fa-crosshairs"></i>
+            </button>
+          </div>
 
-            <!-- Vector Continent Contour -->
-            <path d="M 60,70 L 120,50 L 200,45 L 280,50 L 370,40 L 460,45 L 530,65 L 560,95 L 540,140 L 515,190 L 480,260 L 440,245 L 390,210 L 320,240 L 260,270 L 210,215 L 140,210 L 95,235 L 55,175 L 45,110 Z" fill="#090d16" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.85" />
-
-            <!-- Dynamic Zip Nodes Plotted via JS -->
-            <g id="heatmap-nodes-group"></g>
-          </svg>
-
-          <!-- Ambient Scanner Glow -->
-          <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent w-full animate-pulse opacity-40"></div>
+          <!-- Bottom Map Status Bar -->
+          <div class="absolute bottom-2.5 left-2.5 z-10 bg-slate-950/90 backdrop-blur-md px-3 py-1 rounded-xl border border-slate-800/90 text-[10px] text-slate-400 flex items-center gap-2 shadow-lg">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span id="map-zoom-status">Zoom: 14x (Zip Code Level)</span>
+            <span class="text-slate-600">•</span>
+            <span class="text-slate-400 font-semibold">Google Maps Base Layer</span>
+          </div>
         </div>
 
-        <!-- LIVE ZIP CODE ACTIVITY STRIP -->
+        <!-- ACTIVE ZIP CODES OF TODAY'S WORKOUTS (NO ARBITRARY REGIONAL ZIPS) -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-            <span>Regional Zip Codes:</span>
-            <span id="heatmap-legend" class="text-[10px] text-slate-500 font-normal">🟢 Active Now • 🔥 Completed Today</span>
+            <span>Today's Active Zip Codes:</span>
+            <span id="heatmap-legend" class="text-[10px] text-slate-500 font-normal">🟢 Active Lifter • 🔥 Completed Today</span>
           </div>
           <div id="zip-ticker-container" class="flex items-center gap-2 overflow-x-auto pb-1">
-            <!-- Dynamically populated zip pills -->
+            <!-- Dynamically populated only with zip codes where users worked out or are working out -->
           </div>
         </div>
 
         <!-- SELECTED ZIP CODE DETAIL CARD -->
         <div id="zip-detail-card" class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-3 text-xs">
           <div class="flex items-center gap-2.5 min-w-0">
-            <span id="zip-detail-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+            <span id="zip-detail-indicator" class="w-2.5 h-2.5 rounded-full bg-slate-600 flex-shrink-0"></span>
             <div class="truncate">
-              <span id="zip-detail-title" class="font-bold text-slate-100">Zip 10001 (New York, NY)</span>
-              <p id="zip-detail-desc" class="text-[11px] text-slate-400 truncate">42 Completed Today • 2 Active Lifters</p>
+              <span id="zip-detail-title" class="font-bold text-slate-100">No workouts recorded today</span>
+              <p id="zip-detail-desc" class="text-[11px] text-slate-400 truncate">Workouts logged by you or your squads will appear here in real time.</p>
             </div>
           </div>
-          <span id="zip-detail-badge" class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">Active Area</span>
+          <button id="btn-zoom-to-selected-zip" onclick="triggerHaptic('light'); zoomToSelectedZip()" class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shrink-0">
+            <i class="fa-solid fa-magnifying-glass-location"></i>
+            <span>Zoom to Zip</span>
+          </button>
         </div>
       </section>
 
@@ -3162,6 +3157,7 @@
     }
 
     function updateCloudBackupUI() {
+      const banner = document.getElementById('cloud-backup-reminder-banner');
       const bannerBadge = document.getElementById('backup-banner-badge');
       const bannerTitle = document.getElementById('backup-banner-title');
       const bannerDesc = document.getElementById('backup-banner-desc');
@@ -3181,15 +3177,9 @@
       }
 
       if (googleAccessToken) {
-        if (bannerBadge) {
-          bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-          bannerBadge.innerText = "Auto-Sync Enabled";
-        }
-        if (bannerTitle) bannerTitle.innerText = "Google Drive Auto-Backup Active";
-        if (bannerDesc) bannerDesc.innerText = `Connected as ${email || 'Google User'}. Workouts, weight tracking, and squads are safely synced to Google Drive.`;
-        if (bannerGoogleBtn) {
-          bannerGoogleBtn.innerHTML = `<i class="fa-brands fa-google-drive text-xs"></i><span>Sync Now</span>`;
-          bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); syncToGoogleDrive(false); };
+        // Once the athlete signs in using google, avoid showing the top modal/banner "Google Drive Auto-Backup Active"
+        if (banner) {
+          banner.classList.add('hidden');
         }
         if (settingsBadge) {
           settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
@@ -3204,6 +3194,10 @@
           gdriveText.innerText = `Auto-sync active (${email || 'Connected'})`;
         }
       } else {
+        // Only show this modal to recommend logging into Google to back up their data to google drive
+        if (banner) {
+          banner.classList.remove('hidden');
+        }
         if (bannerBadge) {
           bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20";
           bannerBadge.innerText = "Sign-in Recommended";
@@ -3212,7 +3206,7 @@
         if (bannerDesc) bannerDesc.innerText = "Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.";
         if (bannerGoogleBtn) {
           bannerGoogleBtn.innerHTML = `<i class="fa-brands fa-google text-xs"></i><span>Sign In for Auto-Backup</span>`;
-          bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); handleGoogleSignIn(); };
+          bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); handleGoogleLogin(); };
         }
         if (settingsBadge) {
           settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
@@ -3942,53 +3936,65 @@
     let currentActiveSquadId = null;
     let transferTargetSquadId = null;
     let activePillTimeout = null;
-    let selectedHeatMapZip = '10001';
+    let selectedHeatMapZip = null;
+    let googleMapInstance = null;
+    let googleMapMarkers = [];
+    let currentMapZoom = 14; // Default zip code level (13-15)
+    let isMapEmbedMode = false;
 
-    // 12 Baseline Regional Zip Codes for Vector Continental Grid
-    const defaultZipData = [
-      { zip: '10001', city: 'New York, NY', x: 515, y: 100, completedToday: 0, activeCount: 0 },
-      { zip: '02138', city: 'Boston, MA', x: 545, y: 80, completedToday: 0, activeCount: 0 },
-      { zip: '20001', city: 'Washington, DC', x: 485, y: 125, completedToday: 0, activeCount: 0 },
-      { zip: '30303', city: 'Atlanta, GA', x: 430, y: 180, completedToday: 0, activeCount: 0 },
-      { zip: '33139', city: 'Miami, FL', x: 480, y: 245, completedToday: 0, activeCount: 0 },
-      { zip: '60601', city: 'Chicago, IL', x: 370, y: 105, completedToday: 0, activeCount: 0 },
-      { zip: '75201', city: 'Dallas, TX', x: 290, y: 195, completedToday: 0, activeCount: 0 },
-      { zip: '78701', city: 'Austin, TX', x: 280, y: 225, completedToday: 0, activeCount: 0 },
-      { zip: '80202', city: 'Denver, CO', x: 210, y: 130, completedToday: 0, activeCount: 0 },
-      { zip: '90210', city: 'Los Angeles, CA', x: 85, y: 175, completedToday: 0, activeCount: 0 },
-      { zip: '94103', city: 'San Francisco, CA', x: 65, y: 130, completedToday: 0, activeCount: 0 },
-      { zip: '98101', city: 'Seattle, WA', x: 80, y: 70, completedToday: 0, activeCount: 0 }
-    ];
+    // Standard coordinate lookup for zip codes to center Google Maps
+    const KNOWN_ZIP_COORDS = {
+      '10001': { lat: 40.7505, lng: -73.9934, city: 'New York, NY' },
+      '02138': { lat: 42.3770, lng: -71.1256, city: 'Cambridge, MA' },
+      '20001': { lat: 38.9101, lng: -77.0163, city: 'Washington, DC' },
+      '30303': { lat: 33.7537, lng: -84.3911, city: 'Atlanta, GA' },
+      '33139': { lat: 25.7781, lng: -80.1313, city: 'Miami Beach, FL' },
+      '60601': { lat: 41.8855, lng: -87.6217, city: 'Chicago, IL' },
+      '75201': { lat: 32.7876, lng: -96.7997, city: 'Dallas, TX' },
+      '78701': { lat: 30.2711, lng: -97.7437, city: 'Austin, TX' },
+      '80202': { lat: 39.7525, lng: -105.0003, city: 'Denver, CO' },
+      '90210': { lat: 34.0901, lng: -118.4065, city: 'Beverly Hills, CA' },
+      '94103': { lat: 37.7726, lng: -122.4099, city: 'San Francisco, CA' },
+      '98101': { lat: 47.6101, lng: -122.3344, city: 'Seattle, WA' },
+      '94043': { lat: 37.4056, lng: -122.0775, city: 'Mountain View, CA' },
+      '90001': { lat: 33.9731, lng: -118.2479, city: 'Los Angeles, CA' },
+      '60614': { lat: 41.9227, lng: -87.6534, city: 'Chicago, IL' },
+      '02115': { lat: 42.3424, lng: -71.0911, city: 'Boston, MA' },
+      '78704': { lat: 30.2447, lng: -97.7667, city: 'Austin, TX' },
+      '97201': { lat: 45.5089, lng: -122.6892, city: 'Portland, OR' },
+      '37203': { lat: 36.1517, lng: -86.7915, city: 'Nashville, TN' }
+    };
 
     function getUserZip() {
-      return localStorage.getItem('showUp_user_zip') || '10001';
+      return localStorage.getItem('showUp_user_ip_zip') || localStorage.getItem('showUp_user_zip') || '10001';
     }
 
-    function setUserZip(zip, city) {
+    function setUserZip(zip, city, lat, lng) {
       if (!zip) return;
       localStorage.setItem('showUp_user_zip', zip);
       localStorage.setItem('showUp_user_ip_zip', zip);
       if (city) localStorage.setItem('showUp_user_ip_city', city);
-      selectedHeatMapZip = zip;
+      if (lat) localStorage.setItem('showUp_user_ip_lat', String(lat));
+      if (lng) localStorage.setItem('showUp_user_ip_lng', String(lng));
+    }
 
-      // Ensure user's current IP zip code exists in heat map data
-      const data = getHeatMapZipData();
-      let userNode = data.find(item => item.zip === zip);
-      if (!userNode) {
-        userNode = {
-          zip: zip,
-          city: city || 'Your Area',
-          x: 450,
-          y: 140,
-          completedToday: 0,
-          activeCount: 0
-        };
-        data.push(userNode);
-        saveHeatMapZipData(data);
-      } else if (city && (!userNode.city || userNode.city === 'Your Gym Area')) {
-        userNode.city = city;
-        saveHeatMapZipData(data);
+    function getZipCoordinates(zip) {
+      const userZip = getUserZip();
+      if (zip === userZip) {
+        const uLat = parseFloat(localStorage.getItem('showUp_user_ip_lat'));
+        const uLng = parseFloat(localStorage.getItem('showUp_user_ip_lng'));
+        if (!isNaN(uLat) && !isNaN(uLng)) {
+          return { lat: uLat, lng: uLng, city: localStorage.getItem('showUp_user_ip_city') || 'Your Gym Area' };
+        }
       }
+      if (KNOWN_ZIP_COORDS[zip]) {
+        return KNOWN_ZIP_COORDS[zip];
+      }
+      // Deterministic US geographic approximation based on zip code prefix
+      const prefix = parseInt(zip.substring(0, 2), 10) || 50;
+      const lat = 28.0 + (prefix % 20) * 0.8;
+      const lng = -122.0 + (prefix * 0.6);
+      return { lat, lng, city: `Zip ${zip}` };
     }
 
     async function detectUserZipFromIP() {
@@ -4001,14 +4007,13 @@
       }
 
       try {
-        // Fast, reliable public IP geolocation (returns postal code based on network IP)
         const res = await fetch('https://ipwho.is/').catch(() => null);
         if (res && res.ok) {
           const data = await res.json();
           if (data && data.success && data.postal) {
             const cleanZip = String(data.postal).trim();
             const cityStr = data.city ? `${data.city}, ${data.region_code || ''}` : '';
-            setUserZip(cleanZip, cityStr);
+            setUserZip(cleanZip, cityStr, data.latitude, data.longitude);
             if (displayUserZip) {
               displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
             }
@@ -4017,14 +4022,13 @@
           }
         }
 
-        // Secondary fallback IP service
         const res2 = await fetch('https://freeipapi.com/api/json').catch(() => null);
         if (res2 && res2.ok) {
           const data2 = await res2.json();
           if (data2 && data2.zipCode) {
             const cleanZip = String(data2.zipCode).trim();
             const cityStr = data2.cityName ? `${data2.cityName}, ${data2.regionName || ''}` : '';
-            setUserZip(cleanZip, cityStr);
+            setUserZip(cleanZip, cityStr, data2.latitude, data2.longitude);
             if (displayUserZip) {
               displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
             }
@@ -4034,56 +4038,15 @@
         }
 
         if (!cachedZip) {
-          setUserZip('10001', 'New York, NY (Default IP Node)');
+          setUserZip('10001', 'New York, NY', 40.7505, -73.9934);
           if (displayUserZip) displayUserZip.innerText = '10001 (Auto IP)';
         }
       } catch (e) {
-        console.warn("IP Geolocation detection error:", e);
+        console.warn("IP Geolocation detection notice:", e);
         if (displayUserZip && !cachedZip) {
           displayUserZip.innerText = getUserZip();
         }
       }
-    }
-
-    function getHeatMapZipData() {
-      let data = JSON.parse(localStorage.getItem('showUp_heatmap_zip_data_v2') || 'null');
-      if (!data || !Array.isArray(data) || data.length === 0) {
-        data = JSON.parse(JSON.stringify(defaultZipData));
-        localStorage.setItem('showUp_heatmap_zip_data_v2', JSON.stringify(data));
-      }
-
-      // Ensure user's current zip code exists in data
-      const userZip = getUserZip();
-      let userNode = data.find(item => item.zip === userZip);
-      if (!userNode) {
-        userNode = {
-          zip: userZip,
-          city: localStorage.getItem('showUp_user_ip_city') || 'Your Gym Area',
-          x: 450,
-          y: 140,
-          completedToday: 0,
-          activeCount: 0
-        };
-        data.push(userNode);
-      }
-
-      // Keep user zip node stats strictly real
-      const currentETDate = getETDateKey();
-      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      const userTodayCount = history.filter(w => {
-        const wDate = typeof w === 'string' ? w : w.date;
-        return wDate === currentETDate;
-      }).length;
-
-      userNode.completedToday = userTodayCount;
-      userNode.activeCount = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0) ? 1 : 0;
-
-      saveHeatMapZipData(data);
-      return data;
-    }
-
-    function saveHeatMapZipData(data) {
-      localStorage.setItem('showUp_heatmap_zip_data_v2', JSON.stringify(data));
     }
 
     // ================= EASTERN TIME (ET) 23:59 DAILY RESET LOGIC =================
@@ -4138,21 +4101,8 @@
       localStorage.setItem('showUp_global_counter_et_date', currentETDate);
       localStorage.setItem('showUp_global_counter_count', String(count));
 
-      // Also increment completed count on user's zip code node
-      recordUserZipWorkoutCompleted();
-
       updateGlobalStatsUI();
       renderHeatMap();
-    }
-
-    function recordUserZipWorkoutCompleted() {
-      const userZip = getUserZip();
-      const zipData = getHeatMapZipData();
-      const node = zipData.find(z => z.zip === userZip);
-      if (node) {
-        node.completedToday = (node.completedToday || 0) + 1;
-        saveHeatMapZipData(zipData);
-      }
     }
 
     function getGlobalActiveAthletesCount() {
@@ -4198,126 +4148,387 @@
       updateGlobalStatsUI();
     }, 30000);
 
-    // ================= GLOBAL HEAT MAP VISUALIZATION ENGINE =================
-    function renderHeatMap() {
-      const svgNodesGroup = document.getElementById('heatmap-nodes-group');
-      const tickerContainer = document.getElementById('zip-ticker-container');
-      const displayUserZip = document.getElementById('display-user-zip');
-      if (!svgNodesGroup || !tickerContainer) return;
-
+    // ================= REAL-TIME ZIP CODES (ONLY ACTIVE OR COMPLETED TODAY) =================
+    // CRITICAL USER REQUIREMENT: Avoid showing regional zip codes.
+    // Only show zip codes where users are working out or have worked out already for the day.
+    function getActiveAndCompletedZipNodes() {
+      const currentETDate = getETDateKey();
       const userZip = getUserZip();
-      if (displayUserZip) {
-        displayUserZip.innerText = userZip;
+      const userCoords = getZipCoordinates(userZip);
+      const user = getAppUser();
+      const isUserLifting = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0);
+
+      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      const userCompletedToday = history.filter(w => {
+        const wDate = typeof w === 'string' ? w : w.date;
+        return wDate === currentETDate;
+      }).length;
+
+      const nodesMap = new Map();
+
+      // 1. Add user's zip ONLY if currently working out or completed already today
+      if (isUserLifting || userCompletedToday > 0) {
+        nodesMap.set(userZip, {
+          zip: userZip,
+          city: userCoords.city || 'Your Area',
+          lat: userCoords.lat,
+          lng: userCoords.lng,
+          activeCount: isUserLifting ? 1 : 0,
+          completedToday: userCompletedToday,
+          isUserZip: true,
+          lifters: isUserLifting ? [user.rawName || 'You'] : []
+        });
       }
 
-      const zipNodes = getHeatMapZipData();
+      // 2. Add squad members ONLY if currently working out or completed already today
+      const squads = getSquads();
+      squads.forEach(sq => {
+        sq.members.forEach(m => {
+          const isMe = (m.id === user.id || m.email === user.email || m.id === 'local_user');
+          if (isMe) return;
 
-      // 1. Draw SVG nodes
-      svgNodesGroup.innerHTML = zipNodes.map(node => {
-        const isUserZip = node.zip === userZip;
-        const hasActive = (node.activeCount || 0) > 0;
-        const completed = node.completedToday || 0;
-        const heatRadius = Math.min(24, Math.max(8, 8 + Math.round(completed * 0.4)));
+          const isMemberActive = !!m.isWorkingOut;
+          const isMemberCompletedToday = !!(m.completedToday && m.completedDate === currentETDate);
 
-        return `
-          <g class="cursor-pointer group" onclick="triggerHaptic('light'); selectZipNode('${node.zip}')">
-            <!-- Heat Glow Aura -->
-            ${completed > 0 ? `
-              <circle cx="${node.x}" cy="${node.y}" r="${heatRadius}" fill="url(#heat-glow-emerald)" opacity="0.85" />
-            ` : ''}
+          if (isMemberActive || isMemberCompletedToday) {
+            const mZip = m.zip || '78701';
+            const mCoords = getZipCoordinates(mZip);
+            const mCity = m.city || mCoords.city || 'Teammate Area';
+            const mLat = m.lat || mCoords.lat;
+            const mLng = m.lng || mCoords.lng;
 
-            <!-- Live Active Ping Rings -->
-            ${hasActive ? `
-              <circle cx="${node.x}" cy="${node.y}" r="16" fill="none" stroke="var(--m3-primary)" stroke-width="1.5" opacity="0.6" class="animate-ping" style="animation-duration: 2s;" />
-              <circle cx="${node.x}" cy="${node.y}" r="10" fill="none" stroke="var(--m3-primary-light, var(--m3-primary))" stroke-width="1.2" opacity="0.75" />
-            ` : ''}
+            if (!nodesMap.has(mZip)) {
+              nodesMap.set(mZip, {
+                zip: mZip,
+                city: mCity,
+                lat: mLat,
+                lng: mLng,
+                activeCount: 0,
+                completedToday: 0,
+                isUserZip: false,
+                lifters: []
+              });
+            }
 
-            <!-- User Zip Accent Marker -->
-            ${isUserZip ? `
-              <circle cx="${node.x}" cy="${node.y}" r="${heatRadius + 4}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="2 2" />
-            ` : ''}
+            const existing = nodesMap.get(mZip);
+            if (isMemberActive) {
+              existing.activeCount += 1;
+              const name = m.rawName || m.name;
+              if (!existing.lifters.includes(name)) existing.lifters.push(name);
+            }
+            if (isMemberCompletedToday) {
+              existing.completedToday += 1;
+            }
+          }
+        });
+      });
 
-            <!-- Core Node Circle -->
-            <circle cx="${node.x}" cy="${node.y}" r="${hasActive ? 6 : 4.5}" fill="${hasActive ? 'var(--m3-primary)' : isUserZip ? '#38bdf8' : '#64748b'}" stroke="#0f172a" stroke-width="1.5" class="transition-all duration-300 group-hover:scale-125" />
+      return Array.from(nodesMap.values());
+    }
 
-            <!-- Zip Label -->
-            <text x="${node.x}" y="${node.y - (hasActive ? 12 : 9)}" fill="${isUserZip ? '#38bdf8' : hasActive ? 'var(--m3-primary-light, var(--m3-primary))' : '#94a3b8'}" font-size="8.5" font-family="monospace" font-weight="${isUserZip || hasActive ? 'bold' : 'normal'}" text-anchor="middle" class="select-none pointer-events-none">
-              ${node.zip}${isUserZip ? ' ★' : ''}
-            </text>
-          </g>
-        `;
-      }).join('');
+    // ================= GOOGLE MAPS BASE LAYER & ZOOM ENGINE =================
+    const GOOGLE_MAPS_DARK_STYLE = [
+      { elementType: "geometry", stylers: [{ color: "#0b0f19" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#0b0f19" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#cbd5e1" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+      { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#0f231c" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#34d399" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+      { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#0f172a" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#64748b" }] },
+      { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#334155" }] },
+      { featureType: "transit", elementType: "geometry", stylers: [{ color: "#1e293b" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#060911" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#38bdf8" }] }
+    ];
 
-      // 2. Render Zip Ticker Pills
-      tickerContainer.innerHTML = zipNodes.map(node => {
-        const isSelected = node.zip === selectedHeatMapZip;
-        const isUserZip = node.zip === userZip;
-        const hasActive = (node.activeCount || 0) > 0;
+    function updateMapZoomStatusUI(zoom) {
+      const zoomStatusEl = document.getElementById('map-zoom-status');
+      if (!zoomStatusEl) return;
+      let levelDesc = "Zip Code Level";
+      if (zoom >= 16) levelDesc = "Street Level";
+      else if (zoom >= 13) levelDesc = "Zip Code Level";
+      else if (zoom >= 10) levelDesc = "City / Metro Level";
+      else if (zoom >= 6) levelDesc = "State Level";
+      else levelDesc = "Regional View";
+      zoomStatusEl.innerText = `Zoom: ${zoom}x (${levelDesc})`;
+    }
 
-        return `
-          <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1.5 rounded-xl border text-[11px] whitespace-nowrap transition flex items-center gap-1.5 ${
-            isSelected 
-              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm font-bold' 
-              : hasActive
-                ? 'bg-slate-900 text-emerald-400 border-emerald-500/30 font-semibold'
-                : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
-          }">
-            <span class="w-1.5 h-1.5 rounded-full ${hasActive ? 'bg-emerald-400 animate-pulse' : isUserZip ? 'bg-sky-400' : 'bg-slate-600'}"></span>
-            <span class="font-mono">${node.zip}</span>
-            <span class="text-slate-500 text-[10px]">${node.city.split(',')[0]}</span>
-            ${hasActive ? `<span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">${node.activeCount} Live</span>` : ''}
-          </button>
-        `;
-      }).join('');
+    function initGoogleMapsBaseLayer() {
+      const canvas = document.getElementById('google-maps-canvas');
+      if (!canvas) return;
 
-      // 3. Update Detail Card
-      updateZipDetailCard();
+      const activeNodes = getActiveAndCompletedZipNodes();
+      const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
+      const coords = getZipCoordinates(targetZip);
+
+      // 1. Try Native Google Maps JS API if loaded and authorized
+      if (window.google && window.google.maps && window.google.maps.Map) {
+        try {
+          if (!googleMapInstance) {
+            googleMapInstance = new google.maps.Map(canvas, {
+              center: { lat: coords.lat, lng: coords.lng },
+              zoom: currentMapZoom,
+              styles: GOOGLE_MAPS_DARK_STYLE,
+              disableDefaultUI: true,
+              gestureHandling: 'greedy',
+              zoomControl: false,
+              mapTypeControl: false,
+              scaleControl: false,
+              streetViewControl: false,
+              rotateControl: false,
+              fullscreenControl: false
+            });
+
+            googleMapInstance.addListener('zoom_changed', () => {
+              currentMapZoom = googleMapInstance.getZoom();
+              updateMapZoomStatusUI(currentMapZoom);
+            });
+          } else {
+            googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
+          }
+
+          isMapEmbedMode = false;
+          renderGoogleMapMarkers(activeNodes);
+          updateMapZoomStatusUI(currentMapZoom);
+          return;
+        } catch (e) {
+          console.warn("Google Maps Native JS API initialization notice:", e);
+        }
+      }
+
+      // 2. Google Maps Interactive Base Layer Embed Fallback
+      renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, targetZip, coords.city);
+    }
+
+    function renderGoogleMapsEmbed(lat, lng, zoom, zip, city) {
+      isMapEmbedMode = true;
+      const canvas = document.getElementById('google-maps-canvas');
+      if (!canvas) return;
+
+      const query = zip ? `Zip+Code+${encodeURIComponent(zip)}+${encodeURIComponent(city || '')}` : `${lat},${lng}`;
+      const existingIframe = document.getElementById('google-maps-iframe');
+      const targetSrc = `https://maps.google.com/maps?q=${query}&t=m&z=${zoom}&output=embed`;
+
+      if (existingIframe && existingIframe.dataset.query === query && existingIframe.dataset.zoom === String(zoom)) {
+        return;
+      }
+
+      canvas.innerHTML = `
+        <iframe
+          id="google-maps-iframe"
+          data-query="${query}"
+          data-zoom="${zoom}"
+          title="Google Maps Base Layer"
+          class="w-full h-full border-0 filter invert-[0.9] hue-rotate-180 brightness-[0.85] contrast-[1.2] transition-opacity duration-300"
+          src="${targetSrc}"
+          loading="lazy"
+          allowfullscreen>
+        </iframe>
+      `;
+      updateMapZoomStatusUI(zoom);
+    }
+
+    function renderGoogleMapMarkers(activeNodes) {
+      if (!googleMapInstance) return;
+
+      googleMapMarkers.forEach(m => m.setMap(null));
+      googleMapMarkers = [];
+
+      activeNodes.forEach(node => {
+        const hasActive = node.activeCount > 0;
+        const markerColor = hasActive ? '#10b981' : '#f59e0b';
+
+        const svgIcon = {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="16" fill="${markerColor}" fill-opacity="0.25" stroke="${markerColor}" stroke-width="2"/>
+              <circle cx="18" cy="18" r="8" fill="${markerColor}"/>
+              <circle cx="18" cy="18" r="3" fill="#0b0f19"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(36, 36),
+          anchor: new google.maps.Point(18, 18)
+        };
+
+        const marker = new google.maps.Marker({
+          position: { lat: node.lat, lng: node.lng },
+          map: googleMapInstance,
+          title: `Zip ${node.zip}: ${node.activeCount} Active, ${node.completedToday} Completed Today`,
+          icon: svgIcon
+        });
+
+        marker.addListener('click', () => {
+          triggerHaptic('light');
+          selectZipNode(node.zip);
+        });
+
+        googleMapMarkers.push(marker);
+      });
+    }
+
+    function zoomGoogleMap(delta) {
+      currentMapZoom = Math.min(18, Math.max(3, currentMapZoom + delta));
+      if (googleMapInstance && !isMapEmbedMode) {
+        googleMapInstance.setZoom(currentMapZoom);
+        updateMapZoomStatusUI(currentMapZoom);
+      } else {
+        const activeNodes = getActiveAndCompletedZipNodes();
+        const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
+        const coords = getZipCoordinates(targetZip);
+        renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, targetZip, coords.city);
+      }
+    }
+
+    function zoomToUserZipLevel() {
+      currentMapZoom = 14; // Zip code level
+      const userZip = getUserZip();
+      selectedHeatMapZip = userZip;
+      const coords = getZipCoordinates(userZip);
+
+      if (googleMapInstance && !isMapEmbedMode) {
+        googleMapInstance.setZoom(14);
+        googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
+        updateMapZoomStatusUI(14);
+      } else {
+        renderGoogleMapsEmbed(coords.lat, coords.lng, 14, userZip, coords.city);
+      }
+      renderHeatMap();
+      showToast(`Snapped to Zip Code Level (14x) for ${userZip}`, "info");
+    }
+
+    function zoomToSelectedZip() {
+      currentMapZoom = 14; // Zip code level
+      const activeNodes = getActiveAndCompletedZipNodes();
+      const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
+      const coords = getZipCoordinates(targetZip);
+
+      if (googleMapInstance && !isMapEmbedMode) {
+        googleMapInstance.setZoom(14);
+        googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
+        updateMapZoomStatusUI(14);
+      } else {
+        renderGoogleMapsEmbed(coords.lat, coords.lng, 14, targetZip, coords.city);
+      }
+      showToast(`Zoomed to Zip Code ${targetZip} (14x Level)`, "info");
     }
 
     function selectZipNode(zipCode) {
       selectedHeatMapZip = zipCode;
+      const coords = getZipCoordinates(zipCode);
+      if (googleMapInstance && !isMapEmbedMode) {
+        googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
+      } else {
+        renderGoogleMapsEmbed(coords.lat, coords.lng, currentMapZoom, zipCode, coords.city);
+      }
       renderHeatMap();
     }
 
-    function updateZipDetailCard() {
-      const zipNodes = getHeatMapZipData();
-      const node = zipNodes.find(z => z.zip === selectedHeatMapZip) || zipNodes[0];
-      if (!node) return;
-
+    function renderHeatMap() {
+      const tickerContainer = document.getElementById('zip-ticker-container');
+      const displayUserZip = document.getElementById('display-user-zip');
       const userZip = getUserZip();
-      const isUserZip = node.zip === userZip;
-      const hasActive = (node.activeCount || 0) > 0;
+      const userCity = localStorage.getItem('showUp_user_ip_city');
+
+      if (displayUserZip) {
+        displayUserZip.innerText = userCity ? `${userZip} (${userCity.split(',')[0]})` : userZip;
+      }
+
+      // ONLY get zip codes where users are working out or have worked out already for the day
+      const activeZipNodes = getActiveAndCompletedZipNodes();
+
+      if (!selectedHeatMapZip || !activeZipNodes.some(n => n.zip === selectedHeatMapZip)) {
+        selectedHeatMapZip = activeZipNodes.length > 0 ? activeZipNodes[0].zip : userZip;
+      }
+
+      // 1. Render Zip Ticker Pills
+      if (tickerContainer) {
+        if (activeZipNodes.length === 0) {
+          tickerContainer.innerHTML = `
+            <div class="text-[11px] text-slate-500 italic py-1 px-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-slate-600"></i>
+              <span>No workouts recorded today yet. Log your first workout to put your zip code on the map!</span>
+            </div>
+          `;
+        } else {
+          tickerContainer.innerHTML = activeZipNodes.map(node => {
+            const isSelected = node.zip === selectedHeatMapZip;
+            const isUserZip = node.isUserZip;
+            const hasActive = node.activeCount > 0;
+
+            return `
+              <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1.5 rounded-xl border text-[11px] whitespace-nowrap transition flex items-center gap-1.5 ${
+                isSelected 
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm font-bold' 
+                  : hasActive
+                    ? 'bg-slate-900 text-emerald-400 border-emerald-500/30 font-semibold'
+                    : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+              }">
+                <span class="w-1.5 h-1.5 rounded-full ${hasActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+                <span class="font-mono font-bold">${node.zip}</span>
+                <span class="text-slate-400 text-[10px]">${node.city.split(',')[0]}</span>
+                ${hasActive 
+                  ? `<span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">${node.activeCount} Live</span>` 
+                  : `<span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">${node.completedToday} Done</span>`
+                }
+              </button>
+            `;
+          }).join('');
+        }
+      }
+
+      // 2. Update Detail Card
+      updateZipDetailCard(activeZipNodes);
+
+      // 3. Update Google Maps Base Layer
+      initGoogleMapsBaseLayer();
+    }
+
+    function updateZipDetailCard(activeZipNodes) {
+      if (!activeZipNodes) activeZipNodes = getActiveAndCompletedZipNodes();
+      const userZip = getUserZip();
 
       const titleEl = document.getElementById('zip-detail-title');
       const descEl = document.getElementById('zip-detail-desc');
-      const badgeEl = document.getElementById('zip-detail-badge');
       const indEl = document.getElementById('zip-detail-indicator');
+      const zoomBtn = document.getElementById('btn-zoom-to-selected-zip');
+
+      if (activeZipNodes.length === 0) {
+        if (titleEl) titleEl.innerText = "No workouts recorded today";
+        if (descEl) descEl.innerText = `Only zip codes with active lifters or completed workouts today are displayed. Your zip code (${userZip}) will activate when you log a set.`;
+        if (indEl) indEl.className = "w-2.5 h-2.5 rounded-full bg-slate-700 flex-shrink-0";
+        if (zoomBtn) {
+          zoomBtn.innerHTML = `<i class="fa-solid fa-crosshairs"></i><span>My Zip Area</span>`;
+          zoomBtn.onclick = () => { triggerHaptic('light'); zoomToUserZipLevel(); };
+        }
+        return;
+      }
+
+      const node = activeZipNodes.find(z => z.zip === selectedHeatMapZip) || activeZipNodes[0];
+      if (!node) return;
+
+      const isUserZip = node.isUserZip;
+      const hasActive = node.activeCount > 0;
 
       if (titleEl) {
         titleEl.innerText = `Zip ${node.zip} (${node.city})${isUserZip ? ' • (Your Zip Code)' : ''}`;
       }
       if (descEl) {
-        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today • ${node.activeCount || 0} Lifters Active Right Now`;
+        const liftersStr = node.lifters && node.lifters.length > 0 ? ` (${node.lifters.join(', ')})` : '';
+        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today • ${node.activeCount || 0} Lifters Active Right Now${liftersStr}`;
       }
       if (indEl) {
-        indEl.className = `w-2.5 h-2.5 rounded-full flex-shrink-0 ${hasActive ? 'bg-emerald-400 animate-pulse' : isUserZip ? 'bg-sky-400' : 'bg-slate-600'}`;
+        indEl.className = `w-2.5 h-2.5 rounded-full flex-shrink-0 ${hasActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`;
       }
-      if (badgeEl) {
-        if (hasActive) {
-          badgeEl.className = "text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30 flex-shrink-0";
-          badgeEl.innerText = "Active Hotspot";
-        } else if (isUserZip) {
-          badgeEl.className = "text-[10px] font-semibold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/30 flex-shrink-0";
-          badgeEl.innerText = "Your Zone";
-        } else {
-          badgeEl.className = "text-[10px] font-semibold text-slate-400 bg-slate-850 px-2 py-0.5 rounded-full border border-slate-700 flex-shrink-0";
-          badgeEl.innerText = "Regional Node";
-        }
+      if (zoomBtn) {
+        zoomBtn.innerHTML = `<i class="fa-solid fa-magnifying-glass-location"></i><span>Zoom to Zip</span>`;
+        zoomBtn.onclick = () => { triggerHaptic('light'); zoomToSelectedZip(); };
       }
     }
 
     function openUserZipModal() {
-      // Zip code is established via IP address automatically
       detectUserZipFromIP();
       showToast("Zip code is established automatically based on your network IP address.", "info");
     }
@@ -4574,6 +4785,7 @@
     function dismissSimulatedWorkout() {
       const squads = getSquads();
       let closedCount = 0;
+      const todayET = getETDateKey();
 
       squads.forEach(sq => {
         sq.members.forEach(m => {
@@ -4581,6 +4793,8 @@
             m.isWorkingOut = false;
             m.lastActive = 'Just finished';
             m.currentWorkout = null;
+            m.completedToday = true;
+            m.completedDate = todayET;
             closedCount++;
           }
         });
@@ -4596,7 +4810,7 @@
       const banner = document.getElementById('squad-active-beacon-banner');
       if (banner) banner.classList.add('hidden');
 
-      showToast("Active workout simulation closed.", "info");
+      showToast("Active workout simulation closed (saved as completed today).", "info");
     }
 
     function stopSpecificMemberWorkout(squadId, memberId) {
@@ -4610,6 +4824,8 @@
       member.isWorkingOut = false;
       member.lastActive = 'Just finished';
       member.currentWorkout = null;
+      member.completedToday = true;
+      member.completedDate = getETDateKey();
 
       saveSquads(squads);
       renderSquadsTab();
@@ -4617,7 +4833,7 @@
       updateGlobalStatsUI();
       renderHeatMap();
       dismissSquadPill();
-      showToast(`Ended active workout session for ${member.rawName || member.name}.`, "info");
+      showToast(`Ended active workout session for ${member.rawName || member.name}. Recorded as completed today.`, "info");
     }
 
     function renderSquadsTab() {
@@ -5311,6 +5527,15 @@
       const isFirstTeammate = (squad.members.length === 1);
       const shouldBeBackup = isFirstTeammate || !squad.backupCreatorId;
 
+      const sampleTeammateZips = [
+        { zip: '78701', city: 'Austin, TX', lat: 30.2711, lng: -97.7437 },
+        { zip: '60601', city: 'Chicago, IL', lat: 41.8855, lng: -87.6217 },
+        { zip: '80202', city: 'Denver, CO', lat: 39.7525, lng: -105.0003 },
+        { zip: '98101', city: 'Seattle, WA', lat: 47.6101, lng: -122.3344 },
+        { zip: '02138', city: 'Cambridge, MA', lat: 42.3770, lng: -71.1256 }
+      ];
+      const pickedLoc = sampleTeammateZips[squad.members.length % sampleTeammateZips.length];
+
       // Ensure delivery tracking metadata is created and logged for invitations
       const newMember = {
         id: 'member_' + Date.now(),
@@ -5326,6 +5551,10 @@
         inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         lastInviteSentAt: new Date().toISOString(),
         avatar: null,
+        zip: pickedLoc.zip,
+        city: pickedLoc.city,
+        lat: pickedLoc.lat,
+        lng: pickedLoc.lng,
         isCreator: false,
         isBackupCreator: shouldBeBackup,
         isWorkingOut: false,
@@ -5463,6 +5692,21 @@
         "Macebell 360 & Dands"
       ];
       const randomWorkout = workoutNames[Math.floor(Math.random() * workoutNames.length)];
+
+      if (!member.zip) {
+        const sampleTeammateZips = [
+          { zip: '78701', city: 'Austin, TX', lat: 30.2711, lng: -97.7437 },
+          { zip: '60601', city: 'Chicago, IL', lat: 41.8855, lng: -87.6217 },
+          { zip: '80202', city: 'Denver, CO', lat: 39.7525, lng: -105.0003 },
+          { zip: '98101', city: 'Seattle, WA', lat: 47.6101, lng: -122.3344 },
+          { zip: '02138', city: 'Cambridge, MA', lat: 42.3770, lng: -71.1256 }
+        ];
+        const picked = sampleTeammateZips[Math.floor(Math.random() * sampleTeammateZips.length)];
+        member.zip = picked.zip;
+        member.city = picked.city;
+        member.lat = picked.lat;
+        member.lng = picked.lng;
+      }
 
       member.isWorkingOut = true;
       member.currentWorkout = randomWorkout;
@@ -5631,8 +5875,9 @@
 
       if (changed) {
         saveSquads(squads);
-        updateGlobalStatsUI();
       }
+      updateGlobalStatsUI();
+      renderHeatMap();
     }
 
     function broadcastUserWorkoutEnded() {
@@ -5652,8 +5897,9 @@
 
       if (changed) {
         saveSquads(squads);
-        updateGlobalStatsUI();
       }
+      updateGlobalStatsUI();
+      renderHeatMap();
     }
   </script>
 </body>
