@@ -1297,32 +1297,37 @@
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
-    <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (REQ 5) -->
-    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 border border-[var(--m3-primary)]/30 bg-gradient-to-r from-[var(--m3-primary)]/10 via-slate-900 to-slate-950 shadow-xl relative overflow-hidden transition-all">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/30">
+    <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (MATERIAL DESIGN 3 STANDARDS) -->
+    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 sm:p-5 border border-[var(--m3-primary)]/25 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-xl relative overflow-hidden transition-all">
+      <!-- Background Ambient Glow Accent -->
+      <div class="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="relative z-10 space-y-3.5">
+        <!-- Top Tier: Leading Icon, Header & Content Distribution -->
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center text-lg flex-shrink-0 border border-emerald-500/25 shadow-sm mt-0.5">
             <i class="fa-solid fa-cloud-arrow-up"></i>
           </div>
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h3 id="backup-banner-title" class="text-xs font-bold text-slate-100">Protect Your Workout & Squad Data</h3>
-              <span id="backup-banner-badge" class="text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Sign-in Recommended</span>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h3 id="backup-banner-title" class="text-sm sm:text-base font-bold text-slate-100 tracking-tight">Protect Your Workout & Squad Data</h3>
+              <span id="backup-banner-badge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Sign-in Recommended</span>
             </div>
-            <p id="backup-banner-desc" class="text-[11px] text-slate-400 mt-0.5">Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.</p>
+            <p id="backup-banner-desc" class="text-xs text-slate-300/90 leading-relaxed mt-1">Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap flex-shrink-0">
-          <button id="backup-banner-google-btn" onclick="triggerHaptic('medium'); handleGoogleLogin()" class="m3-btn-primary text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+        <!-- Bottom Tier: Material 3 Action Grouping & Touch Targets -->
+        <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-2.5">
+          <button id="backup-banner-google-btn" onclick="triggerHaptic('medium'); handleGoogleLogin()" class="m3-btn-primary text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-transform">
             <i class="fa-brands fa-google text-xs"></i>
             <span>Sign In for Auto-Backup</span>
           </button>
-          <button onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Export manual backup file to device">
+          <button onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]" title="Export manual backup file to device">
             <i class="fa-solid fa-download text-xs text-emerald-400"></i>
             <span>Backup to Device</span>
           </button>
-          <button onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Restore workouts & squads from a backup file">
+          <button onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]" title="Restore workouts & squads from a backup file">
             <i class="fa-solid fa-upload text-xs text-blue-400"></i>
             <span>Restore from File</span>
           </button>
@@ -3621,7 +3626,7 @@
           banner.classList.remove('hidden');
         }
         if (bannerBadge) {
-          bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20";
+          bannerBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30";
           bannerBadge.innerText = "Sign-in Recommended";
         }
         if (bannerTitle) bannerTitle.innerText = "Protect Your Workout & Squad Data";
@@ -4603,55 +4608,194 @@
       return { lat, lng, city: `Zip ${zip}` };
     }
 
+    async function reverseGeocodeCoords(lat, lng) {
+      if (!lat || !lng) return null;
+      try {
+        // 1. High-speed client reverse geocoding via BigDataCloud
+        const bdcRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`).catch(() => null);
+        if (bdcRes && bdcRes.ok) {
+          const bdcData = await bdcRes.json();
+          const rawZip = bdcData.postcode || '';
+          const matchZip = String(rawZip).match(/\d{5}/)?.[0] || String(rawZip).trim();
+          const city = bdcData.city || bdcData.locality || bdcData.principalSubdivision || '';
+          const state = bdcData.principalSubdivisionCode ? bdcData.principalSubdivisionCode.replace(/^[A-Z]{2}-/, '') : (bdcData.principalSubdivision || '');
+          const cityStr = city ? (state ? `${city}, ${state}` : city) : '';
+          if (matchZip) {
+            return { zip: matchZip, city: cityStr, lat: parseFloat(lat), lng: parseFloat(lng) };
+          }
+        }
+      } catch (e) {
+        console.debug("Reverse geocode BDC notice:", e);
+      }
+
+      try {
+        // 2. OpenStreetMap Nominatim reverse geocode fallback
+        const osmRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+          headers: { 'Accept-Language': 'en' }
+        }).catch(() => null);
+        if (osmRes && osmRes.ok) {
+          const osmData = await osmRes.json();
+          const addr = osmData.address || {};
+          const rawZip = addr.postcode || '';
+          const matchZip = String(rawZip).match(/\d{5}/)?.[0] || String(rawZip).trim();
+          const city = addr.city || addr.town || addr.village || addr.suburb || addr.county || '';
+          const state = addr.state ? addr.state : '';
+          const cityStr = city ? (state ? `${city}, ${state}` : city) : '';
+          if (matchZip) {
+            return { zip: matchZip, city: cityStr, lat: parseFloat(lat), lng: parseFloat(lng) };
+          }
+        }
+      } catch (e) {
+        console.debug("Reverse geocode OSM notice:", e);
+      }
+      return null;
+    }
+
     async function detectUserZipFromIP() {
       const displayUserZip = document.getElementById('display-user-zip');
       const cachedZip = localStorage.getItem('showUp_user_ip_zip');
       const cachedCity = localStorage.getItem('showUp_user_ip_city');
 
       if (cachedZip && displayUserZip) {
-        displayUserZip.innerText = cachedCity ? `${cachedZip} (${cachedCity})` : cachedZip;
+        const cityPart = cachedCity ? cachedCity.split(',')[0] : '';
+        displayUserZip.innerText = cityPart ? `${cachedZip} (${cityPart})` : cachedZip;
       }
 
-      try {
-        const res = await fetch('https://ipwho.is/').catch(() => null);
-        if (res && res.ok) {
-          const data = await res.json();
-          if (data && data.success && data.postal) {
-            const cleanZip = String(data.postal).trim();
-            const cityStr = data.city ? `${data.city}, ${data.region_code || ''}` : '';
-            setUserZip(cleanZip, cityStr, data.latitude, data.longitude);
-            if (displayUserZip) {
-              displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
-            }
-            renderHeatMap();
-            return;
-          }
-        }
+      let resolvedLocation = null;
 
-        const res2 = await fetch('https://freeipapi.com/api/json').catch(() => null);
-        if (res2 && res2.ok) {
-          const data2 = await res2.json();
-          if (data2 && data2.zipCode) {
-            const cleanZip = String(data2.zipCode).trim();
-            const cityStr = data2.cityName ? `${data2.cityName}, ${data2.regionName || ''}` : '';
-            setUserZip(cleanZip, cityStr, data2.latitude, data2.longitude);
-            if (displayUserZip) {
-              displayUserZip.innerText = cityStr ? `${cleanZip} (${cityStr})` : cleanZip;
+      // Tier 1: Zero-Prompt / Permitted High-Accuracy Geolocation -> Reverse Geocode to exact neighborhood zip code
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        try {
+          const geoPromise = new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => resolve(pos),
+              () => resolve(null),
+              { enableHighAccuracy: true, timeout: 4000, maximumAge: 300000 }
+            );
+          });
+          const pos = await geoPromise;
+          if (pos && pos.coords) {
+            const revGeo = await reverseGeocodeCoords(pos.coords.latitude, pos.coords.longitude);
+            if (revGeo && revGeo.zip) {
+              resolvedLocation = revGeo;
             }
-            renderHeatMap();
-            return;
           }
+        } catch (e) {
+          console.debug("Background geolocation check:", e);
         }
+      }
 
-        if (!cachedZip) {
-          setUserZip('10001', 'New York, NY', 40.7505, -73.9934);
-          if (displayUserZip) displayUserZip.innerText = '10001 (Auto IP)';
+      // Tier 2: ipapi.co (High accuracy US postal resolution)
+      if (!resolvedLocation) {
+        try {
+          const res = await fetch('https://ipapi.co/json/').catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.postal && !data.error) {
+              const cleanZip = String(data.postal).match(/\d{5}/)?.[0] || String(data.postal).trim();
+              const cityStr = data.city ? `${data.city}, ${data.region_code || data.region || ''}` : '';
+              resolvedLocation = {
+                zip: cleanZip,
+                city: cityStr,
+                lat: data.latitude,
+                lng: data.longitude
+              };
+            }
+          }
+        } catch (e) {
+          console.debug("ipapi.co notice:", e);
         }
-      } catch (e) {
-        console.warn("IP Geolocation detection notice:", e);
-        if (displayUserZip && !cachedZip) {
-          displayUserZip.innerText = getUserZip();
+      }
+
+      // Tier 3: ipwho.is with coordinate-level reverse geocoding refinement
+      if (!resolvedLocation) {
+        try {
+          const res = await fetch('https://ipwho.is/').catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.success) {
+              let cleanZip = data.postal ? (String(data.postal).match(/\d{5}/)?.[0] || String(data.postal).trim()) : '';
+              let cityStr = data.city ? `${data.city}, ${data.region_code || ''}` : '';
+              
+              if ((!cleanZip || cleanZip.length < 5) && data.latitude && data.longitude) {
+                const refined = await reverseGeocodeCoords(data.latitude, data.longitude);
+                if (refined && refined.zip) {
+                  cleanZip = refined.zip;
+                  if (refined.city) cityStr = refined.city;
+                }
+              }
+
+              if (cleanZip) {
+                resolvedLocation = {
+                  zip: cleanZip,
+                  city: cityStr,
+                  lat: data.latitude,
+                  lng: data.longitude
+                };
+              }
+            }
+          }
+        } catch (e) {
+          console.debug("ipwho.is notice:", e);
         }
+      }
+
+      // Tier 4: freeipapi.com fallback
+      if (!resolvedLocation) {
+        try {
+          const res = await fetch('https://freeipapi.com/api/json').catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.zipCode) {
+              const cleanZip = String(data.zipCode).match(/\d{5}/)?.[0] || String(data.zipCode).trim();
+              const cityStr = data.cityName ? `${data.cityName}, ${data.regionName || ''}` : '';
+              resolvedLocation = {
+                zip: cleanZip,
+                city: cityStr,
+                lat: data.latitude,
+                lng: data.longitude
+              };
+            }
+          }
+        } catch (e) {
+          console.debug("freeipapi notice:", e);
+        }
+      }
+
+      // Tier 5: ip-api.com fallback
+      if (!resolvedLocation) {
+        try {
+          const res = await fetch('https://ip-api.com/json/?fields=status,country,regionName,region,city,zip,lat,lon').catch(() => null);
+          if (res && res.ok) {
+            const data = await res.json();
+            if (data && data.status === 'success' && data.zip) {
+              const cleanZip = String(data.zip).match(/\d{5}/)?.[0] || String(data.zip).trim();
+              const cityStr = data.city ? `${data.city}, ${data.region || ''}` : '';
+              resolvedLocation = {
+                zip: cleanZip,
+                city: cityStr,
+                lat: data.lat,
+                lng: data.lon
+              };
+            }
+          }
+        } catch (e) {
+          console.debug("ip-api notice:", e);
+        }
+      }
+
+      // Apply resolved location
+      if (resolvedLocation && resolvedLocation.zip) {
+        setUserZip(resolvedLocation.zip, resolvedLocation.city, resolvedLocation.lat, resolvedLocation.lng);
+        if (displayUserZip) {
+          const cityPart = resolvedLocation.city ? resolvedLocation.city.split(',')[0] : '';
+          displayUserZip.innerText = cityPart ? `${resolvedLocation.zip} (${cityPart})` : resolvedLocation.zip;
+        }
+        renderHeatMap();
+      } else if (!cachedZip) {
+        setUserZip('10001', 'New York, NY', 40.7505, -73.9934);
+        if (displayUserZip) displayUserZip.innerText = '10001 (New York)';
+        renderHeatMap();
       }
     }
 
