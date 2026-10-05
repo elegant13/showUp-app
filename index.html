@@ -11,15 +11,32 @@
   <!-- FontAwesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts: Plus Jakarta Sans, Outfit, Space Grotesk, Lexend, JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Lexend:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   
   <style>
+    /* Typography Selection Classes */
+    body.font-jakarta {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    body.font-outfit {
+      font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+    }
+    body.font-space {
+      font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+    }
+    body.font-lexend {
+      font-family: 'Lexend', system-ui, -apple-system, sans-serif;
+    }
+    body.font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
     /* Material 3 Dynamic Design Tokens */
     :root {
       --m3-primary: #10b981;
@@ -232,25 +249,29 @@
         <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
       </div>
 
-      <!-- GOOGLE DRIVE CLOUD SYNC SETTINGS -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-          <i class="fa-brands fa-google-drive text-blue-400"></i>
-          Google Drive Integration
-        </h3>
-        <div>
-          <label class="block text-[11px] font-medium text-slate-400 mb-1">Custom OAuth Client ID (Optional)</label>
-          <input type="text" id="setting-google-client-id" placeholder="Optional Client ID (e.g. 123...apps.googleusercontent.com)" onchange="saveGoogleClientIdSetting()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-          <p class="text-[10px] text-slate-500 mt-1">Leave empty to use the default app Client ID. Custom ID is helpful when running on custom domains.</p>
-        </div>
-        <div class="flex items-center gap-2 pt-1">
-          <button type="button" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-cloud-arrow-up"></i>
-            <span>Backup Now</span>
+      <!-- TYPOGRAPHY / FONT CUSTOMIZATION -->
+      <div class="space-y-3">
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Typography & Font Type</label>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button type="button" onclick="triggerHaptic('light'); setFontFamily('jakarta')" id="font-btn-jakarta" class="p-2.5 rounded-2xl border text-left transition active:scale-95 group">
+            <div class="text-xs font-bold" style="font-family: 'Plus Jakarta Sans', sans-serif;">Jakarta Sans</div>
+            <div class="text-[10px] text-slate-400 opacity-80">Default • Clean</div>
           </button>
-          <button type="button" onclick="triggerHaptic('medium'); restoreFromGoogleDrive()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5">
-            <i class="fa-solid fa-cloud-arrow-down"></i>
-            <span>Restore Data</span>
+          <button type="button" onclick="triggerHaptic('light'); setFontFamily('outfit')" id="font-btn-outfit" class="p-2.5 rounded-2xl border text-left transition active:scale-95 group">
+            <div class="text-xs font-bold" style="font-family: 'Outfit', sans-serif;">Outfit</div>
+            <div class="text-[10px] text-slate-400 opacity-80">Geometric • Modern</div>
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setFontFamily('space')" id="font-btn-space" class="p-2.5 rounded-2xl border text-left transition active:scale-95 group">
+            <div class="text-xs font-bold" style="font-family: 'Space Grotesk', sans-serif;">Space Grotesk</div>
+            <div class="text-[10px] text-slate-400 opacity-80">Tech • Dynamic</div>
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setFontFamily('lexend')" id="font-btn-lexend" class="p-2.5 rounded-2xl border text-left transition active:scale-95 group">
+            <div class="text-xs font-bold" style="font-family: 'Lexend', sans-serif;">Lexend</div>
+            <div class="text-[10px] text-slate-400 opacity-80">Athletic • Readable</div>
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setFontFamily('mono')" id="font-btn-mono" class="p-2.5 rounded-2xl border text-left transition active:scale-95 group col-span-2 sm:col-span-1">
+            <div class="text-xs font-bold" style="font-family: 'JetBrains Mono', monospace;">JetBrains Mono</div>
+            <div class="text-[10px] text-slate-400 opacity-80">Tactical • Data</div>
           </button>
         </div>
       </div>
@@ -325,89 +346,6 @@
 
       <button onclick="toggleWeightGraphModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2 rounded-2xl text-xs border border-slate-700 transition">
         Close
-      </button>
-    </div>
-  </div>
-
-  <!-- ================= WORKOUT DATA BACKUP & CLOUD SYNC MODAL ================= -->
-  <div id="backup-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-cloud-arrow-up text-emerald-400"></i>
-            Backup & Sync Center
-          </h2>
-          <p class="text-xs text-slate-400">Safeguard your workout & body weight data</p>
-        </div>
-        <button onclick="toggleBackupModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
-
-      <!-- GOOGLE DRIVE SECTION -->
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <i class="fa-brands fa-google-drive text-blue-400 text-base"></i>
-            <span class="text-xs font-bold text-slate-200">Google Drive Cloud Sync</span>
-          </div>
-          <span id="backup-modal-auth-status" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Not Connected</span>
-        </div>
-
-        <p class="text-[11px] text-slate-400">
-          Syncs all workout history, active sessions, and body weight logs directly to your Google Drive in <code class="text-emerald-400">showUp_workout_data.json</code>.
-        </p>
-
-        <div id="backup-modal-signed-in" class="hidden space-y-2 pt-1">
-          <div class="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
-            <span>Last Synced:</span>
-            <span id="backup-modal-last-synced" class="font-semibold text-slate-200">Never</span>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="m3-btn-primary font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
-              <i class="fa-solid fa-cloud-arrow-up"></i>
-              <span>Backup to Drive</span>
-            </button>
-            <button onclick="triggerHaptic('medium'); restoreFromGoogleDrive()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
-              <i class="fa-solid fa-cloud-arrow-down"></i>
-              <span>Restore from Drive</span>
-            </button>
-          </div>
-        </div>
-
-        <div id="backup-modal-signed-out" class="pt-1">
-          <button onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="w-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold py-2.5 px-4 rounded-xl shadow flex items-center justify-center gap-2 transition">
-            <i class="fa-brands fa-google text-red-500"></i>
-            <span>Sign in with Google</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- LOCAL FILE BACKUP & RESTORE SECTION -->
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-        <div class="flex items-center gap-2">
-          <i class="fa-solid fa-file-export text-emerald-400"></i>
-          <span class="text-xs font-bold text-slate-200">Offline JSON File Backup</span>
-        </div>
-        <p class="text-[11px] text-slate-400">
-          Export an offline JSON file to your device, or restore past workouts from a downloaded backup file.
-        </p>
-        <div class="grid grid-cols-2 gap-2 pt-1">
-          <button onclick="triggerHaptic('medium'); exportJSONBackup()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 transition">
-            <i class="fa-solid fa-download"></i>
-            <span>Export JSON</span>
-          </button>
-          <label class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer transition text-center">
-            <i class="fa-solid fa-upload"></i>
-            <span>Import JSON</span>
-            <input type="file" id="json-file-input" accept=".json" onchange="importJSONBackup(event)" class="hidden">
-          </label>
-        </div>
-      </div>
-
-      <button onclick="toggleBackupModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-2xl text-xs border border-slate-700 transition">
-        Done
       </button>
     </div>
   </div>
@@ -903,7 +841,7 @@
 
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
-    <div class="max-w-3xl mx-auto grid grid-cols-3 px-2 py-2 text-center text-xs">
+    <div class="max-w-3xl mx-auto grid grid-cols-2 px-4 py-2 text-center text-xs">
       <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
         <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
         <span>Workout</span>
@@ -911,10 +849,6 @@
       <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
         <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
         <span>Calendar</span>
-      </button>
-      <button onclick="triggerHaptic('medium'); toggleBackupModal()" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
-        <i class="fa-solid fa-cloud-arrow-up text-lg mb-0.5"></i>
-        <span>Backup</span>
       </button>
     </div>
   </nav>
@@ -958,14 +892,13 @@
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();
-      loadGoogleSettings();
       renderLoggedSets();
       renderCalendar();
       renderWeightHistory();
       initSparkline();
       restoreSavedSession();
       restoreThemePreferences();
-      updateBackupModalUI();
+      restoreFontPreferences();
     });
 
     window.addEventListener('online', () => {
@@ -1958,7 +1891,6 @@
       document.getElementById('dropdown-user-email').innerText = 'user@email.com';
       document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
-      updateBackupModalUI();
       showToast("Signed out of Google Account", "info");
     }
 
@@ -2010,7 +1942,6 @@
           console.warn("Session check notice:", err);
         });
       }
-      updateBackupModalUI();
     }
 
     function initCatalog() {
@@ -2026,26 +1957,34 @@
     const BACKUP_FILENAME = "showUp_workout_data.json";
 
     function getGoogleClientId() {
-      return localStorage.getItem('showUp_google_client_id') || GOOGLE_CLIENT_ID;
+      return GOOGLE_CLIENT_ID;
     }
 
-    function loadGoogleSettings() {
-      const savedClientId = localStorage.getItem('showUp_google_client_id') || '';
-      const input = document.getElementById('setting-google-client-id');
-      if (input) input.value = savedClientId;
+    function setFontFamily(fontKey) {
+      const body = document.getElementById('app-body');
+      body.className = body.className.replace(/\bfont-\S+/g, '').trim();
+      body.classList.add(`font-${fontKey}`);
+      localStorage.setItem('showUp_font', fontKey);
+      updateFontUI(fontKey);
     }
 
-    function saveGoogleClientIdSetting() {
-      const input = document.getElementById('setting-google-client-id');
-      if (!input) return;
-      const val = input.value.trim();
-      if (val) {
-        localStorage.setItem('showUp_google_client_id', val);
-        showToast("Custom Google OAuth Client ID saved!", "success");
-      } else {
-        localStorage.removeItem('showUp_google_client_id');
-        showToast("Reverted to default Google OAuth Client ID.", "info");
-      }
+    function restoreFontPreferences() {
+      const savedFont = localStorage.getItem('showUp_font') || 'jakarta';
+      setFontFamily(savedFont);
+    }
+
+    function updateFontUI(activeFont) {
+      const fonts = ['jakarta', 'outfit', 'space', 'lexend', 'mono'];
+      fonts.forEach(f => {
+        const btn = document.getElementById(`font-btn-${f}`);
+        if (btn) {
+          if (f === activeFont) {
+            btn.className = "p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 text-left transition active:scale-95 shadow-md shadow-emerald-500/10";
+          } else {
+            btn.className = "p-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 text-left transition active:scale-95";
+          }
+        }
+      });
     }
 
     function showToast(message, type = 'info') {
@@ -2080,39 +2019,6 @@
         toast.classList.add('opacity-0', '-translate-y-1');
         setTimeout(() => toast.remove(), 350);
       }, 4000);
-    }
-
-    function toggleBackupModal() {
-      const modal = document.getElementById('backup-modal');
-      if (!modal) return;
-      modal.classList.toggle('hidden');
-      updateBackupModalUI();
-    }
-
-    function updateBackupModalUI() {
-      const signedInBlock = document.getElementById('backup-modal-signed-in');
-      const signedOutBlock = document.getElementById('backup-modal-signed-out');
-      const authStatus = document.getElementById('backup-modal-auth-status');
-      const lastSyncedLabel = document.getElementById('backup-modal-last-synced');
-
-      if (!signedInBlock || !signedOutBlock || !authStatus) return;
-
-      const lastSync = localStorage.getItem('showUp_last_drive_sync');
-      if (lastSyncedLabel) {
-        lastSyncedLabel.innerText = lastSync ? new Date(lastSync).toLocaleString() : 'Never';
-      }
-
-      if (googleAccessToken) {
-        signedInBlock.classList.remove('hidden');
-        signedOutBlock.classList.add('hidden');
-        authStatus.innerText = "Connected";
-        authStatus.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-      } else {
-        signedInBlock.classList.add('hidden');
-        signedOutBlock.classList.remove('hidden');
-        authStatus.innerText = "Not Connected";
-        authStatus.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
-      }
     }
 
     function handleGoogleSignIn() {
@@ -2175,7 +2081,6 @@
               .finally(async () => {
                 document.getElementById('btn-google-login').classList.add('hidden');
                 document.getElementById('google-user-profile').classList.remove('hidden');
-                updateBackupModalUI();
 
                 // If local storage has 0 workouts, check if Drive has a backup to restore
                 if (completedWorkoutsHistory.length === 0) {
@@ -2317,7 +2222,6 @@
 
         const nowIso = new Date().toISOString();
         localStorage.setItem('showUp_last_drive_sync', nowIso);
-        updateBackupModalUI();
 
         if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
         if (!isSilent) showToast("Successfully backed up to Google Drive!", "success");
@@ -2404,7 +2308,6 @@
         renderWeightHistory();
 
         localStorage.setItem('showUp_last_drive_sync', new Date().toISOString());
-        updateBackupModalUI();
 
         showToast(`Restored ${restoredCount} workout${restoredCount === 1 ? '' : 's'} from Google Drive!`, "success");
 
