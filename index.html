@@ -344,7 +344,6 @@
       <div>
         <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
           <span>show<span class="m3-accent-text">Up</span></span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 tracking-wider">v5.0</span>
         </h1>
         <p class="text-[11px] font-bold tracking-wider m3-accent-text uppercase">Compound your progress</p>
       </div>
@@ -3629,11 +3628,53 @@
           },
         });
 
-        // Use prompt: '' so Google does NOT force the unverified missing Privacy Policy / Terms warning dialog repeatedly
-        client.requestAccessToken({ prompt: '' });
+        // Request access token with standard user flow
+        client.requestAccessToken();
       } catch (err) {
         console.error("Failed to initialize Google Token Client:", err);
         showToast(`Auth Initialization failed: ${err.message}`, "error");
+      }
+    }
+
+    function requestDriveAuthorization(autoSyncAfter = true) {
+      if (window.location.protocol === 'file:') {
+        alert("Google Drive authorization requires running showUp via HTTP or HTTPS (e.g. http://localhost:3000 or GitHub Pages).");
+        return;
+      }
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        showToast("Google Identity SDK is loading. Please retry in a moment.", "warning");
+        return;
+      }
+
+      try {
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: getGoogleClientId(),
+          scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+          prompt: 'consent', // Explicitly trigger Google consent dialog so user grants Drive scopes
+          callback: async (response) => {
+            if (response && response.access_token) {
+              googleAccessToken = response.access_token;
+              localStorage.setItem('showUp_google_token', googleAccessToken);
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+              updateCloudBackupUI();
+              showToast("Google Drive backup permission granted!", "success");
+              if (autoSyncAfter) {
+                await syncToGoogleDrive(false);
+              }
+            } else if (response && response.error) {
+              console.warn("Drive authorization canceled or error:", response);
+              if (response.error === 'popup_closed_by_user') {
+                showToast("Google Drive permission dialog was closed.", "info");
+              } else {
+                showToast(`Drive permission: ${response.error_description || response.error}`, "warning");
+              }
+            }
+          }
+        });
+        client.requestAccessToken({ prompt: 'consent' });
+      } catch (err) {
+        console.error("Failed to request Drive authorization:", err);
+        showToast(`Authorization error: ${err.message}`, "error");
       }
     }
 
@@ -3648,7 +3689,10 @@
 
     async function syncToGoogleDrive(isSilent = false) {
       if (!googleAccessToken) {
-        if (!isSilent) showToast("Please sign in with Google first to back up data.", "info");
+        if (!isSilent) {
+          showToast("Authorizing Google Drive backup...", "info");
+          requestDriveAuthorization(true);
+        }
         return;
       }
 
@@ -3681,15 +3725,28 @@
           }
         );
 
-        if (searchRes.status === 401) {
-          console.warn("Drive token expired during sync. Silently refreshing token...");
+        if (searchRes.status === 401 || searchRes.status === 403) {
+          const errData = await searchRes.json().catch(() => ({}));
+          const errMsg = (errData.error?.message || '').toLowerCase();
+          const isScopeErr = searchRes.status === 403 || errMsg.includes('insufficient') || errMsg.includes('scope');
+
           googleAccessToken = null;
           localStorage.removeItem('showUp_google_token');
-          if (!isSilent) {
-            showToast("Google authorization expired. Reconnecting...", "info");
-            handleGoogleSignIn();
+
+          if (isScopeErr) {
+            console.warn("Drive scope insufficient. Prompting for Google Drive permission...");
+            if (!isSilent) {
+              showToast("Google Drive backup permission needed. Opening authorization...", "info");
+              requestDriveAuthorization(true);
+            }
           } else {
-            requestTokenSilently();
+            console.warn("Drive token expired during sync. Reconnecting...");
+            if (!isSilent) {
+              showToast("Google authorization expired. Reconnecting...", "info");
+              handleGoogleSignIn();
+            } else {
+              requestTokenSilently();
+            }
           }
           return;
         }
@@ -3718,6 +3775,15 @@
           );
 
           if (!updateRes.ok) {
+            if (updateRes.status === 401 || updateRes.status === 403) {
+              googleAccessToken = null;
+              localStorage.removeItem('showUp_google_token');
+              if (!isSilent) {
+                showToast("Refreshing Google Drive authorization...", "info");
+                requestDriveAuthorization(true);
+              }
+              return;
+            }
             const errData = await updateRes.json().catch(() => ({}));
             throw new Error(errData.error?.message || `Upload failed with status ${updateRes.status}`);
           }
@@ -3740,6 +3806,15 @@
           );
 
           if (!createMetaRes.ok) {
+            if (createMetaRes.status === 401 || createMetaRes.status === 403) {
+              googleAccessToken = null;
+              localStorage.removeItem('showUp_google_token');
+              if (!isSilent) {
+                showToast("Refreshing Google Drive authorization...", "info");
+                requestDriveAuthorization(true);
+              }
+              return;
+            }
             const errData = await createMetaRes.json().catch(() => ({}));
             throw new Error(errData.error?.message || `File creation failed with status ${createMetaRes.status}`);
           }
@@ -3760,6 +3835,15 @@
           );
 
           if (!uploadRes.ok) {
+            if (uploadRes.status === 401 || uploadRes.status === 403) {
+              googleAccessToken = null;
+              localStorage.removeItem('showUp_google_token');
+              if (!isSilent) {
+                showToast("Refreshing Google Drive authorization...", "info");
+                requestDriveAuthorization(true);
+              }
+              return;
+            }
             const errData = await uploadRes.json().catch(() => ({}));
             throw new Error(errData.error?.message || `Content upload failed with status ${uploadRes.status}`);
           }
@@ -3784,13 +3868,26 @@
       } catch (err) {
         console.error("Google Drive sync error:", err);
         if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-rose-400";
-        if (!isSilent) showToast(`Drive Sync failed: ${err.message}`, "error");
+        const errMsg = (err.message || '').toLowerCase();
+        if (errMsg.includes('insufficient') || errMsg.includes('scope') || errMsg.includes('permission')) {
+          googleAccessToken = null;
+          localStorage.removeItem('showUp_google_token');
+          if (!isSilent) {
+            showToast("Google Drive backup permission needed. Opening authorization...", "info");
+            requestDriveAuthorization(true);
+          }
+        } else {
+          if (!isSilent) showToast(`Drive Sync failed: ${err.message}`, "error");
+        }
       }
     }
 
     async function restoreFromGoogleDrive(isAutoCheck = false) {
       if (!googleAccessToken) {
-        showToast("Please sign in with Google first to restore data.", "info");
+        if (!isAutoCheck) {
+          showToast("Authorizing Google Drive to restore...", "info");
+          requestDriveAuthorization(false);
+        }
         return;
       }
 
@@ -3804,15 +3901,28 @@
           }
         );
 
-        if (searchRes.status === 401) {
-          console.warn("Drive token expired during restore. Silently refreshing token...");
+        if (searchRes.status === 401 || searchRes.status === 403) {
+          const errData = await searchRes.json().catch(() => ({}));
+          const errMsg = (errData.error?.message || '').toLowerCase();
+          const isScopeErr = searchRes.status === 403 || errMsg.includes('insufficient') || errMsg.includes('scope');
+
           googleAccessToken = null;
           localStorage.removeItem('showUp_google_token');
-          if (!isAutoCheck) {
-            showToast("Google authorization expired. Reconnecting...", "info");
-            handleGoogleSignIn();
+
+          if (isScopeErr) {
+            console.warn("Drive scope insufficient during restore. Prompting for Drive permission...");
+            if (!isAutoCheck) {
+              showToast("Google Drive backup permission needed. Opening authorization...", "info");
+              requestDriveAuthorization(false);
+            }
           } else {
-            requestTokenSilently();
+            console.warn("Drive token expired during restore. Reconnecting...");
+            if (!isAutoCheck) {
+              showToast("Google authorization expired. Reconnecting...", "info");
+              handleGoogleSignIn();
+            } else {
+              requestTokenSilently();
+            }
           }
           return;
         }
@@ -3895,7 +4005,17 @@
 
       } catch (err) {
         console.error("Google Drive restore error:", err);
-        showToast(`Drive Restore error: ${err.message}`, "error");
+        const errMsg = (err.message || '').toLowerCase();
+        if (errMsg.includes('insufficient') || errMsg.includes('scope') || errMsg.includes('permission')) {
+          googleAccessToken = null;
+          localStorage.removeItem('showUp_google_token');
+          if (!isAutoCheck) {
+            showToast("Google Drive backup permission needed. Opening authorization...", "info");
+            requestDriveAuthorization(false);
+          }
+        } else {
+          showToast(`Drive Restore error: ${err.message}`, "error");
+        }
       }
     }
 
