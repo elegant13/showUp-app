@@ -4898,17 +4898,24 @@
 
     function checkAndResetDailyETCounter() {
       const currentETDate = getETDateKey();
-      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      let userTodayCount = history.filter(w => {
+      const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      let userTodayCount = rawHistory.filter(w => {
+        if (!w) return false;
         const wDate = typeof w === 'string' ? w : w.date;
-        return wDate === currentETDate;
+        if (wDate !== currentETDate) return false;
+        if (typeof w === 'object') {
+          return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
+        }
+        return true;
       }).length;
 
-      // Real squad completions today
+      // Vetted squad completions today (only authenticated members with valid locations)
       const squads = getSquads();
+      const isValidZip = (z) => typeof z === 'string' && /^\d{5}$/.test(z.trim());
       squads.forEach(sq => {
+        if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
-          if (m.completedDate === currentETDate && m.completedToday) {
+          if (m && m.completedDate === currentETDate && m.completedToday === true && m.zip && isValidZip(m.zip)) {
             userTodayCount += 1;
           }
         });
@@ -4941,13 +4948,19 @@
 
     function getGlobalActiveAthletesCount() {
       const user = getAppUser();
-      const isUserLifting = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0);
+      const isUserLifting = (
+        Array.isArray(currentSessionSets) && 
+        currentSessionSets.length > 0 && 
+        currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
+      );
       const squads = getSquads();
       let squadActive = 0;
       squads.forEach(sq => {
+        if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
+          if (!m) return;
           const isMe = (m.id === user.id || m.email === user.email);
-          if (m.isWorkingOut && !isMe) squadActive++;
+          if (m.isWorkingOut === true && !isMe) squadActive++;
         });
       });
 
@@ -4982,52 +4995,72 @@
       updateGlobalStatsUI();
     }, 30000);
 
-    // ================= REAL-TIME ZIP CODES (ONLY ACTIVE OR COMPLETED TODAY) =================
-    // CRITICAL USER REQUIREMENT: Avoid showing regional zip codes.
-    // Only show zip codes where users are working out or have worked out already for the day.
+    // ================= REAL-TIME VETTED ZIP CODES (STRICTLY AUTHENTICATED & VETTED LOGS) =================
+    // CRITICAL USER REQUIREMENT:
+    // Ensure arbitrary and unvetted workouts are NOT presented in the Active Workout Map.
+    // Only workouts completed by verified, logged-in athletes with authentic zip codes are mapped.
     function getActiveAndCompletedZipNodes() {
       const currentETDate = getETDateKey();
       const userZip = getUserZip();
-      const userCoords = getZipCoordinates(userZip);
       const user = getAppUser();
-      const isUserLifting = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0);
 
-      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      const userCompletedToday = history.filter(w => {
+      // 1. Vetted User Active Lifting Status (must have genuine active workout sets logged in current session)
+      const isUserLifting = (
+        Array.isArray(currentSessionSets) && 
+        currentSessionSets.length > 0 && 
+        currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
+      );
+
+      // 2. Vetted User Completed Workouts Today (from authentic synced workout history)
+      const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      const userVettedCompletedToday = rawHistory.filter(w => {
+        if (!w) return false;
         const wDate = typeof w === 'string' ? w : w.date;
-        return wDate === currentETDate;
+        if (wDate !== currentETDate) return false;
+        // Verify object integrity: must be valid date string or verified workout object with completed flag or sets
+        if (typeof w === 'object') {
+          return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
+        }
+        return true;
       }).length;
 
       const nodesMap = new Map();
+      const isValidZip = (z) => typeof z === 'string' && /^\d{5}$/.test(z.trim());
 
-      // 1. Add user's zip ONLY if currently working out or completed already today
-      if (isUserLifting || userCompletedToday > 0) {
+      // 1. Add logged-in user's zip ONLY if verified active or completed today
+      if (isValidZip(userZip) && (isUserLifting || userVettedCompletedToday > 0)) {
+        const userCoords = getZipCoordinates(userZip);
         nodesMap.set(userZip, {
           zip: userZip,
           city: userCoords.city || 'Your Area',
           lat: userCoords.lat,
           lng: userCoords.lng,
           activeCount: isUserLifting ? 1 : 0,
-          completedToday: userCompletedToday,
+          completedToday: userVettedCompletedToday,
           isUserZip: true,
           lifters: isUserLifting ? [user.rawName || 'You'] : []
         });
       }
 
-      // 2. Add squad members ONLY if currently working out or completed already today
+      // 2. Add squad members ONLY if they have vetted completed workouts or active sessions with valid zip codes
       const squads = getSquads();
       squads.forEach(sq => {
+        if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
+          if (!m) return;
           const isMe = (m.id === user.id || m.email === user.email || m.id === 'local_user');
           if (isMe) return;
 
-          const isMemberActive = !!m.isWorkingOut;
-          const isMemberCompletedToday = !!(m.completedToday && m.completedDate === currentETDate);
+          // Member must have a verified 5-digit zip code (no arbitrary fallback default zips!)
+          const mZip = m.zip && isValidZip(m.zip) ? m.zip.trim() : null;
+          if (!mZip) return; // Discard unvetted locations without a valid postal zip
+
+          const isMemberActive = (m.isWorkingOut === true && (m.currentWorkout || m.workoutStartedAt));
+          const isMemberCompletedToday = (m.completedToday === true && m.completedDate === currentETDate);
 
           if (isMemberActive || isMemberCompletedToday) {
-            const mZip = m.zip || '78701';
             const mCoords = getZipCoordinates(mZip);
-            const mCity = m.city || mCoords.city || 'Teammate Area';
+            const mCity = m.city || mCoords.city || `Zip ${mZip}`;
             const mLat = m.lat || mCoords.lat;
             const mLng = m.lng || mCoords.lng;
 
@@ -5047,7 +5080,7 @@
             const existing = nodesMap.get(mZip);
             if (isMemberActive) {
               existing.activeCount += 1;
-              const name = m.rawName || m.name;
+              const name = m.rawName || m.name || 'Teammate';
               if (!existing.lifters.includes(name)) existing.lifters.push(name);
             }
             if (isMemberCompletedToday) {
@@ -5057,7 +5090,8 @@
         });
       });
 
-      return Array.from(nodesMap.values());
+      // Filter out any nodes that have 0 active lifters AND 0 completed workouts
+      return Array.from(nodesMap.values()).filter(node => (node.completedToday > 0 || node.activeCount > 0));
     }
 
     // ================= GOOGLE MAPS BASE LAYER & ZOOM ENGINE =================
