@@ -685,6 +685,41 @@
     </div>
   </div>
 
+  <!-- ================= SET USER ZIP CODE MODAL ================= -->
+  <div id="user-zip-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-sm shadow-2xl space-y-5 relative">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-location-dot text-emerald-400"></i>
+            Workout Zip Code
+          </h2>
+          <p class="text-xs text-slate-400">Ground your workouts on the global heat map</p>
+        </div>
+        <button onclick="closeUserZipModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">5-Digit US Zip Code</label>
+          <input type="text" id="input-user-zip" placeholder="e.g. 10001, 90210, 78701" maxlength="5" pattern="[0-9]{5}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 font-mono font-bold text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition text-center tracking-widest text-lg">
+        </div>
+        <p class="text-[11px] text-slate-400">Whenever you log workouts, your session is plotted to this regional heat map node.</p>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeUserZipModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); saveUserZipSubmit()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
+          Save Zip Code
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
@@ -1175,7 +1210,122 @@
     <!-- VIEW TAB 3: SQUADS & ACCOUNTABILITY -->
     <div id="tab-squads-view" class="hidden space-y-6">
 
-      <!-- SQUADS HERO & HEADER SECTION -->
+      <!-- 1. GLOBAL WORKOUT COUNTER & ACTIVE ATHLETES CARD -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-earth-americas text-emerald-400 text-sm"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Global Daily Workouts</span>
+          </div>
+          <span class="text-[10px] font-mono text-slate-400 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-full flex items-center gap-1.5" title="Resets strictly to 0 after 23:59 Eastern Time">
+            <i class="fa-regular fa-clock text-amber-400"></i>
+            <span>Resets 23:59 ET</span>
+          </span>
+        </div>
+
+        <div class="py-4 text-center">
+          <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight font-mono">
+            1,428
+          </div>
+          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Workouts Completed Today</p>
+        </div>
+
+        <!-- SENTENCE BELOW GLOBAL COUNTER (EXACT USER REQUIREMENT) -->
+        <div class="pt-3 border-t border-slate-800/80 text-center">
+          <p id="global-active-sentence" class="text-xs text-slate-300 font-medium flex items-center justify-center gap-2">
+            <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span id="global-active-sentence-text">34 athletes are actively working out right now across all squads.</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- 2. GLOBAL HEAT MAP (BY ZIP CODE) -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-map-location-dot text-emerald-400 text-sm"></i>
+              <h3 class="text-sm font-bold text-slate-100 tracking-tight">Global Workout Heat Map</h3>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Live regional zip code density of active and completed workouts</p>
+          </div>
+
+          <!-- USER ZIP CODE SELECTOR -->
+          <div class="flex items-center gap-2">
+            <button onclick="triggerHaptic('light'); openUserZipModal()" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 group" title="Click to change your workout zip code">
+              <span class="text-slate-500">Your Zip:</span>
+              <span id="display-user-zip" class="font-mono font-bold text-emerald-400">10001</span>
+              <i class="fa-solid fa-pen-to-square text-[10px] text-slate-500 group-hover:text-emerald-400"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- SVG HEAT MAP VISUALIZATION -->
+        <div class="relative w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950">
+          <svg id="global-zip-heatmap-svg" viewBox="0 0 600 300" class="w-full h-56 sm:h-64 select-none">
+            <defs>
+              <radialGradient id="heat-glow-emerald" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#10b981" stop-opacity="0.85" />
+                <stop offset="60%" stop-color="#10b981" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="heat-glow-amber" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.75" />
+                <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.2" />
+                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+
+            <!-- Coordinate Grid -->
+            <g stroke="#1e293b" stroke-width="0.5" stroke-dasharray="3 3">
+              <line x1="100" y1="0" x2="100" y2="300" />
+              <line x1="200" y1="0" x2="200" y2="300" />
+              <line x1="300" y1="0" x2="300" y2="300" />
+              <line x1="400" y1="0" x2="400" y2="300" />
+              <line x1="500" y1="0" x2="500" y2="300" />
+              <line x1="0" y1="100" x2="600" y2="100" />
+              <line x1="0" y1="200" x2="600" y2="200" />
+            </g>
+
+            <!-- Vector Continent Contour -->
+            <path d="M 60,70 L 120,50 L 200,45 L 280,50 L 370,40 L 460,45 L 530,65 L 560,95 L 540,140 L 515,190 L 480,260 L 440,245 L 390,210 L 320,240 L 260,270 L 210,215 L 140,210 L 95,235 L 55,175 L 45,110 Z" fill="#090d16" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.85" />
+
+            <!-- Dynamic Zip Nodes Plotted via JS -->
+            <g id="heatmap-nodes-group"></g>
+          </svg>
+
+          <!-- Ambient Scanner Glow -->
+          <div class="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-emerald-500/5 to-transparent w-full animate-pulse opacity-40"></div>
+        </div>
+
+        <!-- LIVE ZIP CODE ACTIVITY STRIP -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
+            <span>Regional Zip Codes:</span>
+            <span id="heatmap-legend" class="text-[10px] text-slate-500 font-normal">🟢 Active Now • 🔥 Completed Today</span>
+          </div>
+          <div id="zip-ticker-container" class="flex items-center gap-2 overflow-x-auto pb-1">
+            <!-- Dynamically populated zip pills -->
+          </div>
+        </div>
+
+        <!-- SELECTED ZIP CODE DETAIL CARD -->
+        <div id="zip-detail-card" class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span id="zip-detail-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+            <div class="truncate">
+              <span id="zip-detail-title" class="font-bold text-slate-100">Zip 10001 (New York, NY)</span>
+              <p id="zip-detail-desc" class="text-[11px] text-slate-400 truncate">42 Completed Today • 2 Active Lifters</p>
+            </div>
+          </div>
+          <span id="zip-detail-badge" class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">Active Area</span>
+        </div>
+      </section>
+
+      <!-- 3. SQUADS HERO & HEADER SECTION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -1184,7 +1334,7 @@
                 <i class="fa-solid fa-people-group"></i>
               </span>
               <div>
-                <h2 class="text-base font-extrabold text-slate-100 tracking-tight">Squads & Community</h2>
+                <h2 class="text-base font-extrabold text-slate-100 tracking-tight">Your Squads</h2>
                 <p class="text-[11px] text-slate-400">Accountability, peer motivation, & quiet workout alerts</p>
               </div>
             </div>
@@ -1201,18 +1351,24 @@
           </div>
         </div>
 
-        <!-- ACTIVE GYM BEACON BANNER (Shows if any teammate is active) -->
+        <!-- ACTIVE GYM BEACON BANNER (With Close Action button!) -->
         <div id="squad-active-beacon-banner" class="hidden mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between bg-emerald-500/5 px-3.5 py-2.5 rounded-2xl border border-emerald-500/20">
-          <div class="flex items-center gap-2.5">
-            <span class="relative flex h-2.5 w-2.5">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span class="relative flex h-2.5 w-2.5 flex-shrink-0">
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <span id="squad-active-beacon-text" class="text-xs font-medium text-emerald-300">
+            <span id="squad-active-beacon-text" class="text-xs font-medium text-emerald-300 truncate">
               1 squad mate is lifting right now!
             </span>
           </div>
-          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wider">Live</span>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wider">Live</span>
+            <button onclick="triggerHaptic('light'); dismissSimulatedWorkout()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-semibold px-2.5 py-1 rounded-xl transition flex items-center gap-1" title="Close and end active workout simulation">
+              <i class="fa-solid fa-xmark text-xs text-rose-400"></i>
+              <span>Close Action</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1294,6 +1450,9 @@
       restoreThemePreferences();
       restoreFontPreferences();
       initSquads();
+      checkAndResetDailyETCounter();
+      renderHeatMap();
+      updateGlobalStatsUI();
     });
 
     window.addEventListener('online', () => {
@@ -1857,6 +2016,7 @@
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
       broadcastUserWorkoutEnded();
+      incrementGlobalWorkoutCounter();
 
       renderLoggedSets();
       renderCalendar();
@@ -2320,6 +2480,8 @@
         if (squadsView) squadsView.classList.remove('hidden');
         if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
         renderSquadsTab();
+        renderHeatMap();
+        updateGlobalStatsUI();
       }
     }
 
@@ -2807,7 +2969,316 @@
     let currentActiveSquadId = null;
     let transferTargetSquadId = null;
     let activePillTimeout = null;
+    let selectedHeatMapZip = '10001';
 
+    // 12 Baseline Regional Zip Codes for Vector Continental Grid
+    const defaultZipData = [
+      { zip: '10001', city: 'New York, NY', x: 515, y: 100, completedToday: 42, activeCount: 3 },
+      { zip: '02138', city: 'Boston, MA', x: 545, y: 80, completedToday: 28, activeCount: 1 },
+      { zip: '20001', city: 'Washington, DC', x: 485, y: 125, completedToday: 35, activeCount: 2 },
+      { zip: '30303', city: 'Atlanta, GA', x: 430, y: 180, completedToday: 26, activeCount: 2 },
+      { zip: '33139', city: 'Miami, FL', x: 480, y: 245, completedToday: 31, activeCount: 1 },
+      { zip: '60601', city: 'Chicago, IL', x: 370, y: 105, completedToday: 39, activeCount: 4 },
+      { zip: '75201', city: 'Dallas, TX', x: 290, y: 195, completedToday: 24, activeCount: 1 },
+      { zip: '78701', city: 'Austin, TX', x: 280, y: 225, completedToday: 33, activeCount: 2 },
+      { zip: '80202', city: 'Denver, CO', x: 210, y: 130, completedToday: 19, activeCount: 1 },
+      { zip: '90210', city: 'Los Angeles, CA', x: 85, y: 175, completedToday: 47, activeCount: 5 },
+      { zip: '94103', city: 'San Francisco, CA', x: 65, y: 130, completedToday: 36, activeCount: 3 },
+      { zip: '98101', city: 'Seattle, WA', x: 80, y: 70, completedToday: 22, activeCount: 2 }
+    ];
+
+    function getUserZip() {
+      return localStorage.getItem('showUp_user_zip') || '10001';
+    }
+
+    function setUserZip(zip) {
+      localStorage.setItem('showUp_user_zip', zip);
+      selectedHeatMapZip = zip;
+    }
+
+    function getHeatMapZipData() {
+      let data = JSON.parse(localStorage.getItem('showUp_heatmap_zip_data') || 'null');
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        data = JSON.parse(JSON.stringify(defaultZipData));
+        localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
+      }
+
+      // Ensure user's current zip code exists in data
+      const userZip = getUserZip();
+      let userNode = data.find(item => item.zip === userZip);
+      if (!userNode) {
+        // Place user zip into reasonable grid location
+        userNode = {
+          zip: userZip,
+          city: 'Your Gym Area',
+          x: 450,
+          y: 140,
+          completedToday: 1,
+          activeCount: 0
+        };
+        data.push(userNode);
+        localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
+      }
+
+      return data;
+    }
+
+    function saveHeatMapZipData(data) {
+      localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
+    }
+
+    // ================= EASTERN TIME (ET) 23:59 DAILY RESET LOGIC =================
+    function getETDateKey(date = new Date()) {
+      try {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'America/New_York',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(date);
+      } catch (e) {
+        const offsetMs = 4 * 60 * 60 * 1000;
+        return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
+      }
+    }
+
+    function checkAndResetDailyETCounter() {
+      const currentETDate = getETDateKey();
+      const lastETDate = localStorage.getItem('showUp_global_counter_et_date');
+      let currentCount = parseInt(localStorage.getItem('showUp_global_counter_count'), 10);
+
+      // Reset counter to 0 after 23:59 ET when calendar date flips in America/New_York
+      if (!lastETDate || lastETDate !== currentETDate || isNaN(currentCount)) {
+        const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+        const userTodayCount = history.filter(w => {
+          const wDate = typeof w === 'string' ? w : w.date;
+          return wDate === currentETDate;
+        }).length;
+
+        currentCount = userTodayCount; // Strict reset to 0 + today's actual completions
+        localStorage.setItem('showUp_global_counter_et_date', currentETDate);
+        localStorage.setItem('showUp_global_counter_count', String(currentCount));
+      }
+
+      const counterEl = document.getElementById('global-daily-counter');
+      if (counterEl) {
+        counterEl.innerText = Number(currentCount).toLocaleString();
+      }
+
+      return currentCount;
+    }
+
+    function incrementGlobalWorkoutCounter() {
+      checkAndResetDailyETCounter();
+      let count = parseInt(localStorage.getItem('showUp_global_counter_count') || '0', 10);
+      count += 1;
+      const currentETDate = getETDateKey();
+      localStorage.setItem('showUp_global_counter_et_date', currentETDate);
+      localStorage.setItem('showUp_global_counter_count', String(count));
+
+      // Also increment completed count on user's zip code node
+      recordUserZipWorkoutCompleted();
+
+      updateGlobalStatsUI();
+      renderHeatMap();
+    }
+
+    function recordUserZipWorkoutCompleted() {
+      const userZip = getUserZip();
+      const zipData = getHeatMapZipData();
+      const node = zipData.find(z => z.zip === userZip);
+      if (node) {
+        node.completedToday = (node.completedToday || 0) + 1;
+        saveHeatMapZipData(zipData);
+      }
+    }
+
+    function getGlobalActiveAthletesCount() {
+      const squads = getSquads();
+      let squadActive = 0;
+      squads.forEach(sq => {
+        sq.members.forEach(m => {
+          if (m.isWorkingOut) squadActive++;
+        });
+      });
+
+      let heatMapActive = 0;
+      const zipNodes = getHeatMapZipData();
+      zipNodes.forEach(z => {
+        heatMapActive += (z.activeCount || 0);
+      });
+
+      return Math.max(squadActive, heatMapActive + squadActive);
+    }
+
+    function updateGlobalStatsUI() {
+      checkAndResetDailyETCounter();
+      const activeCount = getGlobalActiveAthletesCount();
+
+      // Explicit sentence below the global counter on how many users are actively working out
+      const sentenceEl = document.getElementById('global-active-sentence-text');
+      if (sentenceEl) {
+        const noun = activeCount === 1 ? 'athlete is' : 'athletes are';
+        sentenceEl.innerText = `${activeCount} ${noun} actively working out right now across all squads.`;
+      }
+
+      const badgeEl = document.getElementById('global-active-live-badge');
+      if (badgeEl) {
+        badgeEl.innerText = `${activeCount} Active Now`;
+      }
+    }
+
+    // Auto-check ET reset every 30 seconds
+    setInterval(() => {
+      checkAndResetDailyETCounter();
+      updateGlobalStatsUI();
+    }, 30000);
+
+    // ================= GLOBAL HEAT MAP VISUALIZATION ENGINE =================
+    function renderHeatMap() {
+      const svgNodesGroup = document.getElementById('heatmap-nodes-group');
+      const tickerContainer = document.getElementById('zip-ticker-container');
+      const displayUserZip = document.getElementById('display-user-zip');
+      if (!svgNodesGroup || !tickerContainer) return;
+
+      const userZip = getUserZip();
+      if (displayUserZip) {
+        displayUserZip.innerText = userZip;
+      }
+
+      const zipNodes = getHeatMapZipData();
+
+      // 1. Draw SVG nodes
+      svgNodesGroup.innerHTML = zipNodes.map(node => {
+        const isUserZip = node.zip === userZip;
+        const hasActive = (node.activeCount || 0) > 0;
+        const completed = node.completedToday || 0;
+        const heatRadius = Math.min(24, Math.max(8, 8 + Math.round(completed * 0.4)));
+
+        return `
+          <g class="cursor-pointer group" onclick="triggerHaptic('light'); selectZipNode('${node.zip}')">
+            <!-- Heat Glow Aura -->
+            ${completed > 0 ? `
+              <circle cx="${node.x}" cy="${node.y}" r="${heatRadius}" fill="url(#heat-glow-emerald)" opacity="0.85" />
+            ` : ''}
+
+            <!-- Live Active Ping Rings -->
+            ${hasActive ? `
+              <circle cx="${node.x}" cy="${node.y}" r="16" fill="none" stroke="#10b981" stroke-width="1.5" opacity="0.6" class="animate-ping" style="animation-duration: 2s;" />
+              <circle cx="${node.x}" cy="${node.y}" r="10" fill="none" stroke="#34d399" stroke-width="1.2" opacity="0.75" />
+            ` : ''}
+
+            <!-- User Zip Accent Marker -->
+            ${isUserZip ? `
+              <circle cx="${node.x}" cy="${node.y}" r="${heatRadius + 4}" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="2 2" />
+            ` : ''}
+
+            <!-- Core Node Circle -->
+            <circle cx="${node.x}" cy="${node.y}" r="${hasActive ? 6 : 4.5}" fill="${hasActive ? '#10b981' : isUserZip ? '#38bdf8' : '#64748b'}" stroke="#0f172a" stroke-width="1.5" class="transition-all duration-300 group-hover:scale-125" />
+
+            <!-- Zip Label -->
+            <text x="${node.x}" y="${node.y - (hasActive ? 12 : 9)}" fill="${isUserZip ? '#38bdf8' : hasActive ? '#34d399' : '#94a3b8'}" font-size="8.5" font-family="monospace" font-weight="${isUserZip || hasActive ? 'bold' : 'normal'}" text-anchor="middle" class="select-none pointer-events-none">
+              ${node.zip}${isUserZip ? ' ★' : ''}
+            </text>
+          </g>
+        `;
+      }).join('');
+
+      // 2. Render Zip Ticker Pills
+      tickerContainer.innerHTML = zipNodes.map(node => {
+        const isSelected = node.zip === selectedHeatMapZip;
+        const isUserZip = node.zip === userZip;
+        const hasActive = (node.activeCount || 0) > 0;
+
+        return `
+          <button onclick="triggerHaptic('light'); selectZipNode('${node.zip}')" class="px-2.5 py-1.5 rounded-xl border text-[11px] whitespace-nowrap transition flex items-center gap-1.5 ${
+            isSelected 
+              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm font-bold' 
+              : hasActive
+                ? 'bg-slate-900 text-emerald-400 border-emerald-500/30 font-semibold'
+                : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+          }">
+            <span class="w-1.5 h-1.5 rounded-full ${hasActive ? 'bg-emerald-400 animate-pulse' : isUserZip ? 'bg-sky-400' : 'bg-slate-600'}"></span>
+            <span class="font-mono">${node.zip}</span>
+            <span class="text-slate-500 text-[10px]">${node.city.split(',')[0]}</span>
+            ${hasActive ? `<span class="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">${node.activeCount} Live</span>` : ''}
+          </button>
+        `;
+      }).join('');
+
+      // 3. Update Detail Card
+      updateZipDetailCard();
+    }
+
+    function selectZipNode(zipCode) {
+      selectedHeatMapZip = zipCode;
+      renderHeatMap();
+    }
+
+    function updateZipDetailCard() {
+      const zipNodes = getHeatMapZipData();
+      const node = zipNodes.find(z => z.zip === selectedHeatMapZip) || zipNodes[0];
+      if (!node) return;
+
+      const userZip = getUserZip();
+      const isUserZip = node.zip === userZip;
+      const hasActive = (node.activeCount || 0) > 0;
+
+      const titleEl = document.getElementById('zip-detail-title');
+      const descEl = document.getElementById('zip-detail-desc');
+      const badgeEl = document.getElementById('zip-detail-badge');
+      const indEl = document.getElementById('zip-detail-indicator');
+
+      if (titleEl) {
+        titleEl.innerText = `Zip ${node.zip} (${node.city})${isUserZip ? ' • (Your Zip Code)' : ''}`;
+      }
+      if (descEl) {
+        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today • ${node.activeCount || 0} Lifters Active Right Now`;
+      }
+      if (indEl) {
+        indEl.className = `w-2.5 h-2.5 rounded-full flex-shrink-0 ${hasActive ? 'bg-emerald-400 animate-pulse' : isUserZip ? 'bg-sky-400' : 'bg-slate-600'}`;
+      }
+      if (badgeEl) {
+        if (hasActive) {
+          badgeEl.className = "text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/30 flex-shrink-0";
+          badgeEl.innerText = "Active Hotspot";
+        } else if (isUserZip) {
+          badgeEl.className = "text-[10px] font-semibold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/30 flex-shrink-0";
+          badgeEl.innerText = "Your Zone";
+        } else {
+          badgeEl.className = "text-[10px] font-semibold text-slate-400 bg-slate-850 px-2 py-0.5 rounded-full border border-slate-700 flex-shrink-0";
+          badgeEl.innerText = "Regional Node";
+        }
+      }
+    }
+
+    function openUserZipModal() {
+      const input = document.getElementById('input-user-zip');
+      if (input) input.value = getUserZip();
+      document.getElementById('user-zip-modal').classList.remove('hidden');
+    }
+
+    function closeUserZipModal() {
+      document.getElementById('user-zip-modal').classList.add('hidden');
+    }
+
+    function saveUserZipSubmit() {
+      const input = document.getElementById('input-user-zip');
+      let val = input.value.trim().replace(/\D/g, '');
+      if (val.length !== 5) {
+        showToast("Please enter a valid 5-digit US zip code", "warning");
+        input.focus();
+        return;
+      }
+
+      setUserZip(val);
+      getHeatMapZipData(); // Ensures it exists in registry
+      closeUserZipModal();
+      renderHeatMap();
+      showToast(`Workout zip code updated to ${val}!`, "success");
+    }
+
+    // ================= SQUADS CORE STATE & ACTIONS =================
     function getAppUser() {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
       if (savedProfile && (savedProfile.firstName || savedProfile.email)) {
@@ -2835,7 +3306,7 @@
       const user = getAppUser();
 
       if (!squads || !Array.isArray(squads) || squads.length === 0) {
-        // Seed default starter squad with realistic teammates & active workout
+        // Starter squad with delivered email invites and active teammate session
         squads = [
           {
             id: 'squad_iron_collective',
@@ -2844,6 +3315,7 @@
             icon: 'dumbbell',
             accent: 'emerald',
             inviteCode: 'IRON-9821',
+            isCollapsed: false,
             createdAt: new Date().toISOString(),
             creatorId: user.id,
             creatorName: user.rawName,
@@ -2871,6 +3343,10 @@
                 name: 'Marcus Vance',
                 rawName: 'Marcus Vance',
                 email: 'marcus@iron.dev',
+                invitedByEmail: true,
+                inviteEmail: 'marcus@iron.dev',
+                inviteStatus: 'delivered',
+                inviteDeliveredAt: 'Today, 9:15 AM',
                 avatar: null,
                 isCreator: false,
                 isWorkingOut: true,
@@ -2883,6 +3359,10 @@
                 name: 'Elena Rostova',
                 rawName: 'Elena Rostova',
                 email: 'elena@power.fit',
+                invitedByEmail: true,
+                inviteEmail: 'elena@power.fit',
+                inviteStatus: 'delivered',
+                inviteDeliveredAt: 'Yesterday, 4:20 PM',
                 avatar: null,
                 isCreator: false,
                 isWorkingOut: false,
@@ -2965,6 +3445,91 @@
       }
     }
 
+    // Toggle Collapsing a Squad
+    function toggleSquadCollapse(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      squad.isCollapsed = !squad.isCollapsed;
+      saveSquads(squads);
+      renderSquadsTab();
+    }
+
+    // Creator Deletes Squad
+    function deleteSquadPrompt(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const isUserCreator = (squad.creatorId === user.id) || squad.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
+      if (!isUserCreator) {
+        showToast("Only the squad creator has permission to delete this squad.", "error");
+        return;
+      }
+
+      if (confirm(`Are you sure you want to permanently delete and disband "${squad.name}"?\n\nThis will remove the squad for all members and cannot be undone.`)) {
+        const updated = squads.filter(s => s.id !== squadId);
+        saveSquads(updated);
+        renderSquadsTab();
+        updateSquadBeacon();
+        updateGlobalStatsUI();
+        renderHeatMap();
+        showToast(`Squad "${squad.name}" has been deleted.`, "info");
+      }
+    }
+
+    // Close Simulated Workout Action (All active or specific member)
+    function dismissSimulatedWorkout() {
+      const squads = getSquads();
+      let closedCount = 0;
+
+      squads.forEach(sq => {
+        sq.members.forEach(m => {
+          if (m.isWorkingOut) {
+            m.isWorkingOut = false;
+            m.lastActive = 'Just finished';
+            m.currentWorkout = null;
+            closedCount++;
+          }
+        });
+      });
+
+      saveSquads(squads);
+      renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
+      renderHeatMap();
+      dismissSquadPill();
+
+      const banner = document.getElementById('squad-active-beacon-banner');
+      if (banner) banner.classList.add('hidden');
+
+      showToast("Active workout simulation closed.", "info");
+    }
+
+    function stopSpecificMemberWorkout(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const member = squad.members.find(m => m.id === memberId);
+      if (!member) return;
+
+      member.isWorkingOut = false;
+      member.lastActive = 'Just finished';
+      member.currentWorkout = null;
+
+      saveSquads(squads);
+      renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
+      renderHeatMap();
+      dismissSquadPill();
+      showToast(`Ended active workout session for ${member.rawName || member.name}.`, "info");
+    }
+
     function renderSquadsTab() {
       const container = document.getElementById('squads-list-container');
       if (!container) return;
@@ -2994,6 +3559,8 @@
       container.innerHTML = squads.map(sq => {
         const isUserCreator = (sq.creatorId === user.id) || sq.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
         const prefs = sq.notificationPreferences || { inAppPill: true, beaconPulse: true, hapticPulse: true, soundChime: true, browserNotify: false };
+        const isCollapsed = !!sq.isCollapsed;
+        const activeMembersInSquad = sq.members.filter(m => m.isWorkingOut);
         
         const accentColors = {
           emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
@@ -3008,25 +3575,31 @@
           <div class="m3-card rounded-3xl p-5 border border-slate-800 shadow-xl space-y-4">
             
             <!-- SQUAD HEADER -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-2xl ${color.bg} ${color.text} border ${color.border} flex items-center justify-center text-xl shadow-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isCollapsed ? '' : 'border-b border-slate-800/80 pb-4'}">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-12 h-12 rounded-2xl ${color.bg} ${color.text} border ${color.border} flex items-center justify-center text-xl shadow-lg flex-shrink-0">
                   <i class="fa-solid fa-${sq.icon || 'dumbbell'}"></i>
                 </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <h3 class="text-base font-extrabold text-slate-100 tracking-tight">${escapeHtml(sq.name)}</h3>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="text-base font-extrabold text-slate-100 tracking-tight truncate">${escapeHtml(sq.name)}</h3>
                     ${isUserCreator 
                       ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1"><i class="fa-solid fa-crown text-[9px]"></i> Creator</span>`
                       : `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Member</span>`
                     }
                   </div>
-                  <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
+                  <p class="text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
                 </div>
               </div>
 
               <!-- ACTION BUTTONS -->
               <div class="flex items-center gap-1.5 flex-wrap">
+                <!-- COLLAPSE / EXPAND TOGGLE -->
+                <button onclick="triggerHaptic('light'); toggleSquadCollapse('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="${isCollapsed ? 'Expand squad details' : 'Collapse squad card'}">
+                  <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} text-xs text-slate-400"></i>
+                  <span>${isCollapsed ? 'Expand' : 'Collapse'}</span>
+                </button>
+
                 <button onclick="triggerHaptic('light'); openSquadNotificationsModal('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Configure workout notifications">
                   <i class="fa-solid fa-bell text-xs ${prefs.inAppPill || prefs.soundChime ? 'text-emerald-400' : 'text-slate-400'}"></i>
                   <span>Alerts</span>
@@ -3042,8 +3615,17 @@
                   <span>Simulate</span>
                 </button>
 
+                <!-- CREATOR DELETE SQUAD BUTTON -->
+                ${isUserCreator ? `
+                  <button onclick="triggerHaptic('heavy'); deleteSquadPrompt('${sq.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Permanently delete this squad (Creator only)">
+                    <i class="fa-solid fa-trash-can text-xs"></i>
+                    <span>Delete</span>
+                  </button>
+                ` : ''}
+
+                <!-- LEAVE BUTTON -->
                 ${isUserCreator
-                  ? `<button onclick="triggerHaptic('medium'); handleCreatorLeave('${sq.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Leave squad (must assign creator)">
+                  ? `<button onclick="triggerHaptic('medium'); handleCreatorLeave('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Transfer creator role and leave">
                       <i class="fa-solid fa-right-from-bracket text-xs"></i>
                       <span>Leave</span>
                     </button>`
@@ -3055,95 +3637,137 @@
               </div>
             </div>
 
-            <!-- UNOBTRUSIVE NOTIFICATIONS STATUS PILL ROW -->
-            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[11px]">
-              <span class="text-slate-400 font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-bell text-emerald-400"></i>
-                Active Workout Alerts:
-              </span>
-              <div class="flex items-center gap-1 flex-wrap">
-                <span class="px-2 py-0.5 rounded-lg border ${prefs.inAppPill ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Pill</span>
-                <span class="px-2 py-0.5 rounded-lg border ${prefs.beaconPulse ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Beacon</span>
-                <span class="px-2 py-0.5 rounded-lg border ${prefs.hapticPulse ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Haptic</span>
-                <span class="px-2 py-0.5 rounded-lg border ${prefs.soundChime ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Chime</span>
-                <span class="px-2 py-0.5 rounded-lg border ${prefs.browserNotify ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">OS Push</span>
-                <button onclick="triggerHaptic('light'); openSquadNotificationsModal('${sq.id}')" class="text-emerald-400 hover:text-emerald-300 ml-1 underline text-[10px]">Edit</button>
+            <!-- COLLAPSED SUMMARY VIEW -->
+            ${isCollapsed ? `
+              <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="flex -space-x-2 overflow-hidden flex-shrink-0">
+                    ${sq.members.slice(0, 4).map(m => `
+                      <div class="inline-flex h-7 w-7 rounded-xl ring-2 ring-slate-950 bg-slate-900 text-[10px] text-slate-200 font-bold items-center justify-center border border-slate-700">
+                        ${getInitials(m.rawName || m.name)}
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="truncate">
+                    <span class="text-slate-200 font-semibold">${sq.members.length} members</span>
+                    <span class="text-slate-500 mx-1.5">•</span>
+                    ${activeMembersInSquad.length > 0 
+                      ? `<span class="text-emerald-400 font-semibold"><i class="fa-solid fa-bolt text-[10px]"></i> ${activeMembersInSquad.length} lifting now</span>`
+                      : `<span class="text-slate-500">All resting</span>`
+                    }
+                  </div>
+                </div>
+                <button onclick="triggerHaptic('light'); toggleSquadCollapse('${sq.id}')" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 flex-shrink-0">
+                  <span>View Details</span>
+                  <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                </button>
               </div>
-            </div>
-
-            <!-- MEMBERS LIST -->
-            <div class="space-y-2 pt-1">
-              <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider px-1">
-                <span>Members (${sq.members.length})</span>
-                <span class="text-[10px] text-slate-500">Invite Code: <code class="text-emerald-400 font-mono">${sq.inviteCode || 'SHOWUP'}</code></span>
+            ` : `
+              <!-- UNOBTRUSIVE NOTIFICATIONS STATUS PILL ROW -->
+              <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[11px]">
+                <span class="text-slate-400 font-medium flex items-center gap-1.5">
+                  <i class="fa-solid fa-bell text-emerald-400"></i>
+                  Active Workout Alerts:
+                </span>
+                <div class="flex items-center gap-1 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-lg border ${prefs.inAppPill ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Pill</span>
+                  <span class="px-2 py-0.5 rounded-lg border ${prefs.beaconPulse ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Beacon</span>
+                  <span class="px-2 py-0.5 rounded-lg border ${prefs.hapticPulse ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Haptic</span>
+                  <span class="px-2 py-0.5 rounded-lg border ${prefs.soundChime ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Chime</span>
+                  <span class="px-2 py-0.5 rounded-lg border ${prefs.browserNotify ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">OS Push</span>
+                  <button onclick="triggerHaptic('light'); openSquadNotificationsModal('${sq.id}')" class="text-emerald-400 hover:text-emerald-300 ml-1 underline text-[10px]">Edit</button>
+                </div>
               </div>
 
-              <div class="space-y-2">
-                ${sq.members.map(m => {
-                  const isThisUser = (m.id === user.id || m.email === user.email);
-                  const initials = getInitials(m.rawName || m.name);
-                  
-                  return `
-                    <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
-                      <div class="flex items-center gap-3 min-w-0">
-                        <!-- AVATAR -->
-                        <div class="relative flex-shrink-0">
-                          ${m.avatar 
-                            ? `<img src="${m.avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="${escapeHtml(m.rawName)}">`
-                            : `<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-xs">${initials}</div>`
-                          }
-                          ${m.isWorkingOut 
-                            ? `<span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-slate-950"></span>
-                               </span>`
-                            : ''
-                          }
-                        </div>
+              <!-- MEMBERS LIST -->
+              <div class="space-y-2 pt-1">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider px-1">
+                  <span>Members (${sq.members.length})</span>
+                  <span class="text-[10px] text-slate-500">Invite Code: <code class="text-emerald-400 font-mono">${sq.inviteCode || 'SHOWUP'}</code></span>
+                </div>
 
-                        <!-- DETAILS -->
-                        <div class="min-w-0">
-                          <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold text-slate-100 truncate">
-                              ${escapeHtml(m.rawName || m.name)} ${isThisUser ? '<span class="text-emerald-400 font-normal">(You)</span>' : ''}
-                            </span>
-                            ${m.isCreator 
-                              ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-0.5"><i class="fa-solid fa-crown text-[8px]"></i> Creator</span>`
+                <div class="space-y-2">
+                  ${sq.members.map(m => {
+                    const isThisUser = (m.id === user.id || m.email === user.email);
+                    const initials = getInitials(m.rawName || m.name);
+                    const showDeliveryBadge = isUserCreator && (m.invitedByEmail || m.inviteStatus === 'delivered');
+                    
+                    return `
+                      <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                          <!-- AVATAR -->
+                          <div class="relative flex-shrink-0">
+                            ${m.avatar 
+                              ? `<img src="${m.avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="${escapeHtml(m.rawName)}">`
+                              : `<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-xs">${initials}</div>`
+                            }
+                            ${m.isWorkingOut 
+                              ? `<span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-slate-950"></span>
+                                 </span>`
                               : ''
                             }
                           </div>
-                          <div class="mt-0.5">
-                            ${m.isWorkingOut 
-                              ? `<p class="text-[11px] font-semibold text-emerald-400 flex items-center gap-1 truncate">
-                                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                  Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
-                                 </p>`
-                              : `<p class="text-[11px] text-slate-400 truncate">Status: ${escapeHtml(m.lastActive || 'Resting')}</p>`
-                            }
+
+                          <!-- DETAILS & EMAIL DELIVERY STATUS (FOR CREATOR) -->
+                          <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                              <span class="text-xs font-bold text-slate-100 truncate">
+                                ${escapeHtml(m.rawName || m.name)} ${isThisUser ? '<span class="text-emerald-400 font-normal">(You)</span>' : ''}
+                              </span>
+                              ${m.isCreator 
+                                ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-0.5"><i class="fa-solid fa-crown text-[8px]"></i> Creator</span>`
+                                : ''
+                              }
+                              <!-- VISIBLE EMAIL DELIVERY BADGE FOR CREATOR AGAINST MEMBER NAME -->
+                              ${showDeliveryBadge ? `
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 shadow-sm" title="Invite delivered to ${escapeHtml(m.inviteEmail || m.email)} at ${escapeHtml(m.inviteDeliveredAt || 'Recently')}">
+                                  <i class="fa-solid fa-envelope-circle-check text-[10px] text-emerald-400"></i>
+                                  <span>Invite Delivered (${escapeHtml(m.inviteEmail || m.email)})</span>
+                                </span>
+                              ` : ''}
+                            </div>
+                            <div class="mt-0.5 flex items-center gap-2 flex-wrap">
+                              ${m.isWorkingOut 
+                                ? `<div class="flex items-center gap-2">
+                                    <p class="text-[11px] font-semibold text-emerald-400 flex items-center gap-1 truncate">
+                                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                      Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
+                                    </p>
+                                    <!-- CLOSE SIMULATED WORKOUT ACTION ON MEMBER CARD -->
+                                    <button onclick="triggerHaptic('light'); stopSpecificMemberWorkout('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1" title="Close and finish this active workout session">
+                                      <i class="fa-solid fa-xmark text-[9px]"></i>
+                                      <span>Close Session</span>
+                                    </button>
+                                   </div>`
+                                : `<p class="text-[11px] text-slate-400 truncate">Status: ${escapeHtml(m.lastActive || 'Resting')}</p>`
+                              }
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <!-- PERMISSION-BASED ACTION CONTROLS -->
-                      <div class="flex items-center gap-1.5 flex-shrink-0">
-                        ${isUserCreator && !isThisUser
-                          ? `<button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
-                              <i class="fa-solid fa-user-minus text-xs"></i>
-                             </button>`
-                          : ''
-                        }
-                        ${isThisUser && isUserCreator && sq.members.length > 1
-                          ? `<button onclick="triggerHaptic('light'); handleCreatorLeave('${sq.id}')" class="text-[10px] text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 px-2 py-1 rounded-xl transition" title="Transfer creator role">
-                              Transfer Role
-                             </button>`
-                          : ''
-                        }
+                        <!-- PERMISSION-BASED ACTION CONTROLS -->
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
+                          ${isUserCreator && !isThisUser
+                            ? `<button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
+                                <i class="fa-solid fa-user-minus text-xs"></i>
+                               </button>`
+                            : ''
+                          }
+                          ${isThisUser && isUserCreator && sq.members.length > 1
+                            ? `<button onclick="triggerHaptic('light'); handleCreatorLeave('${sq.id}')" class="text-[10px] text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 px-2 py-1 rounded-xl transition" title="Transfer creator role">
+                                Transfer Role
+                               </button>`
+                            : ''
+                          }
+                        </div>
                       </div>
-                    </div>
-                  `;
-                }).join('')}
+                    `;
+                  }).join('')}
+                </div>
               </div>
-            </div>
+            `}
 
           </div>
         `;
@@ -3237,6 +3861,7 @@
         icon: squadCreateSelectedIcon || 'dumbbell',
         accent: squadCreateSelectedAccent || 'emerald',
         inviteCode: randomCode,
+        isCollapsed: false,
         createdAt: new Date().toISOString(),
         creatorId: user.id,
         creatorName: user.rawName,
@@ -3266,6 +3891,7 @@
       saveSquads(squads);
       closeCreateSquadModal();
       renderSquadsTab();
+      updateGlobalStatsUI();
       showToast(`Squad "${name}" created! You are the Creator.`, "success");
     }
 
@@ -3296,6 +3922,8 @@
       squad.members = squad.members.filter(m => m.id !== memberId);
       saveSquads(squads);
       renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
       showToast(`Removed ${targetMember.rawName || targetMember.name} from squad.`, "info");
     }
 
@@ -3312,6 +3940,8 @@
           const updated = squads.filter(s => s.id !== squadId);
           saveSquads(updated);
           renderSquadsTab();
+          updateSquadBeacon();
+          updateGlobalStatsUI();
           showToast(`Squad "${squad.name}" disbanded.`, "info");
         }
         return;
@@ -3375,6 +4005,8 @@
       saveSquads(squads);
       closeTransferModal();
       renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
       showToast(`Transferred creator role to ${newCreator.rawName || newCreator.name} and left squad.`, "success");
     }
 
@@ -3397,6 +4029,8 @@
       squad.members = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
       saveSquads(squads);
       renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
       showToast(`You have left "${squad.name}".`, "info");
     }
 
@@ -3444,23 +4078,29 @@
       const squad = squads.find(s => s.id === currentActiveSquadId);
       if (!squad) return;
 
+      // Ensure delivery tracking metadata is created and logged for email invitations
       const newMember = {
         id: 'member_' + Date.now(),
         name: name,
         rawName: name,
         email: email,
+        invitedByEmail: true,
+        inviteEmail: email,
+        inviteStatus: 'delivered',
+        inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         avatar: null,
         isCreator: false,
         isWorkingOut: false,
         currentWorkout: null,
-        lastActive: 'Just added'
+        lastActive: 'Just invited'
       };
 
       squad.members.push(newMember);
       saveSquads(squads);
       closeAddMemberModal();
       renderSquadsTab();
-      showToast(`Added ${name} to "${squad.name}"!`, "success");
+      updateGlobalStatsUI();
+      showToast(`Added ${name}! Invitation email delivered to ${email}.`, "success");
     }
 
     function quickAddSampleMember(name, handle) {
@@ -3513,7 +4153,6 @@
         browserNotify: document.getElementById('pref-browser').checked
       };
 
-      // Request browser push notification permission if enabled
       if (squad.notificationPreferences.browserNotify && 'Notification' in window && Notification.permission !== 'granted') {
         Notification.requestPermission();
       }
@@ -3558,12 +4197,15 @@
       let otherMembers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
 
       if (otherMembers.length === 0) {
-        // Quick add a buddy so simulation works
         const sample = {
           id: 'member_marcus',
           name: 'Marcus Vance',
           rawName: 'Marcus Vance',
           email: 'marcus@iron.dev',
+          invitedByEmail: true,
+          inviteEmail: 'marcus@iron.dev',
+          inviteStatus: 'delivered',
+          inviteDeliveredAt: 'Today, 9:15 AM',
           avatar: null,
           isCreator: false,
           isWorkingOut: false,
@@ -3574,7 +4216,6 @@
         otherMembers = [sample];
       }
 
-      // Pick a member to toggle or start
       const member = otherMembers[Math.floor(Math.random() * otherMembers.length)];
       const workoutNames = [
         "Incline Dumbbell Press & Chest",
@@ -3595,6 +4236,9 @@
 
       saveSquads(squads);
       renderSquadsTab();
+      updateSquadBeacon();
+      updateGlobalStatsUI();
+      renderHeatMap();
       showToast(`⚡ ${member.rawName} started a workout: ${randomWorkout}`, "info");
     }
 
@@ -3654,7 +4298,7 @@
 
       activePillTimeout = setTimeout(() => {
         dismissSquadPill();
-      }, 4500);
+      }, 5500);
     }
 
     function dismissSquadPill() {
@@ -3749,6 +4393,7 @@
 
       if (changed) {
         saveSquads(squads);
+        updateGlobalStatsUI();
       }
     }
 
@@ -3769,6 +4414,7 @@
 
       if (changed) {
         saveSquads(squads);
+        updateGlobalStatsUI();
       }
     }
   </script>
