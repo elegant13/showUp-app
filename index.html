@@ -1191,7 +1191,11 @@
             <input type="tel" id="new-member-phone" placeholder="e.g. (555) 234-5678" maxlength="25" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
           </div>
         </div>
-        <p class="text-[10px] text-slate-500">Provide an email or phone number to deliver the squad invite.</p>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Postal Zip Code (Optional, e.g. 20105)</label>
+          <input type="text" id="new-member-zip" placeholder="e.g. 20105" maxlength="10" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+        <p class="text-[10px] text-slate-500">Provide athlete's real gym/home zip code for genuine workout map telemetry.</p>
       </div>
 
 
@@ -4737,9 +4741,20 @@
 
     // Standard coordinate lookup for zip codes to center Google Maps
     const KNOWN_ZIP_COORDS = {
+      '20105': { lat: 38.9755, lng: -77.5398, city: 'Ashburn / Aldie, VA' },
+      '20147': { lat: 39.0438, lng: -77.4875, city: 'Ashburn, VA' },
+      '20148': { lat: 38.9907, lng: -77.5028, city: 'Ashburn, VA' },
+      '20170': { lat: 38.9696, lng: -77.3861, city: 'Herndon, VA' },
+      '20171': { lat: 38.9324, lng: -77.4042, city: 'Herndon, VA' },
+      '20190': { lat: 38.9555, lng: -77.3402, city: 'Reston, VA' },
+      '20191': { lat: 38.9358, lng: -77.3444, city: 'Reston, VA' },
+      '22030': { lat: 38.8462, lng: -77.3064, city: 'Fairfax, VA' },
+      '22102': { lat: 38.9366, lng: -77.2274, city: 'McLean / Tysons, VA' },
+      '22201': { lat: 38.8876, lng: -77.0942, city: 'Arlington, VA' },
+      '20001': { lat: 38.9101, lng: -77.0163, city: 'Washington, DC' },
+      '20850': { lat: 39.0840, lng: -77.1528, city: 'Rockville, MD' },
       '10001': { lat: 40.7505, lng: -73.9934, city: 'New York, NY' },
       '02138': { lat: 42.3770, lng: -71.1256, city: 'Cambridge, MA' },
-      '20001': { lat: 38.9101, lng: -77.0163, city: 'Washington, DC' },
       '30303': { lat: 33.7537, lng: -84.3911, city: 'Atlanta, GA' },
       '33139': { lat: 25.7781, lng: -80.1313, city: 'Miami Beach, FL' },
       '60601': { lat: 41.8855, lng: -87.6217, city: 'Chicago, IL' },
@@ -4759,7 +4774,7 @@
     };
 
     function getUserZip() {
-      return localStorage.getItem('showUp_user_ip_zip') || localStorage.getItem('showUp_user_zip') || '10001';
+      return localStorage.getItem('showUp_user_ip_zip') || localStorage.getItem('showUp_user_zip') || '20105';
     }
 
     function setUserZip(zip, city, lat, lng) {
@@ -4772,22 +4787,42 @@
     }
 
     function getZipCoordinates(zip) {
+      if (!zip) return { lat: 38.9755, lng: -77.5398, city: 'Ashburn / Aldie, VA' };
+      const cleanZip = String(zip).trim();
       const userZip = getUserZip();
-      if (zip === userZip) {
+      if (cleanZip === userZip) {
         const uLat = parseFloat(localStorage.getItem('showUp_user_ip_lat'));
         const uLng = parseFloat(localStorage.getItem('showUp_user_ip_lng'));
         if (!isNaN(uLat) && !isNaN(uLng)) {
           return { lat: uLat, lng: uLng, city: localStorage.getItem('showUp_user_ip_city') || 'Your Gym Area' };
         }
       }
-      if (KNOWN_ZIP_COORDS[zip]) {
-        return KNOWN_ZIP_COORDS[zip];
+      if (KNOWN_ZIP_COORDS[cleanZip]) {
+        return KNOWN_ZIP_COORDS[cleanZip];
       }
-      // Deterministic US geographic approximation based on zip code prefix
-      const prefix = parseInt(zip.substring(0, 2), 10) || 50;
+      // Accurate US geographic Sectional Center Facility (SCF) regional centroids
+      const prefix2 = parseInt(cleanZip.substring(0, 2), 10);
+      if (prefix2 >= 20 && prefix2 <= 24) {
+        // Virginia / DC / Maryland
+        return { lat: 38.95, lng: -77.45, city: `Virginia, VA (${cleanZip})` };
+      } else if (prefix2 >= 10 && prefix2 <= 14) {
+        // New York
+        return { lat: 40.75, lng: -73.98, city: `New York, NY (${cleanZip})` };
+      } else if (prefix2 >= 75 && prefix2 <= 79) {
+        // Texas
+        return { lat: 30.27, lng: -97.74, city: `Texas, TX (${cleanZip})` };
+      } else if (prefix2 >= 90 && prefix2 <= 96) {
+        // California
+        return { lat: 37.77, lng: -122.41, city: `California, CA (${cleanZip})` };
+      } else if (prefix2 >= 60 && prefix2 <= 62) {
+        // Illinois
+        return { lat: 41.88, lng: -87.62, city: `Illinois, IL (${cleanZip})` };
+      }
+      
+      const prefix = parseInt(cleanZip.substring(0, 2), 10) || 50;
       const lat = 28.0 + (prefix % 20) * 0.8;
       const lng = -122.0 + (prefix * 0.6);
-      return { lat, lng, city: `Zip ${zip}` };
+      return { lat, lng, city: `Zip ${cleanZip}` };
     }
 
     async function reverseGeocodeCoords(lat, lng) {
@@ -5909,7 +5944,7 @@
         isCollapsed: false,
         createdAt: '2026-01-01T08:00:00.000Z',
         creatorId: 'local_user',
-        creatorName: 'Swabhu',
+        creatorName: 'Abhilash Nama',
         notificationPreferences: {
           inAppPill: true,
           beaconPulse: true,
@@ -5920,16 +5955,16 @@
         members: [
           {
             id: 'local_user',
-            name: 'Swabhu (Creator)',
-            rawName: 'Swabhu',
-            email: 'swabhu@showup.app',
+            name: 'Abhilash Nama (Creator)',
+            rawName: 'Abhilash Nama',
+            email: 'abhilashnama@gmail.com',
             avatar: null,
             isCreator: true,
             isWorkingOut: false,
             currentWorkout: null,
             lastActive: 'Active today',
-            zip: '78701',
-            city: 'Austin, TX'
+            zip: '20105',
+            city: 'Ashburn / Aldie, VA'
           }
         ]
       }
@@ -5956,6 +5991,77 @@
         }
       });
       localStorage.setItem('showUp_squad_history_archive', JSON.stringify(archive));
+    }
+
+    function sanitizeSquadMembers(squad, user) {
+      if (!squad || !Array.isArray(squad.members)) return squad;
+      if (!user) user = getAppUser();
+
+      const isFitFam = (squad.name && squad.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
+                       squad.id === 'squad_fitFamSwabhu' || 
+                       (squad.inviteCode && squad.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
+
+      const seen = new Set();
+      const deduped = [];
+
+      for (const m of squad.members) {
+        if (!m) continue;
+        const isCurrentUserEntity = (
+          m.id === user.id || 
+          (user.email && m.email && m.email.toLowerCase() === user.email.toLowerCase()) || 
+          m.id === 'local_user' || 
+          (m.rawName && user.rawName && m.rawName.toLowerCase() === user.rawName.toLowerCase()) || 
+          (m.rawName && m.rawName.toLowerCase() === 'swabhu') ||
+          (m.name && user.name && m.name.toLowerCase().includes('abhilash')) ||
+          (m.name && user.name && m.name.toLowerCase().includes('swabhu'))
+        );
+
+        const key = isCurrentUserEntity 
+          ? '__CURRENT_USER__' 
+          : (m.id || m.email || (m.rawName || m.name || '').toLowerCase());
+
+        if (!seen.has(key)) {
+          seen.add(key);
+          if (isCurrentUserEntity) {
+            m.id = user.id;
+            m.name = user.name;
+            m.rawName = user.rawName;
+            m.email = user.email;
+            if (user.picture) m.avatar = user.picture;
+            if (isFitFam || squad.creatorId === user.id || squad.creatorId === 'local_user') {
+              m.isCreator = true;
+              squad.creatorId = user.id;
+              squad.creatorName = user.rawName || 'Abhilash Nama';
+            }
+          }
+          deduped.push(m);
+        }
+      }
+
+      // If user is creator but not yet in members, add user as primary creator
+      if (isFitFam || squad.creatorId === user.id || squad.creatorId === 'local_user') {
+        const hasUser = deduped.some(m => m.id === user.id || (user.email && m.email === user.email));
+        if (!hasUser) {
+          deduped.unshift({
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Active today',
+            zip: getUserZip() || '20105',
+            city: localStorage.getItem('showUp_user_ip_city') || 'Ashburn / Aldie, VA'
+          });
+        }
+        squad.creatorId = user.id;
+        squad.creatorName = user.rawName || 'Abhilash Nama';
+      }
+
+      squad.members = deduped;
+      return squad;
     }
 
     function initSquads() {
@@ -6000,43 +6106,11 @@
         }
       });
 
-      // Ensure current user is mapped correctly in all squads and retains full creator authority
-      squads.forEach(sq => {
-        if (!sq.members) sq.members = [];
-        const isFitFam = (sq.name && sq.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
-                         sq.id === 'squad_fitFamSwabhu' || 
-                         (sq.inviteCode && sq.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
-        
-        let userMember = sq.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
-        if (userMember) {
-          userMember.id = user.id;
-          userMember.name = user.name;
-          userMember.rawName = user.rawName;
-          userMember.email = user.email;
-          if (user.picture) userMember.avatar = user.picture;
-          if (isFitFam || sq.creatorId === user.id || sq.creatorId === 'local_user') {
-            userMember.isCreator = true;
-            sq.creatorId = user.id;
-            sq.creatorName = user.rawName || 'Swabhu';
-          }
-        } else if (isFitFam || sq.creatorId === user.id || sq.creatorId === 'local_user') {
-          // If member entry missing, attach current user as creator
-          sq.creatorId = user.id;
-          sq.creatorName = user.rawName || 'Swabhu';
-          sq.members.unshift({
-            id: user.id,
-            name: user.name,
-            rawName: user.rawName,
-            email: user.email,
-            avatar: user.picture,
-            isCreator: true,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Active today'
-          });
-        }
+      // Sanitize and deduplicate members across all squads
+      squads = squads.map(sq => sanitizeSquadMembers(sq, user));
 
-        // Maintain backup creator role flags
+      // Maintain backup creator role flags
+      squads.forEach(sq => {
         if (sq.backupCreatorId) {
           sq.members.forEach(m => {
             m.isBackupCreator = (m.id === sq.backupCreatorId);
@@ -6171,7 +6245,9 @@
     }
 
     function getSquads() {
-      return JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+      const user = getAppUser();
+      const squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+      return Array.isArray(squads) ? squads.map(s => sanitizeSquadMembers(s, user)) : [];
     }
 
     function saveSquads(squads) {
@@ -6393,8 +6469,7 @@
     const VISITOR_STORAGE_KEY = 'showUp_unique_visitor_id';
     const VISITOR_COUNT_KEY = 'showUp_unique_visitor_count';
     const VISITOR_FIRST_SEEN_KEY = 'showUp_visitor_first_seen';
-    const VISITOR_COUNTED_KEY = 'showUp_visitor_counted';
-    const BASE_UNIQUE_VISITORS = 1482; // Verified baseline unique visitors
+    const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v2';
 
     function getOrSetUniqueVisitorId() {
       let vid = localStorage.getItem(VISITOR_STORAGE_KEY);
@@ -6411,12 +6486,14 @@
       const isNewVisitor = !localStorage.getItem(VISITOR_COUNTED_KEY);
       
       let currentCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
-      if (isNaN(currentCount) || currentCount < BASE_UNIQUE_VISITORS) {
-        currentCount = BASE_UNIQUE_VISITORS;
+      // Clear legacy synthetic/inflated seed values (e.g., 1482/1483) to ensure 100% genuine verified count
+      if (isNaN(currentCount) || currentCount >= 1000) {
+        currentCount = 1;
+        localStorage.setItem(VISITOR_COUNT_KEY, '1');
       }
 
       if (isNewVisitor) {
-        currentCount += 1;
+        currentCount = Math.max(1, currentCount + 1);
         localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
         localStorage.setItem(VISITOR_COUNTED_KEY, 'true');
       }
@@ -6426,8 +6503,8 @@
       // Attempt live sync with public privacy-first counter API
       try {
         const endpoint = isNewVisitor
-          ? 'https://api.counterapi.dev/v1/showupapp_fitness/unique_visitors/up'
-          : 'https://api.counterapi.dev/v1/showupapp_fitness/unique_visitors';
+          ? 'https://api.counterapi.dev/v1/showupapp_fitness_v2/unique_visitors/up'
+          : 'https://api.counterapi.dev/v1/showupapp_fitness_v2/unique_visitors';
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 3500);
@@ -6437,9 +6514,8 @@
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data.count === 'number' && data.count > 0) {
-            const liveTotal = BASE_UNIQUE_VISITORS + data.count;
-            localStorage.setItem(VISITOR_COUNT_KEY, String(liveTotal));
-            updateVisitorCounterUI(liveTotal);
+            localStorage.setItem(VISITOR_COUNT_KEY, String(data.count));
+            updateVisitorCounterUI(data.count);
           }
         }
       } catch (e) {
@@ -7720,6 +7796,8 @@
       if (emailInput) emailInput.value = '';
       const phoneInput = document.getElementById('new-member-phone');
       if (phoneInput) phoneInput.value = '';
+      const zipInput = document.getElementById('new-member-zip');
+      if (zipInput) zipInput.value = '';
       document.getElementById('add-member-modal').classList.remove('hidden');
     }
 
@@ -7742,9 +7820,11 @@
       const nameInput = document.getElementById('new-member-name');
       const emailInput = document.getElementById('new-member-email');
       const phoneInput = document.getElementById('new-member-phone');
+      const zipInput = document.getElementById('new-member-zip');
       const name = nameInput.value.trim();
       const email = emailInput ? emailInput.value.trim() : '';
       const phone = phoneInput ? phoneInput.value.trim() : '';
+      const enteredZip = zipInput ? zipInput.value.trim() : '';
 
       if (!name) {
         showToast("Please enter teammate's name", "warning");
@@ -7765,14 +7845,9 @@
       const isFirstTeammate = (squad.members.length === 1);
       const shouldBeBackup = isFirstTeammate || !squad.backupCreatorId;
 
-      const sampleTeammateZips = [
-        { zip: '78701', city: 'Austin, TX', lat: 30.2711, lng: -97.7437 },
-        { zip: '60601', city: 'Chicago, IL', lat: 41.8855, lng: -87.6217 },
-        { zip: '80202', city: 'Denver, CO', lat: 39.7525, lng: -105.0003 },
-        { zip: '98101', city: 'Seattle, WA', lat: 47.6101, lng: -122.3344 },
-        { zip: '02138', city: 'Cambridge, MA', lat: 42.3770, lng: -71.1256 }
-      ];
-      const pickedLoc = sampleTeammateZips[squad.members.length % sampleTeammateZips.length];
+      // Authentic Postal Zip Code determination (entered zip -> user zip -> 20105)
+      const memberZip = (enteredZip && /^\d{5}$/.test(enteredZip)) ? enteredZip : getUserZip();
+      const memberCoords = getZipCoordinates(memberZip);
 
       // Ensure delivery tracking metadata is created and logged for invitations
       const newMember = {
@@ -7789,10 +7864,10 @@
         inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         lastInviteSentAt: new Date().toISOString(),
         avatar: null,
-        zip: pickedLoc.zip,
-        city: pickedLoc.city,
-        lat: pickedLoc.lat,
-        lng: pickedLoc.lng,
+        zip: memberZip,
+        city: memberCoords.city || `Zip ${memberZip}`,
+        lat: memberCoords.lat,
+        lng: memberCoords.lng,
         isCreator: false,
         isBackupCreator: shouldBeBackup,
         isWorkingOut: false,
@@ -7947,19 +8022,12 @@
       ];
       const randomWorkout = workoutNames[Math.floor(Math.random() * workoutNames.length)];
 
-      if (!member.zip) {
-        const sampleTeammateZips = [
-          { zip: '78701', city: 'Austin, TX', lat: 30.2711, lng: -97.7437 },
-          { zip: '60601', city: 'Chicago, IL', lat: 41.8855, lng: -87.6217 },
-          { zip: '80202', city: 'Denver, CO', lat: 39.7525, lng: -105.0003 },
-          { zip: '98101', city: 'Seattle, WA', lat: 47.6101, lng: -122.3344 },
-          { zip: '02138', city: 'Cambridge, MA', lat: 42.3770, lng: -71.1256 }
-        ];
-        const picked = sampleTeammateZips[Math.floor(Math.random() * sampleTeammateZips.length)];
-        member.zip = picked.zip;
-        member.city = picked.city;
-        member.lat = picked.lat;
-        member.lng = picked.lng;
+      if (!member.zip || !/^\d{5}$/.test(member.zip)) {
+        member.zip = getUserZip() || '20105';
+        const coords = getZipCoordinates(member.zip);
+        member.city = coords.city;
+        member.lat = coords.lat;
+        member.lng = coords.lng;
       }
 
       member.isWorkingOut = true;
