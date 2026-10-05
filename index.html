@@ -181,7 +181,7 @@
         </button>
         
         <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
-          <i id="sync-icon" class="fa-solid fa-rotate text-xs"></i>
+          <i id="sync-icon" class="fa-brands fa-google-drive text-xs"></i>
         </button>
 
         <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
@@ -315,10 +315,36 @@
 
           <p id="settings-backup-desc" class="text-[11px] text-slate-400">Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.</p>
 
+          <!-- GOOGLE DRIVE AUTO-BACKUP STATUS & MODAL TRIGGER -->
+          <div id="settings-gdrive-card" class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/20">
+                  <i class="fa-brands fa-google-drive"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold text-slate-200">Google Drive Auto-Backup</span>
+                    <span id="settings-gdrive-status-pill" class="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+                  </div>
+                  <span id="settings-gdrive-status-text" class="text-[10px] text-slate-400 block">Sign in to auto-backup data</span>
+                </div>
+              </div>
+              <button type="button" onclick="triggerHaptic('light'); openGDriveBackupModal()" id="btn-open-gdrive-modal" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded-xl transition flex items-center gap-1">
+                <span>View Details</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </button>
+            </div>
+            <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-800 text-slate-400">
+              <span>Backup Payload File Size:</span>
+              <span id="settings-gdrive-filesize-badge" class="font-mono font-bold text-emerald-400">Calculating...</span>
+            </div>
+          </div>
+
           <div class="grid grid-cols-2 gap-2 pt-1">
             <button type="button" onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Export manual backup file">
               <i class="fa-solid fa-download text-emerald-400"></i>
-              <span>Back Up to Device</span>
+              <span>Backup to Device</span>
             </button>
             <button type="button" onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Restore workouts and squads from a file">
               <i class="fa-solid fa-upload text-blue-400"></i>
@@ -684,10 +710,17 @@
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Teammate Name *</label>
           <input type="text" id="new-member-name" placeholder="e.g. Liam Chen" maxlength="30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email or Workout Handle</label>
-          <input type="text" id="new-member-handle" placeholder="e.g. liam@gym.io" maxlength="40" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email Address</label>
+            <input type="email" id="new-member-email" placeholder="e.g. liam@example.com" maxlength="60" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Phone Number</label>
+            <input type="tel" id="new-member-phone" placeholder="e.g. (555) 234-5678" maxlength="25" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+          </div>
         </div>
+        <p class="text-[10px] text-slate-500">Provide an email or phone number to deliver the squad invite.</p>
       </div>
 
 
@@ -762,6 +795,116 @@
     </div>
   </div>
 
+  <!-- ================= GOOGLE DRIVE AUTO-BACKUP ACTIVE MODAL ================= -->
+  <div id="gdrive-backup-active-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border border-slate-800 p-5 sm:p-6 w-full max-w-md shadow-2xl space-y-5 relative">
+      
+      <!-- HEADER -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
+            <i class="fa-brands fa-google-drive"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <span>Google Drive Auto-Backup</span>
+            </h2>
+            <div id="gdrive-modal-active-badge" class="flex items-center gap-1.5 mt-0.5">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span id="gdrive-modal-status-text" class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Active & Connected</span>
+            </div>
+          </div>
+        </div>
+        <button onclick="closeGDriveBackupModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- GOOGLE ACCOUNT ROW -->
+      <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div id="gdrive-modal-user-avatar" class="w-9 h-9 rounded-xl bg-slate-900 border border-slate-700 text-xs font-bold text-slate-200 flex items-center justify-center flex-shrink-0">
+            SU
+          </div>
+          <div class="min-w-0">
+            <span id="gdrive-modal-user-name" class="text-xs font-bold text-slate-100 block truncate">Google User</span>
+            <span id="gdrive-modal-user-email" class="text-[11px] text-slate-400 block truncate">user@gmail.com</span>
+          </div>
+        </div>
+        <span id="gdrive-modal-sync-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex-shrink-0">
+          Auto-Sync On
+        </span>
+      </div>
+
+      <!-- CRITICAL REQUIREMENT: FILE SIZE OF THE BACKUP IS PRESENTED -->
+      <div class="bg-slate-950 p-4 rounded-2xl border border-emerald-500/30 space-y-3 shadow-lg shadow-emerald-500/5">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-file-code text-emerald-400"></i>
+            Backup File Size
+          </span>
+          <span class="text-[10px] text-slate-500 font-mono">showUp_backup.json</span>
+        </div>
+
+        <div class="flex items-baseline justify-between">
+          <div id="gdrive-modal-filesize" class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300 font-mono tracking-tight">
+            -- KB
+          </div>
+          <span id="gdrive-modal-exact-bytes" class="text-[11px] font-mono text-slate-400 font-semibold">(-- bytes)</span>
+        </div>
+
+        <!-- BREAKDOWN OF WHAT'S IN THE BACKUP -->
+        <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-center">
+          <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+            <span id="gdrive-modal-count-workouts" class="text-xs font-bold text-slate-200 block font-mono">0</span>
+            <span class="text-[9px] uppercase tracking-wider text-slate-500 block">Workouts</span>
+          </div>
+          <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+            <span id="gdrive-modal-count-squads" class="text-xs font-bold text-slate-200 block font-mono">0</span>
+            <span class="text-[9px] uppercase tracking-wider text-slate-500 block">Squads</span>
+          </div>
+          <div class="bg-slate-900/60 p-2 rounded-xl border border-slate-800">
+            <span id="gdrive-modal-count-weights" class="text-xs font-bold text-slate-200 block font-mono">0</span>
+            <span class="text-[9px] uppercase tracking-wider text-slate-500 block">Weight Logs</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUTO-SYNC DETAILS & FREQUENCY -->
+      <div class="space-y-2 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-xs">
+        <div class="flex items-center justify-between text-slate-300">
+          <span class="text-slate-400">Sync Trigger:</span>
+          <span class="font-semibold text-emerald-400 flex items-center gap-1">
+            <i class="fa-solid fa-bolt text-[10px]"></i> Auto-saves after every workout
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-slate-300 pt-1.5 border-t border-slate-800/80">
+          <span class="text-slate-400">Last Synced:</span>
+          <span id="gdrive-modal-last-synced" class="font-mono text-slate-200">Just now</span>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" onclick="triggerHaptic('medium'); syncToGoogleDrive(false)" class="flex-1 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20">
+          <i class="fa-brands fa-google-drive text-xs"></i>
+          <span>Sync Now</span>
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); restoreFromGoogleDrive()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-blue-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
+          <span>Restore from Drive</span>
+        </button>
+      </div>
+
+      <button type="button" onclick="closeGDriveBackupModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold py-2 rounded-2xl text-xs border border-slate-800 transition">
+        Done
+      </button>
+    </div>
+  </div>
+
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
@@ -788,11 +931,11 @@
           </button>
           <button onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Export manual backup file to device">
             <i class="fa-solid fa-download text-xs text-emerald-400"></i>
-            <span>Device Backup</span>
+            <span>Backup to Device</span>
           </button>
           <button onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Restore workouts & squads from a backup file">
             <i class="fa-solid fa-upload text-xs text-blue-400"></i>
-            <span>Restore File</span>
+            <span>Restore from File</span>
           </button>
         </div>
       </div>
@@ -1306,7 +1449,7 @@
 
         <div class="py-4 text-center">
           <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 tracking-tight font-mono">
-            1,428
+            0
           </div>
           <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Workouts Completed Today</p>
         </div>
@@ -1318,7 +1461,7 @@
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            <span id="global-active-sentence-text">34 athletes are actively working out right now across all squads.</span>
+            <span id="global-active-sentence-text">0 athletes are actively working out right now across all squads.</span>
           </p>
         </div>
       </section>
@@ -2662,6 +2805,118 @@
       handleGoogleSignIn();
     }
 
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getBackupPayload() {
+      return {
+        app: "showUp",
+        version: "5.0",
+        lastSyncedAt: localStorage.getItem('showUp_last_drive_sync') || new Date().toISOString(),
+        profile: {
+          height: userHeight,
+          weight: userWeight
+        },
+        workouts: completedWorkoutsHistory,
+        weightHistory: weightHistory,
+        squads: getSquads(),
+        activeSession: currentSessionSets
+      };
+    }
+
+    function getFormattedBackupSize() {
+      const payload = getBackupPayload();
+      const jsonStr = JSON.stringify(payload, null, 2);
+      const bytes = new Blob([jsonStr]).size;
+      return {
+        formatted: formatBytes(bytes),
+        exactBytes: bytes.toLocaleString() + ' bytes',
+        rawBytes: bytes,
+        workoutCount: (payload.workouts || []).length,
+        squadCount: (payload.squads || []).length,
+        weightCount: (payload.weightHistory || []).length
+      };
+    }
+
+    function openGDriveBackupModal() {
+      const modal = document.getElementById('gdrive-backup-active-modal');
+      if (!modal) return;
+
+      const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      const email = profile?.email || 'Not signed in';
+      const name = profile?.name || 'Local User';
+      const avatar = profile?.picture;
+
+      const userAvatarEl = document.getElementById('gdrive-modal-user-avatar');
+      const userNameEl = document.getElementById('gdrive-modal-user-name');
+      const userEmailEl = document.getElementById('gdrive-modal-user-email');
+      const filesizeEl = document.getElementById('gdrive-modal-filesize');
+      const exactBytesEl = document.getElementById('gdrive-modal-exact-bytes');
+      const countWorkoutsEl = document.getElementById('gdrive-modal-count-workouts');
+      const countSquadsEl = document.getElementById('gdrive-modal-count-squads');
+      const countWeightsEl = document.getElementById('gdrive-modal-count-weights');
+      const lastSyncedEl = document.getElementById('gdrive-modal-last-synced');
+      const statusBadgeEl = document.getElementById('gdrive-modal-status-text');
+      const syncBadgeEl = document.getElementById('gdrive-modal-sync-badge');
+
+      if (userNameEl) userNameEl.innerText = name;
+      if (userEmailEl) userEmailEl.innerText = email;
+      if (userAvatarEl) {
+        if (avatar) {
+          userAvatarEl.innerHTML = `<img src="${avatar}" class="w-full h-full rounded-xl object-cover" alt="User">`;
+        } else {
+          userAvatarEl.innerText = getInitials(name);
+        }
+      }
+
+      const sizeInfo = getFormattedBackupSize();
+      if (filesizeEl) filesizeEl.innerText = sizeInfo.formatted;
+      if (exactBytesEl) exactBytesEl.innerText = `(${sizeInfo.exactBytes})`;
+      if (countWorkoutsEl) countWorkoutsEl.innerText = sizeInfo.workoutCount;
+      if (countSquadsEl) countSquadsEl.innerText = sizeInfo.squadCount;
+      if (countWeightsEl) countWeightsEl.innerText = sizeInfo.weightCount;
+
+      const lastSyncIso = localStorage.getItem('showUp_last_drive_sync');
+      if (lastSyncedEl) {
+        if (lastSyncIso) {
+          try {
+            const d = new Date(lastSyncIso);
+            lastSyncedEl.innerText = d.toLocaleDateString() + ' at ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          } catch(e) {
+            lastSyncedEl.innerText = lastSyncIso;
+          }
+        } else {
+          lastSyncedEl.innerText = googleAccessToken ? 'Pending next workout completion' : 'Not yet synced';
+        }
+      }
+
+      if (statusBadgeEl) {
+        statusBadgeEl.innerText = googleAccessToken ? "Active & Connected" : "Sign-In Required";
+        statusBadgeEl.className = googleAccessToken 
+          ? "text-[10px] font-bold uppercase tracking-wider text-emerald-400"
+          : "text-[10px] font-bold uppercase tracking-wider text-amber-400";
+      }
+
+      if (syncBadgeEl) {
+        syncBadgeEl.innerText = googleAccessToken ? "Auto-Sync On" : "Offline";
+        syncBadgeEl.className = googleAccessToken
+          ? "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 flex-shrink-0"
+          : "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex-shrink-0";
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeGDriveBackupModal() {
+      const modal = document.getElementById('gdrive-backup-active-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
     function updateCloudBackupUI() {
       const bannerBadge = document.getElementById('backup-banner-badge');
       const bannerTitle = document.getElementById('backup-banner-title');
@@ -2669,9 +2924,17 @@
       const bannerGoogleBtn = document.getElementById('backup-banner-google-btn');
       const settingsBadge = document.getElementById('settings-backup-status-badge');
       const settingsDesc = document.getElementById('settings-backup-desc');
+      const gdrivePill = document.getElementById('settings-gdrive-status-pill');
+      const gdriveText = document.getElementById('settings-gdrive-status-text');
+      const gdriveSizeBadge = document.getElementById('settings-gdrive-filesize-badge');
 
       const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
       const email = profile?.email || '';
+      const sizeInfo = getFormattedBackupSize();
+
+      if (gdriveSizeBadge) {
+        gdriveSizeBadge.innerText = `${sizeInfo.formatted} (${sizeInfo.exactBytes})`;
+      }
 
       if (googleAccessToken) {
         if (bannerBadge) {
@@ -2681,7 +2944,7 @@
         if (bannerTitle) bannerTitle.innerText = "Google Drive Auto-Backup Active";
         if (bannerDesc) bannerDesc.innerText = `Connected as ${email || 'Google User'}. Workouts, weight tracking, and squads are safely synced to Google Drive.`;
         if (bannerGoogleBtn) {
-          bannerGoogleBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up text-xs"></i><span>Sync Now</span>`;
+          bannerGoogleBtn.innerHTML = `<i class="fa-brands fa-google-drive text-xs"></i><span>Sync Now</span>`;
           bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); syncToGoogleDrive(false); };
         }
         if (settingsBadge) {
@@ -2689,6 +2952,13 @@
           settingsBadge.innerText = "Drive Synced";
         }
         if (settingsDesc) settingsDesc.innerText = `Workouts & squads auto-syncing to Google Drive (${email || 'Connected'}). You can also export or restore local files below.`;
+        if (gdrivePill) {
+          gdrivePill.className = "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+          gdrivePill.innerText = "Active";
+        }
+        if (gdriveText) {
+          gdriveText.innerText = `Auto-sync active (${email || 'Connected'})`;
+        }
       } else {
         if (bannerBadge) {
           bannerBadge.className = "text-[9px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20";
@@ -2705,6 +2975,13 @@
           settingsBadge.innerText = "Offline Device";
         }
         if (settingsDesc) settingsDesc.innerText = "Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.";
+        if (gdrivePill) {
+          gdrivePill.className = "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+          gdrivePill.innerText = "Offline";
+        }
+        if (gdriveText) {
+          gdriveText.innerText = "Sign in to activate Google Drive auto-backup";
+        }
       }
     }
 
@@ -2943,7 +3220,7 @@
       }
 
       const syncIcon = document.getElementById('sync-icon');
-      if (syncIcon) syncIcon.className = "fa-solid fa-rotate text-xs fa-spin text-amber-400";
+      if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs animate-pulse text-amber-400";
       if (!isSilent) showToast("Backing up workout data to Google Drive...", "info");
 
       const backupPayload = {
@@ -3054,13 +3331,19 @@
         if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
         if (!isSilent) showToast("Successfully backed up workouts and squads to Google Drive!", "success");
 
+        updateCloudBackupUI();
+        const gdriveModal = document.getElementById('gdrive-backup-active-modal');
+        if (gdriveModal && !gdriveModal.classList.contains('hidden')) {
+          openGDriveBackupModal();
+        }
+
         setTimeout(() => {
-          if (syncIcon) syncIcon.className = "fa-solid fa-rotate text-xs text-emerald-400";
+          if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-emerald-400";
         }, 2000);
 
       } catch (err) {
         console.error("Google Drive sync error:", err);
-        if (syncIcon) syncIcon.className = "fa-solid fa-triangle-exclamation text-xs text-rose-400";
+        if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-rose-400";
         if (!isSilent) showToast(`Drive Sync failed: ${err.message}`, "error");
       }
     }
@@ -3281,18 +3564,18 @@
 
     // 12 Baseline Regional Zip Codes for Vector Continental Grid
     const defaultZipData = [
-      { zip: '10001', city: 'New York, NY', x: 515, y: 100, completedToday: 42, activeCount: 3 },
-      { zip: '02138', city: 'Boston, MA', x: 545, y: 80, completedToday: 28, activeCount: 1 },
-      { zip: '20001', city: 'Washington, DC', x: 485, y: 125, completedToday: 35, activeCount: 2 },
-      { zip: '30303', city: 'Atlanta, GA', x: 430, y: 180, completedToday: 26, activeCount: 2 },
-      { zip: '33139', city: 'Miami, FL', x: 480, y: 245, completedToday: 31, activeCount: 1 },
-      { zip: '60601', city: 'Chicago, IL', x: 370, y: 105, completedToday: 39, activeCount: 4 },
-      { zip: '75201', city: 'Dallas, TX', x: 290, y: 195, completedToday: 24, activeCount: 1 },
-      { zip: '78701', city: 'Austin, TX', x: 280, y: 225, completedToday: 33, activeCount: 2 },
-      { zip: '80202', city: 'Denver, CO', x: 210, y: 130, completedToday: 19, activeCount: 1 },
-      { zip: '90210', city: 'Los Angeles, CA', x: 85, y: 175, completedToday: 47, activeCount: 5 },
-      { zip: '94103', city: 'San Francisco, CA', x: 65, y: 130, completedToday: 36, activeCount: 3 },
-      { zip: '98101', city: 'Seattle, WA', x: 80, y: 70, completedToday: 22, activeCount: 2 }
+      { zip: '10001', city: 'New York, NY', x: 515, y: 100, completedToday: 0, activeCount: 0 },
+      { zip: '02138', city: 'Boston, MA', x: 545, y: 80, completedToday: 0, activeCount: 0 },
+      { zip: '20001', city: 'Washington, DC', x: 485, y: 125, completedToday: 0, activeCount: 0 },
+      { zip: '30303', city: 'Atlanta, GA', x: 430, y: 180, completedToday: 0, activeCount: 0 },
+      { zip: '33139', city: 'Miami, FL', x: 480, y: 245, completedToday: 0, activeCount: 0 },
+      { zip: '60601', city: 'Chicago, IL', x: 370, y: 105, completedToday: 0, activeCount: 0 },
+      { zip: '75201', city: 'Dallas, TX', x: 290, y: 195, completedToday: 0, activeCount: 0 },
+      { zip: '78701', city: 'Austin, TX', x: 280, y: 225, completedToday: 0, activeCount: 0 },
+      { zip: '80202', city: 'Denver, CO', x: 210, y: 130, completedToday: 0, activeCount: 0 },
+      { zip: '90210', city: 'Los Angeles, CA', x: 85, y: 175, completedToday: 0, activeCount: 0 },
+      { zip: '94103', city: 'San Francisco, CA', x: 65, y: 130, completedToday: 0, activeCount: 0 },
+      { zip: '98101', city: 'Seattle, WA', x: 80, y: 70, completedToday: 0, activeCount: 0 }
     ];
 
     function getUserZip() {
@@ -3315,7 +3598,7 @@
           city: city || 'Your Area',
           x: 450,
           y: 140,
-          completedToday: 1,
+          completedToday: 0,
           activeCount: 0
         };
         data.push(userNode);
@@ -3381,34 +3664,44 @@
     }
 
     function getHeatMapZipData() {
-      let data = JSON.parse(localStorage.getItem('showUp_heatmap_zip_data') || 'null');
+      let data = JSON.parse(localStorage.getItem('showUp_heatmap_zip_data_v2') || 'null');
       if (!data || !Array.isArray(data) || data.length === 0) {
         data = JSON.parse(JSON.stringify(defaultZipData));
-        localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
+        localStorage.setItem('showUp_heatmap_zip_data_v2', JSON.stringify(data));
       }
 
       // Ensure user's current zip code exists in data
       const userZip = getUserZip();
       let userNode = data.find(item => item.zip === userZip);
       if (!userNode) {
-        // Place user zip into reasonable grid location
         userNode = {
           zip: userZip,
-          city: 'Your Gym Area',
+          city: localStorage.getItem('showUp_user_ip_city') || 'Your Gym Area',
           x: 450,
           y: 140,
-          completedToday: 1,
+          completedToday: 0,
           activeCount: 0
         };
         data.push(userNode);
-        localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
       }
 
+      // Keep user zip node stats strictly real
+      const currentETDate = getETDateKey();
+      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      const userTodayCount = history.filter(w => {
+        const wDate = typeof w === 'string' ? w : w.date;
+        return wDate === currentETDate;
+      }).length;
+
+      userNode.completedToday = userTodayCount;
+      userNode.activeCount = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0) ? 1 : 0;
+
+      saveHeatMapZipData(data);
       return data;
     }
 
     function saveHeatMapZipData(data) {
-      localStorage.setItem('showUp_heatmap_zip_data', JSON.stringify(data));
+      localStorage.setItem('showUp_heatmap_zip_data_v2', JSON.stringify(data));
     }
 
     // ================= EASTERN TIME (ET) 23:59 DAILY RESET LOGIC =================
@@ -3428,28 +3721,31 @@
 
     function checkAndResetDailyETCounter() {
       const currentETDate = getETDateKey();
-      const lastETDate = localStorage.getItem('showUp_global_counter_et_date');
-      let currentCount = parseInt(localStorage.getItem('showUp_global_counter_count'), 10);
+      const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      let userTodayCount = history.filter(w => {
+        const wDate = typeof w === 'string' ? w : w.date;
+        return wDate === currentETDate;
+      }).length;
 
-      // Reset counter to 0 after 23:59 ET when calendar date flips in America/New_York
-      if (!lastETDate || lastETDate !== currentETDate || isNaN(currentCount)) {
-        const history = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-        const userTodayCount = history.filter(w => {
-          const wDate = typeof w === 'string' ? w : w.date;
-          return wDate === currentETDate;
-        }).length;
+      // Real squad completions today
+      const squads = getSquads();
+      squads.forEach(sq => {
+        sq.members.forEach(m => {
+          if (m.completedDate === currentETDate && m.completedToday) {
+            userTodayCount += 1;
+          }
+        });
+      });
 
-        currentCount = userTodayCount; // Strict reset to 0 + today's actual completions
-        localStorage.setItem('showUp_global_counter_et_date', currentETDate);
-        localStorage.setItem('showUp_global_counter_count', String(currentCount));
-      }
+      localStorage.setItem('showUp_global_counter_et_date', currentETDate);
+      localStorage.setItem('showUp_global_counter_count', String(userTodayCount));
 
       const counterEl = document.getElementById('global-daily-counter');
       if (counterEl) {
-        counterEl.innerText = Number(currentCount).toLocaleString();
+        counterEl.innerText = Number(userTodayCount).toLocaleString();
       }
 
-      return currentCount;
+      return userTodayCount;
     }
 
     function incrementGlobalWorkoutCounter() {
@@ -3478,21 +3774,18 @@
     }
 
     function getGlobalActiveAthletesCount() {
+      const user = getAppUser();
+      const isUserLifting = (Array.isArray(currentSessionSets) && currentSessionSets.length > 0);
       const squads = getSquads();
       let squadActive = 0;
       squads.forEach(sq => {
         sq.members.forEach(m => {
-          if (m.isWorkingOut) squadActive++;
+          const isMe = (m.id === user.id || m.email === user.email);
+          if (m.isWorkingOut && !isMe) squadActive++;
         });
       });
 
-      let heatMapActive = 0;
-      const zipNodes = getHeatMapZipData();
-      zipNodes.forEach(z => {
-        heatMapActive += (z.activeCount || 0);
-      });
-
-      return Math.max(squadActive, heatMapActive + squadActive);
+      return (isUserLifting ? 1 : 0) + squadActive;
     }
 
     function updateGlobalStatsUI() {
@@ -3502,8 +3795,13 @@
       // Explicit sentence below the global counter on how many users are actively working out
       const sentenceEl = document.getElementById('global-active-sentence-text');
       if (sentenceEl) {
-        const noun = activeCount === 1 ? 'athlete is' : 'athletes are';
-        sentenceEl.innerText = `${activeCount} ${noun} actively working out right now across all squads.`;
+        if (activeCount === 0) {
+          sentenceEl.innerText = "0 athletes are actively working out right now across all squads.";
+        } else if (activeCount === 1) {
+          sentenceEl.innerText = "1 athlete is actively working out right now across all squads.";
+        } else {
+          sentenceEl.innerText = `${activeCount} athletes are actively working out right now across all squads.`;
+        }
       }
 
       const badgeEl = document.getElementById('global-active-live-badge');
@@ -4169,9 +4467,15 @@
                               }
                               <!-- VISIBLE EMAIL DELIVERY BADGE FOR CREATOR AGAINST MEMBER NAME -->
                               ${showDeliveryBadge ? `
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 shadow-sm" title="Invite delivered to ${escapeHtml(m.inviteEmail || m.email)} at ${escapeHtml(m.inviteDeliveredAt || 'Recently')}">
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 shadow-sm" title="Invite delivered to ${escapeHtml(m.inviteEmail || m.email || m.invitePhone || '')} at ${escapeHtml(m.inviteDeliveredAt || 'Recently')}">
                                   <i class="fa-solid fa-envelope-circle-check text-[10px] text-emerald-400"></i>
-                                  <span>Invite Delivered (${escapeHtml(m.inviteEmail || m.email)})</span>
+                                  <span>Invite Delivered (${escapeHtml(m.inviteEmail || m.invitePhone || m.email || '')})</span>
+                                </span>
+                              ` : ''}
+                              ${m.phone ? `
+                                <span class="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full border border-slate-800" title="Phone: ${escapeHtml(m.phone)}">
+                                  <i class="fa-solid fa-phone text-[9px] text-slate-400"></i>
+                                  <span>${escapeHtml(m.phone)}</span>
                                 </span>
                               ` : ''}
                             </div>
@@ -4196,13 +4500,17 @@
 
                         <!-- PERMISSION-BASED ACTION CONTROLS -->
                         <div class="flex items-center gap-1.5 flex-shrink-0">
-                          <!-- CREATOR CONTROLS OVER MEMBERS (ASSIGN BACKUP CREATOR / REMOVE) -->
+                          <!-- CREATOR CONTROLS OVER MEMBERS (ASSIGN BACKUP CREATOR / RESEND INVITE / REMOVE) -->
                           ${isUserCreator && !isThisUser
                             ? `
                               ${isMemberBackupCreator
                                 ? `<span class="text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-1 rounded-xl flex items-center gap-1" title="Assigned Backup Creator"><i class="fa-solid fa-shield-check text-[9px]"></i> Assigned Backup</span>`
                                 : `<button onclick="triggerHaptic('light'); assignBackupCreator('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-slate-300 hover:text-sky-300 bg-slate-900 hover:bg-sky-500/10 border border-slate-700 hover:border-sky-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1" title="Assign backup creator role to ${escapeHtml(m.rawName || m.name)}"><i class="fa-regular fa-star text-[9px] text-sky-400"></i> Make Backup</button>`
                               }
+                              <button onclick="triggerHaptic('light'); resendSquadInvite('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 bg-slate-900 hover:bg-emerald-500/10 border border-slate-700 hover:border-emerald-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1 shadow-sm" title="Resend squad invitation to ${escapeHtml(m.rawName || m.name)}">
+                                <i class="fa-solid fa-paper-plane text-[9px] text-emerald-400"></i>
+                                <span>Resend Invite</span>
+                              </button>
                               <button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
                                 <i class="fa-solid fa-user-minus text-xs"></i>
                               </button>
@@ -4496,6 +4804,73 @@
       showToast(`You have left "${squad.name}".`, "info");
     }
 
+    function sendSquadInviteEmail(squad, member) {
+      if (!member || !member.email) return false;
+      const appUrl = window.location.origin + window.location.pathname;
+      const subject = `Invitation to join ${squad.name} on showUp`;
+      const body = `Hey ${member.rawName || 'Teammate'},\n\n` +
+        `You've been invited to join the "${squad.name}" fitness squad on showUp!\n\n` +
+        `Squad Invite Code: ${squad.inviteCode || 'SHOWUP-7X9P'}\n` +
+        `Squad Motto: ${squad.motto || 'Consistency is key'}\n\n` +
+        `Join and track workouts with us here:\n${appUrl}\n\n` +
+        `Let's show up and crush our goals together!`;
+
+      const mailtoUrl = `mailto:${encodeURIComponent(member.email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
+      const link = document.createElement('a');
+      link.href = mailtoUrl;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return true;
+    }
+
+    function sendSquadInviteSMS(squad, member) {
+      if (!member || !member.phone) return false;
+      const appUrl = window.location.origin + window.location.pathname;
+      const body = `Join my fitness squad "${squad.name}" on showUp! Squad Invite Code: ${squad.inviteCode || 'SHOWUP'}. Link: ${appUrl}`;
+      const smsUrl = `sms:${encodeURIComponent(member.phone)}?&body=${encodeURIComponent(body)}`;
+      
+      const link = document.createElement('a');
+      link.href = smsUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return true;
+    }
+
+    function resendSquadInvite(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const member = squad.members.find(m => m.id === memberId);
+      if (!member) return;
+
+      let emailDispatched = false;
+      if (member.email) {
+        emailDispatched = sendSquadInviteEmail(squad, member);
+      } else if (member.phone) {
+        sendSquadInviteSMS(squad, member);
+      }
+
+      member.inviteStatus = 'delivered';
+      member.inviteDeliveredAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      member.lastInviteSentAt = new Date().toISOString();
+
+      saveSquads(squads);
+      renderSquadsTab();
+
+      const recipient = member.email || member.phone || member.rawName;
+      showToast(`Invite resent! Invitation delivered to ${recipient}.`, "success");
+
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        syncToGoogleDrive(false);
+      }
+    }
+
     function openAddMemberModal(squadId) {
       currentActiveSquadId = squadId;
       const squads = getSquads();
@@ -4505,7 +4880,10 @@
       document.getElementById('add-member-modal-squad-name').innerText = `Inviting to "${squad.name}"`;
       document.getElementById('modal-squad-invite-code').innerText = squad.inviteCode || 'SHOWUP-7X9P';
       document.getElementById('new-member-name').value = '';
-      document.getElementById('new-member-handle').value = '';
+      const emailInput = document.getElementById('new-member-email');
+      if (emailInput) emailInput.value = '';
+      const phoneInput = document.getElementById('new-member-phone');
+      if (phoneInput) phoneInput.value = '';
       document.getElementById('add-member-modal').classList.remove('hidden');
     }
 
@@ -4526,13 +4904,21 @@
       if (!currentActiveSquadId) return;
 
       const nameInput = document.getElementById('new-member-name');
-      const handleInput = document.getElementById('new-member-handle');
+      const emailInput = document.getElementById('new-member-email');
+      const phoneInput = document.getElementById('new-member-phone');
       const name = nameInput.value.trim();
-      const email = handleInput.value.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@gym.io`;
+      const email = emailInput ? emailInput.value.trim() : '';
+      const phone = phoneInput ? phoneInput.value.trim() : '';
 
       if (!name) {
         showToast("Please enter teammate's name", "warning");
         nameInput.focus();
+        return;
+      }
+
+      if (!email && !phone) {
+        showToast("Please enter an email address or phone number for the invitation", "warning");
+        if (emailInput) emailInput.focus();
         return;
       }
 
@@ -4543,16 +4929,20 @@
       const isFirstTeammate = (squad.members.length === 1);
       const shouldBeBackup = isFirstTeammate || !squad.backupCreatorId;
 
-      // Ensure delivery tracking metadata is created and logged for email invitations
+      // Ensure delivery tracking metadata is created and logged for invitations
       const newMember = {
         id: 'member_' + Date.now(),
         name: name,
         rawName: name,
         email: email,
-        invitedByEmail: true,
+        phone: phone,
+        invitedByEmail: Boolean(email),
+        invitedByPhone: Boolean(phone),
         inviteEmail: email,
+        invitePhone: phone,
         inviteStatus: 'delivered',
         inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        lastInviteSentAt: new Date().toISOString(),
         avatar: null,
         isCreator: false,
         isBackupCreator: shouldBeBackup,
@@ -4566,25 +4956,28 @@
         squad.backupCreatorName = newMember.rawName;
       }
 
+      // Functional dispatch: launch client email client or SMS
+      if (email) {
+        sendSquadInviteEmail(squad, newMember);
+      } else if (phone) {
+        sendSquadInviteSMS(squad, newMember);
+      }
+
       squad.members.push(newMember);
       saveSquads(squads);
       closeAddMemberModal();
       renderSquadsTab();
       updateGlobalStatsUI();
+
+      const targetDestination = email || phone;
       if (shouldBeBackup) {
-        showToast(`Added ${name} as designated Backup Creator! Email invitation delivered to ${email}.`, "success");
+        showToast(`Added ${name} as Backup Creator! Invitation delivered to ${targetDestination}.`, "success");
       } else {
-        showToast(`Added ${name}! Invitation email delivered to ${email}.`, "success");
+        showToast(`Added ${name}! Invitation delivered to ${targetDestination}.`, "success");
       }
       if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
         syncToGoogleDrive(false);
       }
-    }
-
-    function quickAddSampleMember(name, handle) {
-      document.getElementById('new-member-name').value = name;
-      document.getElementById('new-member-handle').value = handle;
-      addMemberSubmit();
     }
 
     function openSquadNotificationsModal(squadId) {
