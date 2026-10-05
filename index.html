@@ -18,9 +18,14 @@
 
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
-  <!-- Google Maps JavaScript API (Base Layer) -->
-  <script src="https://maps.googleapis.com/maps/api/js?v=weekly&loading=async" async defer></script>
+  <!-- Google Maps Base Layer (Direct Embed Engine - zero auth popups or key errors) -->
+  <script>
+    // Safeguard: intercept any third-party or residual Google Maps auth error dialogs
+    window.gm_authFailure = function() {
+      console.warn("Google Maps auth notification intercepted - defaulting smoothly to Google Maps interactive Embed.");
+      if (typeof isMapEmbedMode !== 'undefined') isMapEmbedMode = true;
+    };
+  </script>
 
   <!-- App Favicon & Touch Icon -->
   <link rel="icon" type="image/png" href="showup_emblem.png">
@@ -202,13 +207,15 @@
     }
 
     /* UNIVERSAL THEME PALETTE ACCENT MAPPINGS ACROSS ALL UI ASSETS */
-    .m3-counter-text {
-      color: var(--m3-primary-light, var(--m3-primary)) !important;
-      background: linear-gradient(135deg, var(--m3-primary-light, var(--m3-primary)) 0%, var(--m3-primary) 50%, var(--m3-onPrimaryContainer, var(--m3-primary)) 100%) !important;
-      -webkit-background-clip: text !important;
-      background-clip: text !important;
-      -webkit-text-fill-color: transparent !important;
-      filter: drop-shadow(0 0 16px color-mix(in srgb, var(--m3-primary) 35%, transparent));
+    .m3-counter-text,
+    #global-daily-counter {
+      color: var(--m3-primary) !important;
+      -webkit-text-fill-color: var(--m3-primary) !important;
+      background: none !important;
+      -webkit-background-clip: unset !important;
+      background-clip: unset !important;
+      text-shadow: 0 0 28px color-mix(in srgb, var(--m3-primary) 50%, transparent);
+      transition: color 0.3s ease, text-shadow 0.3s ease;
     }
 
     .m3-accent-text,
@@ -1716,7 +1723,7 @@
         </div>
 
         <div class="py-4 text-center">
-          <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black tracking-tight font-mono m3-counter-text">
+          <div id="global-daily-counter" class="text-4xl sm:text-5xl font-black tracking-tight font-mono m3-counter-text" style="color: var(--m3-primary); -webkit-text-fill-color: var(--m3-primary);">
             0
           </div>
           <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Workouts Completed Today</p>
@@ -3004,6 +3011,14 @@
       body.classList.add(`theme-${themeKey}`);
       localStorage.setItem('showUp_theme', themeKey);
       updateThemeButtonsUI(themeKey);
+
+      // Instantly re-absorb the chosen color palette into the global daily counter
+      const counterEl = document.getElementById('global-daily-counter');
+      if (counterEl) {
+        counterEl.style.color = 'var(--m3-primary)';
+        counterEl.style.webkitTextFillColor = 'var(--m3-primary)';
+      }
+      if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI();
       if (typeof renderHeatMap === 'function') renderHeatMap();
       if (typeof renderCalendar === 'function') renderCalendar();
       if (typeof renderWeightHistory === 'function') renderWeightHistory();
@@ -3562,6 +3577,26 @@
       }, 4000);
     }
 
+    function resetGoogleLoginButtonUI() {
+      const btn = document.getElementById('btn-google-login');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-brands fa-google text-red-500"></i><span>Sign in</span>`;
+      }
+    }
+
+    function setGoogleLoginLoading(isLoading) {
+      const btn = document.getElementById('btn-google-login');
+      if (btn) {
+        if (isLoading) {
+          btn.disabled = true;
+          btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i><span>Signing in...</span>`;
+        } else {
+          resetGoogleLoginButtonUI();
+        }
+      }
+    }
+
     function handleGoogleSignIn() {
       if (window.location.protocol === 'file:') {
         alert("Google Sign-In requires running showUp via HTTP or HTTPS (e.g. http://localhost:3000, 127.0.0.1, or GitHub Pages), as Google OAuth security blocks the file:// protocol.\n\nTip: You can start a quick local server using: npx serve or python3 -m http.server 3000");
@@ -3573,13 +3608,23 @@
         return;
       }
 
+      setGoogleLoginLoading(true);
       const clientId = getGoogleClientId();
+
+      // Safety timer: automatically reset button if popup is closed or stalled
+      const safetyTimer = setTimeout(() => {
+        setGoogleLoginLoading(false);
+      }, 45000);
 
       try {
         const client = google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          callback: (response) => {
+          prompt: 'consent',
+          callback: async (response) => {
+            clearTimeout(safetyTimer);
+            setGoogleLoginLoading(false);
+
             if (response.error) {
               console.error("Google Auth Error:", response);
               if (response.error === 'popup_closed_by_user') {
@@ -3587,7 +3632,7 @@
               } else if (response.error === 'access_denied') {
                 showToast("Access permission denied by user.", "warning");
               } else {
-                showToast(`Google Sign-In Error: ${response.error_description || response.error}`, "error");
+                showToast(`Google Sign-In notice: ${response.error_description || response.error}`, "warning");
               }
               return;
             }
@@ -3595,51 +3640,80 @@
             if (response.access_token) {
               googleAccessToken = response.access_token;
               localStorage.setItem('showUp_google_token', googleAccessToken);
-              // Set session active for 1 week
               localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
 
-              fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${googleAccessToken}` }
-              })
-              .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch userinfo");
-                return res.json();
-              })
-              .then(profile => {
-                if (profile) {
-                  const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
+              // 1. Immediately activate logged-in UI
+              document.getElementById('btn-google-login').classList.add('hidden');
+              document.getElementById('google-user-profile').classList.remove('hidden');
+              updateCloudBackupUI();
+
+              // 2. Fetch User Profile non-blockingly with timeout
+              try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                  headers: { Authorization: `Bearer ${googleAccessToken}` },
+                  signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+
+                if (res.ok) {
+                  const profile = await res.json();
+                  const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'Athlete');
                   const userEmail = profile.email || '';
                   const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
                   const profileObj = { firstName, email: userEmail, picture };
                   localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-
                   updateProfileUI(firstName, userEmail, picture);
                   showToast(`Signed in as ${firstName}`, "success");
-                }
-              })
-              .catch((err) => {
-                console.warn("Profile details fetch warning:", err);
-              })
-              .finally(async () => {
-                document.getElementById('btn-google-login').classList.add('hidden');
-                document.getElementById('google-user-profile').classList.remove('hidden');
-                updateCloudBackupUI();
-
-                // If local storage has 0 workouts, check if Drive has a backup to restore
-                if (completedWorkoutsHistory.length === 0) {
-                  await restoreFromGoogleDrive(true);
                 } else {
-                  await syncToGoogleDrive(false);
+                  const fallbackProfile = { firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
+                  localStorage.setItem('showUp_user_profile', JSON.stringify(fallbackProfile));
+                  updateProfileUI('Athlete', '', fallbackProfile.picture);
+                  showToast("Signed in successfully!", "success");
                 }
-              });
+              } catch (err) {
+                console.warn("User info fetch notice:", err);
+                const fallbackProfile = { firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
+                localStorage.setItem('showUp_user_profile', JSON.stringify(fallbackProfile));
+                updateProfileUI('Athlete', '', fallbackProfile.picture);
+                showToast("Signed in successfully!", "success");
+              }
+
+              // 3. Asynchronously trigger silent Drive check in background
+              setTimeout(async () => {
+                try {
+                  if (completedWorkoutsHistory.length === 0) {
+                    await restoreFromGoogleDrive(true);
+                  } else {
+                    await syncToGoogleDrive(true);
+                  }
+                } catch (driveErr) {
+                  console.warn("Background drive sync notice:", driveErr);
+                }
+              }, 1000);
             }
           },
+          error_callback: (err) => {
+            clearTimeout(safetyTimer);
+            setGoogleLoginLoading(false);
+            console.warn("Google OAuth error callback:", err);
+            if (err && err.type === 'popup_closed') {
+              showToast("Google sign-in popup was closed.", "info");
+            } else if (err && err.type === 'popup_failed_to_open') {
+              showToast("Popup blocked by browser. Please allow popups for showUp.", "warning");
+            } else {
+              showToast("Google sign-in was interrupted. Please retry.", "info");
+            }
+          }
         });
 
-        // Request access token with standard user flow
-        client.requestAccessToken();
+        // Request access token with explicit consent prompt to guarantee clean transition from account selection
+        client.requestAccessToken({ prompt: 'consent' });
       } catch (err) {
+        clearTimeout(safetyTimer);
+        setGoogleLoginLoading(false);
         console.error("Failed to initialize Google Token Client:", err);
         showToast(`Auth Initialization failed: ${err.message}`, "error");
       }
@@ -3677,6 +3751,14 @@
               } else {
                 showToast(`Drive permission: ${response.error_description || response.error}`, "warning");
               }
+            }
+          },
+          error_callback: (err) => {
+            console.warn("Drive authorization error callback:", err);
+            if (err && err.type === 'popup_closed') {
+              showToast("Google Drive permission window was closed.", "info");
+            } else {
+              showToast("Google Drive authorization interrupted.", "info");
             }
           }
         });
@@ -3749,12 +3831,10 @@
               requestDriveAuthorization(true);
             }
           } else {
-            console.warn("Drive token expired during sync. Reconnecting...");
+            console.warn("Drive token expired during sync. Refreshing token silently...");
+            requestTokenSilently();
             if (!isSilent) {
-              showToast("Google authorization expired. Reconnecting...", "info");
-              handleGoogleSignIn();
-            } else {
-              requestTokenSilently();
+              showToast("Google authorization refreshed. Click backup to sync.", "info");
             }
           }
           return;
@@ -3925,12 +4005,10 @@
               requestDriveAuthorization(false);
             }
           } else {
-            console.warn("Drive token expired during restore. Reconnecting...");
+            console.warn("Drive token expired during restore. Refreshing token silently...");
+            requestTokenSilently();
             if (!isAutoCheck) {
-              showToast("Google authorization expired. Reconnecting...", "info");
-              handleGoogleSignIn();
-            } else {
-              requestTokenSilently();
+              showToast("Google authorization refreshed. Click restore to re-sync.", "info");
             }
           }
           return;
@@ -4288,6 +4366,8 @@
       const counterEl = document.getElementById('global-daily-counter');
       if (counterEl) {
         counterEl.innerText = Number(userTodayCount).toLocaleString();
+        counterEl.style.color = 'var(--m3-primary)';
+        counterEl.style.webkitTextFillColor = 'var(--m3-primary)';
       }
 
       return userTodayCount;
@@ -4464,8 +4544,9 @@
       const targetZip = selectedHeatMapZip || (activeNodes.length > 0 ? activeNodes[0].zip : getUserZip());
       const coords = getZipCoordinates(targetZip);
 
-      // 1. Try Native Google Maps JS API if loaded and authorized
-      if (window.google && window.google.maps && window.google.maps.Map) {
+      // 1. Try Native Google Maps JS API only if an authorized API key is provided
+      const savedGmapsKey = localStorage.getItem('showUp_gmaps_api_key');
+      if (savedGmapsKey && window.google && window.google.maps && window.google.maps.Map) {
         try {
           if (!googleMapInstance) {
             googleMapInstance = new google.maps.Map(canvas, {
