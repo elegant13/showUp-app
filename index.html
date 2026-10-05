@@ -350,8 +350,343 @@
     </div>
   </div>
 
+  <!-- ================= UNOBTRUSIVE SQUAD WORKOUT NOTIFICATION PILL ================= -->
+  <aside id="squad-notification-pill" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-sm w-[92%] bg-slate-900/95 border border-emerald-500/40 text-slate-100 rounded-2xl p-3 shadow-2xl backdrop-blur-md transition-all duration-300 transform -translate-y-6 opacity-0 pointer-events-auto">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="relative flex-shrink-0">
+          <div id="pill-avatar" class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs border border-emerald-500/30">
+            MV
+          </div>
+          <span class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900 animate-ping"></span>
+          <span class="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-900"></span>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5">
+            <span id="pill-name" class="text-xs font-bold text-slate-100 truncate">Marcus Vance</span>
+            <span class="text-[9px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">Lifting Now</span>
+          </div>
+          <p id="pill-workout" class="text-[11px] text-slate-400 truncate mt-0.5">Started: Heavy Deadlifts & Lats</p>
+        </div>
+      </div>
+      <button onclick="dismissSquadPill()" class="text-slate-500 hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-800 transition flex-shrink-0">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= CREATE SQUAD MODAL ================= -->
+  <div id="create-squad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-people-group text-emerald-400"></i>
+            Create New Squad
+          </h2>
+          <p class="text-xs text-slate-400">Assemble your accountability crew</p>
+        </div>
+        <button onclick="closeCreateSquadModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Squad Name *</label>
+          <input type="text" id="new-squad-name" placeholder="e.g. Dawn Patrol, Iron Collective" maxlength="30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Motto / Target Focus</label>
+          <input type="text" id="new-squad-motto" placeholder="e.g. 5AM compound lifts • Consistency is key" maxlength="60" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Squad Emblem Icon</label>
+          <div class="grid grid-cols-6 gap-2">
+            <button type="button" onclick="selectSquadIcon('dumbbell')" id="squad-icon-dumbbell" class="h-10 rounded-xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-dumbbell"></i>
+            </button>
+            <button type="button" onclick="selectSquadIcon('fire')" id="squad-icon-fire" class="h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-fire"></i>
+            </button>
+            <button type="button" onclick="selectSquadIcon('trophy')" id="squad-icon-trophy" class="h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-trophy"></i>
+            </button>
+            <button type="button" onclick="selectSquadIcon('bolt')" id="squad-icon-bolt" class="h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-bolt"></i>
+            </button>
+            <button type="button" onclick="selectSquadIcon('crown')" id="squad-icon-crown" class="h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-crown"></i>
+            </button>
+            <button type="button" onclick="selectSquadIcon('shield-halved')" id="squad-icon-shield-halved" class="h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition">
+              <i class="fa-solid fa-shield-halved"></i>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Accent Theme</label>
+          <div class="grid grid-cols-5 gap-2">
+            <button type="button" onclick="selectSquadAccent('emerald')" id="squad-accent-emerald" class="h-8 rounded-xl bg-emerald-500 border-2 border-white/90 transition"></button>
+            <button type="button" onclick="selectSquadAccent('blue')" id="squad-accent-blue" class="h-8 rounded-xl bg-blue-500 border-2 border-transparent hover:border-white/50 transition"></button>
+            <button type="button" onclick="selectSquadAccent('purple')" id="squad-accent-purple" class="h-8 rounded-xl bg-purple-500 border-2 border-transparent hover:border-white/50 transition"></button>
+            <button type="button" onclick="selectSquadAccent('amber')" id="squad-accent-amber" class="h-8 rounded-xl bg-amber-500 border-2 border-transparent hover:border-white/50 transition"></button>
+            <button type="button" onclick="selectSquadAccent('rose')" id="squad-accent-rose" class="h-8 rounded-xl bg-rose-500 border-2 border-transparent hover:border-white/50 transition"></button>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 text-[11px] text-slate-400 flex items-start gap-2.5">
+          <i class="fa-solid fa-crown text-amber-400 text-sm mt-0.5"></i>
+          <div>
+            <span class="font-bold text-slate-200">Squad Creator Authority:</span>
+            <p class="mt-0.5">You will be designated as the <span class="text-amber-400 font-semibold">Creator</span>. Creators can manage and remove members. If you decide to leave later, you will appoint a successor creator.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeCreateSquadModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); createNewSquadSubmit()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
+          Create Squad
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= TRANSFER CREATOR ROLE BEFORE LEAVING MODAL ================= -->
+  <div id="transfer-creator-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-crown text-amber-400"></i>
+            Assign New Creator
+          </h2>
+          <p class="text-xs text-slate-400">Appoint a successor before leaving</p>
+        </div>
+        <button onclick="closeTransferModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-2xl text-xs text-amber-300 space-y-1">
+        <p class="font-bold flex items-center gap-1.5">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          Creator Departure Requirement
+        </p>
+        <p class="text-[11px] text-amber-200/80">
+          As the squad creator, you cannot leave the squad without assigning one of your existing members to become the new creator.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Select Successor Creator:</label>
+        <div id="transfer-candidates-list" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+          <!-- Dynamically populated candidate members -->
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeTransferModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); confirmTransferAndLeave()" class="w-2/3 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-rose-600/20">
+          Transfer & Leave
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= SQUAD NOTIFICATION PREFERENCES MODAL ================= -->
+  <div id="squad-notifications-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-bell text-emerald-400"></i>
+            Workout Notifications
+          </h2>
+          <p id="notif-modal-squad-name" class="text-xs text-slate-400">Choose unobtrusive workout start alerts</p>
+        </div>
+        <button onclick="closeSquadNotificationsModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        Select one or more <strong class="text-emerald-400">unobtrusive notifications</strong> to receive whenever a member of this squad begins a workout session:
+      </p>
+
+      <div class="space-y-3">
+        <!-- 1. Floating In-App Pill -->
+        <label class="flex items-start gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+          <input type="checkbox" id="pref-pill" class="mt-1 w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-comment-dots text-emerald-400"></i>
+                Subtle In-App Floating Pill
+              </span>
+              <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">Quiet</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Gentle floating pill slides down at the top of the app for 4 seconds without interrupting your session.</p>
+          </div>
+        </label>
+
+        <!-- 2. Live Status Pulse Beacon -->
+        <label class="flex items-start gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+          <input type="checkbox" id="pref-beacon" class="mt-1 w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-tower-broadcast text-blue-400"></i>
+                Live Status Pulse & Beacon
+              </span>
+              <span class="text-[10px] font-semibold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded-full border border-blue-500/20">Visual</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Glows a pulsing green gym beacon dot on the Squads bottom navigation tab and highlights member as 'Lifting Now'.</p>
+          </div>
+        </label>
+
+        <!-- 3. Haptic Pulse Vibration -->
+        <label class="flex items-start gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+          <input type="checkbox" id="pref-haptic" class="mt-1 w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-mobile-screen text-amber-400"></i>
+                Tactile Haptic Pulse
+              </span>
+              <span class="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full border border-amber-500/20">Haptic</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Short, soft double-tap vibration on supported mobile devices when a teammate begins their set.</p>
+          </div>
+        </label>
+
+        <!-- 4. Ambient Audio Chime -->
+        <label class="flex items-start gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+          <input type="checkbox" id="pref-chime" class="mt-1 w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-music text-purple-400"></i>
+                Ambient Audio Chime
+              </span>
+              <span class="text-[10px] font-semibold text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded-full border border-purple-500/20">Sound</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">A quiet, soothing two-tone glass sine chime generated in real-time via Web Audio API.</p>
+          </div>
+        </label>
+
+        <!-- 5. Browser System Notification -->
+        <label class="flex items-start gap-3 bg-slate-950 p-3.5 rounded-2xl border border-slate-800 hover:border-slate-700 cursor-pointer transition">
+          <input type="checkbox" id="pref-browser" class="mt-1 w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                <i class="fa-solid fa-globe text-rose-400"></i>
+                Browser System Notification
+              </span>
+              <span class="text-[10px] font-semibold text-rose-400 bg-rose-500/10 px-1.5 py-0.5 rounded-full border border-rose-500/20">OS Push</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Sends a quiet standard browser push banner notification if showUp is running in another tab.</p>
+          </div>
+        </label>
+      </div>
+
+      <div class="pt-2 space-y-2">
+        <button type="button" onclick="triggerHaptic('light'); previewCurrentSquadNotifications()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2 rounded-2xl text-xs border border-slate-700 flex items-center justify-center gap-1.5 transition">
+          <i class="fa-solid fa-play text-xs text-amber-400"></i>
+          <span>Test Selected Notifications</span>
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="closeSquadNotificationsModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+            Cancel
+          </button>
+          <button type="button" onclick="triggerHaptic('medium'); saveSquadNotificationsSubmit()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
+            Save Preferences
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ADD MEMBER / INVITE MODAL ================= -->
+  <div id="add-member-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-user-plus text-emerald-400"></i>
+            Invite & Add Member
+          </h2>
+          <p id="add-member-modal-squad-name" class="text-xs text-slate-400">Grow your squad accountability</p>
+        </div>
+        <button onclick="closeAddMemberModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- SQUAD SHAREABLE CODE -->
+      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+        <label class="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Squad Invite Code</label>
+        <div class="flex items-center gap-2">
+          <div id="modal-squad-invite-code" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-emerald-400 tracking-wider text-center select-all">
+            SHOWUP-7X9P
+          </div>
+          <button onclick="triggerHaptic('light'); copySquadInviteCode()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+            <i class="fa-solid fa-copy"></i>
+            <span>Copy</span>
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500">Teammates can enter this code to instantly join your squad.</p>
+      </div>
+
+      <!-- DIRECT ADD FORM -->
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Teammate Name *</label>
+          <input type="text" id="new-member-name" placeholder="e.g. Liam Chen" maxlength="30" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email or Workout Handle</label>
+          <input type="text" id="new-member-handle" placeholder="e.g. liam@gym.io" maxlength="40" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+      </div>
+
+      <!-- QUICK SAMPLE ADDS -->
+      <div class="pt-1">
+        <label class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Or Quick Add Workout Buddy:</label>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="quickAddSampleMember('Liam Chen', 'liam@iron.dev')" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-left p-2.5 rounded-xl transition group">
+            <div class="text-xs font-bold text-slate-200 group-hover:text-emerald-400">+ Liam Chen</div>
+            <div class="text-[10px] text-slate-500">Powerlifter</div>
+          </button>
+          <button type="button" onclick="quickAddSampleMember('Maya Patel', 'maya@power.fit')" class="bg-slate-950 hover:bg-slate-900 border border-slate-800 text-left p-2.5 rounded-xl transition group">
+            <div class="text-xs font-bold text-slate-200 group-hover:text-emerald-400">+ Maya Patel</div>
+            <div class="text-[10px] text-slate-500">Calisthenics</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button type="button" onclick="closeAddMemberModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); addMemberSubmit()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20">
+          Add Member
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
-  <main class="max-w-3xl mx-auto px-4 pt-4 space-y-6">
+  <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
     <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
     <div id="tab-workout-view" class="space-y-6">
@@ -837,18 +1172,77 @@
 
     </div>
 
+    <!-- VIEW TAB 3: SQUADS & ACCOUNTABILITY -->
+    <div id="tab-squads-view" class="hidden space-y-6">
+
+      <!-- SQUADS HERO & HEADER SECTION -->
+      <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2.5 mb-1">
+              <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-base shadow-sm">
+                <i class="fa-solid fa-people-group"></i>
+              </span>
+              <div>
+                <h2 class="text-base font-extrabold text-slate-100 tracking-tight">Squads & Community</h2>
+                <p class="text-[11px] text-slate-400">Accountability, peer motivation, & quiet workout alerts</p>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="triggerHaptic('light'); openCreateSquadModal()" class="m3-btn-primary text-xs font-bold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 active:scale-95 transition">
+              <i class="fa-solid fa-plus"></i>
+              <span>Create Squad</span>
+            </button>
+            <button onclick="triggerHaptic('light'); simulateTeammateWorkout()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Test workout start notification">
+              <i class="fa-solid fa-bolt text-amber-400"></i>
+              <span>Simulate Workout</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ACTIVE GYM BEACON BANNER (Shows if any teammate is active) -->
+        <div id="squad-active-beacon-banner" class="hidden mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between bg-emerald-500/5 px-3.5 py-2.5 rounded-2xl border border-emerald-500/20">
+          <div class="flex items-center gap-2.5">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <span id="squad-active-beacon-text" class="text-xs font-medium text-emerald-300">
+              1 squad mate is lifting right now!
+            </span>
+          </div>
+          <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 uppercase tracking-wider">Live</span>
+        </div>
+      </section>
+
+      <!-- SQUADS LIST CONTAINER -->
+      <div id="squads-list-container" class="space-y-6">
+        <!-- Rendered dynamically via renderSquadsTab() -->
+      </div>
+
+    </div>
+
   </main>
 
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
   <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
-    <div class="max-w-3xl mx-auto grid grid-cols-2 px-4 py-2 text-center text-xs">
-      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition">
+    <div class="max-w-3xl mx-auto grid grid-cols-3 px-3 py-2 text-center text-xs">
+      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative">
         <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
         <span>Workout</span>
       </button>
-      <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition">
+      <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
         <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
         <span>Calendar</span>
+      </button>
+      <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
+        <div class="relative">
+          <i class="fa-solid fa-people-group text-lg mb-0.5"></i>
+          <span id="squad-nav-beacon" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
+          <span id="squad-nav-beacon-dot" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full"></span>
+        </div>
+        <span>Squads</span>
       </button>
     </div>
   </nav>
@@ -899,6 +1293,7 @@
       restoreSavedSession();
       restoreThemePreferences();
       restoreFontPreferences();
+      initSquads();
     });
 
     window.addEventListener('online', () => {
@@ -1282,6 +1677,7 @@
       currentSessionSets.push(setObj);
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
+      broadcastUserWorkoutStarted(exerciseName);
 
       if (googleAccessToken) {
         syncToGoogleDrive();
@@ -1460,6 +1856,7 @@
 
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
+      broadcastUserWorkoutEnded();
 
       renderLoggedSets();
       renderCalendar();
@@ -1897,22 +2294,32 @@
     function switchTab(tabName) {
       const workoutView = document.getElementById('tab-workout-view');
       const calendarView = document.getElementById('tab-calendar-view');
+      const squadsView = document.getElementById('tab-squads-view');
       const btnWorkout = document.getElementById('nav-btn-workout');
       const btnCalendar = document.getElementById('nav-btn-calendar');
+      const btnSquads = document.getElementById('nav-btn-squads');
+
+      workoutView.classList.add('hidden');
+      calendarView.classList.add('hidden');
+      if (squadsView) squadsView.classList.add('hidden');
+
+      btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
 
       if (tabName === 'workout') {
         workoutView.classList.remove('hidden');
-        calendarView.classList.add('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
-      } else {
-        workoutView.classList.add('hidden');
+        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+      } else if (tabName === 'calendar') {
         calendarView.classList.remove('hidden');
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition";
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition";
+        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+      } else if (tabName === 'squads') {
+        if (squadsView) squadsView.classList.remove('hidden');
+        if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+        renderSquadsTab();
       }
     }
 
@@ -2392,6 +2799,977 @@
       };
       reader.readAsText(file);
       event.target.value = '';
+    }
+
+    // ================= SQUADS & ACCOUNTABILITY ENGINE =================
+    let squadCreateSelectedIcon = 'dumbbell';
+    let squadCreateSelectedAccent = 'emerald';
+    let currentActiveSquadId = null;
+    let transferTargetSquadId = null;
+    let activePillTimeout = null;
+
+    function getAppUser() {
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      if (savedProfile && (savedProfile.firstName || savedProfile.email)) {
+        return {
+          id: savedProfile.email || 'local_user',
+          name: savedProfile.firstName ? `${savedProfile.firstName} (You)` : 'You',
+          rawName: savedProfile.firstName || 'You',
+          email: savedProfile.email || 'user@showup.app',
+          picture: savedProfile.picture || null,
+          isCurrentUser: true
+        };
+      }
+      return {
+        id: 'local_user',
+        name: 'You',
+        rawName: 'You',
+        email: 'you@showup.app',
+        picture: null,
+        isCurrentUser: true
+      };
+    }
+
+    function initSquads() {
+      let squads = JSON.parse(localStorage.getItem('showUp_squads') || 'null');
+      const user = getAppUser();
+
+      if (!squads || !Array.isArray(squads) || squads.length === 0) {
+        // Seed default starter squad with realistic teammates & active workout
+        squads = [
+          {
+            id: 'squad_iron_collective',
+            name: 'Iron Collective',
+            motto: 'Show up, stay consistent, compound gains daily.',
+            icon: 'dumbbell',
+            accent: 'emerald',
+            inviteCode: 'IRON-9821',
+            createdAt: new Date().toISOString(),
+            creatorId: user.id,
+            creatorName: user.rawName,
+            notificationPreferences: {
+              inAppPill: true,
+              beaconPulse: true,
+              hapticPulse: true,
+              soundChime: true,
+              browserNotify: false
+            },
+            members: [
+              {
+                id: user.id,
+                name: user.name,
+                rawName: user.rawName,
+                email: user.email,
+                avatar: user.picture,
+                isCreator: true,
+                isWorkingOut: false,
+                currentWorkout: null,
+                lastActive: 'Just now'
+              },
+              {
+                id: 'member_marcus',
+                name: 'Marcus Vance',
+                rawName: 'Marcus Vance',
+                email: 'marcus@iron.dev',
+                avatar: null,
+                isCreator: false,
+                isWorkingOut: true,
+                currentWorkout: 'Heavy Deadlift & Lats',
+                workoutStartedAt: new Date(Date.now() - 8 * 60000).toISOString(),
+                lastActive: 'Active now'
+              },
+              {
+                id: 'member_elena',
+                name: 'Elena Rostova',
+                rawName: 'Elena Rostova',
+                email: 'elena@power.fit',
+                avatar: null,
+                isCreator: false,
+                isWorkingOut: false,
+                currentWorkout: null,
+                lastActive: '2h ago'
+              },
+              {
+                id: 'member_jordan',
+                name: 'Jordan Lee',
+                rawName: 'Jordan Lee',
+                email: 'jordan@strength.io',
+                avatar: null,
+                isCreator: false,
+                isWorkingOut: false,
+                currentWorkout: null,
+                lastActive: 'Yesterday'
+              }
+            ]
+          }
+        ];
+        localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      } else {
+        // Ensure current user is mapped correctly in squads
+        squads.forEach(sq => {
+          const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+          if (userMember) {
+            userMember.id = user.id;
+            userMember.name = user.name;
+            userMember.rawName = user.rawName;
+            userMember.email = user.email;
+            if (user.picture) userMember.avatar = user.picture;
+          }
+        });
+        localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      }
+
+      updateSquadBeacon();
+    }
+
+    function getSquads() {
+      return JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+    }
+
+    function saveSquads(squads) {
+      localStorage.setItem('showUp_squads', JSON.stringify(squads));
+      updateSquadBeacon();
+    }
+
+    function updateSquadBeacon() {
+      const squads = getSquads();
+      const user = getAppUser();
+      let activeMemberCount = 0;
+      let activeSummary = "";
+
+      squads.forEach(sq => {
+        sq.members.forEach(m => {
+          if (m.isWorkingOut && m.id !== user.id) {
+            activeMemberCount++;
+            if (!activeSummary) {
+              activeSummary = `${m.rawName} is lifting right now in ${sq.name}! (${m.currentWorkout || 'Session'})`;
+            }
+          }
+        });
+      });
+
+      const navBeaconPing = document.getElementById('squad-nav-beacon');
+      const navBeaconDot = document.getElementById('squad-nav-beacon-dot');
+      const banner = document.getElementById('squad-active-beacon-banner');
+      const bannerText = document.getElementById('squad-active-beacon-text');
+
+      if (activeMemberCount > 0) {
+        if (navBeaconPing) navBeaconPing.classList.remove('hidden');
+        if (navBeaconDot) navBeaconDot.classList.remove('hidden');
+        if (banner) banner.classList.remove('hidden');
+        if (bannerText) bannerText.innerText = activeSummary;
+      } else {
+        if (navBeaconPing) navBeaconPing.classList.add('hidden');
+        if (navBeaconDot) navBeaconDot.classList.add('hidden');
+        if (banner) banner.classList.add('hidden');
+      }
+    }
+
+    function renderSquadsTab() {
+      const container = document.getElementById('squads-list-container');
+      if (!container) return;
+
+      const squads = getSquads();
+      const user = getAppUser();
+
+      if (squads.length === 0) {
+        container.innerHTML = `
+          <div class="m3-card rounded-3xl p-8 border border-slate-800 text-center space-y-4">
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl mx-auto border border-emerald-500/20">
+              <i class="fa-solid fa-people-group"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-100">No Squads Active Yet</h3>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Create your first squad, invite workout partners, and experience real-time quiet accountability notifications.</p>
+            </div>
+            <button onclick="triggerHaptic('medium'); openCreateSquadModal()" class="m3-btn-primary font-bold px-5 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 shadow-lg shadow-emerald-500/20">
+              <i class="fa-solid fa-plus"></i>
+              <span>Create Your First Squad</span>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = squads.map(sq => {
+        const isUserCreator = (sq.creatorId === user.id) || sq.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
+        const prefs = sq.notificationPreferences || { inAppPill: true, beaconPulse: true, hapticPulse: true, soundChime: true, browserNotify: false };
+        
+        const accentColors = {
+          emerald: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+          blue: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/30' },
+          purple: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/30' },
+          amber: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30' },
+          rose: { bg: 'bg-rose-500/10', text: 'text-rose-400', border: 'border-rose-500/30' }
+        };
+        const color = accentColors[sq.accent] || accentColors.emerald;
+
+        return `
+          <div class="m3-card rounded-3xl p-5 border border-slate-800 shadow-xl space-y-4">
+            
+            <!-- SQUAD HEADER -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl ${color.bg} ${color.text} border ${color.border} flex items-center justify-center text-xl shadow-lg">
+                  <i class="fa-solid fa-${sq.icon || 'dumbbell'}"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-base font-extrabold text-slate-100 tracking-tight">${escapeHtml(sq.name)}</h3>
+                    ${isUserCreator 
+                      ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1"><i class="fa-solid fa-crown text-[9px]"></i> Creator</span>`
+                      : `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Member</span>`
+                    }
+                  </div>
+                  <p class="text-xs text-slate-400 mt-0.5">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
+                </div>
+              </div>
+
+              <!-- ACTION BUTTONS -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button onclick="triggerHaptic('light'); openSquadNotificationsModal('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Configure workout notifications">
+                  <i class="fa-solid fa-bell text-xs ${prefs.inAppPill || prefs.soundChime ? 'text-emerald-400' : 'text-slate-400'}"></i>
+                  <span>Alerts</span>
+                </button>
+
+                <button onclick="triggerHaptic('light'); openAddMemberModal('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Add or invite workout buddy">
+                  <i class="fa-solid fa-user-plus text-xs text-blue-400"></i>
+                  <span>Invite</span>
+                </button>
+
+                <button onclick="triggerHaptic('light'); simulateTeammateWorkout('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Simulate a teammate starting workout">
+                  <i class="fa-solid fa-bolt text-xs text-amber-400"></i>
+                  <span>Simulate</span>
+                </button>
+
+                ${isUserCreator
+                  ? `<button onclick="triggerHaptic('medium'); handleCreatorLeave('${sq.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Leave squad (must assign creator)">
+                      <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                      <span>Leave</span>
+                    </button>`
+                  : `<button onclick="triggerHaptic('medium'); leaveSquadAsMember('${sq.id}')" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Leave squad">
+                      <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                      <span>Leave</span>
+                    </button>`
+                }
+              </div>
+            </div>
+
+            <!-- UNOBTRUSIVE NOTIFICATIONS STATUS PILL ROW -->
+            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-between flex-wrap gap-2 text-[11px]">
+              <span class="text-slate-400 font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-bell text-emerald-400"></i>
+                Active Workout Alerts:
+              </span>
+              <div class="flex items-center gap-1 flex-wrap">
+                <span class="px-2 py-0.5 rounded-lg border ${prefs.inAppPill ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Pill</span>
+                <span class="px-2 py-0.5 rounded-lg border ${prefs.beaconPulse ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Beacon</span>
+                <span class="px-2 py-0.5 rounded-lg border ${prefs.hapticPulse ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Haptic</span>
+                <span class="px-2 py-0.5 rounded-lg border ${prefs.soundChime ? 'bg-purple-500/10 text-purple-400 border-purple-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">Chime</span>
+                <span class="px-2 py-0.5 rounded-lg border ${prefs.browserNotify ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 font-semibold' : 'bg-slate-900 text-slate-500 border-slate-800 line-through'}">OS Push</span>
+                <button onclick="triggerHaptic('light'); openSquadNotificationsModal('${sq.id}')" class="text-emerald-400 hover:text-emerald-300 ml-1 underline text-[10px]">Edit</button>
+              </div>
+            </div>
+
+            <!-- MEMBERS LIST -->
+            <div class="space-y-2 pt-1">
+              <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider px-1">
+                <span>Members (${sq.members.length})</span>
+                <span class="text-[10px] text-slate-500">Invite Code: <code class="text-emerald-400 font-mono">${sq.inviteCode || 'SHOWUP'}</code></span>
+              </div>
+
+              <div class="space-y-2">
+                ${sq.members.map(m => {
+                  const isThisUser = (m.id === user.id || m.email === user.email);
+                  const initials = getInitials(m.rawName || m.name);
+                  
+                  return `
+                    <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <!-- AVATAR -->
+                        <div class="relative flex-shrink-0">
+                          ${m.avatar 
+                            ? `<img src="${m.avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="${escapeHtml(m.rawName)}">`
+                            : `<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-xs">${initials}</div>`
+                          }
+                          ${m.isWorkingOut 
+                            ? `<span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-slate-950"></span>
+                               </span>`
+                            : ''
+                          }
+                        </div>
+
+                        <!-- DETAILS -->
+                        <div class="min-w-0">
+                          <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-slate-100 truncate">
+                              ${escapeHtml(m.rawName || m.name)} ${isThisUser ? '<span class="text-emerald-400 font-normal">(You)</span>' : ''}
+                            </span>
+                            ${m.isCreator 
+                              ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-0.5"><i class="fa-solid fa-crown text-[8px]"></i> Creator</span>`
+                              : ''
+                            }
+                          </div>
+                          <div class="mt-0.5">
+                            ${m.isWorkingOut 
+                              ? `<p class="text-[11px] font-semibold text-emerald-400 flex items-center gap-1 truncate">
+                                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                  Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
+                                 </p>`
+                              : `<p class="text-[11px] text-slate-400 truncate">Status: ${escapeHtml(m.lastActive || 'Resting')}</p>`
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- PERMISSION-BASED ACTION CONTROLS -->
+                      <div class="flex items-center gap-1.5 flex-shrink-0">
+                        ${isUserCreator && !isThisUser
+                          ? `<button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
+                              <i class="fa-solid fa-user-minus text-xs"></i>
+                             </button>`
+                          : ''
+                        }
+                        ${isThisUser && isUserCreator && sq.members.length > 1
+                          ? `<button onclick="triggerHaptic('light'); handleCreatorLeave('${sq.id}')" class="text-[10px] text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/30 px-2 py-1 rounded-xl transition" title="Transfer creator role">
+                              Transfer Role
+                             </button>`
+                          : ''
+                        }
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function getInitials(name) {
+      if (!name) return 'SU';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+      }
+      return name.slice(0, 2).toUpperCase();
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function openCreateSquadModal() {
+      document.getElementById('new-squad-name').value = '';
+      document.getElementById('new-squad-motto').value = '';
+      selectSquadIcon('dumbbell');
+      selectSquadAccent('emerald');
+      document.getElementById('create-squad-modal').classList.remove('hidden');
+    }
+
+    function closeCreateSquadModal() {
+      document.getElementById('create-squad-modal').classList.add('hidden');
+    }
+
+    function selectSquadIcon(icon) {
+      squadCreateSelectedIcon = icon;
+      const icons = ['dumbbell', 'fire', 'trophy', 'bolt', 'crown', 'shield-halved'];
+      icons.forEach(ic => {
+        const btn = document.getElementById(`squad-icon-${ic}`);
+        if (btn) {
+          if (ic === icon) {
+            btn.className = "h-10 rounded-xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm transition";
+          } else {
+            btn.className = "h-10 rounded-xl border border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200 flex items-center justify-center text-sm transition";
+          }
+        }
+      });
+    }
+
+    function selectSquadAccent(accent) {
+      squadCreateSelectedAccent = accent;
+      const accents = ['emerald', 'blue', 'purple', 'amber', 'rose'];
+      accents.forEach(ac => {
+        const btn = document.getElementById(`squad-accent-${ac}`);
+        if (btn) {
+          if (ac === accent) {
+            btn.classList.add('border-white/90');
+            btn.classList.remove('border-transparent');
+          } else {
+            btn.classList.remove('border-white/90');
+            btn.classList.add('border-transparent');
+          }
+        }
+      });
+    }
+
+    function createNewSquadSubmit() {
+      const nameInput = document.getElementById('new-squad-name');
+      const mottoInput = document.getElementById('new-squad-motto');
+      const name = nameInput.value.trim();
+      const motto = mottoInput.value.trim() || 'Daily grind & consistency';
+
+      if (!name) {
+        showToast("Please enter a squad name", "warning");
+        nameInput.focus();
+        return;
+      }
+
+      const user = getAppUser();
+      const squads = getSquads();
+      const newSquadId = 'squad_' + Date.now();
+      const randomCode = 'SHOWUP-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+
+      const newSquad = {
+        id: newSquadId,
+        name: name,
+        motto: motto,
+        icon: squadCreateSelectedIcon || 'dumbbell',
+        accent: squadCreateSelectedAccent || 'emerald',
+        inviteCode: randomCode,
+        createdAt: new Date().toISOString(),
+        creatorId: user.id,
+        creatorName: user.rawName,
+        notificationPreferences: {
+          inAppPill: true,
+          beaconPulse: true,
+          hapticPulse: true,
+          soundChime: true,
+          browserNotify: false
+        },
+        members: [
+          {
+            id: user.id,
+            name: user.name,
+            rawName: user.rawName,
+            email: user.email,
+            avatar: user.picture,
+            isCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Just now'
+          }
+        ]
+      };
+
+      squads.unshift(newSquad);
+      saveSquads(squads);
+      closeCreateSquadModal();
+      renderSquadsTab();
+      showToast(`Squad "${name}" created! You are the Creator.`, "success");
+    }
+
+    function removeSquadMember(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const isUserCreator = (squad.creatorId === user.id) || squad.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
+      if (!isUserCreator) {
+        showToast("Only the squad creator can remove other members.", "error");
+        return;
+      }
+
+      const targetMember = squad.members.find(m => m.id === memberId);
+      if (!targetMember) return;
+
+      if (targetMember.id === user.id) {
+        handleCreatorLeave(squadId);
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to remove ${targetMember.rawName || targetMember.name} from "${squad.name}"?`)) {
+        return;
+      }
+
+      squad.members = squad.members.filter(m => m.id !== memberId);
+      saveSquads(squads);
+      renderSquadsTab();
+      showToast(`Removed ${targetMember.rawName || targetMember.name} from squad.`, "info");
+    }
+
+    function handleCreatorLeave(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const otherMembers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+
+      if (otherMembers.length === 0) {
+        if (confirm(`You are the only member in "${squad.name}". Leaving will permanently disband and delete this squad. Continue?`)) {
+          const updated = squads.filter(s => s.id !== squadId);
+          saveSquads(updated);
+          renderSquadsTab();
+          showToast(`Squad "${squad.name}" disbanded.`, "info");
+        }
+        return;
+      }
+
+      transferTargetSquadId = squadId;
+      const listEl = document.getElementById('transfer-candidates-list');
+      if (listEl) {
+        listEl.innerHTML = otherMembers.map((m, idx) => `
+          <label class="flex items-center justify-between p-3 rounded-2xl border border-slate-800 bg-slate-950 hover:border-slate-700 cursor-pointer transition">
+            <div class="flex items-center gap-3 min-w-0">
+              <input type="radio" name="successor-creator-radio" value="${m.id}" ${idx === 0 ? 'checked' : ''} class="w-4 h-4 accent-amber-500 cursor-pointer">
+              <div class="min-w-0">
+                <span class="text-xs font-bold text-slate-100 block truncate">${escapeHtml(m.rawName || m.name)}</span>
+                <span class="text-[10px] text-slate-400 block truncate">${escapeHtml(m.email || 'Squad member')}</span>
+              </div>
+            </div>
+            <span class="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">New Creator</span>
+          </label>
+        `).join('');
+      }
+
+      document.getElementById('transfer-creator-modal').classList.remove('hidden');
+    }
+
+    function closeTransferModal() {
+      document.getElementById('transfer-creator-modal').classList.add('hidden');
+      transferTargetSquadId = null;
+    }
+
+    function confirmTransferAndLeave() {
+      if (!transferTargetSquadId) return;
+
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === transferTargetSquadId);
+      if (!squad) return;
+
+      const selectedRadio = document.querySelector('input[name="successor-creator-radio"]:checked');
+      if (!selectedRadio) {
+        showToast("Please choose a squad member to assign as the new creator.", "warning");
+        return;
+      }
+
+      const newCreatorId = selectedRadio.value;
+      const newCreator = squad.members.find(m => m.id === newCreatorId);
+      if (!newCreator) {
+        showToast("Selected successor not found.", "error");
+        return;
+      }
+
+      const user = getAppUser();
+
+      // Transfer Creator Role
+      squad.creatorId = newCreator.id;
+      squad.creatorName = newCreator.rawName || newCreator.name;
+      newCreator.isCreator = true;
+
+      // Remove leaving creator
+      squad.members = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+
+      saveSquads(squads);
+      closeTransferModal();
+      renderSquadsTab();
+      showToast(`Transferred creator role to ${newCreator.rawName || newCreator.name} and left squad.`, "success");
+    }
+
+    function leaveSquadAsMember(squadId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      const user = getAppUser();
+      const userMember = squad.members.find(m => m.id === user.id || m.email === user.email);
+      if (userMember && userMember.isCreator) {
+        handleCreatorLeave(squadId);
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to leave "${squad.name}"?`)) {
+        return;
+      }
+
+      squad.members = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+      saveSquads(squads);
+      renderSquadsTab();
+      showToast(`You have left "${squad.name}".`, "info");
+    }
+
+    function openAddMemberModal(squadId) {
+      currentActiveSquadId = squadId;
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      document.getElementById('add-member-modal-squad-name').innerText = `Inviting to "${squad.name}"`;
+      document.getElementById('modal-squad-invite-code').innerText = squad.inviteCode || 'SHOWUP-7X9P';
+      document.getElementById('new-member-name').value = '';
+      document.getElementById('new-member-handle').value = '';
+      document.getElementById('add-member-modal').classList.remove('hidden');
+    }
+
+    function closeAddMemberModal() {
+      document.getElementById('add-member-modal').classList.add('hidden');
+    }
+
+    function copySquadInviteCode() {
+      const code = document.getElementById('modal-squad-invite-code').innerText.trim();
+      navigator.clipboard.writeText(code).then(() => {
+        showToast(`Invite code ${code} copied to clipboard!`, "success");
+      }).catch(() => {
+        showToast(`Code: ${code}`, "info");
+      });
+    }
+
+    function addMemberSubmit() {
+      if (!currentActiveSquadId) return;
+
+      const nameInput = document.getElementById('new-member-name');
+      const handleInput = document.getElementById('new-member-handle');
+      const name = nameInput.value.trim();
+      const email = handleInput.value.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@gym.io`;
+
+      if (!name) {
+        showToast("Please enter teammate's name", "warning");
+        nameInput.focus();
+        return;
+      }
+
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === currentActiveSquadId);
+      if (!squad) return;
+
+      const newMember = {
+        id: 'member_' + Date.now(),
+        name: name,
+        rawName: name,
+        email: email,
+        avatar: null,
+        isCreator: false,
+        isWorkingOut: false,
+        currentWorkout: null,
+        lastActive: 'Just added'
+      };
+
+      squad.members.push(newMember);
+      saveSquads(squads);
+      closeAddMemberModal();
+      renderSquadsTab();
+      showToast(`Added ${name} to "${squad.name}"!`, "success");
+    }
+
+    function quickAddSampleMember(name, handle) {
+      document.getElementById('new-member-name').value = name;
+      document.getElementById('new-member-handle').value = handle;
+      addMemberSubmit();
+    }
+
+    function openSquadNotificationsModal(squadId) {
+      currentActiveSquadId = squadId;
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+
+      document.getElementById('notif-modal-squad-name').innerText = `For squad: "${squad.name}"`;
+
+      const prefs = squad.notificationPreferences || {
+        inAppPill: true,
+        beaconPulse: true,
+        hapticPulse: true,
+        soundChime: true,
+        browserNotify: false
+      };
+
+      document.getElementById('pref-pill').checked = !!prefs.inAppPill;
+      document.getElementById('pref-beacon').checked = !!prefs.beaconPulse;
+      document.getElementById('pref-haptic').checked = !!prefs.hapticPulse;
+      document.getElementById('pref-chime').checked = !!prefs.soundChime;
+      document.getElementById('pref-browser').checked = !!prefs.browserNotify;
+
+      document.getElementById('squad-notifications-modal').classList.remove('hidden');
+    }
+
+    function closeSquadNotificationsModal() {
+      document.getElementById('squad-notifications-modal').classList.add('hidden');
+    }
+
+    function saveSquadNotificationsSubmit() {
+      if (!currentActiveSquadId) return;
+
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === currentActiveSquadId);
+      if (!squad) return;
+
+      squad.notificationPreferences = {
+        inAppPill: document.getElementById('pref-pill').checked,
+        beaconPulse: document.getElementById('pref-beacon').checked,
+        hapticPulse: document.getElementById('pref-haptic').checked,
+        soundChime: document.getElementById('pref-chime').checked,
+        browserNotify: document.getElementById('pref-browser').checked
+      };
+
+      // Request browser push notification permission if enabled
+      if (squad.notificationPreferences.browserNotify && 'Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+
+      saveSquads(squads);
+      closeSquadNotificationsModal();
+      renderSquadsTab();
+      showToast("Notification preferences updated!", "success");
+    }
+
+    function previewCurrentSquadNotifications() {
+      const willPill = document.getElementById('pref-pill').checked;
+      const willHaptic = document.getElementById('pref-haptic').checked;
+      const willChime = document.getElementById('pref-chime').checked;
+      const willBrowser = document.getElementById('pref-browser').checked;
+
+      if (willPill) {
+        showSquadNotificationPill({ rawName: "Marcus Vance", avatar: null }, "Heavy Incline Press");
+      }
+      if (willHaptic) {
+        triggerSquadHaptic();
+      }
+      if (willChime) {
+        playUnobtrusiveChime();
+      }
+      if (willBrowser) {
+        sendBrowserNotification("ShowUp Squad", "Marcus Vance started: Heavy Incline Press");
+      }
+    }
+
+    function simulateTeammateWorkout(targetSquadId) {
+      const squads = getSquads();
+      if (squads.length === 0) {
+        showToast("Create a squad first to simulate workout alerts", "info");
+        return;
+      }
+
+      const squad = targetSquadId ? squads.find(s => s.id === targetSquadId) : squads[0];
+      if (!squad) return;
+
+      const user = getAppUser();
+      let otherMembers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
+
+      if (otherMembers.length === 0) {
+        // Quick add a buddy so simulation works
+        const sample = {
+          id: 'member_marcus',
+          name: 'Marcus Vance',
+          rawName: 'Marcus Vance',
+          email: 'marcus@iron.dev',
+          avatar: null,
+          isCreator: false,
+          isWorkingOut: false,
+          currentWorkout: null,
+          lastActive: 'Just now'
+        };
+        squad.members.push(sample);
+        otherMembers = [sample];
+      }
+
+      // Pick a member to toggle or start
+      const member = otherMembers[Math.floor(Math.random() * otherMembers.length)];
+      const workoutNames = [
+        "Incline Dumbbell Press & Chest",
+        "Barbell Deadlift & Lat Pulls",
+        "Barbell Back Squats & Core",
+        "Overhead Press & Tricep Burnout",
+        "Macebell 360 & Dands"
+      ];
+      const randomWorkout = workoutNames[Math.floor(Math.random() * workoutNames.length)];
+
+      member.isWorkingOut = true;
+      member.currentWorkout = randomWorkout;
+      member.workoutStartedAt = new Date().toISOString();
+      member.lastActive = 'Active now';
+
+      // Trigger user's chosen unobtrusive notifications for this squad
+      triggerSquadWorkoutNotification(squad, member, randomWorkout);
+
+      saveSquads(squads);
+      renderSquadsTab();
+      showToast(`⚡ ${member.rawName} started a workout: ${randomWorkout}`, "info");
+    }
+
+    function triggerSquadWorkoutNotification(squad, member, workoutName) {
+      const prefs = squad.notificationPreferences || {
+        inAppPill: true,
+        beaconPulse: true,
+        hapticPulse: true,
+        soundChime: true,
+        browserNotify: false
+      };
+
+      if (prefs.inAppPill) {
+        showSquadNotificationPill(member, workoutName);
+      }
+      if (prefs.beaconPulse) {
+        updateSquadBeacon();
+      }
+      if (prefs.hapticPulse) {
+        triggerSquadHaptic();
+      }
+      if (prefs.soundChime) {
+        playUnobtrusiveChime();
+      }
+      if (prefs.browserNotify) {
+        sendBrowserNotification(`ShowUp Squad • ${squad.name}`, `${member.rawName || member.name} just stepped in to lift: ${workoutName}!`);
+      }
+    }
+
+    function showSquadNotificationPill(member, workoutName) {
+      const pill = document.getElementById('squad-notification-pill');
+      const avatarEl = document.getElementById('pill-avatar');
+      const nameEl = document.getElementById('pill-name');
+      const workoutEl = document.getElementById('pill-workout');
+      if (!pill || !nameEl || !workoutEl) return;
+
+      if (avatarEl) {
+        if (member.avatar) {
+          avatarEl.innerHTML = `<img src="${member.avatar}" class="w-full h-full object-cover rounded-xl" alt="avatar">`;
+        } else {
+          avatarEl.innerText = getInitials(member.rawName || member.name || "SU");
+        }
+      }
+
+      nameEl.innerText = member.rawName || member.name || "Squad Mate";
+      workoutEl.innerText = `Started: ${workoutName || 'Active Workout'}`;
+
+      if (activePillTimeout) {
+        clearTimeout(activePillTimeout);
+      }
+
+      pill.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        pill.classList.remove('opacity-0', '-translate-y-6');
+        pill.classList.add('opacity-100', 'translate-y-0');
+      });
+
+      activePillTimeout = setTimeout(() => {
+        dismissSquadPill();
+      }, 4500);
+    }
+
+    function dismissSquadPill() {
+      const pill = document.getElementById('squad-notification-pill');
+      if (!pill) return;
+      pill.classList.remove('opacity-100', 'translate-y-0');
+      pill.classList.add('opacity-0', '-translate-y-6');
+      setTimeout(() => {
+        pill.classList.add('hidden');
+      }, 300);
+    }
+
+    function playUnobtrusiveChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        
+        // Soft C5 note (523.25 Hz)
+        const osc1 = ctx.createOscillator();
+        const gain1 = ctx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(523.25, now);
+        gain1.gain.setValueAtTime(0.08, now);
+        gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(ctx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+
+        // Soft E5 note (659.25 Hz)
+        const osc2 = ctx.createOscillator();
+        const gain2 = ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(659.25, now + 0.12);
+        gain2.gain.setValueAtTime(0.08, now + 0.12);
+        gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+        osc2.connect(gain2);
+        gain2.connect(ctx.destination);
+        osc2.start(now + 0.12);
+        osc2.stop(now + 0.55);
+      } catch (e) {
+        console.warn("Ambient chime preview warning:", e);
+      }
+    }
+
+    function triggerSquadHaptic() {
+      if (navigator.vibrate) {
+        try {
+          navigator.vibrate([40, 50, 40]);
+        } catch (e) {}
+      }
+    }
+
+    function sendBrowserNotification(title, body) {
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          try {
+            new Notification(title, {
+              body: body,
+              icon: 'https://cdn-icons-png.flaticon.com/512/2964/2964514.png',
+              silent: true
+            });
+          } catch (e) {
+            console.warn("Browser notification notice:", e);
+          }
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission();
+        }
+      }
+    }
+
+    function broadcastUserWorkoutStarted(exerciseName) {
+      const squads = getSquads();
+      const user = getAppUser();
+      let changed = false;
+
+      squads.forEach(sq => {
+        const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+        if (userMember && !userMember.isWorkingOut) {
+          userMember.isWorkingOut = true;
+          userMember.currentWorkout = exerciseName;
+          userMember.workoutStartedAt = new Date().toISOString();
+          userMember.lastActive = 'Active now';
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        saveSquads(squads);
+      }
+    }
+
+    function broadcastUserWorkoutEnded() {
+      const squads = getSquads();
+      const user = getAppUser();
+      let changed = false;
+
+      squads.forEach(sq => {
+        const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
+        if (userMember && userMember.isWorkingOut) {
+          userMember.isWorkingOut = false;
+          userMember.lastActive = 'Just now';
+          userMember.currentWorkout = null;
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        saveSquads(squads);
+      }
     }
   </script>
 </body>
