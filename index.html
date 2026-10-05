@@ -593,6 +593,120 @@
     </div>
   </div>
 
+  <!-- ================= LOG HISTORICAL BODY WEIGHT MODAL ================= -->
+  <div id="log-weight-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeLogWeightModal()">
+    <div class="m3-card rounded-3xl border border-slate-800 p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- MODAL HEADER -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+            <i class="fa-solid fa-weight-scale text-sm"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-bold text-slate-100">Log Body Weight</h2>
+            <p class="text-[11px] text-slate-400">Record current or historical weigh-in</p>
+          </div>
+        </div>
+        <button onclick="closeLogWeightModal()" class="text-slate-500 hover:text-slate-300 p-1.5 rounded-lg hover:bg-slate-800/60 transition" title="Close">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- DATE SELECTION SECTION -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label for="log-weight-date-input" class="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-regular fa-calendar text-emerald-400"></i>
+            <span>Weigh-in Date</span>
+          </label>
+          <span id="log-weight-date-label" class="text-[11px] text-emerald-400 font-semibold font-mono">Today</span>
+        </div>
+
+        <!-- Date Input Container with Calendar Picker -->
+        <div class="relative">
+          <input 
+            type="date" 
+            id="log-weight-date-input" 
+            onchange="handleLogWeightDateChange(this.value)"
+            class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 text-slate-100 text-xs font-semibold px-3 py-2.5 rounded-2xl focus:outline-none transition shadow-inner font-mono [color-scheme:dark] cursor-pointer"
+            title="Click to open calendar date picker"
+          >
+        </div>
+
+        <!-- Quick Shortcut Date Chips (Today, Yesterday, 2 Days Ago, 1 Week Ago) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5" id="quick-date-chips-container">
+          <button type="button" onclick="triggerHaptic('light'); setLogWeightQuickDate(0)" data-days="0" class="quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-emerald-500/15 text-emerald-400 border-emerald-500/40">
+            Today
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setLogWeightQuickDate(1)" data-days="1" class="quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+            Yesterday
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setLogWeightQuickDate(2)" data-days="2" class="quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+            2 Days Ago
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); setLogWeightQuickDate(7)" data-days="7" class="quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200">
+            1 Week Ago
+          </button>
+        </div>
+      </div>
+
+      <!-- WEIGHT INPUT SECTION -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <label for="log-weight-num-input" class="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-gauge-high text-emerald-400"></i>
+            <span>Body Weight (lbs)</span>
+          </label>
+          <span id="log-weight-existing-hint" class="text-[10px] text-amber-400 font-medium hidden">Replaces entry for this date</span>
+        </div>
+
+        <!-- Big Display & Numeric Input -->
+        <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800 flex items-center justify-between shadow-inner focus-within:border-emerald-500/50 transition">
+          <div class="flex items-baseline gap-1.5 flex-1">
+            <input 
+              type="number" 
+              step="0.1" 
+              min="0" 
+              max="999" 
+              id="log-weight-num-input" 
+              placeholder="0"
+              class="w-32 bg-transparent text-3xl font-black font-mono text-emerald-400 focus:outline-none tracking-tight"
+            >
+            <span class="text-xs font-bold text-slate-400 font-mono">lbs</span>
+          </div>
+          <button 
+            type="button" 
+            onclick="triggerHaptic('light'); openWeightNumpadForHistorical()" 
+            class="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 transition active:scale-95 shrink-0" 
+            title="Open Tactile Number Pad">
+            <i class="fa-solid fa-calculator"></i>
+            <span>Numpad</span>
+          </button>
+        </div>
+
+        <!-- Quick Increments / Steppers -->
+        <div class="grid grid-cols-4 gap-1.5">
+          <button type="button" onclick="triggerHaptic('light'); adjustLogWeight(-5)" class="py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono font-bold text-xs border border-slate-800 active:scale-95 transition">-5</button>
+          <button type="button" onclick="triggerHaptic('light'); adjustLogWeight(-1)" class="py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono font-bold text-xs border border-slate-800 active:scale-95 transition">-1</button>
+          <button type="button" onclick="triggerHaptic('light'); adjustLogWeight(1)" class="py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30 active:scale-95 transition">+1</button>
+          <button type="button" onclick="triggerHaptic('light'); adjustLogWeight(5)" class="py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 font-mono font-bold text-xs border border-emerald-500/30 active:scale-95 transition">+5</button>
+        </div>
+      </div>
+
+      <!-- FOOTER ACTIONS -->
+      <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80">
+        <button type="button" onclick="closeLogWeightModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); saveLogWeightEntry()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-xl text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span>Save Weight</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= ELEGANT WEIGHT TREND LINE GRAPH MODAL ================= -->
   <div id="weight-graph-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="m3-card rounded-3xl border p-5 w-full max-w-lg shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
@@ -2110,24 +2224,208 @@
       }
     }
 
-    function logBodyWeightEntry() {
-      openWeightNumpadModal('user-weight-input', 'Log Body Weight (lbs)', (finalVal) => {
-        if (isNaN(finalVal) || finalVal <= 0) return;
+    // ================= HISTORICAL WEIGHT LOGGING & INTUITIVE DATE PICKER =================
+    function getLocalDateISO(d = new Date()) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
 
-        userWeight = finalVal;
-        const input = document.getElementById('user-weight-input');
-        if (input) input.value = userWeight;
-        localStorage.setItem('showUp_user_weight', userWeight);
+    function formatHistoricalDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const d = new Date(year, month, day);
+          return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        return new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      } catch (e) {
+        return dateStr;
+      }
+    }
 
-        const todayISO = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
-        weightHistory.unshift({ date: todayISO, weight: userWeight });
-        localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+    function openLogWeightModal(targetDate = null) {
+      const modal = document.getElementById('log-weight-modal');
+      if (!modal) return;
 
-        renderWeightHistory();
-        if (googleAccessToken) {
-          syncToGoogleDrive(true);
+      const dateInput = document.getElementById('log-weight-date-input');
+      const numInput = document.getElementById('log-weight-num-input');
+      const todayStr = getLocalDateISO();
+
+      // Pick default date: targetDate -> selectedWorkoutDate -> today
+      const defaultDate = targetDate || selectedWorkoutDate || todayStr;
+      if (dateInput) {
+        dateInput.max = todayStr; // Allow any historical date up to today
+        dateInput.value = defaultDate;
+      }
+
+      // Check if entry for chosen date already exists
+      const existing = weightHistory.find(w => w.date === defaultDate);
+      const initialWeight = existing ? existing.weight : (userWeight || 0);
+
+      if (numInput) {
+        numInput.value = initialWeight > 0 ? initialWeight : "";
+        numInput.dataset.autoFilled = "true";
+      }
+
+      handleLogWeightDateChange(defaultDate);
+
+      modal.classList.remove('hidden');
+      if (numInput) {
+        setTimeout(() => {
+          numInput.focus();
+          numInput.select();
+        }, 120);
+      }
+    }
+
+    function closeLogWeightModal() {
+      const modal = document.getElementById('log-weight-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function setLogWeightQuickDate(daysAgo) {
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+      const iso = getLocalDateISO(d);
+      const dateInput = document.getElementById('log-weight-date-input');
+      if (dateInput) {
+        dateInput.value = iso;
+      }
+      handleLogWeightDateChange(iso);
+    }
+
+    function updateQuickDateChipsUI(selectedDateStr) {
+      const chips = document.querySelectorAll('.quick-date-chip');
+      const today = new Date();
+      chips.forEach(chip => {
+        const days = parseInt(chip.dataset.days || '0', 10);
+        const d = new Date();
+        d.setDate(today.getDate() - days);
+        const iso = getLocalDateISO(d);
+
+        if (selectedDateStr === iso) {
+          chip.className = "quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-sm";
+        } else {
+          chip.className = "quick-date-chip px-2.5 py-1 rounded-xl text-[10px] font-bold border transition shrink-0 bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200";
         }
       });
+    }
+
+    function handleLogWeightDateChange(dateStr) {
+      if (!dateStr) return;
+      const labelEl = document.getElementById('log-weight-date-label');
+      const existingHint = document.getElementById('log-weight-existing-hint');
+      const numInput = document.getElementById('log-weight-num-input');
+
+      const todayStr = getLocalDateISO();
+      let relLabel = "";
+      if (dateStr === todayStr) {
+        relLabel = "Today";
+      } else {
+        relLabel = formatHistoricalDate(dateStr);
+      }
+      if (labelEl) labelEl.innerText = relLabel;
+
+      updateQuickDateChipsUI(dateStr);
+
+      const existing = weightHistory.find(w => w.date === dateStr);
+      if (existing) {
+        if (existingHint) {
+          existingHint.innerText = `Replaces recorded entry (${existing.weight} lbs)`;
+          existingHint.classList.remove('hidden');
+        }
+        if (numInput && (!numInput.value || numInput.dataset.autoFilled === "true")) {
+          numInput.value = existing.weight;
+          numInput.dataset.autoFilled = "true";
+        }
+      } else {
+        if (existingHint) existingHint.classList.add('hidden');
+        if (numInput && numInput.dataset.autoFilled === "true") {
+          numInput.value = userWeight || "";
+          numInput.dataset.autoFilled = "true";
+        }
+      }
+    }
+
+    function adjustLogWeight(delta) {
+      const input = document.getElementById('log-weight-num-input');
+      if (!input) return;
+      let current = parseFloat(input.value) || userWeight || 0;
+      current = Math.max(0, Math.round((current + delta) * 10) / 10);
+      input.value = current;
+      input.dataset.autoFilled = "false";
+    }
+
+    function openWeightNumpadForHistorical() {
+      const numInput = document.getElementById('log-weight-num-input');
+      const currentVal = numInput ? (parseFloat(numInput.value) || userWeight || 0) : userWeight;
+      openWeightNumpadModal('log-weight-num-input', 'Log Body Weight (lbs)', (finalVal) => {
+        if (numInput) {
+          numInput.value = finalVal;
+          numInput.dataset.autoFilled = "false";
+        }
+      });
+    }
+
+    function saveLogWeightEntry() {
+      const dateInput = document.getElementById('log-weight-date-input');
+      const numInput = document.getElementById('log-weight-num-input');
+
+      const chosenDate = dateInput ? dateInput.value : getLocalDateISO();
+      const rawVal = numInput ? parseFloat(numInput.value) : 0;
+
+      if (!chosenDate) {
+        showToast("Please choose a valid date for this weigh-in.", "warning");
+        return;
+      }
+      if (isNaN(rawVal) || rawVal <= 0) {
+        showToast("Please enter a valid weight (e.g. 175.5 lbs).", "warning");
+        if (numInput) numInput.focus();
+        return;
+      }
+
+      const weight = Math.round(rawVal * 10) / 10;
+
+      // Update if date already exists in history, otherwise insert
+      const existingIndex = weightHistory.findIndex(w => w.date === chosenDate);
+      if (existingIndex >= 0) {
+        weightHistory[existingIndex].weight = weight;
+      } else {
+        weightHistory.push({ date: chosenDate, weight: weight });
+      }
+
+      // Always sort chronological descending (newest first)
+      weightHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+      localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
+
+      // If the saved date is today or the latest entry, synchronize profile current weight
+      const latestEntry = weightHistory[0];
+      if (latestEntry && (chosenDate === getLocalDateISO() || chosenDate === latestEntry.date)) {
+        userWeight = latestEntry.weight;
+        localStorage.setItem('showUp_user_weight', userWeight);
+        const profileInput = document.getElementById('user-weight-input');
+        if (profileInput) profileInput.value = userWeight;
+      }
+
+      renderWeightHistory();
+      closeLogWeightModal();
+
+      const humanDate = (chosenDate === getLocalDateISO()) ? "Today" : formatHistoricalDate(chosenDate);
+      showToast(`Recorded ${weight} lbs for ${humanDate}!`, "success");
+
+      if (googleAccessToken) {
+        syncToGoogleDrive(true);
+      }
+    }
+
+    function logBodyWeightEntry(initialDate = null) {
+      openLogWeightModal(initialDate);
     }
 
     function renderWeightHistory() {
@@ -2135,11 +2433,19 @@
       const changeValEl = document.getElementById('cal-weight-change-val');
       const container = document.getElementById('weight-history-list');
 
-      currentValEl.innerText = `${userWeight} lbs`;
+      // Sort chronological descending
+      weightHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (weightHistory.length > 0) {
+        userWeight = weightHistory[0].weight;
+        currentValEl.innerText = `${userWeight} lbs`;
+      } else {
+        currentValEl.innerText = `${userWeight || '--'} lbs`;
+      }
 
       if (weightHistory.length === 0) {
         changeValEl.innerText = "0.0 lbs";
-        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>`;
+        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet. Click "+ Log Weight" above to record an entry.</div>`;
         return;
       }
 
@@ -2150,26 +2456,46 @@
       changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
       changeValEl.className = `text-xl font-black ${diff < 0 ? 'text-emerald-400' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
 
-      container.innerHTML = weightHistory.map((item, index) => `
-        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-          <div class="flex items-center gap-2">
-            <i class="fa-solid fa-calendar-day text-slate-500"></i>
-            <span class="text-slate-300 font-semibold">${item.date}</span>
+      container.innerHTML = weightHistory.map((item, index) => {
+        const humanDate = formatHistoricalDate(item.date);
+        return `
+          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs hover:border-slate-700 transition group">
+            <div class="flex items-center gap-2 cursor-pointer" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit weight for ${item.date}">
+              <i class="fa-solid fa-calendar-day text-slate-500 group-hover:text-emerald-400 transition"></i>
+              <div>
+                <span class="text-slate-200 font-semibold font-mono">${item.date}</span>
+                <span class="text-[10px] text-slate-500 ml-1.5 hidden sm:inline">(${humanDate.split(',')[0]})</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-emerald-400 cursor-pointer font-mono" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit">${item.weight} lbs</span>
+              <button onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" class="text-slate-500 hover:text-slate-300 p-1 transition" title="Edit weight">
+                <i class="fa-solid fa-pen text-[10px]"></i>
+              </button>
+              <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 p-1 transition" title="Delete Entry">
+                <i class="fa-solid fa-trash-can text-[10px]"></i>
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="font-bold text-emerald-400">${item.weight} lbs</span>
-            <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 transition" title="Delete Entry">
-              <i class="fa-solid fa-xmark text-xs"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function deleteWeightEntry(index) {
+      const wasFirst = (index === 0);
       weightHistory.splice(index, 1);
+      if (wasFirst && weightHistory.length > 0) {
+        userWeight = weightHistory[0].weight;
+        localStorage.setItem('showUp_user_weight', userWeight);
+        const profileInput = document.getElementById('user-weight-input');
+        if (profileInput) profileInput.value = userWeight;
+      }
       localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
       renderWeightHistory();
+      if (googleAccessToken) {
+        syncToGoogleDrive(true);
+      }
+      showToast("Weight entry removed", "info");
     }
 
     function openWeightTrendGraph() {
@@ -3002,6 +3328,8 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeLargeLogoModal();
+        closeLogWeightModal();
+        closeWeightNumpadModal();
       }
     });
 
