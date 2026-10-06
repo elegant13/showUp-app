@@ -5959,23 +5959,23 @@
             id: 'member_swathi_fitfam',
             name: 'Swathi',
             rawName: 'Swathi',
-            email: 'swathi@gmail.com',
+            email: '',
             avatar: null,
             isCreator: false,
             isBackupCreator: true,
             isWorkingOut: false,
             currentWorkout: null,
-            lastActive: 'Showed up 2h ago',
+            lastActive: 'Active today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'delivered',
-            inviteEmail: 'swathi@gmail.com'
+            inviteStatus: 'pending',
+            inviteEmail: ''
           },
           {
-            id: 'member_rohit_fitfam',
-            name: 'Rohit',
-            rawName: 'Rohit',
-            email: 'rohit.runner@gmail.com',
+            id: 'member_bhuvan_fitfam',
+            name: 'Bhuvan',
+            rawName: 'Bhuvan',
+            email: '',
             avatar: null,
             isCreator: false,
             isBackupCreator: false,
@@ -5984,8 +5984,8 @@
             lastActive: 'Resting today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'delivered',
-            inviteEmail: 'rohit.runner@gmail.com'
+            inviteStatus: 'pending',
+            inviteEmail: ''
           }
         ]
       }
@@ -6028,8 +6028,8 @@
       for (const m of squad.members) {
         if (!m) continue;
 
-        // Discard legacy mock placeholder teammates or arbitrary test zips (e.g., 60601 Chicago, 80202 Denver)
-        if (m.zip === '60601' || m.zip === '80202' || m.id === 'mock_athlete_1' || m.id === 'mock_athlete_2' || m.isMockTeammate || (typeof m.id === 'string' && m.id.startsWith('mock_'))) {
+        // Discard legacy mock placeholder teammates or invalid members (e.g., Rohit or mock ids)
+        if (m.zip === '60601' || m.zip === '80202' || m.id === 'mock_athlete_1' || m.id === 'mock_athlete_2' || m.id === 'member_rohit_fitfam' || (m.rawName && m.rawName.toLowerCase() === 'rohit') || (m.name && m.name.toLowerCase() === 'rohit') || m.isMockTeammate || (typeof m.id === 'string' && m.id.startsWith('mock_'))) {
           continue;
         }
 
@@ -6088,30 +6088,30 @@
         squad.creatorName = user.rawName || 'Abhilash Nama';
       }
 
-      // Ensure all 3 athletes exist for fitFamSwabhu (Abhilash, Swathi, Rohit)
+      // Ensure all 3 authentic athletes exist for fitFamSwabhu (Abhilash, Swathi, Bhuvan)
       if (isFitFam) {
         const defaultTeammates = [
           {
             id: 'member_swathi_fitfam',
             name: 'Swathi',
             rawName: 'Swathi',
-            email: 'swathi@gmail.com',
+            email: '',
             avatar: null,
             isCreator: false,
             isBackupCreator: true,
             isWorkingOut: false,
             currentWorkout: null,
-            lastActive: 'Showed up 2h ago',
+            lastActive: 'Active today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'delivered',
-            inviteEmail: 'swathi@gmail.com'
+            inviteStatus: 'pending',
+            inviteEmail: ''
           },
           {
-            id: 'member_rohit_fitfam',
-            name: 'Rohit',
-            rawName: 'Rohit',
-            email: 'rohit.runner@gmail.com',
+            id: 'member_bhuvan_fitfam',
+            name: 'Bhuvan',
+            rawName: 'Bhuvan',
+            email: '',
             avatar: null,
             isCreator: false,
             isBackupCreator: false,
@@ -6120,13 +6120,13 @@
             lastActive: 'Resting today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'delivered',
-            inviteEmail: 'rohit.runner@gmail.com'
+            inviteStatus: 'pending',
+            inviteEmail: ''
           }
         ];
 
         defaultTeammates.forEach(tm => {
-          const exists = deduped.some(m => (m.email && m.email.toLowerCase() === tm.email.toLowerCase()) || (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id);
+          const exists = deduped.some(m => (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id);
           if (!exists) {
             deduped.push(tm);
           }
