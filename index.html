@@ -391,26 +391,10 @@
             <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
           </div>
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
-        </button>
-        
-        <button id="btn-sync-now" onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="text-emerald-400 hover:text-emerald-300 ml-1 transition p-1 border-l border-slate-700/80 pl-2" title="Sync with Google Drive">
-          <i id="sync-icon" class="fa-brands fa-google-drive text-xs"></i>
-        </button>
-
         <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
           <div class="px-3.5 py-2">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
             <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
-          </div>
-          <div class="py-1">
-            <button onclick="triggerHaptic('medium'); syncToGoogleDrive()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-emerald-400 hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
-              <span>Backup to Google Drive</span>
-            </button>
-            <button onclick="triggerHaptic('medium'); restoreFromGoogleDrive()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-blue-400 hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-cloud-arrow-down text-xs"></i>
-              <span>Restore from Drive</span>
-            </button>
           </div>
           <div class="py-1">
             <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
@@ -474,14 +458,8 @@
           </div>
 
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-[11px] font-medium text-slate-400">Current Weight (lbs)</label>
-              <button type="button" onclick="triggerHaptic('light'); openWeightNumpadModal('user-weight-input', 'Current Weight (lbs)', savePhysicalProfile)" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/30 transition" title="Open tactile Number Pad">
-                <i class="fa-solid fa-calculator text-[10px]"></i>
-                <span>Numpad</span>
-              </button>
-            </div>
-            <input type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" id="user-weight-input" placeholder="e.g. 175" onclick="triggerHaptic('light'); openWeightNumpadModal('user-weight-input', 'Current Weight (lbs)', savePhysicalProfile)" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition cursor-pointer" title="Click to open Number Pad">
+            <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
+            <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
           </div>
         </div>
         <p class="text-[10px] text-slate-500 italic">Used for estimating metabolic calorie burn. Historical weight tracking is available in the Calendar tab.</p>
@@ -518,13 +496,13 @@
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Theme Palette Accent</label>
           <div class="grid grid-cols-7 gap-2" id="theme-palette-grid">
-            <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" class="h-9 rounded-xl bg-emerald-500 border-2 border-transparent active:scale-95 transition" title="Emerald"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" class="h-9 rounded-xl bg-orange-500 border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" class="h-9 rounded-xl bg-blue-500 border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" class="h-9 rounded-xl bg-purple-500 border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" class="h-9 rounded-xl bg-rose-500 border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" class="h-9 rounded-xl bg-slate-500 border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" class="h-9 rounded-xl bg-black border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" style="background-color: #10b981 !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Emerald Green"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" style="background-color: #f97316 !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" style="background-color: #3b82f6 !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" style="background-color: #a855f7 !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" style="background-color: #f43f5e !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" style="background-color: #64748b !important;" class="h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
+            <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" style="background-color: #000000 !important;" class="h-9 rounded-xl border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
           </div>
         </div>
 
@@ -536,55 +514,75 @@
           </div>
         </div>
 
-        <!-- WORKOUT & SQUADS DATA BACKUP & RESTORE SECTION -->
-        <div class="space-y-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-          <div class="flex items-center justify-between">
-            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
-              <i class="fa-solid fa-database text-emerald-400"></i>
+        <!-- WORKOUT & SQUADS DATA BACKUP & RESTORE SECTION (MATERIAL DESIGN 3) -->
+        <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+          <div class="flex items-center justify-between pb-0.5">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-database text-[var(--m3-primary)]"></i>
               Data Backup & Restore
             </h3>
-            <span id="settings-backup-status-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700">Offline Device</span>
+            <span id="settings-backup-status-badge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700">Protected</span>
           </div>
 
-          <p id="settings-backup-desc" class="text-[11px] text-slate-400">Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.</p>
-
-          <!-- GOOGLE DRIVE AUTO-BACKUP STATUS & MODAL TRIGGER -->
-          <div id="settings-gdrive-card" class="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-2">
+          <!-- 1. GOOGLE DRIVE: BACKUP | RESTORE (WITH BACKUP TIMESTAMP) -->
+          <div id="settings-gdrive-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-sm">
             <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/20">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-sm border border-emerald-500/20 shrink-0">
                   <i class="fa-brands fa-google-drive"></i>
                 </div>
-                <div>
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-xs font-bold text-slate-200">Google Drive Auto-Backup</span>
-                    <span id="settings-gdrive-status-pill" class="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-slate-100">Google Drive</span>
+                    <span id="settings-gdrive-status-pill" class="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Cloud Sync</span>
                   </div>
-                  <span id="settings-gdrive-status-text" class="text-[10px] text-slate-400 block">Sign in to auto-backup data</span>
+                  <span id="settings-gdrive-timestamp" class="text-[10px] text-slate-400 block mt-0.5 truncate">
+                    <i class="fa-regular fa-clock text-[9px] mr-1 text-slate-500"></i>Last backup: <span id="settings-gdrive-time-val" class="text-slate-300 font-mono font-medium">Not synced yet</span>
+                  </span>
                 </div>
               </div>
-              <button type="button" onclick="triggerHaptic('light'); openGDriveBackupModal()" id="btn-open-gdrive-modal" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold px-2.5 py-1 rounded-xl transition flex items-center gap-1">
-                <span>View Details</span>
-                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-              </button>
             </div>
-            <div class="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-800 text-slate-400">
-              <span>Backup Payload File Size:</span>
-              <span id="settings-gdrive-filesize-badge" class="font-mono font-bold text-emerald-400">Calculating...</span>
+
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+              <button type="button" onclick="triggerHaptic('medium'); syncToGoogleDrive()" id="btn-settings-gdrive-backup" class="m3-btn-primary text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/15 active:scale-[0.98]">
+                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                <span>Backup</span>
+              </button>
+              <button type="button" onclick="triggerHaptic('medium'); restoreFromGoogleDrive()" id="btn-settings-gdrive-restore" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]">
+                <i class="fa-solid fa-cloud-arrow-down text-xs text-blue-400"></i>
+                <span>Restore</span>
+              </button>
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="button" onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Export manual backup file">
-              <i class="fa-solid fa-download text-emerald-400"></i>
-              <span>Backup to Device</span>
-            </button>
-            <button type="button" onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5" title="Restore workouts and squads from a file">
-              <i class="fa-solid fa-upload text-blue-400"></i>
-              <span>Restore from File</span>
-            </button>
+          <!-- 2. DEVICE: BACKUP | RESTORE (FILE PICKER SELECTION) -->
+          <div id="settings-device-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm border border-blue-500/20 shrink-0">
+                  <i class="fa-solid fa-hard-drive"></i>
+                </div>
+                <div class="min-w-0">
+                  <span class="text-xs font-bold text-slate-100 block">Device</span>
+                  <span class="text-[10px] text-slate-400 block mt-0.5 truncate">
+                    <i class="fa-regular fa-file-code text-[9px] mr-1 text-slate-500"></i>Save or select a <span class="font-mono text-slate-300">.json</span> file from device
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+              <button type="button" onclick="triggerHaptic('light'); exportJSONBackup()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]" title="Export backup file to device">
+                <i class="fa-solid fa-download text-xs text-emerald-400"></i>
+                <span>Backup</span>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); triggerManualFileRestore()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]" title="Select a backup file from device">
+                <i class="fa-solid fa-folder-open text-xs text-blue-400"></i>
+                <span>Restore</span>
+              </button>
+            </div>
+            <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
           </div>
-          <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
         </div>
 
         <!-- WEBSITE & COMMUNITY TELEMETRY -->
@@ -704,18 +702,10 @@
               max="999" 
               id="log-weight-num-input" 
               placeholder="0"
-              class="w-32 bg-transparent text-3xl font-black font-mono text-emerald-400 focus:outline-none tracking-tight"
+              class="w-full bg-transparent text-3xl font-black font-mono text-emerald-400 focus:outline-none tracking-tight"
             >
             <span class="text-xs font-bold text-slate-400 font-mono">lbs</span>
           </div>
-          <button 
-            type="button" 
-            onclick="triggerHaptic('light'); openWeightNumpadForHistorical()" 
-            class="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1.5 rounded-xl border border-emerald-500/30 transition active:scale-95 shrink-0" 
-            title="Open Tactile Number Pad">
-            <i class="fa-solid fa-calculator"></i>
-            <span>Numpad</span>
-          </button>
         </div>
 
         <!-- Quick Increments / Steppers -->
@@ -1607,15 +1597,9 @@
         <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) -->
         <div id="standard-metrics-panel" class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
           <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Weight (lbs / kg)</label>
-              <button type="button" onclick="triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight (lbs / kg)')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/30 transition" title="Open tactile Number Pad">
-                <i class="fa-solid fa-calculator text-[10px]"></i>
-                <span>Numpad</span>
-              </button>
-            </div>
+            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
             <div class="flex items-center justify-center gap-2">
-              <input type="text" inputmode="decimal" pattern="[0-9]*[.]?[0-9]*" id="input-weight" value="0" onclick="triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight (lbs / kg)')" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer" title="Click to open Number Pad">
+              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
               <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
@@ -3761,38 +3745,39 @@
       const bannerDesc = document.getElementById('backup-banner-desc');
       const bannerGoogleBtn = document.getElementById('backup-banner-google-btn');
       const settingsBadge = document.getElementById('settings-backup-status-badge');
-      const settingsDesc = document.getElementById('settings-backup-desc');
       const gdrivePill = document.getElementById('settings-gdrive-status-pill');
-      const gdriveText = document.getElementById('settings-gdrive-status-text');
-      const gdriveSizeBadge = document.getElementById('settings-gdrive-filesize-badge');
+      const timeValEl = document.getElementById('settings-gdrive-time-val');
 
-      const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
-      const email = profile?.email || '';
-      const sizeInfo = getFormattedBackupSize();
-
-      if (gdriveSizeBadge) {
-        gdriveSizeBadge.innerText = `${sizeInfo.formatted} (${sizeInfo.exactBytes})`;
+      const lastSyncIso = localStorage.getItem('showUp_last_drive_sync');
+      if (timeValEl) {
+        if (lastSyncIso) {
+          try {
+            const d = new Date(lastSyncIso);
+            const datePart = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const timePart = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+            timeValEl.innerText = `${datePart}, ${timePart}`;
+          } catch (e) {
+            timeValEl.innerText = lastSyncIso;
+          }
+        } else {
+          timeValEl.innerText = googleAccessToken ? "Ready to sync" : "Not backed up yet";
+        }
       }
 
       if (googleAccessToken) {
-        // Once the athlete signs in using google, avoid showing the top modal/banner "Google Drive Auto-Backup Active"
+        // Once athlete is signed in with Google, hide reminder banner
         if (banner) {
           banner.classList.add('hidden');
         }
         if (settingsBadge) {
-          settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
-          settingsBadge.innerText = "Drive Synced";
+          settingsBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+          settingsBadge.innerText = "Cloud Synced";
         }
-        if (settingsDesc) settingsDesc.innerText = `Workouts & squads auto-syncing to Google Drive (${email || 'Connected'}). You can also export or restore local files below.`;
         if (gdrivePill) {
           gdrivePill.className = "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-          gdrivePill.innerText = "Active";
-        }
-        if (gdriveText) {
-          gdriveText.innerText = `Auto-sync active (${email || 'Connected'})`;
+          gdrivePill.innerText = "Connected";
         }
       } else {
-        // Only show this modal to recommend logging into Google to back up their data to google drive
         if (banner) {
           banner.classList.remove('hidden');
         }
@@ -3807,16 +3792,12 @@
           bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); handleGoogleLogin(); };
         }
         if (settingsBadge) {
-          settingsBadge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
+          settingsBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
           settingsBadge.innerText = "Offline Device";
         }
-        if (settingsDesc) settingsDesc.innerText = "Sign in with Google to auto-sync your workout data to Drive, or back up manually to your device and restore from a file anytime.";
         if (gdrivePill) {
           gdrivePill.className = "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
           gdrivePill.innerText = "Offline";
-        }
-        if (gdriveText) {
-          gdriveText.innerText = "Sign in to activate Google Drive auto-backup";
         }
       }
     }
