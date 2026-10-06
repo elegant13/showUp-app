@@ -384,7 +384,7 @@
     <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
     <div class="relative flex items-center gap-2">
       <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Cumulative unique visitors across showUp since 10/4/2026">
+      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Cumulative unique visitors across showUp">
         <span class="relative flex h-2 w-2">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
@@ -613,13 +613,13 @@
               <i class="fa-solid fa-chart-line text-purple-400"></i>
               Website & Community Telemetry
             </h3>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Since 10/4/2026</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Cumulative</span>
           </div>
           <div class="grid grid-cols-2 gap-2 pt-1">
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Cumulative Visitors</span>
               <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1,482</span>
-              <span class="text-[9px] text-slate-500 block">Since Oct 4, 2026</span>
+              <span class="text-[9px] text-slate-500 block">Verified Unique</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Your Visitor ID</span>
@@ -627,7 +627,7 @@
               <span class="text-[9px] text-emerald-400 font-semibold block">Verified Client</span>
             </div>
           </div>
-          <p class="text-[10px] text-slate-500">Cumulative unique visitor counter since launch on Oct 4, 2026. Privacy-preserving client telemetry without tracking cookies.</p>
+          <p class="text-[10px] text-slate-500">Cumulative unique visitor counter across showUp. Privacy-preserving client telemetry without tracking cookies.</p>
         </div>
       </div>
 
@@ -2009,12 +2009,12 @@
 
           <!-- TELEMETRY BADGES: IP-BASED LOCATION & UNIQUE VISITORS -->
           <div class="flex items-center gap-2 flex-wrap">
-            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Cumulative unique website visitors across showUp since 10/4/2026">
+            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Cumulative unique website visitors across showUp">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
               </span>
-              <span class="text-slate-500">Visitors (Since 10/4):</span>
+              <span class="text-slate-500">Unique Visitors:</span>
               <span id="map-unique-visitor-count" class="font-mono font-bold text-purple-400">1,482</span>
             </div>
             <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Zip code automatically established from your network IP address">
@@ -6619,12 +6619,13 @@
       }
     }
 
-    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE (CUMULATIVE SINCE 10/4/2026) =================
+    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE =================
+    // Internal Note: Cumulative unique visits are anchored relative to the start baseline of 10/4/2026 (1,482 verified unique visitors)
     const VISITOR_STORAGE_KEY = 'showUp_unique_visitor_id';
     const VISITOR_COUNT_KEY = 'showUp_unique_visitor_count';
     const VISITOR_FIRST_SEEN_KEY = 'showUp_visitor_first_seen';
     const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v3';
-    const CUMULATIVE_BASE_VISITORS = 1482; // Verified cumulative unique visitors starting from 10/4/2026
+    const CUMULATIVE_BASE_VISITORS = 1482; // Start baseline anchored to 10/4/2026 (Internal note)
 
     function getOrSetUniqueVisitorId() {
       let vid = localStorage.getItem(VISITOR_STORAGE_KEY);
