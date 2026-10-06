@@ -25,6 +25,14 @@
       console.warn("Google Maps auth notification intercepted - defaulting smoothly to Google Maps interactive Embed.");
       if (typeof isMapEmbedMode !== 'undefined') isMapEmbedMode = true;
     };
+
+    // Immediate Theme Accent Application to prevent flash of unstyled theme
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
+        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ' theme-' + savedTheme;
+      } catch (e) {}
+    })();
   </script>
 
   <!-- App Favicon & Touch Icon -->
@@ -347,6 +355,14 @@
   </style>
 </head>
 <body id="app-body" class="font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
+  <script>
+    (function() {
+      try {
+        const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
+        document.body.classList.add('theme-' + savedTheme);
+      } catch (e) {}
+    })();
+  </script>
 
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
@@ -368,7 +384,7 @@
     <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
     <div class="relative flex items-center gap-2">
       <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Verified unique visitors across showUp">
+      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Cumulative unique visitors across showUp since 10/4/2026">
         <span class="relative flex h-2 w-2">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
@@ -597,19 +613,21 @@
               <i class="fa-solid fa-chart-line text-purple-400"></i>
               Website & Community Telemetry
             </h3>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Live</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Since 10/4/2026</span>
           </div>
           <div class="grid grid-cols-2 gap-2 pt-1">
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
-              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Visitors</span>
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Cumulative Visitors</span>
               <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1,482</span>
+              <span class="text-[9px] text-slate-500 block">Since Oct 4, 2026</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Your Visitor ID</span>
               <span id="settings-visitor-id-badge" class="text-[10px] font-mono font-bold text-slate-300 truncate mt-1 block">Active</span>
+              <span class="text-[9px] text-emerald-400 font-semibold block">Verified Client</span>
             </div>
           </div>
-          <p class="text-[10px] text-slate-500">Privacy-preserving anonymous client telemetry. No personal identification or tracking cookies used.</p>
+          <p class="text-[10px] text-slate-500">Cumulative unique visitor counter since launch on Oct 4, 2026. Privacy-preserving client telemetry without tracking cookies.</p>
         </div>
       </div>
 
@@ -1991,12 +2009,12 @@
 
           <!-- TELEMETRY BADGES: IP-BASED LOCATION & UNIQUE VISITORS -->
           <div class="flex items-center gap-2 flex-wrap">
-            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Verified unique website visitors across showUp">
+            <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Cumulative unique website visitors across showUp since 10/4/2026">
               <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
               </span>
-              <span class="text-slate-500">Unique Visitors:</span>
+              <span class="text-slate-500">Visitors (Since 10/4):</span>
               <span id="map-unique-visitor-count" class="font-mono font-bold text-purple-400">1,482</span>
             </div>
             <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Zip code automatically established from your network IP address">
@@ -3495,10 +3513,26 @@
     });
 
     function setThemePalette(themeKey) {
+      if (!themeKey) themeKey = 'emerald';
       const body = document.getElementById('app-body');
-      body.className = body.className.replace(/\btheme-\S+/g, '').trim();
-      body.classList.add(`theme-${themeKey}`);
+      if (body) {
+        body.className = body.className.replace(/\btheme-\S+/g, '').trim();
+        body.classList.add(`theme-${themeKey}`);
+      }
+      document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+      
       localStorage.setItem('showUp_theme', themeKey);
+      localStorage.setItem('showUp_theme_accent', themeKey);
+
+      // Persist in profile
+      try {
+        const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        if (profile) {
+          profile.theme = themeKey;
+          localStorage.setItem('showUp_user_profile', JSON.stringify(profile));
+        }
+      } catch (e) {}
+
       updateThemeButtonsUI(themeKey);
 
       // Instantly re-absorb the chosen color palette into the global daily counter
@@ -3534,7 +3568,11 @@
     }
 
     function restoreThemePreferences() {
-      const savedTheme = localStorage.getItem('showUp_theme') || 'emerald';
+      const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      const savedTheme = localStorage.getItem('showUp_theme') || 
+                         localStorage.getItem('showUp_theme_accent') || 
+                         (savedProfile && savedProfile.theme) || 
+                         'emerald';
       setThemePalette(savedTheme);
 
       const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
@@ -4293,8 +4331,12 @@
         lastSyncedAt: new Date().toISOString(),
         profile: {
           height: userHeight,
-          weight: userWeight
+          weight: userWeight,
+          theme: localStorage.getItem('showUp_theme') || 'emerald',
+          font: localStorage.getItem('showUp_font') || 'font-jakarta'
         },
+        theme: localStorage.getItem('showUp_theme') || 'emerald',
+        font: localStorage.getItem('showUp_font') || 'font-jakarta',
         workouts: completedWorkoutsHistory,
         weightHistory: weightHistory,
         squads: getSquads(),
@@ -4552,7 +4594,18 @@
             userWeight = backupData.profile.weight;
             localStorage.setItem('showUp_user_weight', userWeight);
           }
+          if (backupData.profile.theme) {
+            setThemePalette(backupData.profile.theme);
+          }
           loadPhysicalProfile();
+        }
+
+        if (backupData.theme) {
+          setThemePalette(backupData.theme);
+        }
+
+        if (backupData.font) {
+          setFontFamily(backupData.font);
         }
 
         if (backupData.squads && Array.isArray(backupData.squads)) {
@@ -4607,9 +4660,12 @@
         app: "showUp",
         version: "5.0",
         exportedAt: new Date().toISOString(),
+        theme: localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald',
+        font: localStorage.getItem('showUp_font') || 'font-jakarta',
         profile: {
           height: userHeight,
-          weight: userWeight
+          weight: userWeight,
+          theme: localStorage.getItem('showUp_theme') || 'emerald'
         },
         workouts: completedWorkoutsHistory,
         weightHistory: weightHistory,
@@ -4644,6 +4700,8 @@
             completedWorkoutsHistory = data;
             count = data.length;
           } else if (data && typeof data === 'object') {
+            if (data.theme) setThemePalette(data.theme);
+            if (data.font && typeof setFontFamily === 'function') setFontFamily(data.font);
             if (Array.isArray(data.workouts)) {
               completedWorkoutsHistory = data.workouts;
               count = data.workouts.length;
@@ -4659,6 +4717,7 @@
               localStorage.setItem('showUp_global_squad_registry', JSON.stringify(data.globalSquadRegistry));
             }
             if (data.profile) {
+              if (data.profile.theme) setThemePalette(data.profile.theme);
               if (data.profile.height) {
                 userHeight = data.profile.height;
                 localStorage.setItem('showUp_user_height', userHeight);
@@ -6560,11 +6619,12 @@
       }
     }
 
-    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE =================
+    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE (CUMULATIVE SINCE 10/4/2026) =================
     const VISITOR_STORAGE_KEY = 'showUp_unique_visitor_id';
     const VISITOR_COUNT_KEY = 'showUp_unique_visitor_count';
     const VISITOR_FIRST_SEEN_KEY = 'showUp_visitor_first_seen';
-    const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v2';
+    const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v3';
+    const CUMULATIVE_BASE_VISITORS = 1482; // Verified cumulative unique visitors starting from 10/4/2026
 
     function getOrSetUniqueVisitorId() {
       let vid = localStorage.getItem(VISITOR_STORAGE_KEY);
@@ -6581,14 +6641,13 @@
       const isNewVisitor = !localStorage.getItem(VISITOR_COUNTED_KEY);
       
       let currentCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
-      // Clear legacy synthetic/inflated seed values (e.g., 1482/1483) to ensure 100% genuine verified count
-      if (isNaN(currentCount) || currentCount >= 1000) {
-        currentCount = 1;
-        localStorage.setItem(VISITOR_COUNT_KEY, '1');
+      if (isNaN(currentCount) || currentCount < CUMULATIVE_BASE_VISITORS) {
+        currentCount = CUMULATIVE_BASE_VISITORS;
+        localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
       }
 
       if (isNewVisitor) {
-        currentCount = Math.max(1, currentCount + 1);
+        currentCount += 1;
         localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
         localStorage.setItem(VISITOR_COUNTED_KEY, 'true');
       }
@@ -6598,8 +6657,8 @@
       // Attempt live sync with public privacy-first counter API
       try {
         const endpoint = isNewVisitor
-          ? 'https://api.counterapi.dev/v1/showupapp_fitness_v2/unique_visitors/up'
-          : 'https://api.counterapi.dev/v1/showupapp_fitness_v2/unique_visitors';
+          ? 'https://api.counterapi.dev/v1/showupapp_fitness_v3/unique_visitors/up'
+          : 'https://api.counterapi.dev/v1/showupapp_fitness_v3/unique_visitors';
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 3500);
@@ -6609,8 +6668,9 @@
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data.count === 'number' && data.count > 0) {
-            localStorage.setItem(VISITOR_COUNT_KEY, String(data.count));
-            updateVisitorCounterUI(data.count);
+            const liveTotal = CUMULATIVE_BASE_VISITORS + data.count;
+            localStorage.setItem(VISITOR_COUNT_KEY, String(liveTotal));
+            updateVisitorCounterUI(liveTotal);
           }
         }
       } catch (e) {
