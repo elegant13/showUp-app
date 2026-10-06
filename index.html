@@ -5931,6 +5931,8 @@
         createdAt: '2026-01-01T08:00:00.000Z',
         creatorId: 'local_user',
         creatorName: 'Abhilash Nama',
+        backupCreatorId: 'member_swathi_fitfam',
+        backupCreatorName: 'Swathi',
         notificationPreferences: {
           inAppPill: true,
           beaconPulse: true,
@@ -5946,11 +5948,44 @@
             email: 'abhilashnama@gmail.com',
             avatar: null,
             isCreator: true,
+            isBackupCreator: false,
             isWorkingOut: false,
             currentWorkout: null,
             lastActive: 'Active today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA'
+          },
+          {
+            id: 'member_swathi_fitfam',
+            name: 'Swathi',
+            rawName: 'Swathi',
+            email: 'swathi@gmail.com',
+            avatar: null,
+            isCreator: false,
+            isBackupCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Showed up 2h ago',
+            zip: '20105',
+            city: 'Ashburn / Aldie, VA',
+            inviteStatus: 'delivered',
+            inviteEmail: 'swathi@gmail.com'
+          },
+          {
+            id: 'member_rohit_fitfam',
+            name: 'Rohit',
+            rawName: 'Rohit',
+            email: 'rohit.runner@gmail.com',
+            avatar: null,
+            isCreator: false,
+            isBackupCreator: false,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Resting today',
+            zip: '20105',
+            city: 'Ashburn / Aldie, VA',
+            inviteStatus: 'delivered',
+            inviteEmail: 'rohit.runner@gmail.com'
           }
         ]
       }
@@ -6041,6 +6076,7 @@
             email: user.email,
             avatar: user.picture,
             isCreator: true,
+            isBackupCreator: false,
             isWorkingOut: false,
             currentWorkout: null,
             lastActive: 'Active today',
@@ -6050,6 +6086,56 @@
         }
         squad.creatorId = user.id;
         squad.creatorName = user.rawName || 'Abhilash Nama';
+      }
+
+      // Ensure all 3 athletes exist for fitFamSwabhu (Abhilash, Swathi, Rohit)
+      if (isFitFam) {
+        const defaultTeammates = [
+          {
+            id: 'member_swathi_fitfam',
+            name: 'Swathi',
+            rawName: 'Swathi',
+            email: 'swathi@gmail.com',
+            avatar: null,
+            isCreator: false,
+            isBackupCreator: true,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Showed up 2h ago',
+            zip: '20105',
+            city: 'Ashburn / Aldie, VA',
+            inviteStatus: 'delivered',
+            inviteEmail: 'swathi@gmail.com'
+          },
+          {
+            id: 'member_rohit_fitfam',
+            name: 'Rohit',
+            rawName: 'Rohit',
+            email: 'rohit.runner@gmail.com',
+            avatar: null,
+            isCreator: false,
+            isBackupCreator: false,
+            isWorkingOut: false,
+            currentWorkout: null,
+            lastActive: 'Resting today',
+            zip: '20105',
+            city: 'Ashburn / Aldie, VA',
+            inviteStatus: 'delivered',
+            inviteEmail: 'rohit.runner@gmail.com'
+          }
+        ];
+
+        defaultTeammates.forEach(tm => {
+          const exists = deduped.some(m => (m.email && m.email.toLowerCase() === tm.email.toLowerCase()) || (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id);
+          if (!exists) {
+            deduped.push(tm);
+          }
+        });
+
+        if (!squad.backupCreatorId) {
+          squad.backupCreatorId = 'member_swathi_fitfam';
+          squad.backupCreatorName = 'Swathi';
+        }
       }
 
       squad.members = deduped;
