@@ -5959,7 +5959,7 @@
             id: 'member_swathi_fitfam',
             name: 'Swathi',
             rawName: 'Swathi',
-            email: '',
+            email: 'swathi.kandati@gmail.com',
             avatar: null,
             isCreator: false,
             isBackupCreator: true,
@@ -5968,14 +5968,15 @@
             lastActive: 'Active today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'pending',
-            inviteEmail: ''
+            invitedByEmail: true,
+            inviteStatus: 'delivered',
+            inviteEmail: 'swathi.kandati@gmail.com'
           },
           {
             id: 'member_bhuvan_fitfam',
             name: 'Bhuvan',
             rawName: 'Bhuvan',
-            email: '',
+            email: 'bhuvansnama@gmail.com',
             avatar: null,
             isCreator: false,
             isBackupCreator: false,
@@ -5984,8 +5985,9 @@
             lastActive: 'Resting today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'pending',
-            inviteEmail: ''
+            invitedByEmail: true,
+            inviteStatus: 'delivered',
+            inviteEmail: 'bhuvansnama@gmail.com'
           }
         ]
       }
@@ -6060,6 +6062,19 @@
               squad.creatorId = user.id;
               squad.creatorName = user.rawName || 'Abhilash Nama';
             }
+          } else if (isFitFam) {
+            if ((m.rawName && m.rawName.toLowerCase() === 'swathi') || m.id === 'member_swathi_fitfam') {
+              m.email = 'swathi.kandati@gmail.com';
+              m.inviteEmail = 'swathi.kandati@gmail.com';
+              m.invitedByEmail = true;
+              m.inviteStatus = 'delivered';
+              m.isBackupCreator = true;
+            } else if ((m.rawName && m.rawName.toLowerCase() === 'bhuvan') || m.id === 'member_bhuvan_fitfam') {
+              m.email = 'bhuvansnama@gmail.com';
+              m.inviteEmail = 'bhuvansnama@gmail.com';
+              m.invitedByEmail = true;
+              m.inviteStatus = 'delivered';
+            }
           }
           deduped.push(m);
         }
@@ -6095,7 +6110,7 @@
             id: 'member_swathi_fitfam',
             name: 'Swathi',
             rawName: 'Swathi',
-            email: '',
+            email: 'swathi.kandati@gmail.com',
             avatar: null,
             isCreator: false,
             isBackupCreator: true,
@@ -6104,14 +6119,15 @@
             lastActive: 'Active today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'pending',
-            inviteEmail: ''
+            invitedByEmail: true,
+            inviteStatus: 'delivered',
+            inviteEmail: 'swathi.kandati@gmail.com'
           },
           {
             id: 'member_bhuvan_fitfam',
             name: 'Bhuvan',
             rawName: 'Bhuvan',
-            email: '',
+            email: 'bhuvansnama@gmail.com',
             avatar: null,
             isCreator: false,
             isBackupCreator: false,
@@ -6120,13 +6136,14 @@
             lastActive: 'Resting today',
             zip: '20105',
             city: 'Ashburn / Aldie, VA',
-            inviteStatus: 'pending',
-            inviteEmail: ''
+            invitedByEmail: true,
+            inviteStatus: 'delivered',
+            inviteEmail: 'bhuvansnama@gmail.com'
           }
         ];
 
         defaultTeammates.forEach(tm => {
-          const exists = deduped.some(m => (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id);
+          const exists = deduped.some(m => (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id || (m.email && m.email.toLowerCase() === tm.email.toLowerCase()));
           if (!exists) {
             deduped.push(tm);
           }
