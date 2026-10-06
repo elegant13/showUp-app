@@ -3636,9 +3636,34 @@
         }
       }
       googleAccessToken = null;
+
+      // 1. Wipe all authentication tokens & athlete profile
       localStorage.removeItem('showUp_google_token');
       localStorage.removeItem('showUp_user_profile');
       localStorage.removeItem('showUp_session_expiry');
+
+      // 2. Wipe personal physical measurements & geo telemetry
+      localStorage.removeItem('showUp_user_height');
+      localStorage.removeItem('showUp_user_weight');
+      localStorage.removeItem('showUp_user_zip');
+      localStorage.removeItem('showUp_user_city');
+      localStorage.removeItem('showUp_user_state');
+      localStorage.removeItem('showUp_user_location_name');
+
+      // 3. Wipe personal workout history, weight logs, and squads
+      localStorage.removeItem('showUp_synced_workouts');
+      localStorage.removeItem('showUp_weight_history');
+      localStorage.removeItem('showUp_squads');
+      localStorage.removeItem('showUp_squad_invites');
+      localStorage.removeItem('showUp_global_squad_registry');
+      localStorage.removeItem('showUp_squad_archive');
+
+      // 4. Reset in-memory session variables
+      completedWorkoutsHistory = [];
+      weightHistory = [];
+      currentSessionSets = [];
+      userHeight = 70;
+      userWeight = 165;
 
       if (window.google?.accounts?.id) {
         try {
@@ -3646,22 +3671,47 @@
         } catch (e) {}
       }
 
-      document.getElementById('profile-dropdown-menu').classList.add('hidden');
-      document.getElementById('google-user-profile').classList.add('hidden');
-      document.getElementById('btn-google-login').classList.remove('hidden');
+      // 5. Reset Header profile badge & dropdown menu
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      if (dropdown) dropdown.classList.add('hidden');
+      const userProfileBadge = document.getElementById('google-user-profile');
+      if (userProfileBadge) userProfileBadge.classList.add('hidden');
+      const loginBtn = document.getElementById('btn-google-login');
+      if (loginBtn) loginBtn.classList.remove('hidden');
 
-      document.getElementById('user-first-name').innerText = 'User';
-      document.getElementById('user-email').innerText = 'user@email.com';
-      document.getElementById('dropdown-user-email').innerText = 'user@email.com';
-      document.getElementById('user-avatar').src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+      const firstNameEl = document.getElementById('user-first-name');
+      if (firstNameEl) firstNameEl.innerText = 'User';
+      const emailEl = document.getElementById('user-email');
+      if (emailEl) emailEl.innerText = 'user@email.com';
+      const dropdownEmailEl = document.getElementById('dropdown-user-email');
+      if (dropdownEmailEl) dropdownEmailEl.innerText = 'user@email.com';
+      const avatarEl = document.getElementById('user-avatar');
+      if (avatarEl) avatarEl.src = 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
+      // 6. Reset Settings Modal Physical Profile Inputs
+      const hInput = document.getElementById('user-height-input');
+      const wInput = document.getElementById('user-weight-input');
+      if (hInput) hInput.value = '';
+      if (wInput) wInput.value = '';
+
+      // 7. Reset Map Telemetry & Zip Code Badges
+      const zipDisplay = document.getElementById('display-user-zip');
+      if (zipDisplay) zipDisplay.innerText = 'Detecting...';
+
+      // 8. Re-render all UI views in pristine logged-out state
       updateCloudBackupUI();
       initSquads();
       renderSquadsTab();
+      updateSquadBeacon();
+      renderCalendar();
+      renderMonthlyHistory();
+      renderWeightHistory();
       updateGlobalStatsUI();
       renderHeatMap();
+      if (typeof renderActiveSets === 'function') renderActiveSets();
+
       if (!isSilent) {
-        showToast("Signed out of Google Account", "info");
+        showToast("Signed out. All personal data and squads cleared.", "info");
       }
     }
 
@@ -6219,7 +6269,15 @@
     }
 
     function initSquads() {
-      let squads = JSON.parse(localStorage.getItem('showUp_squads') || 'null');
+      const isLoggedIn = isCustomerLoggedIn();
+      if (!isLoggedIn) {
+        // Logged-out athlete: zero squads or personal data loaded
+        localStorage.removeItem('showUp_squads');
+        updateSquadBeacon();
+        return;
+      }
+
+      let squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
       const user = getAppUser();
       const globalReg = getGlobalSquadRegistry();
       const archive = getHistoricalSquadArchive();
@@ -6241,13 +6299,8 @@
       candidateHistorical.forEach(cand => {
         if (!cand || !cand.id || cand.id === 'squad_iron_collective' || cand.name === 'Iron Collective') return;
         
-        const isFitFam = (cand.name && cand.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
-                         cand.id === 'squad_fitFamSwabhu' || 
-                         (cand.inviteCode && cand.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
-        const isUserSquad = isFitFam || 
-                            (cand.creatorId === user.id) || 
-                            (cand.creatorId === 'local_user') || 
-                            (cand.members && cand.members.some(m => m.id === user.id || m.email === user.email || m.id === 'local_user' || (user.rawName && m.rawName === user.rawName)));
+        const isUserSquad = (cand.creatorId === user.id) || 
+                            (cand.members && cand.members.some(m => m.id === user.id || (user.email && m.email === user.email)));
 
         if (isUserSquad) {
           const existingIdx = squads.findIndex(s => s.id === cand.id || 
@@ -6272,7 +6325,7 @@
         }
       });
 
-      // Save to all persistence layers
+      // Save to active squad list
       saveSquads(squads);
       updateSquadBeacon();
 
@@ -6399,6 +6452,7 @@
     }
 
     function getSquads() {
+      if (!isCustomerLoggedIn()) return [];
       const user = getAppUser();
       const squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
       return Array.isArray(squads) ? squads.map(s => sanitizeSquadMembers(s, user)) : [];
@@ -6432,6 +6486,8 @@
     }
 
     function getAllKnownAndHistoricalSquads() {
+      if (!isCustomerLoggedIn()) return [];
+      const user = getAppUser();
       const activeSquads = getSquads();
       const archive = getHistoricalSquadArchive();
       const globalReg = getGlobalSquadRegistry();
@@ -6439,6 +6495,9 @@
 
       [...KNOWN_HISTORICAL_SQUADS, ...archive, ...globalReg, ...activeSquads].forEach(sq => {
         if (!sq || !sq.id || sq.id === 'squad_iron_collective' || sq.name === 'Iron Collective') return;
+        const isUserSquad = (sq.creatorId === user.id) || 
+                            (sq.members && sq.members.some(m => m.id === user.id || (user.email && m.email === user.email)));
+        if (!isUserSquad) return;
         const key = sq.id || sq.inviteCode || (sq.name ? sq.name.toLowerCase() : '');
         if (key && !map.has(key)) {
           map.set(key, sq);
