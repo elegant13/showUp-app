@@ -5992,6 +5992,12 @@
 
       for (const m of squad.members) {
         if (!m) continue;
+
+        // Discard legacy mock placeholder teammates or arbitrary test zips (e.g., 60601 Chicago, 80202 Denver)
+        if (m.zip === '60601' || m.zip === '80202' || m.id === 'mock_athlete_1' || m.id === 'mock_athlete_2' || m.isMockTeammate || (typeof m.id === 'string' && m.id.startsWith('mock_'))) {
+          continue;
+        }
+
         const isCurrentUserEntity = (
           m.id === user.id || 
           (user.email && m.email && m.email.toLowerCase() === user.email.toLowerCase()) || 
@@ -7245,12 +7251,20 @@
             ${isCollapsed ? (() => {
               const currentETDate = getETDateKey();
               const userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-              const userCompleted = userHistory.some(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+              const userCompleted = userHistory.some(w => {
+                if (!w) return false;
+                const wDate = typeof w === 'string' ? w : w.date;
+                if (wDate !== currentETDate) return false;
+                if (typeof w === 'object') {
+                  return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
+                }
+                return true;
+              });
               const showedUpCount = sq.members.filter(mem => {
-                const isMe = (mem.id === user.id || mem.email === user.email);
-                return isMe ? userCompleted : !!(mem.completedToday && mem.completedDate === currentETDate);
+                const isMe = (mem.id === user.id || mem.email === user.email || mem.id === 'local_user');
+                return isMe ? userCompleted : !!(mem.completedToday === true && mem.completedDate === currentETDate);
               }).length;
-              const toBeSeenCount = sq.members.length - showedUpCount;
+              const yetToShowUpCount = sq.members.length - showedUpCount;
 
               return `
                 <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
@@ -7267,7 +7281,7 @@
                       <span class="text-slate-500 mx-1.5">•</span>
                       <span class="text-emerald-400 font-semibold">${showedUpCount} Showed Up</span>
                       <span class="text-slate-500 mx-1">•</span>
-                      <span class="text-slate-400">${toBeSeenCount} To be seen</span>
+                      <span class="text-slate-400">${yetToShowUpCount} Yet to show up</span>
                       ${activeMembersInSquad.length > 0 
                         ? `<span class="text-emerald-400 font-semibold ml-1.5"><i class="fa-solid fa-bolt text-[10px]"></i> ${activeMembersInSquad.length} lifting now</span>`
                         : ''
@@ -7306,17 +7320,25 @@
 
                 <div class="space-y-2">
                   ${sq.members.map(m => {
-                    const isThisUser = (m.id === user.id || m.email === user.email);
+                    const isThisUser = (m.id === user.id || m.email === user.email || m.id === 'local_user');
                     const isMemberBackupCreator = m.isBackupCreator || (sq.backupCreatorId === m.id);
                     const initials = getInitials(m.rawName || m.name);
                     const showDeliveryBadge = isUserCreator && (m.invitedByEmail || m.inviteStatus === 'delivered');
                     
                     const currentETDate = getETDateKey();
                     const userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-                    const userCompletedToday = userHistory.some(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+                    const userCompletedToday = userHistory.some(w => {
+                      if (!w) return false;
+                      const wDate = typeof w === 'string' ? w : w.date;
+                      if (wDate !== currentETDate) return false;
+                      if (typeof w === 'object') {
+                        return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
+                      }
+                      return true;
+                    });
                     const hasCompletedToday = isThisUser 
                       ? userCompletedToday 
-                      : !!(m.completedToday && m.completedDate === currentETDate);
+                      : !!(m.completedToday === true && m.completedDate === currentETDate);
                     
                     return `
                       <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
@@ -7363,7 +7385,7 @@
                               ` : ''}
                             </div>
                             <div class="mt-1 flex items-center gap-2 flex-wrap">
-                              <!-- ATHLETE STATUS: "Showed Up" if completed workout today, else "To be seen" -->
+                              <!-- ATHLETE STATUS: "Showed Up" if completed workout today, else "Yet to show up" -->
                               ${hasCompletedToday ? `
                                 <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-sm">
                                   <i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i>
@@ -7372,7 +7394,7 @@
                               ` : `
                                 <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
                                   <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
-                                  <span>To be seen</span>
+                                  <span>Yet to show up</span>
                                 </span>
                               `}
 
