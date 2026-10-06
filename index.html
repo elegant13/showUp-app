@@ -390,7 +390,7 @@
           <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
         </span>
         <i class="fa-solid fa-users text-xs text-purple-400"></i>
-        <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1,482</span>
+        <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
         <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
       </div>
 
@@ -618,7 +618,7 @@
           <div class="grid grid-cols-2 gap-2 pt-1">
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Cumulative Visitors</span>
-              <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1,482</span>
+              <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1</span>
               <span class="text-[9px] text-slate-500 block">Verified Unique</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
@@ -2015,7 +2015,7 @@
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
               </span>
               <span class="text-slate-500">Unique Visitors:</span>
-              <span id="map-unique-visitor-count" class="font-mono font-bold text-purple-400">1,482</span>
+              <span id="map-unique-visitor-count" class="font-mono font-bold text-purple-400">1</span>
             </div>
             <div class="bg-slate-950 border border-slate-800 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl flex items-center gap-1.5" title="Zip code automatically established from your network IP address">
               <span class="relative flex h-2 w-2">
@@ -6619,13 +6619,11 @@
       }
     }
 
-    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE =================
-    // Internal Note: Cumulative unique visits are anchored relative to the start baseline of 10/4/2026 (1,482 verified unique visitors)
+    // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE (GENUINE LIVE VISITOR TRACKING) =================
     const VISITOR_STORAGE_KEY = 'showUp_unique_visitor_id';
     const VISITOR_COUNT_KEY = 'showUp_unique_visitor_count';
     const VISITOR_FIRST_SEEN_KEY = 'showUp_visitor_first_seen';
-    const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v3';
-    const CUMULATIVE_BASE_VISITORS = 1482; // Start baseline anchored to 10/4/2026 (Internal note)
+    const VISITOR_COUNTED_KEY = 'showUp_unique_counted_v4';
 
     function getOrSetUniqueVisitorId() {
       let vid = localStorage.getItem(VISITOR_STORAGE_KEY);
@@ -6642,24 +6640,25 @@
       const isNewVisitor = !localStorage.getItem(VISITOR_COUNTED_KEY);
       
       let currentCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
-      if (isNaN(currentCount) || currentCount < CUMULATIVE_BASE_VISITORS) {
-        currentCount = CUMULATIVE_BASE_VISITORS;
-        localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
+      // Clean legacy arbitrary/inflated mock values (e.g., >= 1000) to ensure genuine unpadded count
+      if (isNaN(currentCount) || currentCount >= 1000 || currentCount < 1) {
+        currentCount = 1;
+        localStorage.setItem(VISITOR_COUNT_KEY, '1');
       }
 
       if (isNewVisitor) {
-        currentCount += 1;
+        currentCount = Math.max(1, currentCount + 1);
         localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
         localStorage.setItem(VISITOR_COUNTED_KEY, 'true');
       }
 
       updateVisitorCounterUI(currentCount);
 
-      // Attempt live sync with public privacy-first counter API
+      // Attempt live sync with privacy-preserving counter API
       try {
         const endpoint = isNewVisitor
-          ? 'https://api.counterapi.dev/v1/showupapp_fitness_v3/unique_visitors/up'
-          : 'https://api.counterapi.dev/v1/showupapp_fitness_v3/unique_visitors';
+          ? 'https://api.counterapi.dev/v1/showupapp_fitness_genuine/unique_visitors/up'
+          : 'https://api.counterapi.dev/v1/showupapp_fitness_genuine/unique_visitors';
 
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), 3500);
@@ -6669,9 +6668,8 @@
         if (res.ok) {
           const data = await res.json();
           if (data && typeof data.count === 'number' && data.count > 0) {
-            const liveTotal = CUMULATIVE_BASE_VISITORS + data.count;
-            localStorage.setItem(VISITOR_COUNT_KEY, String(liveTotal));
-            updateVisitorCounterUI(liveTotal);
+            localStorage.setItem(VISITOR_COUNT_KEY, String(data.count));
+            updateVisitorCounterUI(data.count);
           }
         }
       } catch (e) {
