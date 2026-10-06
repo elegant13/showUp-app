@@ -391,26 +391,31 @@
             <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
           </div>
           <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
+        </button>
+
         <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
           <div class="px-3.5 py-2">
             <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
             <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
           </div>
+
+          <!-- LEGAL & PRIVACY POSITIONED UNDER PROFILE -->
+          <div class="py-1">
+            <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
+              <i class="fa-solid fa-user-shield text-xs text-emerald-400"></i>
+              <span>Privacy Policy</span>
+            </a>
+            <a href="terms.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
+              <i class="fa-solid fa-file-contract text-xs text-blue-400"></i>
+              <span>Terms of Service</span>
+            </a>
+          </div>
+
           <div class="py-1">
             <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
               <i class="fa-solid fa-right-from-bracket text-xs"></i>
               <span>Log out</span>
             </button>
-          </div>
-          <div class="py-1 border-t border-slate-800/80">
-            <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-1.5 text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-user-shield text-[10px] text-slate-400"></i>
-              <span>Privacy Policy</span>
-            </a>
-            <a href="terms.html" target="_blank" class="w-full text-left px-3.5 py-1.5 text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-file-contract text-[10px] text-slate-400"></i>
-              <span>Terms of Service</span>
-            </a>
           </div>
         </div>
       </div>
