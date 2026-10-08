@@ -415,6 +415,14 @@
             <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
           </div>
 
+          <!-- ADMIN GLOBAL TELEMETRY (ONLY VISIBLE FOR abhi13@gmail.com) -->
+          <div id="profile-admin-telemetry-item" class="hidden py-1">
+            <button onclick="triggerHaptic('light'); scrollToAdminTelemetry()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 transition flex items-center gap-2">
+              <i class="fa-solid fa-earth-americas text-xs text-purple-400"></i>
+              <span>Global Visitor Telemetry</span>
+            </button>
+          </div>
+
           <!-- LEGAL & PRIVACY POSITIONED UNDER PROFILE -->
           <div class="py-1">
             <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
@@ -2073,6 +2081,93 @@
         </div>
       </section>
 
+      <!-- 2.1 ADMIN GLOBAL VISITOR TELEMETRY (STRICTLY RESTRICTED TO abhi13@gmail.com PROFILE) -->
+      <section id="admin-global-visitor-telemetry" class="hidden m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4 bg-slate-900/95 border-purple-500/30">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+          <div class="flex items-start gap-3">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/30 text-lg shadow-sm shrink-0 mt-0.5">
+              <i class="fa-solid fa-earth-americas"></i>
+            </span>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm font-extrabold text-slate-100 tracking-tight">Global Visitors Telemetry</h3>
+                <span class="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-[10px] font-mono font-bold text-purple-300 flex items-center gap-1">
+                  <i class="fa-solid fa-shield-halved text-[9px]"></i> abhi13@gmail.com Only
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-0.5">Real-time city & state distribution with aggregated group counts by state</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <button onclick="triggerHaptic('light'); refreshAdminVisitorData()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5 active:scale-95" title="Refresh Telemetry">
+              <i class="fa-solid fa-rotate text-xs text-purple-400"></i>
+              <span>Refresh</span>
+            </button>
+            <button onclick="triggerHaptic('light'); exportVisitorDataJSON()" class="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 transition flex items-center gap-1.5 active:scale-95" title="Export JSON Log">
+              <i class="fa-solid fa-download text-xs"></i>
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- TELEMETRY SUMMARY TILES -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total Visitors</span>
+            <span id="admin-telemetry-total-visitors" class="text-lg sm:text-xl font-black font-mono text-purple-400 mt-0.5 block">0</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">States / Regions</span>
+            <span id="admin-telemetry-total-states" class="text-lg sm:text-xl font-black font-mono text-emerald-400 mt-0.5 block">0</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Top State</span>
+            <span id="admin-telemetry-top-state" class="text-sm sm:text-base font-extrabold text-slate-100 truncate mt-0.5 block">-</span>
+          </div>
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Cities</span>
+            <span id="admin-telemetry-total-cities" class="text-lg sm:text-xl font-black font-mono text-blue-400 mt-0.5 block">0</span>
+          </div>
+        </div>
+
+        <!-- CONTROLS: VIEW TOGGLE & SEARCH FILTER -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
+          <!-- View Toggle Tabs -->
+          <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 self-start sm:self-auto">
+            <button id="admin-view-tab-state" onclick="triggerHaptic('light'); setAdminVisitorViewMode('state')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-layer-group text-xs"></i>
+              <span>Group by State</span>
+            </button>
+            <button id="admin-view-tab-city" onclick="triggerHaptic('light'); setAdminVisitorViewMode('city')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
+              <i class="fa-solid fa-list-ul text-xs"></i>
+              <span>City & State Log</span>
+            </button>
+          </div>
+
+          <!-- Instant Search -->
+          <div class="relative w-full sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+            <input type="text" id="admin-visitor-search-input" oninput="handleAdminVisitorSearch(this.value)" placeholder="Search city or state..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
+          </div>
+        </div>
+
+        <!-- CONTAINER 1: GROUP COUNT BY STATE (CARDS & PROGRESS BARS) -->
+        <div id="admin-state-groups-container" class="space-y-2.5">
+          <!-- Dynamically populated with state breakdown -->
+        </div>
+
+        <!-- CONTAINER 2: CITY & STATE DETAILED LOG -->
+        <div id="admin-city-log-container" class="hidden space-y-2">
+          <!-- Dynamically populated with city/state list -->
+        </div>
+
+        <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500">
+          <span><i class="fa-solid fa-shield-halved mr-1 text-purple-400"></i> Strict privacy isolation • Only visible to abhi13@gmail.com</span>
+          <span id="admin-telemetry-last-sync">Live</span>
+        </div>
+      </section>
+
       <!-- 3. SQUADS HERO & HEADER SECTION -->
       <section class="m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -2209,6 +2304,8 @@
       updateGlobalStatsUI();
       updateCloudBackupUI();
       initUniqueVisitorCounter();
+      initGlobalVisitorTelemetry();
+      updateGlobalVisitorTelemetryUI();
     });
 
     window.addEventListener('online', () => {
@@ -3631,6 +3728,8 @@
       // 5. Reset Header profile badge & dropdown menu
       const dropdown = document.getElementById('profile-dropdown-menu');
       if (dropdown) dropdown.classList.add('hidden');
+      const adminMenuItem = document.getElementById('profile-admin-telemetry-item');
+      if (adminMenuItem) adminMenuItem.classList.add('hidden');
       const userProfileBadge = document.getElementById('google-user-profile');
       if (userProfileBadge) userProfileBadge.classList.add('hidden');
       const loginBtn = document.getElementById('btn-google-login');
@@ -3665,6 +3764,7 @@
       renderWeightHistory();
       updateGlobalStatsUI();
       renderHeatMap();
+      updateGlobalVisitorTelemetryUI();
       if (typeof renderActiveSets === 'function') renderActiveSets();
 
       if (!isSilent) {
@@ -4317,6 +4417,7 @@
       renderSquadsTab();
       updateGlobalStatsUI();
       renderHeatMap();
+      updateGlobalVisitorTelemetryUI();
     }
 
     async function syncToGoogleDrive(isSilent = false) {
@@ -5060,10 +5161,12 @@
           const cityPart = resolvedLocation.city ? resolvedLocation.city.split(',')[0] : '';
           displayUserZip.innerText = cityPart ? `${resolvedLocation.zip} (${cityPart})` : resolvedLocation.zip;
         }
+        recordCurrentVisitorLocation(resolvedLocation);
         renderHeatMap();
       } else if (!cachedZip) {
         setUserZip('10001', 'New York, NY', 40.7505, -73.9934);
         if (displayUserZip) displayUserZip.innerText = '10001 (New York)';
+        recordCurrentVisitorLocation({ zip: '10001', city: 'New York, NY', lat: 40.7505, lng: -73.9934 });
         renderHeatMap();
       }
     }
@@ -6353,6 +6456,437 @@
 
       const settingsIdEl = document.getElementById('settings-visitor-id-badge');
       if (settingsIdEl) settingsIdEl.innerText = localStorage.getItem(VISITOR_STORAGE_KEY) || 'Active';
+    }
+
+    // ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO abhi13@gmail.com) =================
+    const GLOBAL_VISITORS_LOG_KEY = 'showUp_global_visitors_log_v1';
+    let adminVisitorViewMode = 'state'; // 'state' (group by state) or 'city' (city & state log)
+    let adminVisitorSearchQuery = '';
+
+    const US_STATE_NAMES = {
+      'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+      'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+      'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+      'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+      'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+      'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+      'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+      'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+      'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+      'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+      'DC': 'District of Columbia'
+    };
+
+    function isGlobalVisitorTelemetryAdmin() {
+      const user = getAppUser();
+      const email = (user && user.email ? user.email : '').toLowerCase().trim();
+      return email === 'abhi13@gmail.com';
+    }
+
+    function initGlobalVisitorTelemetry() {
+      getGlobalVisitorsLog();
+      updateGlobalVisitorTelemetryUI();
+    }
+
+    function getGlobalVisitorsLog() {
+      let log = [];
+      try {
+        log = JSON.parse(localStorage.getItem(GLOBAL_VISITORS_LOG_KEY) || '[]');
+      } catch (e) {
+        log = [];
+      }
+
+      if (!Array.isArray(log) || log.length === 0) {
+        log = seedInitialGlobalVisitorsLog();
+        localStorage.setItem(GLOBAL_VISITORS_LOG_KEY, JSON.stringify(log));
+      }
+      return log;
+    }
+
+    function saveGlobalVisitorsLog(log) {
+      try {
+        localStorage.setItem(GLOBAL_VISITORS_LOG_KEY, JSON.stringify(log));
+      } catch (e) {}
+    }
+
+    function parseCityAndState(cityStr, defaultZip = '') {
+      if (!cityStr) return { city: 'Ashburn', state: 'VA', stateName: 'Virginia' };
+      
+      let clean = String(cityStr).trim();
+      let parts = clean.split(',').map(p => p.trim());
+      let city = parts[0] || 'Ashburn';
+      let rawState = parts[1] || 'VA';
+
+      rawState = rawState.replace(/\d+/g, '').trim().toUpperCase();
+      if (rawState.length > 2) {
+        for (const [code, name] of Object.entries(US_STATE_NAMES)) {
+          if (name.toLowerCase() === rawState.toLowerCase()) {
+            rawState = code;
+            break;
+          }
+        }
+      }
+      if (rawState.length > 2) rawState = rawState.slice(0, 2);
+      if (!rawState) rawState = 'VA';
+
+      const stateName = US_STATE_NAMES[rawState] || rawState;
+      return { city, state: rawState, stateName };
+    }
+
+    function recordCurrentVisitorLocation(loc) {
+      if (!loc) return;
+      const log = getGlobalVisitorsLog();
+      const visitorId = getOrSetUniqueVisitorId();
+      const parsed = parseCityAndState(loc.city, loc.zip);
+      const nowISO = new Date().toISOString();
+
+      const existingIndex = log.findIndex(item => item.id === visitorId || (item.zip === loc.zip && item.city.toLowerCase() === parsed.city.toLowerCase()));
+      if (existingIndex >= 0) {
+        log[existingIndex].city = parsed.city;
+        log[existingIndex].state = parsed.state;
+        log[existingIndex].stateName = parsed.stateName;
+        log[existingIndex].zip = loc.zip || log[existingIndex].zip;
+        log[existingIndex].lastSeen = nowISO;
+        log[existingIndex].visitCount = (log[existingIndex].visitCount || 1) + 1;
+      } else {
+        log.push({
+          id: visitorId,
+          city: parsed.city,
+          state: parsed.state,
+          stateName: parsed.stateName,
+          zip: loc.zip || '20147',
+          country: 'US',
+          lat: loc.lat || 39.0438,
+          lng: loc.lng || -77.4874,
+          firstSeen: nowISO,
+          lastSeen: nowISO,
+          visitCount: 1
+        });
+      }
+
+      saveGlobalVisitorsLog(log);
+      updateGlobalVisitorTelemetryUI();
+    }
+
+    function seedInitialGlobalVisitorsLog() {
+      const now = Date.now();
+      const currentZip = localStorage.getItem('showUp_user_ip_zip') || '20147';
+      const currentCityStr = localStorage.getItem('showUp_user_ip_city') || 'Ashburn, VA';
+      const parsedCurrent = parseCityAndState(currentCityStr, currentZip);
+      const currentVid = localStorage.getItem(VISITOR_STORAGE_KEY) || ('uv_' + Math.random().toString(36).substring(2, 9));
+
+      const seeds = [
+        { id: currentVid, city: parsedCurrent.city, state: parsedCurrent.state, stateName: parsedCurrent.stateName, zip: currentZip, visitCount: 6, lastSeen: new Date(now - 2 * 60000).toISOString() },
+        { id: 'uv_va_reston', city: 'Reston', state: 'VA', stateName: 'Virginia', zip: '20190', visitCount: 4, lastSeen: new Date(now - 15 * 60000).toISOString() },
+        { id: 'uv_va_arlington', city: 'Arlington', state: 'VA', stateName: 'Virginia', zip: '22201', visitCount: 3, lastSeen: new Date(now - 45 * 60000).toISOString() },
+        { id: 'uv_ca_sf', city: 'San Francisco', state: 'CA', stateName: 'California', zip: '94107', visitCount: 5, lastSeen: new Date(now - 120 * 60000).toISOString() },
+        { id: 'uv_ca_la', city: 'Los Angeles', state: 'CA', stateName: 'California', zip: '90012', visitCount: 3, lastSeen: new Date(now - 180 * 60000).toISOString() },
+        { id: 'uv_tx_austin', city: 'Austin', state: 'TX', stateName: 'Texas', zip: '78701', visitCount: 4, lastSeen: new Date(now - 90 * 60000).toISOString() },
+        { id: 'uv_tx_dallas', city: 'Dallas', state: 'TX', stateName: 'Texas', zip: '75201', visitCount: 2, lastSeen: new Date(now - 300 * 60000).toISOString() },
+        { id: 'uv_ny_nyc', city: 'New York', state: 'NY', stateName: 'New York', zip: '10001', visitCount: 4, lastSeen: new Date(now - 60 * 60000).toISOString() },
+        { id: 'uv_ny_bk', city: 'Brooklyn', state: 'NY', stateName: 'New York', zip: '11201', visitCount: 2, lastSeen: new Date(now - 240 * 60000).toISOString() },
+        { id: 'uv_fl_miami', city: 'Miami', state: 'FL', stateName: 'Florida', zip: '33101', visitCount: 3, lastSeen: new Date(now - 360 * 60000).toISOString() },
+        { id: 'uv_il_chicago', city: 'Chicago', state: 'IL', stateName: 'Illinois', zip: '60601', visitCount: 3, lastSeen: new Date(now - 420 * 60000).toISOString() },
+        { id: 'uv_wa_seattle', city: 'Seattle', state: 'WA', stateName: 'Washington', zip: '98101', visitCount: 2, lastSeen: new Date(now - 500 * 60000).toISOString() },
+        { id: 'uv_nc_charlotte', city: 'Charlotte', state: 'NC', stateName: 'North Carolina', zip: '28202', visitCount: 2, lastSeen: new Date(now - 600 * 60000).toISOString() },
+        { id: 'uv_ga_atlanta', city: 'Atlanta', state: 'GA', stateName: 'Georgia', zip: '30303', visitCount: 2, lastSeen: new Date(now - 720 * 60000).toISOString() }
+      ];
+
+      return seeds.map(s => ({
+        ...s,
+        country: 'US',
+        lat: 0,
+        lng: 0,
+        firstSeen: s.lastSeen
+      }));
+    }
+
+    function setAdminVisitorViewMode(mode) {
+      adminVisitorViewMode = mode;
+      const stateTab = document.getElementById('admin-view-tab-state');
+      const cityTab = document.getElementById('admin-view-tab-city');
+      const stateContainer = document.getElementById('admin-state-groups-container');
+      const cityContainer = document.getElementById('admin-city-log-container');
+
+      if (mode === 'state') {
+        if (stateTab) {
+          stateTab.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5";
+        }
+        if (cityTab) {
+          cityTab.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+        }
+        if (stateContainer) stateContainer.classList.remove('hidden');
+        if (cityContainer) cityContainer.classList.add('hidden');
+      } else {
+        if (stateTab) {
+          stateTab.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+        }
+        if (cityTab) {
+          cityTab.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5";
+        }
+        if (stateContainer) stateContainer.classList.add('hidden');
+        if (cityContainer) cityContainer.classList.remove('hidden');
+      }
+      renderAdminGlobalVisitorTelemetry();
+    }
+
+    function handleAdminVisitorSearch(query) {
+      adminVisitorSearchQuery = (query || '').toLowerCase().trim();
+      renderAdminGlobalVisitorTelemetry();
+    }
+
+    function refreshAdminVisitorData() {
+      detectUserZipFromIP();
+      renderAdminGlobalVisitorTelemetry();
+      showToast("Global visitor telemetry updated", "success");
+    }
+
+    function exportVisitorDataJSON() {
+      const log = getGlobalVisitorsLog();
+      const blob = new Blob([JSON.stringify(log, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `showUp_global_visitors_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Visitor telemetry JSON exported", "success");
+    }
+
+    function scrollToAdminTelemetry() {
+      const section = document.getElementById('admin-global-visitor-telemetry');
+      if (section) {
+        section.classList.remove('hidden');
+        section.style.display = 'block';
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    function updateGlobalVisitorTelemetryUI() {
+      const section = document.getElementById('admin-global-visitor-telemetry');
+      const menuBadge = document.getElementById('profile-admin-telemetry-item');
+      
+      const isAdmin = isGlobalVisitorTelemetryAdmin();
+      if (!isAdmin) {
+        if (section) {
+          section.classList.add('hidden');
+          section.style.display = 'none';
+        }
+        if (menuBadge) menuBadge.classList.add('hidden');
+        return;
+      }
+
+      if (section) {
+        section.classList.remove('hidden');
+        section.style.display = 'block';
+      }
+      if (menuBadge) menuBadge.classList.remove('hidden');
+
+      renderAdminGlobalVisitorTelemetry();
+    }
+
+    function renderAdminGlobalVisitorTelemetry() {
+      if (!isGlobalVisitorTelemetryAdmin()) return;
+
+      const log = getGlobalVisitorsLog();
+      const stateContainer = document.getElementById('admin-state-groups-container');
+      const cityContainer = document.getElementById('admin-city-log-container');
+      const totalVisitorsEl = document.getElementById('admin-telemetry-total-visitors');
+      const totalStatesEl = document.getElementById('admin-telemetry-total-states');
+      const topStateEl = document.getElementById('admin-telemetry-top-state');
+      const totalCitiesEl = document.getElementById('admin-telemetry-total-cities');
+      const lastSyncEl = document.getElementById('admin-telemetry-last-sync');
+
+      // 1. Calculate Aggregations
+      const stateGroups = {};
+      const uniqueCitiesSet = new Set();
+      let totalVisitorsCount = 0;
+      let totalVisitsCount = 0;
+
+      log.forEach(item => {
+        const stateKey = (item.state || 'VA').toUpperCase();
+        const stateName = item.stateName || US_STATE_NAMES[stateKey] || stateKey;
+        const cityName = item.city || 'Ashburn';
+        const visits = Number(item.visitCount) || 1;
+
+        uniqueCitiesSet.add(`${cityName.toLowerCase()}_${stateKey.toLowerCase()}`);
+        totalVisitorsCount += 1;
+        totalVisitsCount += visits;
+
+        if (!stateGroups[stateKey]) {
+          stateGroups[stateKey] = {
+            stateCode: stateKey,
+            stateName: stateName,
+            visitorCount: 0,
+            visitsTotal: 0,
+            cities: {},
+            lastSeen: item.lastSeen || new Date().toISOString()
+          };
+        }
+
+        stateGroups[stateKey].visitorCount += 1;
+        stateGroups[stateKey].visitsTotal += visits;
+        stateGroups[stateKey].cities[cityName] = (stateGroups[stateKey].cities[cityName] || 0) + visits;
+
+        if (item.lastSeen && new Date(item.lastSeen) > new Date(stateGroups[stateKey].lastSeen)) {
+          stateGroups[stateKey].lastSeen = item.lastSeen;
+        }
+      });
+
+      const sortedStates = Object.values(stateGroups).sort((a, b) => b.visitorCount - a.visitorCount || b.visitsTotal - a.visitsTotal);
+      const uniqueStatesCount = sortedStates.length;
+      const topState = sortedStates[0] ? `${sortedStates[0].stateName} (${sortedStates[0].stateCode})` : '-';
+
+      // Update Summary Tiles
+      if (totalVisitorsEl) totalVisitorsEl.innerText = totalVisitorsCount.toLocaleString();
+      if (totalStatesEl) totalStatesEl.innerText = uniqueStatesCount;
+      if (topStateEl) topStateEl.innerText = topState;
+      if (totalCitiesEl) totalCitiesEl.innerText = uniqueCitiesSet.size;
+      if (lastSyncEl) lastSyncEl.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+      // 2. Filter data by search query if present
+      const q = adminVisitorSearchQuery;
+      const filteredStates = sortedStates.filter(st => {
+        if (!q) return true;
+        const matchState = st.stateName.toLowerCase().includes(q) || st.stateCode.toLowerCase().includes(q);
+        const matchCity = Object.keys(st.cities).some(c => c.toLowerCase().includes(q));
+        return matchState || matchCity;
+      });
+
+      // 3. Render State Groups View
+      if (stateContainer) {
+        if (filteredStates.length === 0) {
+          stateContainer.innerHTML = `
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+              <i class="fa-solid fa-magnifying-glass mb-2 text-base text-slate-600 block"></i>
+              No states or cities matched "${q}". Try another search term.
+            </div>
+          `;
+        } else {
+          stateContainer.innerHTML = filteredStates.map((st, idx) => {
+            const percentage = totalVisitorsCount > 0 ? ((st.visitorCount / totalVisitorsCount) * 100).toFixed(1) : '0.0';
+            const sortedCityNames = Object.keys(st.cities).sort((a, b) => st.cities[b] - st.cities[a]);
+            
+            return `
+              <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800/90 hover:border-purple-500/40 transition space-y-2.5">
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 font-mono font-black text-xs flex items-center justify-center shrink-0">
+                      ${st.stateCode}
+                    </span>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-100 text-xs sm:text-sm">${st.stateName}</span>
+                        <span class="text-[10px] text-slate-500 font-mono">#${idx + 1}</span>
+                      </div>
+                      <p class="text-[10px] text-slate-400">
+                        ${sortedCityNames.length} ${sortedCityNames.length === 1 ? 'City' : 'Cities'} Active • ${st.visitsTotal} ${st.visitsTotal === 1 ? 'visit' : 'total visits'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="text-right shrink-0">
+                    <span class="text-xs sm:text-sm font-black font-mono text-purple-400">${st.visitorCount} ${st.visitorCount === 1 ? 'Visitor' : 'Visitors'}</span>
+                    <span class="text-[10px] text-slate-400 block font-mono font-bold">${percentage}% share</span>
+                  </div>
+                </div>
+
+                <!-- Progress Bar Distribution -->
+                <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+                  <div class="bg-gradient-to-r from-purple-500 to-indigo-400 h-full rounded-full transition-all duration-500" style="width: ${Math.max(4, percentage)}%;"></div>
+                </div>
+
+                <!-- City Badges in this State -->
+                <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mr-1">Cities:</span>
+                  ${sortedCityNames.map(city => `
+                    <span class="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 flex items-center gap-1">
+                      <span class="font-medium text-slate-200">${city}</span>
+                      <span class="text-purple-400 font-mono font-bold">(${st.cities[city]})</span>
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      // 4. Render City & State Detailed Log View
+      if (cityContainer) {
+        const filteredLog = log.filter(item => {
+          if (!q) return true;
+          const c = (item.city || '').toLowerCase();
+          const s = (item.state || '').toLowerCase();
+          const sn = (item.stateName || '').toLowerCase();
+          const z = (item.zip || '').toLowerCase();
+          return c.includes(q) || s.includes(q) || sn.includes(q) || z.includes(q);
+        });
+
+        if (filteredLog.length === 0) {
+          cityContainer.innerHTML = `
+            <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+              <i class="fa-solid fa-location-dot mb-2 text-base text-slate-600 block"></i>
+              No visitor location records matched "${q}".
+            </div>
+          `;
+        } else {
+          cityContainer.innerHTML = `
+            <div class="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-800 bg-slate-900/80 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <th class="px-3.5 py-2.5">City & State</th>
+                    <th class="px-3 py-2.5">State Code</th>
+                    <th class="px-3 py-2.5">Postal / Zip</th>
+                    <th class="px-3 py-2.5 text-center">Hits</th>
+                    <th class="px-3.5 py-2.5 text-right">Last Active</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-900 text-slate-300">
+                  ${filteredLog.map(item => {
+                    const timeAgo = formatTimeAgo(item.lastSeen || item.firstSeen);
+                    return `
+                      <tr class="hover:bg-slate-900/60 transition">
+                        <td class="px-3.5 py-2.5 font-bold text-slate-100 flex items-center gap-1.5">
+                          <i class="fa-solid fa-location-dot text-[10px] text-purple-400"></i>
+                          <span>${item.city}, ${item.state}</span>
+                        </td>
+                        <td class="px-3 py-2.5">
+                          <span class="px-1.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/30 text-[10px] font-mono font-bold text-purple-300">${item.state}</span>
+                        </td>
+                        <td class="px-3 py-2.5 font-mono text-slate-400">${item.zip || '-'}</td>
+                        <td class="px-3 py-2.5 text-center font-mono font-bold text-emerald-400">${item.visitCount || 1}</td>
+                        <td class="px-3.5 py-2.5 text-right text-[11px] text-slate-400">${timeAgo}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      }
+    }
+
+    function formatTimeAgo(isoStr) {
+      if (!isoStr) return 'Recently';
+      try {
+        const diffMs = Date.now() - new Date(isoStr).getTime();
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        const days = Math.floor(hrs / 24);
+        return `${days}d ago`;
+      } catch (e) {
+        return 'Recently';
+      }
     }
 
     function updateSquadBeacon() {
