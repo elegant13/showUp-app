@@ -633,7 +633,10 @@
 
       <!-- LEGAL & PRIVACY FOOTER -->
       <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
-        <span>showUp Fitness</span>
+        <div class="flex items-center gap-1.5">
+          <span class="font-bold text-slate-400">showUp</span>
+          <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">V2</span>
+        </div>
         <div class="flex items-center gap-3">
           <a href="privacy.html" target="_blank" class="hover:text-emerald-400 transition underline underline-offset-2">Privacy Policy</a>
           <span>•</span>
@@ -954,49 +957,7 @@
     </div>
   </div>
 
-  <!-- ================= FIND & RESTORE HISTORICAL SQUAD MODAL ================= -->
-  <div id="find-squad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div>
-          <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left text-emerald-400"></i>
-            Find & Restore Squads
-          </h2>
-          <p class="text-xs text-slate-400">Recover historical squads like fitFamSwabhu</p>
-        </div>
-        <button onclick="closeFindSquadModal()" class="text-slate-500 hover:text-slate-300 p-1">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-      </div>
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Squad Name or Code</label>
-          <div class="relative">
-            <input type="text" id="find-squad-query-input" placeholder="e.g. fitFamSwabhu or SHOWUP-FITFAM" maxlength="40" oninput="handleSquadSearchInput(this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-3.5 pr-10 py-2.5 text-xs font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          </div>
-          <p class="text-[11px] text-slate-500 mt-1">Search local archives, backups, and historical squad catalog.</p>
-        </div>
-
-        <!-- SEARCH RESULTS CONTAINER -->
-        <div id="find-squad-results-list" class="space-y-2 max-h-60 overflow-y-auto">
-          <!-- Populated dynamically via renderSquadSearchResults() -->
-        </div>
-      </div>
-
-      <div class="flex items-center gap-2 pt-2 border-t border-slate-800/80">
-        <button type="button" onclick="closeFindSquadModal()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
-          Close
-        </button>
-        <button type="button" onclick="triggerHaptic('medium'); restoreAllHistoricalSquads()" class="w-2/3 m3-btn-primary font-bold py-2.5 rounded-2xl text-xs transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-1.5">
-          <i class="fa-solid fa-rotate"></i>
-          <span>Restore All Known Squads</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- ================= TRANSFER CREATOR ROLE BEFORE LEAVING MODAL ================= -->
   <div id="transfer-creator-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
@@ -2127,10 +2088,6 @@
             </div>
           </div>
           <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="triggerHaptic('light'); openFindSquadModal()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Find and restore historical squads like fitFamSwabhu">
-              <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
-              <span>Find & Restore</span>
-            </button>
             <button onclick="triggerHaptic('light'); openJoinSquadModal()" class="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 text-xs font-semibold px-3.5 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Join a squad with a joining code">
               <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
               <span>Join Squad</span>
@@ -3730,7 +3687,7 @@
     function getBackupPayload() {
       return {
         app: "showUp",
-        version: "5.0",
+        version: "2.0",
         lastSyncedAt: localStorage.getItem('showUp_last_drive_sync') || new Date().toISOString(),
         profile: {
           height: userHeight,
@@ -4377,7 +4334,7 @@
 
       const backupPayload = {
         app: "showUp",
-        version: "5.0",
+        version: "2.0",
         lastSyncedAt: new Date().toISOString(),
         profile: {
           height: userHeight,
@@ -4708,7 +4665,7 @@
     function exportJSONBackup() {
       const fullBackup = {
         app: "showUp",
-        version: "5.0",
+        version: "2.0",
         exportedAt: new Date().toISOString(),
         theme: localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald',
         font: localStorage.getItem('showUp_font') || 'font-jakarta',
@@ -5129,7 +5086,11 @@
     function checkAndResetDailyETCounter() {
       const currentETDate = getETDateKey();
       const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      let userTodayCount = rawHistory.filter(w => {
+      const user = getAppUser();
+      const showedUpAthletes = new Set();
+
+      // Check if current athlete showed up / completed a workout today
+      const userCompletedToday = rawHistory.some(w => {
         if (!w) return false;
         const wDate = typeof w === 'string' ? w : w.date;
         if (wDate !== currentETDate) return false;
@@ -5137,31 +5098,43 @@
           return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
         }
         return true;
-      }).length;
+      });
 
-      // Vetted squad completions today (only authenticated members with valid locations)
+      if (userCompletedToday) {
+        showedUpAthletes.add(user.id || user.email || '__CURRENT_USER__');
+      }
+
+      // Vetted squad teammate completions today (only authenticated/vetted members, deduplicated)
       const squads = getSquads();
-      const isValidZip = (z) => typeof z === 'string' && /^\d{5}$/.test(z.trim());
       squads.forEach(sq => {
         if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
-          if (m && m.completedDate === currentETDate && m.completedToday === true && m.zip && isValidZip(m.zip)) {
-            userTodayCount += 1;
+          if (!m) return;
+          const isMe = (m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
+          if (m.completedDate === currentETDate && m.completedToday === true) {
+            if (isMe) {
+              showedUpAthletes.add(user.id || user.email || '__CURRENT_USER__');
+            } else {
+              const memberKey = m.id || m.email || (m.rawName || m.name);
+              if (memberKey) showedUpAthletes.add(memberKey);
+            }
           }
         });
       });
 
+      const totalCount = showedUpAthletes.size;
+
       localStorage.setItem('showUp_global_counter_et_date', currentETDate);
-      localStorage.setItem('showUp_global_counter_count', String(userTodayCount));
+      localStorage.setItem('showUp_global_counter_count', String(totalCount));
 
       const counterEl = document.getElementById('global-daily-counter');
       if (counterEl) {
-        counterEl.innerText = Number(userTodayCount).toLocaleString();
+        counterEl.innerText = Number(totalCount).toLocaleString();
         counterEl.style.color = 'var(--m3-primary)';
         counterEl.style.webkitTextFillColor = 'var(--m3-primary)';
       }
 
-      return userTodayCount;
+      return totalCount;
     }
 
     function incrementGlobalWorkoutCounter() {
@@ -6027,111 +6000,41 @@
       };
     }
 
-    // ================= SQUAD HISTORICAL REGISTRY & PERMANENT ARCHIVE =================
-    const KNOWN_HISTORICAL_SQUADS = [
-      {
-        id: 'squad_fitFamSwabhu',
-        name: 'fitFamSwabhu',
-        motto: 'Family that lifts together stays together • Daily consistency',
-        icon: 'fire',
-        accent: 'emerald',
-        inviteCode: 'SHOWUP-FITFAM',
-        isCollapsed: false,
-        createdAt: '2026-01-01T08:00:00.000Z',
-        creatorId: 'local_user',
-        creatorName: 'Abhilash Nama',
-        backupCreatorId: 'member_swathi_fitfam',
-        backupCreatorName: 'Swathi',
-        notificationPreferences: {
-          inAppPill: true,
-          beaconPulse: true,
-          hapticPulse: true,
-          soundChime: true,
-          browserNotify: false
-        },
-        members: [
-          {
-            id: 'local_user',
-            name: 'Abhilash Nama (Creator)',
-            rawName: 'Abhilash Nama',
-            email: 'abhi13@gmail.com',
-            avatar: null,
-            isCreator: true,
-            isBackupCreator: false,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Active today',
-            zip: '20105',
-            city: 'Ashburn / Aldie, VA'
-          },
-          {
-            id: 'member_swathi_fitfam',
-            name: 'Swathi',
-            rawName: 'Swathi',
-            email: 'swathi.kandati@gmail.com',
-            avatar: null,
-            isCreator: false,
-            isBackupCreator: true,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Active today',
-            zip: '20105',
-            city: 'Ashburn / Aldie, VA',
-            invitedByEmail: true,
-            inviteStatus: 'delivered',
-            inviteEmail: 'swathi.kandati@gmail.com'
-          },
-          {
-            id: 'member_bhuvan_fitfam',
-            name: 'Bhuvan',
-            rawName: 'Bhuvan',
-            email: 'bhuvansnama@gmail.com',
-            avatar: null,
-            isCreator: false,
-            isBackupCreator: false,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Resting today',
-            zip: '20105',
-            city: 'Ashburn / Aldie, VA',
-            invitedByEmail: true,
-            inviteStatus: 'delivered',
-            inviteEmail: 'bhuvansnama@gmail.com'
-          }
-        ]
-      }
-    ];
+    // ================= SQUADS ENGINE (STRICT ATHLETE ISOLATION) =================
+    function isAthleteMemberOrCreator(squad, user) {
+      if (!squad) return false;
+      if (!user) user = getAppUser();
+      const userId = user.id;
+      const userEmail = (user.email || '').toLowerCase().trim();
 
-    function getHistoricalSquadArchive() {
-      try {
-        return JSON.parse(localStorage.getItem('showUp_squad_history_archive') || '[]');
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveToHistoricalSquadArchive(squadsList) {
-      if (!Array.isArray(squadsList)) return;
-      const archive = getHistoricalSquadArchive();
-      squadsList.forEach(sq => {
-        if (!sq || !sq.id) return;
-        const idx = archive.findIndex(a => a.id === sq.id || (sq.inviteCode && a.inviteCode === sq.inviteCode) || (sq.name && a.name && a.name.toLowerCase() === sq.name.toLowerCase()));
-        if (idx >= 0) {
-          archive[idx] = { ...archive[idx], ...sq };
-        } else {
-          archive.unshift(sq);
-        }
+      // 1. Is athlete the squad creator?
+      const isCreatorById = squad.creatorId && (squad.creatorId === userId || squad.creatorId === 'local_user');
+      const isCreatorByEmail = userEmail && squad.creatorEmail && (squad.creatorEmail.toLowerCase().trim() === userEmail);
+      const isCreatorInMembers = Array.isArray(squad.members) && squad.members.some(m => {
+        if (!m) return false;
+        const matchId = m.id === userId || m.id === 'local_user';
+        const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
+        return (matchId || matchEmail) && m.isCreator === true;
       });
-      localStorage.setItem('showUp_squad_history_archive', JSON.stringify(archive));
+
+      if (isCreatorById || isCreatorByEmail || isCreatorInMembers) {
+        return true;
+      }
+
+      // 2. Is athlete an active member who joined the squad?
+      const isMember = Array.isArray(squad.members) && squad.members.some(m => {
+        if (!m) return false;
+        const matchId = m.id === userId;
+        const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
+        return matchId || matchEmail;
+      });
+
+      return !!isMember;
     }
 
     function sanitizeSquadMembers(squad, user) {
       if (!squad || !Array.isArray(squad.members)) return squad;
       if (!user) user = getAppUser();
-
-      const isFitFam = (squad.name && squad.name.toLowerCase().replace(/[\s-_]/g, '') === 'fitfamswabhu') || 
-                       squad.id === 'squad_fitFamSwabhu' || 
-                       (squad.inviteCode && squad.inviteCode.toUpperCase() === 'SHOWUP-FITFAM');
 
       const seen = new Set();
       const deduped = [];
@@ -6139,19 +6042,15 @@
       for (const m of squad.members) {
         if (!m) continue;
 
-        // Discard legacy mock placeholder teammates or invalid members (e.g., Rohit or mock ids)
-        if (m.zip === '60601' || m.zip === '80202' || m.id === 'mock_athlete_1' || m.id === 'mock_athlete_2' || m.id === 'member_rohit_fitfam' || (m.rawName && m.rawName.toLowerCase() === 'rohit') || (m.name && m.name.toLowerCase() === 'rohit') || m.isMockTeammate || (typeof m.id === 'string' && m.id.startsWith('mock_'))) {
+        // Discard any mock placeholder teammates or invalid mock IDs
+        if (m.zip === '60601' || m.zip === '80202' || m.id === 'mock_athlete_1' || m.id === 'mock_athlete_2' || m.isMockTeammate || (typeof m.id === 'string' && m.id.startsWith('mock_'))) {
           continue;
         }
 
         const isCurrentUserEntity = (
           m.id === user.id || 
-          (user.email && m.email && m.email.toLowerCase() === user.email.toLowerCase()) || 
-          m.id === 'local_user' || 
-          (m.rawName && user.rawName && m.rawName.toLowerCase() === user.rawName.toLowerCase()) || 
-          (m.rawName && m.rawName.toLowerCase() === 'swabhu') ||
-          (m.name && user.name && m.name.toLowerCase().includes('abhilash')) ||
-          (m.name && user.name && m.name.toLowerCase().includes('swabhu'))
+          (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()) || 
+          m.id === 'local_user'
         );
 
         const key = isCurrentUserEntity 
@@ -6166,32 +6065,19 @@
             m.rawName = user.rawName;
             m.email = user.email;
             if (user.picture) m.avatar = user.picture;
-            if (isFitFam || squad.creatorId === user.id || squad.creatorId === 'local_user') {
+            if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
               m.isCreator = true;
               squad.creatorId = user.id;
-              squad.creatorName = user.rawName || 'Abhilash Nama';
-            }
-          } else if (isFitFam) {
-            if ((m.rawName && m.rawName.toLowerCase() === 'swathi') || m.id === 'member_swathi_fitfam') {
-              m.email = 'swathi.kandati@gmail.com';
-              m.inviteEmail = 'swathi.kandati@gmail.com';
-              m.invitedByEmail = true;
-              m.inviteStatus = 'delivered';
-              m.isBackupCreator = true;
-            } else if ((m.rawName && m.rawName.toLowerCase() === 'bhuvan') || m.id === 'member_bhuvan_fitfam') {
-              m.email = 'bhuvansnama@gmail.com';
-              m.inviteEmail = 'bhuvansnama@gmail.com';
-              m.invitedByEmail = true;
-              m.inviteStatus = 'delivered';
+              squad.creatorName = user.rawName || user.name;
             }
           }
           deduped.push(m);
         }
       }
 
-      // If user is creator but not yet in members, add user as primary creator
-      if (isFitFam || squad.creatorId === user.id || squad.creatorId === 'local_user') {
-        const hasUser = deduped.some(m => m.id === user.id || (user.email && m.email === user.email));
+      // If user is creator but not yet in members list, ensure they are in members
+      if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
+        const hasUser = deduped.some(m => m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
         if (!hasUser) {
           deduped.unshift({
             id: user.id,
@@ -6205,63 +6091,11 @@
             currentWorkout: null,
             lastActive: 'Active today',
             zip: getUserZip() || '20105',
-            city: localStorage.getItem('showUp_user_ip_city') || 'Ashburn / Aldie, VA'
+            city: localStorage.getItem('showUp_user_ip_city') || 'Ashburn, VA'
           });
         }
         squad.creatorId = user.id;
-        squad.creatorName = user.rawName || 'Abhilash Nama';
-      }
-
-      // Ensure all 3 authentic athletes exist for fitFamSwabhu (Abhilash, Swathi, Bhuvan)
-      if (isFitFam) {
-        const defaultTeammates = [
-          {
-            id: 'member_swathi_fitfam',
-            name: 'Swathi',
-            rawName: 'Swathi',
-            email: 'swathi.kandati@gmail.com',
-            avatar: null,
-            isCreator: false,
-            isBackupCreator: true,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Active today',
-            zip: '20105',
-            city: 'Ashburn / Aldie, VA',
-            invitedByEmail: true,
-            inviteStatus: 'delivered',
-            inviteEmail: 'swathi.kandati@gmail.com'
-          },
-          {
-            id: 'member_bhuvan_fitfam',
-            name: 'Bhuvan',
-            rawName: 'Bhuvan',
-            email: 'bhuvansnama@gmail.com',
-            avatar: null,
-            isCreator: false,
-            isBackupCreator: false,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Resting today',
-            zip: '20105',
-            city: 'Ashburn / Aldie, VA',
-            invitedByEmail: true,
-            inviteStatus: 'delivered',
-            inviteEmail: 'bhuvansnama@gmail.com'
-          }
-        ];
-
-        defaultTeammates.forEach(tm => {
-          const exists = deduped.some(m => (m.rawName && m.rawName.toLowerCase() === tm.rawName.toLowerCase()) || m.id === tm.id || (m.email && m.email.toLowerCase() === tm.email.toLowerCase()));
-          if (!exists) {
-            deduped.push(tm);
-          }
-        });
-
-        if (!squad.backupCreatorId) {
-          squad.backupCreatorId = 'member_swathi_fitfam';
-          squad.backupCreatorName = 'Swathi';
-        }
+        squad.creatorName = user.rawName || user.name;
       }
 
       squad.members = deduped;
@@ -6279,41 +6113,15 @@
 
       let squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
       const user = getAppUser();
-      const globalReg = getGlobalSquadRegistry();
-      const archive = getHistoricalSquadArchive();
 
       if (!Array.isArray(squads)) {
         squads = [];
       }
 
-      // Avoid display of sample mock squads
-      squads = squads.filter(sq => sq && sq.id !== 'squad_iron_collective' && sq.name !== 'Iron Collective');
+      // Strict isolation: only keep squads created by athlete or joined by athlete
+      squads = squads.filter(sq => sq && sq.id && isAthleteMemberOrCreator(sq, user));
 
-      // Candidate historical squads from all multi-tier storage layers
-      const candidateHistorical = [
-        ...KNOWN_HISTORICAL_SQUADS,
-        ...archive,
-        ...globalReg
-      ];
-
-      candidateHistorical.forEach(cand => {
-        if (!cand || !cand.id || cand.id === 'squad_iron_collective' || cand.name === 'Iron Collective') return;
-        
-        const isUserSquad = (cand.creatorId === user.id) || 
-                            (cand.members && cand.members.some(m => m.id === user.id || (user.email && m.email === user.email)));
-
-        if (isUserSquad) {
-          const existingIdx = squads.findIndex(s => s.id === cand.id || 
-                                                    (cand.inviteCode && s.inviteCode === cand.inviteCode) || 
-                                                    (cand.name && s.name && s.name.toLowerCase() === cand.name.toLowerCase()));
-          if (existingIdx < 0) {
-            // Recover historically created squad into active list
-            squads.unshift(JSON.parse(JSON.stringify(cand)));
-          }
-        }
-      });
-
-      // Sanitize and deduplicate members across all squads
+      // Sanitize and deduplicate members across all valid squads
       squads = squads.map(sq => sanitizeSquadMembers(sq, user));
 
       // Maintain backup creator role flags
@@ -6325,7 +6133,7 @@
         }
       });
 
-      // Save to active squad list
+      // Save filtered active squad list
       saveSquads(squads);
       updateSquadBeacon();
 
@@ -6455,227 +6263,19 @@
       if (!isCustomerLoggedIn()) return [];
       const user = getAppUser();
       const squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
-      return Array.isArray(squads) ? squads.map(s => sanitizeSquadMembers(s, user)) : [];
+      if (!Array.isArray(squads)) return [];
+      return squads
+        .filter(sq => sq && isAthleteMemberOrCreator(sq, user))
+        .map(s => sanitizeSquadMembers(s, user));
     }
 
     function saveSquads(squads) {
       if (!Array.isArray(squads)) return;
-      localStorage.setItem('showUp_squads', JSON.stringify(squads));
-      saveToHistoricalSquadArchive(squads);
-      squads.forEach(sq => saveSquadToGlobalRegistry(sq));
-      updateSquadBeacon();
-    }
-
-    // ================= FIND & RESTORE HISTORICAL SQUADS =================
-    function openFindSquadModal() {
-      const modal = document.getElementById('find-squad-modal');
-      const input = document.getElementById('find-squad-query-input');
-      if (input) input.value = '';
-      if (modal) modal.classList.remove('hidden');
-      renderSquadSearchResults('');
-      if (input) setTimeout(() => input.focus(), 150);
-    }
-
-    function closeFindSquadModal() {
-      const modal = document.getElementById('find-squad-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    function handleSquadSearchInput(query) {
-      renderSquadSearchResults(query);
-    }
-
-    function getAllKnownAndHistoricalSquads() {
-      if (!isCustomerLoggedIn()) return [];
       const user = getAppUser();
-      const activeSquads = getSquads();
-      const archive = getHistoricalSquadArchive();
-      const globalReg = getGlobalSquadRegistry();
-      const map = new Map();
-
-      [...KNOWN_HISTORICAL_SQUADS, ...archive, ...globalReg, ...activeSquads].forEach(sq => {
-        if (!sq || !sq.id || sq.id === 'squad_iron_collective' || sq.name === 'Iron Collective') return;
-        const isUserSquad = (sq.creatorId === user.id) || 
-                            (sq.members && sq.members.some(m => m.id === user.id || (user.email && m.email === user.email)));
-        if (!isUserSquad) return;
-        const key = sq.id || sq.inviteCode || (sq.name ? sq.name.toLowerCase() : '');
-        if (key && !map.has(key)) {
-          map.set(key, sq);
-        }
-      });
-
-      return Array.from(map.values());
-    }
-
-    function renderSquadSearchResults(query = '') {
-      const container = document.getElementById('find-squad-results-list');
-      if (!container) return;
-
-      const q = (query || '').trim().toLowerCase();
-      const all = getAllKnownAndHistoricalSquads();
-      const activeSquads = getSquads();
-
-      const filtered = all.filter(sq => {
-        if (!q) return true;
-        const nameMatch = sq.name && sq.name.toLowerCase().includes(q);
-        const codeMatch = sq.inviteCode && sq.inviteCode.toLowerCase().includes(q);
-        const mottoMatch = sq.motto && sq.motto.toLowerCase().includes(q);
-        const creatorMatch = sq.creatorName && sq.creatorName.toLowerCase().includes(q);
-        return nameMatch || codeMatch || mottoMatch || creatorMatch;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-center space-y-1">
-            <p class="text-xs font-bold text-slate-300">No matching squads found</p>
-            <p class="text-[11px] text-slate-500">Try searching "fitFamSwabhu" or entering a joining code.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = filtered.map(sq => {
-        const isAlreadyActive = activeSquads.some(s => s.id === sq.id || (sq.inviteCode && s.inviteCode === sq.inviteCode) || (sq.name && s.name && s.name.toLowerCase() === sq.name.toLowerCase()));
-        return `
-          <div class="p-3 bg-slate-950 rounded-2xl border border-slate-800 hover:border-slate-700 flex items-center justify-between gap-3 transition">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 flex items-center justify-center text-sm shrink-0">
-                <i class="fa-solid fa-${sq.icon || 'dumbbell'}"></i>
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(sq.name)}</span>
-                  ${sq.inviteCode ? `<span class="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">${escapeHtml(sq.inviteCode)}</span>` : ''}
-                  ${isAlreadyActive ? `<span class="text-[9px] font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">In Active List</span>` : ''}
-                </div>
-                <p class="text-[11px] text-slate-400 truncate">${escapeHtml(sq.motto || 'Active squad')}</p>
-              </div>
-            </div>
-            <div class="shrink-0">
-              ${isAlreadyActive ? `
-                <button disabled class="bg-slate-900 text-slate-500 text-[11px] font-semibold px-2.5 py-1.5 rounded-xl cursor-default">
-                  Active
-                </button>
-              ` : `
-                <button onclick="triggerHaptic('medium'); restoreHistoricalSquad('${sq.id}')" class="m3-btn-primary text-[11px] font-bold px-3 py-1.5 rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center gap-1">
-                  <i class="fa-solid fa-cloud-arrow-down text-[10px]"></i>
-                  <span>Restore</span>
-                </button>
-              `}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function restoreHistoricalSquad(squadId) {
-      const all = getAllKnownAndHistoricalSquads();
-      const target = all.find(s => s.id === squadId);
-      if (!target) {
-        showToast("Squad not found in archive.", "error");
-        return;
-      }
-
-      const squads = getSquads();
-      const user = getAppUser();
-
-      const existingIdx = squads.findIndex(s => s.id === target.id || (target.inviteCode && s.inviteCode === target.inviteCode) || (target.name && s.name && s.name.toLowerCase() === target.name.toLowerCase()));
-      if (existingIdx >= 0) {
-        showToast(`Squad "${target.name}" is already in your active list!`, "info");
-        closeFindSquadModal();
-        return;
-      }
-
-      const restored = JSON.parse(JSON.stringify(target));
-      if (!restored.members) restored.members = [];
-
-      let userMember = restored.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
-      if (userMember) {
-        userMember.id = user.id;
-        userMember.name = user.name;
-        userMember.rawName = user.rawName;
-        userMember.email = user.email;
-        if (user.picture) userMember.avatar = user.picture;
-        userMember.isCreator = true;
-      } else {
-        restored.members.unshift({
-          id: user.id,
-          name: user.name,
-          rawName: user.rawName,
-          email: user.email,
-          avatar: user.picture,
-          isCreator: true,
-          isWorkingOut: false,
-          currentWorkout: null,
-          lastActive: 'Active today'
-        });
-      }
-      restored.creatorId = user.id;
-      restored.creatorName = user.rawName || 'Swabhu';
-
-      squads.unshift(restored);
-      saveSquads(squads);
-      closeFindSquadModal();
-      renderSquadsTab();
-      updateGlobalStatsUI();
+      const filtered = squads.filter(sq => sq && isAthleteMemberOrCreator(sq, user));
+      localStorage.setItem('showUp_squads', JSON.stringify(filtered));
+      filtered.forEach(sq => saveSquadToGlobalRegistry(sq));
       updateSquadBeacon();
-      showToast(`🎉 Squad "${restored.name}" restored with full creator authority!`, "success");
-
-      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
-        syncToGoogleDrive(false);
-      }
-    }
-
-    function restoreAllHistoricalSquads() {
-      const all = getAllKnownAndHistoricalSquads();
-      const squads = getSquads();
-      const user = getAppUser();
-      let restoredCount = 0;
-
-      all.forEach(target => {
-        const exists = squads.some(s => s.id === target.id || (target.inviteCode && s.inviteCode === target.inviteCode) || (target.name && s.name && s.name.toLowerCase() === target.name.toLowerCase()));
-        if (!exists) {
-          const restored = JSON.parse(JSON.stringify(target));
-          if (!restored.members) restored.members = [];
-          const userMember = restored.members.find(m => m.id === user.id || (user.email && m.email === user.email) || m.id === 'local_user');
-          if (userMember) {
-            userMember.id = user.id;
-            userMember.name = user.name;
-            userMember.rawName = user.rawName;
-            userMember.email = user.email;
-            if (user.picture) userMember.avatar = user.picture;
-            userMember.isCreator = true;
-          } else {
-            restored.members.unshift({
-              id: user.id,
-              name: user.name,
-              rawName: user.rawName,
-              email: user.email,
-              avatar: user.picture,
-              isCreator: true,
-              isWorkingOut: false,
-              currentWorkout: null,
-              lastActive: 'Active today'
-            });
-          }
-          restored.creatorId = user.id;
-          restored.creatorName = user.rawName || 'Swabhu';
-          squads.unshift(restored);
-          restoredCount++;
-        }
-      });
-
-      saveSquads(squads);
-      closeFindSquadModal();
-      renderSquadsTab();
-      updateGlobalStatsUI();
-      updateSquadBeacon();
-
-      if (restoredCount > 0) {
-        showToast(`🎉 Restored ${restoredCount} historical squad${restoredCount === 1 ? '' : 's'} into your account!`, "success");
-      } else {
-        showToast("All known historical squads are already in your active list.", "info");
-      }
     }
 
     // ================= UNIQUE VISITOR WEBSITE COUNTER ENGINE (GENUINE LIVE VISITOR TRACKING) =================
@@ -6813,14 +6413,14 @@
         return;
       }
 
-      if (confirm(`Are you sure you want to remove "${squad.name}" from your active list? You can restore it anytime from Find & Restore.`)) {
+      if (confirm(`Are you sure you want to delete squad "${squad.name}"?`)) {
         const updated = squads.filter(s => s.id !== squadId);
         localStorage.setItem('showUp_squads', JSON.stringify(updated));
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();
         renderHeatMap();
-        showToast(`Squad "${squad.name}" removed from active view. You can restore it anytime from Find & Restore.`, "info");
+        showToast(`Squad "${squad.name}" deleted.`, "info");
       }
     }
 
@@ -7335,10 +6935,6 @@
               <p class="text-xs text-slate-400 max-w-sm mx-auto mt-1">Create your first squad or enter a joining code from a teammate to experience real-time quiet accountability notifications.</p>
             </div>
             <div class="flex items-center justify-center gap-2.5 flex-wrap">
-              <button onclick="triggerHaptic('medium'); openFindSquadModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 transition active:scale-95" title="Search and restore historical squads like fitFamSwabhu">
-                <i class="fa-solid fa-clock-rotate-left text-blue-400"></i>
-                <span>Find & Restore</span>
-              </button>
               <button onclick="triggerHaptic('medium'); openJoinSquadModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-2xl text-xs inline-flex items-center gap-2 transition active:scale-95">
                 <i class="fa-solid fa-right-to-bracket text-emerald-400"></i>
                 <span>Join with Code</span>

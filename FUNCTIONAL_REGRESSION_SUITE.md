@@ -1,23 +1,24 @@
 # showUp - Functional Regression Suite
 
-**Document Version:** 1.0  
+**Document Version:** 2.0 (V2)  
 **Target Application:** showUp (`index.html`)  
 **Status:** ALL TESTS PASSING (100% Verified)  
-**Last Run:** October 5, 2026  
+**Last Run:** October 8, 2026  
 
 ---
 
 ## 1. Executive Summary & Test Metrics
 
-This Functional Regression Suite serves as the canonical test specification and quality audit for the **showUp** progressive web application. It verifies end-to-end user journeys, DOM integrity, state persistence, data isolation, and privacy compliance across all application features.
+This Functional Regression Suite serves as the canonical test specification and quality audit for the **showUp V2** progressive web application. It verifies end-to-end user journeys, DOM integrity, state persistence, strict squad privacy isolation, verified global daily counter accuracy, and privacy compliance across all application features.
 
 | Metric | Measurement | Result |
 | :--- | :--- | :--- |
-| **Core Test Suites** | 9 Functional Suites | **PASS** |
+| **Core Test Suites** | 10 Functional Suites | **PASS** |
 | **DOM Element IDs Checked** | 208 Elements | **100% Match** |
-| **Declared Functions Verified** | 193 Functions | **100% Bound** |
-| **Bracket / Syntax Integrity** | 3 Script Blocks | **0 Syntax Errors** |
-| **Privacy & Data Isolation** | Full Logout Wipe | **Verified Safe** |
+| **Declared Functions Verified** | 185 Functions | **100% Bound** |
+| **Bracket / Syntax Integrity** | Clean Script Blocks | **0 Syntax Errors** |
+| **Privacy & Squad Isolation** | Created/Joined Only | **100% Isolated** |
+| **Global Daily Counter** | Deduplicated Set Math (ET) | **100% Accurate** |
 
 ---
 
@@ -50,20 +51,27 @@ This Functional Regression Suite serves as the canonical test specification and 
 * **TC-5.2 Muscle Heatmap & 1RM**: Estimates 1-Rep Max load using the Epley formula and maps targeted muscle groups dynamically.
 * **TC-5.3 Weight Tracking & BMI**: Records date-stamped bodyweight logs with BMI calculations and historical charts.
 
-### Suite 6: Squads Accountability & Quiet Notifications
-* **TC-6.1 fitFamSwabhu Verified Roster**: Squad roster consists of Abhilash Nama (`abhi13@gmail.com`), Swathi (`swathi.kandati@gmail.com`), and Bhuvan (`bhuvansnama@gmail.com`).
-* **TC-6.2 Squad Beacon**: Pulses quietly when a teammate is actively working out; surfaces real-time lifting banner.
-* **TC-6.3 Squad Invitations & Codes**: Supports joining via invite code (e.g. `SHOWUP-FITFAM`) or direct URL query parameters (`?join=CODE`).
+### Suite 6: Squads Strict Isolation & Membership Controls (V2)
+* **TC-6.1 Strict Athlete Squad Isolation**: An athlete shall **only** view squads that were either created by the athlete or joined by the athlete themselves. Zero squads outside those two criteria are displayed.
+* **TC-6.2 Elimination of Legacy/Hardcoded Squad Injections**: No legacy, hardcoded, or third-party squads are auto-injected or discoverable without an explicit joining code or direct invitation.
+* **TC-6.3 Squad Beacon & Active Workout Alerts**: Pulses quietly when a teammate is actively working out; surfaces real-time lifting banner.
+* **TC-6.4 Squad Invitations & Direct Joining**: Supports joining via 6-character code (e.g. `SHOWUP-FITFAM`) or direct URL query parameters (`?join=CODE`).
+* **TC-6.5 Creator Authority & Mantle Pickup**: Allows designated backup creators to pick up primary creator leadership if necessary.
 
-### Suite 7: Active Workout Map & Telemetry
-* **TC-7.1 Vetted Athlete Verification**: Excludes unauthenticated mock zip codes (e.g., 60601, 80202); only plots authenticated, vetted workout locations.
-* **TC-7.2 Geolocation & Map Telemetry**: Displays detected zip code and genuine live unique visitors with clean telemetry badges.
+### Suite 7: Global Daily Counter & Live Telemetry Engine (V2)
+* **TC-7.1 Deduplicated Daily Athlete Count**: Calculates distinct athlete count (logged user + distinct squad teammates completed today) using a unique ID `Set` to prevent double-counting across sessions or squads.
+* **TC-7.2 Eastern Time (ET) Midnight Reset**: Counter accurately computes status based on the Eastern Time calendar date and resets daily at 23:59 ET.
+* **TC-7.3 Active Athlete Live Badge**: Real-time counter of athletes currently lifting with dynamic singular/plural sentence updates.
 
-### Suite 8: Privacy, Security & Logout Eradication
-* **TC-8.1 Legal Documentation Access**: Privacy Policy (`privacy.html`) and Terms of Service (`terms.html`) positioned under Profile dropdown and Settings modal footer.
-* **TC-8.2 Complete Data Eradication on Logout**: Clicking **Log out** purges all tokens (`showUp_google_token`), user profile, height/weight metrics, workout history, weight logs, squad memberships, and location cache.
-* **TC-8.3 Pristine Logged-Out State**: Ensures zero remnants or squads leak to unauthenticated visitors on shared devices.
+### Suite 8: Active Workout Map & Telemetry
+* **TC-8.1 Vetted Athlete Verification**: Excludes unauthenticated mock zip codes; only plots authenticated, vetted workout locations.
+* **TC-8.2 Geolocation & Map Telemetry**: Displays detected zip code and genuine live unique visitors with clean telemetry badges.
 
-### Suite 9: Backup & Multi-Tier Cloud Sync
-* **TC-9.1 Offline JSON Backup**: Exports complete JSON archive with workouts, weight logs, squads, theme, and typography; imports without data corruption.
-* **TC-9.2 Google Drive Cloud Sync**: Silently syncs backup payload to `appDataFolder` on Google Drive.
+### Suite 9: Privacy, Security & Logout Eradication
+* **TC-9.1 Legal Documentation Access**: Privacy Policy (`privacy.html`) and Terms of Service (`terms.html`) positioned under Profile dropdown and Settings modal footer.
+* **TC-9.2 Complete Data Eradication on Logout**: Clicking **Log out** purges all tokens (`showUp_google_token`), user profile, height/weight metrics, workout history, weight logs, squad memberships, and location cache.
+* **TC-9.3 Pristine Logged-Out State**: Ensures zero remnants or squads leak to unauthenticated visitors on shared devices.
+
+### Suite 10: Backup & Multi-Tier Cloud Sync (V2 Format)
+* **TC-10.1 Offline JSON Backup (v2.0)**: Exports complete JSON archive with workouts, weight logs, squads, theme, and typography; imports without data corruption.
+* **TC-10.2 Google Drive Cloud Sync**: Silently syncs backup payload with `version: "2.0"` to `appDataFolder` on Google Drive.
