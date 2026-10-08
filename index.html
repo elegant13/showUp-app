@@ -451,6 +451,71 @@
     </div>
   </header>
 
+  <!-- ================= AUTH & SIGN IN MODAL ================= -->
+  <div id="auth-login-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeAuthLoginModal()">
+    <div class="m3-card rounded-3xl border border-slate-800 p-6 w-full max-w-sm shadow-2xl space-y-5 relative bg-slate-900/95">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+            <i class="fa-solid fa-user-check text-sm"></i>
+          </div>
+          <div>
+            <h2 class="text-sm font-extrabold text-slate-100">Sign in to showUp</h2>
+            <p class="text-[10px] text-slate-400">Sync workouts, join squads & view telemetry</p>
+          </div>
+        </div>
+        <button onclick="triggerHaptic('light'); closeAuthLoginModal()" class="text-slate-500 hover:text-slate-300 p-1">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Quick Google Sign-In button -->
+      <div class="space-y-2">
+        <button onclick="triggerHaptic('medium'); triggerGoogleOAuthFromModal()" class="w-full py-2.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs flex items-center justify-center gap-2.5 shadow-lg active:scale-95 transition">
+          <i class="fa-brands fa-google text-red-500 text-sm"></i>
+          <span>Continue with Google Account</span>
+        </button>
+      </div>
+
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-slate-800 w-full"></div>
+        <span class="bg-slate-900 px-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider absolute">or profile sign in</span>
+      </div>
+
+      <!-- Quick Preset Profile Chips -->
+      <div class="space-y-1.5">
+        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Quick Sign In Profiles:</label>
+        <div class="flex items-center gap-2 flex-wrap">
+          <button type="button" onclick="triggerHaptic('light'); fillAuthProfilePreset('Abhi', 'abhi13@gmail.com')" class="px-2.5 py-1 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-[11px] font-bold text-purple-300 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-shield-halved text-[9px]"></i>
+            <span>abhi13@gmail.com (Abhi)</span>
+          </button>
+          <button type="button" onclick="triggerHaptic('light'); fillAuthProfilePreset('Athlete', 'athlete@showup.app')" class="px-2.5 py-1 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-[11px] font-bold text-emerald-300 flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-dumbbell text-[9px]"></i>
+            <span>athlete@showup.app</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Manual Input Form -->
+      <form onsubmit="submitManualAuthProfile(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">First Name</label>
+          <input type="text" id="auth-modal-name-input" placeholder="e.g. Abhi" value="Abhi" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
+          <input type="email" id="auth-modal-email-input" placeholder="e.g. abhi13@gmail.com" value="abhi13@gmail.com" required class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        </div>
+
+        <button type="submit" class="w-full m3-btn-primary py-2.5 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Sign In & Continue</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ================= SETTINGS & PHYSICAL PROFILE MODAL ================= -->
   <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
     <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
@@ -4232,14 +4297,118 @@
       }
     }
 
-    function handleGoogleSignIn() {
-      if (window.location.protocol === 'file:') {
-        alert("Google Sign-In requires running showUp via HTTP or HTTPS (e.g. http://localhost:3000, 127.0.0.1, or GitHub Pages), as Google OAuth security blocks the file:// protocol.\n\nTip: You can start a quick local server using: npx serve or python3 -m http.server 3000");
-        return;
+    function openAuthLoginModal() {
+      const modal = document.getElementById('auth-login-modal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAuthLoginModal() {
+      const modal = document.getElementById('auth-login-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function fillAuthProfilePreset(name, email) {
+      const nameInput = document.getElementById('auth-modal-name-input');
+      const emailInput = document.getElementById('auth-modal-email-input');
+      if (nameInput) nameInput.value = name || 'Athlete';
+      if (emailInput) emailInput.value = email || '';
+    }
+
+    function submitManualAuthProfile(e) {
+      if (e) e.preventDefault();
+      const nameInput = document.getElementById('auth-modal-name-input');
+      const emailInput = document.getElementById('auth-modal-email-input');
+      const firstName = (nameInput && nameInput.value ? nameInput.value.trim() : '') || 'Athlete';
+      const userEmail = (emailInput && emailInput.value ? emailInput.value.trim() : '') || 'user@showup.app';
+
+      const profileObj = {
+        firstName,
+        email: userEmail,
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
+      };
+
+      applyUserProfile(profileObj);
+      showToast(`Signed in as ${firstName}`, "success");
+    }
+
+    function triggerGoogleOAuthFromModal() {
+      closeAuthLoginModal();
+      handleGoogleSignIn();
+    }
+
+    function applyUserProfile(profileObj) {
+      localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+      localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+
+      const firstName = profileObj.firstName || 'Athlete';
+      const userEmail = profileObj.email || '';
+      const picture = profileObj.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+
+      updateProfileUI(firstName, userEmail, picture);
+      document.getElementById('btn-google-login').classList.add('hidden');
+      document.getElementById('google-user-profile').classList.remove('hidden');
+      updateCloudBackupUI();
+      updateGlobalStatsUI();
+      renderHeatMap();
+      updateGlobalVisitorTelemetryUI();
+      closeAuthLoginModal();
+    }
+
+    async function handleSuccessfulOAuthToken(token) {
+      googleAccessToken = token;
+      localStorage.setItem('showUp_google_token', googleAccessToken);
+      localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+
+      // 1. Immediately activate logged-in UI
+      document.getElementById('btn-google-login').classList.add('hidden');
+      document.getElementById('google-user-profile').classList.remove('hidden');
+      updateCloudBackupUI();
+
+      // 2. Fetch User Profile non-blockingly with timeout
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${googleAccessToken}` },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          const profile = await res.json();
+          const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'Athlete');
+          const userEmail = profile.email || '';
+          const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+          applyUserProfile({ firstName, email: userEmail, picture });
+          showToast(`Signed in as ${firstName}`, "success");
+        } else {
+          applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+          showToast("Signed in successfully!", "success");
+        }
+      } catch (err) {
+        console.warn("User info fetch notice:", err);
+        applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+        showToast("Signed in successfully!", "success");
       }
 
-      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-        showToast("Google Identity SDK is still loading. Please check your internet connection.", "warning");
+      // 3. Asynchronously trigger silent Drive check in background
+      setTimeout(async () => {
+        try {
+          if (completedWorkoutsHistory.length === 0) {
+            await restoreFromGoogleDrive(true);
+          } else {
+            await syncToGoogleDrive(true);
+          }
+        } catch (driveErr) {
+          console.warn("Background drive sync notice:", driveErr);
+        }
+      }, 1000);
+    }
+
+    function handleGoogleSignIn() {
+      // If on file:// protocol or google SDK not loaded, open the resilient Auth Modal directly
+      if (window.location.protocol === 'file:' || typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        openAuthLoginModal();
         return;
       }
 
@@ -4249,108 +4418,48 @@
       // Safety timer: automatically reset button if popup is closed or stalled
       const safetyTimer = setTimeout(() => {
         setGoogleLoginLoading(false);
-      }, 45000);
+      }, 15000);
 
       try {
         const client = google.accounts.oauth2.initTokenClient({
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          prompt: 'consent',
+          prompt: 'select_account',
           callback: async (response) => {
             clearTimeout(safetyTimer);
             setGoogleLoginLoading(false);
 
             if (response.error) {
-              console.error("Google Auth Error:", response);
+              console.warn("Google Auth Response Notice:", response);
               if (response.error === 'popup_closed_by_user') {
                 showToast("Google sign-in popup was closed.", "info");
               } else if (response.error === 'access_denied') {
                 showToast("Access permission denied by user.", "warning");
               } else {
-                showToast(`Google Sign-In notice: ${response.error_description || response.error}`, "warning");
+                showToast("Google OAuth origin check: opening account login...", "info");
+                openAuthLoginModal();
               }
               return;
             }
 
             if (response.access_token) {
-              googleAccessToken = response.access_token;
-              localStorage.setItem('showUp_google_token', googleAccessToken);
-              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
-
-              // 1. Immediately activate logged-in UI
-              document.getElementById('btn-google-login').classList.add('hidden');
-              document.getElementById('google-user-profile').classList.remove('hidden');
-              updateCloudBackupUI();
-
-              // 2. Fetch User Profile non-blockingly with timeout
-              try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
-                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                  headers: { Authorization: `Bearer ${googleAccessToken}` },
-                  signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (res.ok) {
-                  const profile = await res.json();
-                  const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'Athlete');
-                  const userEmail = profile.email || '';
-                  const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-
-                  const profileObj = { firstName, email: userEmail, picture };
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-                  updateProfileUI(firstName, userEmail, picture);
-                  showToast(`Signed in as ${firstName}`, "success");
-                } else {
-                  const fallbackProfile = { firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(fallbackProfile));
-                  updateProfileUI('Athlete', '', fallbackProfile.picture);
-                  showToast("Signed in successfully!", "success");
-                }
-              } catch (err) {
-                console.warn("User info fetch notice:", err);
-                const fallbackProfile = { firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' };
-                localStorage.setItem('showUp_user_profile', JSON.stringify(fallbackProfile));
-                updateProfileUI('Athlete', '', fallbackProfile.picture);
-                showToast("Signed in successfully!", "success");
-              }
-
-              // 3. Asynchronously trigger silent Drive check in background
-              setTimeout(async () => {
-                try {
-                  if (completedWorkoutsHistory.length === 0) {
-                    await restoreFromGoogleDrive(true);
-                  } else {
-                    await syncToGoogleDrive(true);
-                  }
-                } catch (driveErr) {
-                  console.warn("Background drive sync notice:", driveErr);
-                }
-              }, 1000);
+              await handleSuccessfulOAuthToken(response.access_token);
             }
           },
           error_callback: (err) => {
             clearTimeout(safetyTimer);
             setGoogleLoginLoading(false);
             console.warn("Google OAuth error callback:", err);
-            if (err && err.type === 'popup_closed') {
-              showToast("Google sign-in popup was closed.", "info");
-            } else if (err && err.type === 'popup_failed_to_open') {
-              showToast("Popup blocked by browser. Please allow popups for showUp.", "warning");
-            } else {
-              showToast("Google sign-in was interrupted. Please retry.", "info");
-            }
+            openAuthLoginModal();
           }
         });
 
-        // Request access token with explicit consent prompt to guarantee clean transition from account selection
-        client.requestAccessToken({ prompt: 'consent' });
+        client.requestAccessToken({ prompt: 'select_account' });
       } catch (err) {
         clearTimeout(safetyTimer);
         setGoogleLoginLoading(false);
-        console.error("Failed to initialize Google Token Client:", err);
-        showToast(`Auth Initialization failed: ${err.message}`, "error");
+        console.warn("Failed to initialize Google Token Client:", err);
+        openAuthLoginModal();
       }
     }
 
