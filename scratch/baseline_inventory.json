@@ -1,0 +1,1333 @@
+{
+  "dom_ids_count": 215,
+  "dom_ids": [
+    "add-member-modal",
+    "add-member-modal-squad-name",
+    "admin-city-log-container",
+    "admin-global-visitor-telemetry",
+    "admin-state-groups-container",
+    "admin-telemetry-last-sync",
+    "admin-telemetry-top-state",
+    "admin-telemetry-total-cities",
+    "admin-telemetry-total-states",
+    "admin-telemetry-total-visitors",
+    "admin-view-tab-city",
+    "admin-view-tab-state",
+    "admin-visitor-search-input",
+    "aerobic-te-label",
+    "aerobic-te-score",
+    "anaerobic-te-label",
+    "anaerobic-te-score",
+    "app-body",
+    "auth-login-modal",
+    "auth-modal-email-input",
+    "auth-modal-name-input",
+    "backup-banner-badge",
+    "backup-banner-desc",
+    "backup-banner-google-btn",
+    "backup-banner-title",
+    "banner-date-label",
+    "best-streak-val",
+    "body-back",
+    "body-biceps",
+    "body-chest",
+    "body-core",
+    "body-hamstrings",
+    "body-quads",
+    "body-shoulders-ant",
+    "body-shoulders-post",
+    "body-triceps",
+    "btn-connect-hrm",
+    "btn-google-login",
+    "btn-settings-gdrive-backup",
+    "btn-settings-gdrive-restore",
+    "btn-share-full-workout",
+    "btn-toggle-sim",
+    "btn-zoom-to-selected-zip",
+    "cal-current-weight-val",
+    "cal-weight-change-val",
+    "calendar-grid",
+    "calendar-month-year-label",
+    "calories-burned-score",
+    "cloud-backup-reminder-banner",
+    "create-squad-modal",
+    "current-streak-val",
+    "display-user-zip",
+    "dropdown-user-email",
+    "endurance-dist-label",
+    "endurance-metrics-panel",
+    "erg-metrics-panel",
+    "exercise-catalog-list",
+    "exercise-name-input",
+    "font-btn-jakarta",
+    "font-btn-lexend",
+    "font-btn-mono",
+    "font-btn-outfit",
+    "font-btn-space",
+    "gdrive-backup-active-modal",
+    "gdrive-modal-active-badge",
+    "gdrive-modal-count-squads",
+    "gdrive-modal-count-weights",
+    "gdrive-modal-count-workouts",
+    "gdrive-modal-exact-bytes",
+    "gdrive-modal-filesize",
+    "gdrive-modal-last-synced",
+    "gdrive-modal-status-text",
+    "gdrive-modal-sync-badge",
+    "gdrive-modal-user-avatar",
+    "gdrive-modal-user-email",
+    "gdrive-modal-user-name",
+    "global-active-sentence",
+    "global-active-sentence-text",
+    "global-daily-counter",
+    "google-maps-canvas",
+    "google-user-profile",
+    "graph-avg-weight",
+    "graph-max-weight",
+    "graph-min-weight",
+    "header-visitor-count",
+    "header-visitor-pill",
+    "heatmap-legend",
+    "historical-mode-banner",
+    "hr-card",
+    "hr-card-body",
+    "hr-collapse-icon",
+    "hr-pulse-dot",
+    "hr-pulse-ping",
+    "hr-sparkline",
+    "implement-select",
+    "input-endurance-distance",
+    "input-endurance-time",
+    "input-erg-distance",
+    "input-erg-time",
+    "input-reps",
+    "input-swim-distance",
+    "input-swim-time",
+    "input-weight",
+    "join-squad-code-input",
+    "join-squad-modal",
+    "large-logo-img",
+    "large-logo-modal",
+    "live-hr-display",
+    "live-hr-zone",
+    "log-weight-date-input",
+    "log-weight-date-label",
+    "log-weight-existing-hint",
+    "log-weight-modal",
+    "log-weight-num-input",
+    "logged-sets-list",
+    "manual-backup-file-input",
+    "map-boundary-center-hud",
+    "map-boundary-top-hud",
+    "map-unique-visitor-count",
+    "map-zip-boundaries-overlay",
+    "map-zoom-status",
+    "modal-squad-invite-code",
+    "monthly-count-badge",
+    "monthly-history-list",
+    "muscle-breakdown-bars",
+    "muscle-group-select",
+    "muscle-map-container",
+    "nav-btn-calendar",
+    "nav-btn-squads",
+    "nav-btn-workout",
+    "new-member-email",
+    "new-member-name",
+    "new-member-phone",
+    "new-member-zip",
+    "new-squad-motto",
+    "new-squad-name",
+    "notif-modal-squad-name",
+    "numpad-display-unit",
+    "numpad-display-val",
+    "numpad-modal-title",
+    "pill-avatar",
+    "pill-name",
+    "pill-workout",
+    "pref-beacon",
+    "pref-browser",
+    "pref-chime",
+    "pref-haptic",
+    "pref-hr-collapsed",
+    "pref-pill",
+    "profile-admin-telemetry-item",
+    "profile-dropdown-menu",
+    "quick-date-chips-container",
+    "rpe-select",
+    "session-timer",
+    "set-count-badge",
+    "settings-backup-status-badge",
+    "settings-device-card",
+    "settings-gdrive-card",
+    "settings-gdrive-status-pill",
+    "settings-gdrive-time-val",
+    "settings-gdrive-timestamp",
+    "settings-modal",
+    "settings-unique-visitor-count",
+    "settings-visitor-id-badge",
+    "squad-accent-amber",
+    "squad-accent-blue",
+    "squad-accent-emerald",
+    "squad-accent-purple",
+    "squad-accent-rose",
+    "squad-active-beacon-banner",
+    "squad-active-beacon-text",
+    "squad-icon-bolt",
+    "squad-icon-crown",
+    "squad-icon-dumbbell",
+    "squad-icon-fire",
+    "squad-icon-shield-halved",
+    "squad-icon-trophy",
+    "squad-nav-beacon",
+    "squad-nav-beacon-dot",
+    "squad-notification-pill",
+    "squad-notifications-modal",
+    "squads-list-container",
+    "standard-metrics-panel",
+    "summary-notes-display",
+    "summary-timestamp",
+    "summary-title",
+    "svg-anterior",
+    "svg-posterior",
+    "swim-metrics-panel",
+    "tab-calendar-view",
+    "tab-squads-view",
+    "tab-workout-view",
+    "theme-palette-grid",
+    "toast-container",
+    "transfer-candidates-list",
+    "transfer-creator-modal",
+    "user-avatar",
+    "user-email",
+    "user-first-name",
+    "user-height-input",
+    "user-weight-input",
+    "weight-graph-modal",
+    "weight-history-list",
+    "weight-numpad-modal",
+    "weight-trend-svg",
+    "workout-date-picker",
+    "workout-notes-input",
+    "workout-summary-card",
+    "workout-title-input",
+    "zip-detail-border-tag",
+    "zip-detail-card",
+    "zip-detail-desc",
+    "zip-detail-indicator",
+    "zip-detail-title",
+    "zip-ticker-container"
+  ],
+  "functions_count": 211,
+  "functions": [
+    "acceptSquadInvite",
+    "addMemberSubmit",
+    "adjustEnduranceDistance",
+    "adjustEnduranceTime",
+    "adjustErgDistance",
+    "adjustErgTime",
+    "adjustLogWeight",
+    "adjustReps",
+    "adjustSwimDistance",
+    "adjustSwimTime",
+    "adjustWeight",
+    "applyUserProfile",
+    "assignBackupCreator",
+    "attemptSilentTokenRefresh",
+    "avgW",
+    "broadcastUserWorkoutEnded",
+    "broadcastUserWorkoutStarted",
+    "checkAndResetDailyETCounter",
+    "checkAndRun",
+    "closeAddMemberModal",
+    "closeAuthLoginModal",
+    "closeCreateSquadModal",
+    "closeGDriveBackupModal",
+    "closeJoinSquadModal",
+    "closeLargeLogoModal",
+    "closeLogWeightModal",
+    "closeProfileDropdownOutside",
+    "closeSquadNotificationsModal",
+    "closeSummary",
+    "closeTransferModal",
+    "closeUserZipModal",
+    "closeWeightNumpadModal",
+    "confirmTransferAndLeave",
+    "copySquadInviteCode",
+    "createNewSquadSubmit",
+    "declineSquadInvite",
+    "deleteHistoricalWorkout",
+    "deleteSet",
+    "deleteSquadPrompt",
+    "deleteWeightEntry",
+    "detectUserZipFromIP",
+    "dismissSimulatedWorkout",
+    "dismissSquadPill",
+    "draw",
+    "editHistoricalSet",
+    "escapeHtml",
+    "evaluateAndFinishWorkout",
+    "exportJSONBackup",
+    "exportVisitorDataJSON",
+    "fillAuthProfilePreset",
+    "formatBytes",
+    "formatHistoricalDate",
+    "formatTimeAgo",
+    "getActiveAndCompletedZipNodes",
+    "getAggregatedNodesForZoom",
+    "getAppUser",
+    "getBackupPayload",
+    "getETDateKey",
+    "getFormattedBackupSize",
+    "getGlobalActiveAthletesCount",
+    "getGlobalSquadRegistry",
+    "getGlobalVisitorsLog",
+    "getGoogleClientId",
+    "getInitials",
+    "getLocalDateISO",
+    "getOrSetUniqueVisitorId",
+    "getPendingSquadInvites",
+    "getSquadInvites",
+    "getSquads",
+    "getUserZip",
+    "getZipCoordinates",
+    "gm_authFailure",
+    "handleAdminVisitorSearch",
+    "handleCreatorLeave",
+    "handleDateChange",
+    "handleExerciseInput",
+    "handleGoogleLogin",
+    "handleGoogleSignIn",
+    "handleImplementChange",
+    "handleLogWeightDateChange",
+    "handleLogout",
+    "handleSuccessfulOAuthToken",
+    "importJSONBackup",
+    "incrementGlobalWorkoutCounter",
+    "initCatalog",
+    "initDatePickerConstraints",
+    "initGlobalVisitorTelemetry",
+    "initGoogleMapsBaseLayer",
+    "initSparkline",
+    "initSquads",
+    "initUniqueVisitorCounter",
+    "isAthleteMemberOrCreator",
+    "isCustomerLoggedIn",
+    "isGlobalVisitorTelemetryAdmin",
+    "isValidZip",
+    "leaveSquadAsMember",
+    "loadPhysicalProfile",
+    "logBodyWeightEntry",
+    "logSet",
+    "navigateCalendarMonth",
+    "numpadBackspace",
+    "numpadClear",
+    "numpadConfirm",
+    "numpadInput",
+    "numpadQuickAdjust",
+    "openAddMemberModal",
+    "openAuthLoginModal",
+    "openCreateSquadModal",
+    "openGDriveBackupModal",
+    "openJoinSquadModal",
+    "openLargeLogoModal",
+    "openLogWeightModal",
+    "openSquadNotificationsModal",
+    "openUserZipModal",
+    "openWeightNumpadForHistorical",
+    "openWeightNumpadModal",
+    "openWeightTrendGraph",
+    "parseCityAndState",
+    "parseJwtPayload",
+    "parseLocationHierarchy",
+    "pasteJoinCodeFromClipboard",
+    "pickUpMantlePrompt",
+    "playUnobtrusiveChime",
+    "previewCurrentSquadNotifications",
+    "promptAssignFirstBackupCreator",
+    "recordCurrentVisitorLocation",
+    "recordSquadInvite",
+    "refreshAdminVisitorData",
+    "removeSquadMember",
+    "renderAdminGlobalVisitorTelemetry",
+    "renderCalendar",
+    "renderGoogleMapMarkers",
+    "renderGoogleMapsEmbed",
+    "renderHeatMap",
+    "renderLoggedSets",
+    "renderMapZipBoundariesOverlay",
+    "renderMonthlyHistory",
+    "renderSquadsTab",
+    "renderWeightHistory",
+    "renderWeightTrendGraphSVG",
+    "requestDriveAuthorization",
+    "requestTokenSilently",
+    "resendSquadInvite",
+    "resetGoogleLoginButtonUI",
+    "resetToTodayDate",
+    "restoreFontPreferences",
+    "restoreFromGoogleDrive",
+    "restoreSavedSession",
+    "restoreThemePreferences",
+    "reverseGeocodeCoords",
+    "sanitizeSquadMembers",
+    "saveGlobalVisitorsLog",
+    "saveLogWeightEntry",
+    "savePhysicalProfile",
+    "saveSquadNotificationsSubmit",
+    "saveSquadToGlobalRegistry",
+    "saveSquads",
+    "saveUserZipSubmit",
+    "scrollToAdminTelemetry",
+    "seedInitialGlobalVisitorsLog",
+    "selectSquadAccent",
+    "selectSquadIcon",
+    "selectZipNode",
+    "sendBrowserNotification",
+    "sendSquadInviteEmail",
+    "sendSquadInviteSMS",
+    "setAdminVisitorViewMode",
+    "setFontFamily",
+    "setGoogleLoginLoading",
+    "setLogWeightQuickDate",
+    "setThemePalette",
+    "setUserZip",
+    "shareWorkoutToWhatsApp",
+    "showSquadNotificationPill",
+    "showToast",
+    "simulateTeammateWorkout",
+    "stopSpecificMemberWorkout",
+    "submitJoinSquadByCode",
+    "submitManualAuthProfile",
+    "switchTab",
+    "syncToGoogleDrive",
+    "toggleHRCardVisibility",
+    "toggleHRCollapsePref",
+    "toggleHRSimulator",
+    "toggleProfileDropdown",
+    "toggleSettingsModal",
+    "toggleSquadCollapse",
+    "toggleWeightGraphModal",
+    "toggleWorkoutAccordion",
+    "triggerGoogleOAuthFromModal",
+    "triggerHaptic",
+    "triggerManualFileRestore",
+    "triggerSquadHaptic",
+    "triggerSquadWorkoutNotification",
+    "tryGoogleOneTap",
+    "updateAnatomicalBodyMap",
+    "updateCloudBackupUI",
+    "updateFontUI",
+    "updateGlobalStatsUI",
+    "updateGlobalVisitorTelemetryUI",
+    "updateMapZoomStatusUI",
+    "updateNumpadDisplay",
+    "updateProfileUI",
+    "updateQuickDateChipsUI",
+    "updateSquadBeacon",
+    "updateThemeButtonsUI",
+    "updateVisitorCounterUI",
+    "updateZipDetailCard",
+    "zoomGoogleMap",
+    "zoomToSelectedZip",
+    "zoomToUserZipLevel"
+  ],
+  "inline_handlers_count": 173,
+  "inline_handlers": [
+    [
+      "body",
+      "onclick",
+      "closeProfileDropdownOutside(event)"
+    ],
+    [
+      "div",
+      "onclick",
+      "triggerHaptic('light'); openLargeLogoModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); toggleSettingsModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); toggleProfileDropdown(event)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); scrollToAdminTelemetry()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); handleLogout()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); handleGoogleSignIn()"
+    ],
+    [
+      "div",
+      "onclick",
+      "if(event.target === this) closeAuthLoginModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); closeAuthLoginModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); triggerGoogleOAuthFromModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); fillAuthProfilePreset('Abhi', 'abhi13@gmail.com')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); fillAuthProfilePreset('Athlete', 'athlete@showup.app')"
+    ],
+    [
+      "form",
+      "onsubmit",
+      "submitManualAuthProfile(event)"
+    ],
+    [
+      "button",
+      "onclick",
+      "toggleSettingsModal()"
+    ],
+    [
+      "div",
+      "onclick",
+      "triggerHaptic('light'); openLargeLogoModal()"
+    ],
+    [
+      "input",
+      "onchange",
+      "savePhysicalProfile()"
+    ],
+    [
+      "input",
+      "onchange",
+      "savePhysicalProfile()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setFontFamily('jakarta')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setFontFamily('outfit')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setFontFamily('space')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setFontFamily('lexend')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setFontFamily('mono')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('emerald')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('orange')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('blue')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('purple')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('red')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('slate')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setThemePalette('amoled')"
+    ],
+    [
+      "input",
+      "onchange",
+      "toggleHRCollapsePref(this.checked)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); syncToGoogleDrive()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); restoreFromGoogleDrive()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); exportJSONBackup()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); triggerManualFileRestore()"
+    ],
+    [
+      "input",
+      "onchange",
+      "importJSONBackup(event)"
+    ],
+    [
+      "button",
+      "onclick",
+      "toggleSettingsModal()"
+    ],
+    [
+      "div",
+      "onclick",
+      "if(event.target === this) closeLogWeightModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeLogWeightModal()"
+    ],
+    [
+      "input",
+      "onchange",
+      "handleLogWeightDateChange(this.value)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setLogWeightQuickDate(0)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setLogWeightQuickDate(1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setLogWeightQuickDate(2)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setLogWeightQuickDate(7)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustLogWeight(-5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustLogWeight(-1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustLogWeight(1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustLogWeight(5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeLogWeightModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); saveLogWeightEntry()"
+    ],
+    [
+      "button",
+      "onclick",
+      "toggleWeightGraphModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "toggleWeightGraphModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "dismissSquadPill()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeCreateSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('dumbbell')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('fire')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('trophy')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('bolt')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('crown')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadIcon('shield-halved')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadAccent('emerald')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadAccent('blue')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadAccent('purple')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadAccent('amber')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectSquadAccent('rose')"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeCreateSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); createNewSquadSubmit()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeJoinSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "pasteJoinCodeFromClipboard()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeJoinSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); submitJoinSquadByCode()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeTransferModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeTransferModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); confirmTransferAndLeave()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeSquadNotificationsModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); previewCurrentSquadNotifications()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeSquadNotificationsModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); saveSquadNotificationsSubmit()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeAddMemberModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); copySquadInviteCode()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeAddMemberModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); addMemberSubmit()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeWeightNumpadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('1')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('2')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('3')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadQuickAdjust(5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('4')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('5')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('6')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadQuickAdjust(2.5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('7')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('8')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('9')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadQuickAdjust(-2.5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('.')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadInput('0')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadBackspace()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadQuickAdjust(-5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); numpadClear()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); numpadConfirm()"
+    ],
+    [
+      "div",
+      "onclick",
+      "if(event.target === this) closeLargeLogoModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeLargeLogoModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeLargeLogoModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeGDriveBackupModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); syncToGoogleDrive(false)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); restoreFromGoogleDrive()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeGDriveBackupModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); handleGoogleLogin()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); exportJSONBackup()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); triggerManualFileRestore()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); connectHRM()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); toggleHRSimulator()"
+    ],
+    [
+      "button",
+      "onclick",
+      "toggleHRCardVisibility()"
+    ],
+    [
+      "input",
+      "onchange",
+      "handleDateChange(this.value)"
+    ],
+    [
+      "button",
+      "onclick",
+      "resetToTodayDate()"
+    ],
+    [
+      "input",
+      "oninput",
+      "handleExerciseInput(this.value)"
+    ],
+    [
+      "select",
+      "onchange",
+      "handleImplementChange(this.value)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustWeight(-5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustWeight(-2.5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustWeight(2.5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustWeight(5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustReps(-5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustReps(-1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustReps(1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustReps(5)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgDistance(-500)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgDistance(-100)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgDistance(100)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgDistance(500)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgTime(-60)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgTime(-15)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgTime(15)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustErgTime(60)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimDistance(-250)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimDistance(-50)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimDistance(50)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimDistance(250)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimTime(-120)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimTime(-30)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimTime(30)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustSwimTime(120)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceDistance(-1.0)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceDistance(-0.25)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceDistance(0.25)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceDistance(1.0)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceTime(-900)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceTime(-300)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceTime(300)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); adjustEnduranceTime(900)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('heavy'); logSet()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('heavy'); evaluateAndFinishWorkout()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); shareWorkoutToWhatsApp()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); closeSummary()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); logBodyWeightEntry()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); openWeightTrendGraph()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); navigateCalendarMonth(-1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); navigateCalendarMonth(1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); zoomGoogleMap(1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); zoomGoogleMap(-1)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); zoomToUserZipLevel()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); zoomToSelectedZip()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); refreshAdminVisitorData()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); exportVisitorDataJSON()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('state')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('city')"
+    ],
+    [
+      "input",
+      "oninput",
+      "handleAdminVisitorSearch(this.value)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); openJoinSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); openCreateSquadModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); simulateTeammateWorkout()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); dismissSimulatedWorkout()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); switchTab('workout')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); switchTab('calendar')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); switchTab('squads')"
+    ]
+  ],
+  "localStorage_keys_count": 28,
+  "localStorage_keys": [
+    "showUp_active_workout_sets",
+    "showUp_font",
+    "showUp_global_counter_count",
+    "showUp_global_counter_et_date",
+    "showUp_global_squad_registry",
+    "showUp_gmaps_api_key",
+    "showUp_google_token",
+    "showUp_hr_collapsed",
+    "showUp_last_drive_sync",
+    "showUp_session_expiry",
+    "showUp_squad_archive",
+    "showUp_squad_invites",
+    "showUp_squads",
+    "showUp_synced_workouts",
+    "showUp_theme",
+    "showUp_theme_accent",
+    "showUp_user_city",
+    "showUp_user_height",
+    "showUp_user_ip_city",
+    "showUp_user_ip_lat",
+    "showUp_user_ip_lng",
+    "showUp_user_ip_zip",
+    "showUp_user_location_name",
+    "showUp_user_profile",
+    "showUp_user_state",
+    "showUp_user_weight",
+    "showUp_user_zip",
+    "showUp_weight_history"
+  ]
+}
