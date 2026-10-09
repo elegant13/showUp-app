@@ -128,7 +128,7 @@
     // ================= UI/UX DESIGN PARADIGM MANAGEMENT (V3) =================
 
     function setAppUIMode(modeKey) {
-      if (!modeKey || !['precision', 'zen', 'hud'].includes(modeKey)) {
+      if (!modeKey || !['precision', 'zen', 'hud', 'light'].includes(modeKey)) {
         modeKey = 'precision';
       }
       const body = document.getElementById('app-body');
@@ -143,14 +143,15 @@
 
     function cycleAppUIMode() {
       const current = localStorage.getItem('showUp_ui_mode') || 'precision';
-      const modes = ['precision', 'zen', 'hud'];
+      const modes = ['precision', 'zen', 'hud', 'light'];
       const nextIdx = (modes.indexOf(current) + 1) % modes.length;
       const nextMode = modes[nextIdx];
       setAppUIMode(nextMode);
       const labels = {
         precision: 'Precision Glass UI',
         zen: 'Executive Zen UI (Minimalist)',
-        hud: 'Cyber Kinetic HUD (Telemetry)'
+        hud: 'Cyber Kinetic HUD (Telemetry)',
+        light: 'Daylight Frost UI (Light Mode)'
       };
       if (typeof showToast === 'function') {
         showToast(`Switched to ${labels[nextMode]}`, 'info');
@@ -163,7 +164,7 @@
     }
 
     function updateUIModeButtons(activeMode) {
-      const modes = ['precision', 'zen', 'hud'];
+      const modes = ['precision', 'zen', 'hud', 'light'];
       modes.forEach(m => {
         const btn = document.getElementById(`ui-mode-btn-${m}`);
         if (btn) {
@@ -176,7 +177,7 @@
       });
       const quickToggleLabel = document.getElementById('quick-ui-mode-name');
       if (quickToggleLabel) {
-        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD' };
+        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD', light: 'Light' };
         quickToggleLabel.innerText = names[activeMode] || 'Glass';
       }
     }

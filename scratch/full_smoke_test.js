@@ -926,7 +926,7 @@ const AppStorage = {
     // ================= UI/UX DESIGN PARADIGM MANAGEMENT (V3) =================
 
     function setAppUIMode(modeKey) {
-      if (!modeKey || !['precision', 'zen', 'hud'].includes(modeKey)) {
+      if (!modeKey || !['precision', 'zen', 'hud', 'light'].includes(modeKey)) {
         modeKey = 'precision';
       }
       const body = document.getElementById('app-body');
@@ -941,14 +941,15 @@ const AppStorage = {
 
     function cycleAppUIMode() {
       const current = localStorage.getItem('showUp_ui_mode') || 'precision';
-      const modes = ['precision', 'zen', 'hud'];
+      const modes = ['precision', 'zen', 'hud', 'light'];
       const nextIdx = (modes.indexOf(current) + 1) % modes.length;
       const nextMode = modes[nextIdx];
       setAppUIMode(nextMode);
       const labels = {
         precision: 'Precision Glass UI',
         zen: 'Executive Zen UI (Minimalist)',
-        hud: 'Cyber Kinetic HUD (Telemetry)'
+        hud: 'Cyber Kinetic HUD (Telemetry)',
+        light: 'Daylight Frost UI (Light Mode)'
       };
       if (typeof showToast === 'function') {
         showToast(`Switched to ${labels[nextMode]}`, 'info');
@@ -961,7 +962,7 @@ const AppStorage = {
     }
 
     function updateUIModeButtons(activeMode) {
-      const modes = ['precision', 'zen', 'hud'];
+      const modes = ['precision', 'zen', 'hud', 'light'];
       modes.forEach(m => {
         const btn = document.getElementById(`ui-mode-btn-${m}`);
         if (btn) {
@@ -974,7 +975,7 @@ const AppStorage = {
       });
       const quickToggleLabel = document.getElementById('quick-ui-mode-name');
       if (quickToggleLabel) {
-        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD' };
+        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD', light: 'Light' };
         quickToggleLabel.innerText = names[activeMode] || 'Glass';
       }
     }
@@ -5707,56 +5708,65 @@ async function initUniqueVisitorCounter() {
   const visitorId = getOrSetUniqueVisitorId();
   const isNewVisitor = !localStorage.getItem(VISITOR_COUNTED_KEY);
 
-  let currentCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
-  // Clean legacy arbitrary/inflated mock values (e.g., >= 1000) to ensure genuine unpadded count
-  if (isNaN(currentCount) || currentCount >= 1000 || currentCount < 1) {
-    currentCount = 1;
-    localStorage.setItem(VISITOR_COUNT_KEY, '1');
+  // 1. Get baseline count from verified local global visitors log
+  const localLog = getGlobalVisitorsLog();
+  let currentCount = Math.max(1, localLog.length);
+  const storedCount = parseInt(localStorage.getItem(VISITOR_COUNT_KEY) || '0', 10);
+  if (!isNaN(storedCount) && storedCount > currentCount && storedCount < 1000) {
+    currentCount = storedCount;
   }
 
   if (isNewVisitor) {
-    currentCount = Math.max(1, currentCount + 1);
-    localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
     localStorage.setItem(VISITOR_COUNTED_KEY, 'true');
   }
 
+  localStorage.setItem(VISITOR_COUNT_KEY, String(currentCount));
   updateVisitorCounterUI(currentCount);
 
-  // Attempt live sync with privacy-preserving counter API
+  // 2. Query Firestore global_visitors directly as canonical source of truth
   try {
-    const endpoint = isNewVisitor
-      ? 'https://api.counterapi.dev/v1/showupapp_fitness_genuine/unique_visitors/up'
-      : 'https://api.counterapi.dev/v1/showupapp_fitness_genuine/unique_visitors';
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-    const res = await fetch(endpoint, { signal: controller.signal });
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const data = await res.json();
-      if (data && typeof data.count === 'number' && data.count > 0) {
-        localStorage.setItem(VISITOR_COUNT_KEY, String(data.count));
-        updateVisitorCounterUI(data.count);
+    const db = getFirestoreDb();
+    if (db) {
+      const snapshot = await db.collection('global_visitors').get();
+      if (snapshot && typeof snapshot.size === 'number' && snapshot.size > 0) {
+        const canonicalCount = Math.max(1, snapshot.size);
+        localStorage.setItem(VISITOR_COUNT_KEY, String(canonicalCount));
+        updateVisitorCounterUI(canonicalCount);
+        return;
       }
     }
-  } catch (e) {
-    // Graceful offline/network fallback
+  } catch (err) {
+    console.debug("Firestore visitor count sync notice:", err);
+  }
+
+  // 3. Fallback: Keep unified with local telemetry log
+  const finalLog = getGlobalVisitorsLog();
+  if (finalLog && finalLog.length > 0) {
+    updateVisitorCounterUI(finalLog.length);
   }
 }
 
 function updateVisitorCounterUI(count) {
-  const formatted = Number(count).toLocaleString();
+  const safeCount = Math.max(1, parseInt(count, 10) || 1);
+  const formatted = safeCount.toLocaleString();
 
+  // Top level header visitor counter pill
   const headerEl = document.getElementById('header-visitor-count');
   if (headerEl) headerEl.innerText = formatted;
 
+  // Global Visitors Telemetry Total Visitors (strict lockstep match)
+  const adminTotalEl = document.getElementById('admin-telemetry-total-visitors');
+  if (adminTotalEl) adminTotalEl.innerText = formatted;
+
+  // Map unique visitor badge
   const mapEl = document.getElementById('map-unique-visitor-count');
   if (mapEl) mapEl.innerText = formatted;
 
+  // Global stats visitor counter
   const globalStatsEl = document.getElementById('global-visitor-counter');
   if (globalStatsEl) globalStatsEl.innerText = formatted;
 
+  // Settings modal unique visitor count
   const settingsEl = document.getElementById('settings-unique-visitor-count');
   if (settingsEl) settingsEl.innerText = formatted;
 
@@ -5874,6 +5884,7 @@ function recordCurrentVisitorLocation(loc) {
   }
 
   saveGlobalVisitorsLog(log);
+  updateVisitorCounterUI(Math.max(1, log.length));
   updateGlobalVisitorTelemetryUI();
 
   // Cross-device cloud sync: Upsert anonymous location record in Firestore
@@ -5982,6 +5993,8 @@ function subscribeAdminGlobalVisitorTelemetry() {
         saveGlobalVisitorsLog(remoteLog);
         renderAdminGlobalVisitorTelemetry();
       }
+      const liveTotal = Math.max(1, (snapshot && snapshot.size) ? snapshot.size : remoteLog.length);
+      updateVisitorCounterUI(liveTotal);
     }, (err) => {
       console.warn("Firestore live telemetry subscription notice:", err);
     });
@@ -6027,6 +6040,7 @@ async function refreshAdminVisitorData() {
       });
       if (remoteLog.length > 0) {
         saveGlobalVisitorsLog(remoteLog);
+        updateVisitorCounterUI(remoteLog.length);
       }
     } catch (err) {
       console.warn("Firestore refresh notice:", err);
@@ -6147,6 +6161,10 @@ function renderAdminGlobalVisitorTelemetry() {
   if (topStateEl) topStateEl.innerText = topState;
   if (totalCitiesEl) totalCitiesEl.innerText = uniqueCitiesSet.size;
   if (lastSyncEl) lastSyncEl.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+  // Guarantee top level visitors metric and telemetry total visitors metric remain strictly identical
+  const canonicalTotal = Math.max(1, totalVisitorsCount);
+  updateVisitorCounterUI(canonicalTotal);
 
   // 2. Filter data by search query if present
   const q = adminVisitorSearchQuery;
@@ -7026,7 +7044,7 @@ runSuite("2. Theme Palette & Typography Engine", () => {
     assert(localStorage.getItem('showUp_font') === f, "Font persistence for: " + f);
   });
 
-  const uiModes = ['precision', 'zen', 'hud'];
+  const uiModes = ['precision', 'zen', 'hud', 'light'];
   uiModes.forEach(m => {
     setAppUIMode(m);
     assert(localStorage.getItem('showUp_ui_mode') === m, "UI Mode persistence for: " + m);
@@ -7036,6 +7054,10 @@ runSuite("2. Theme Palette & Typography Engine", () => {
   assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycle UI Mode from precision to zen");
   cycleAppUIMode();
   assert(localStorage.getItem('showUp_ui_mode') === 'hud', "Cycle UI Mode from zen to hud");
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'light', "Cycle UI Mode from hud to light");
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'precision', "Cycle UI Mode from light back to precision");
 });
 
 runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9.2)", () => {
@@ -7172,6 +7194,12 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   const updatedLog = getGlobalVisitorsLog();
   assert(updatedLog.length === 1, "Exactly 1 real visitor entry recorded");
   assert(updatedLog[0].city === "Ashburn", "Recorded visitor city is authentic");
+
+  // Verify top level visitors metric and telemetry total visitors metric are strictly identical
+  const headerCount = getOrCreateElement('header-visitor-count').innerText;
+  const adminTotal = getOrCreateElement('admin-telemetry-total-visitors').innerText;
+  assert(headerCount === adminTotal, "Top level visitor count (" + headerCount + ") matches telemetry total visitors (" + adminTotal + ")");
+  assert(headerCount === "1", "Visitor count reflects recorded visitor: " + headerCount);
   
   // Verify Admin authorization
   applyUserProfile({ firstName: "RegularUser", email: "user@example.com" });

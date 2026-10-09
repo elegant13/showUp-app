@@ -28,6 +28,7 @@ This Functional Regression Suite serves as the canonical test specification and 
 * **TC-1.1 Logo & Large Emblem Modal**: Clicking the brand emblem triggers the interactive high-resolution emblem preview modal with haptic feedback.
 * **TC-1.2 Unique Visitor Counter**: Displays live, genuine unpadded count starting from `1` with clean tooltips and no exposed internal start dates.
 * **TC-1.3 Bottom Navigation Tabs**: Smooth tab transitions across Track, History, Progress, and Squads with responsive safe-area padding.
+* **TC-1.4 UI/UX Design Paradigms (V3)**: Supports 4 switchable first-class design paradigms: Precision Glass (`precision`), Executive Zen (`zen`), Cyber Kinetic HUD (`hud`), and Daylight Frost (`light`) with zero data loss and persistent athlete selection.
 
 ### Suite 2: Theme Palette Accent & Typography Persistence
 * **TC-2.1 Color Palettes**: Supports instant accent switching across Emerald, Warm Orange, Ocean Blue, Royal Purple, Rose Red, Slate Titanium, and AMOLED Black.
@@ -66,6 +67,7 @@ This Functional Regression Suite serves as the canonical test specification and 
 ### Suite 8: Active Workout Map & Telemetry
 * **TC-8.1 Vetted Athlete Verification**: Excludes unauthenticated mock zip codes; only plots authenticated, vetted workout locations.
 * **TC-8.2 Geolocation & Map Telemetry**: Displays detected zip code and genuine live unique visitors with clean telemetry badges.
+* **TC-8.3 Visitor Metric Strict Unification**: Top level visitor counters (`header-visitor-count`, `map-unique-visitor-count`, `global-visitor-counter`, `settings-unique-visitor-count`) and Global Visitors Telemetry Total Visitors (`admin-telemetry-total-visitors`) are strictly identical and synchronized in real-time.
 
 ### Suite 9: Privacy, Security & Logout Eradication
 * **TC-9.1 Legal Documentation Access**: Privacy Policy (`privacy.html`) and Terms of Service (`terms.html`) positioned under Profile dropdown and Settings modal footer.

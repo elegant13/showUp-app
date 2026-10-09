@@ -272,7 +272,7 @@ runSuite("2. Theme Palette & Typography Engine", () => {
     assert(localStorage.getItem('showUp_font') === f, "Font persistence for: " + f);
   });
 
-  const uiModes = ['precision', 'zen', 'hud'];
+  const uiModes = ['precision', 'zen', 'hud', 'light'];
   uiModes.forEach(m => {
     setAppUIMode(m);
     assert(localStorage.getItem('showUp_ui_mode') === m, "UI Mode persistence for: " + m);
@@ -282,6 +282,10 @@ runSuite("2. Theme Palette & Typography Engine", () => {
   assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycle UI Mode from precision to zen");
   cycleAppUIMode();
   assert(localStorage.getItem('showUp_ui_mode') === 'hud', "Cycle UI Mode from zen to hud");
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'light', "Cycle UI Mode from hud to light");
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'precision', "Cycle UI Mode from light back to precision");
 });
 
 runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9.2)", () => {
@@ -418,6 +422,12 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   const updatedLog = getGlobalVisitorsLog();
   assert(updatedLog.length === 1, "Exactly 1 real visitor entry recorded");
   assert(updatedLog[0].city === "Ashburn", "Recorded visitor city is authentic");
+
+  // Verify top level visitors metric and telemetry total visitors metric are strictly identical
+  const headerCount = getOrCreateElement('header-visitor-count').innerText;
+  const adminTotal = getOrCreateElement('admin-telemetry-total-visitors').innerText;
+  assert(headerCount === adminTotal, "Top level visitor count (" + headerCount + ") matches telemetry total visitors (" + adminTotal + ")");
+  assert(headerCount === "1", "Visitor count reflects recorded visitor: " + headerCount);
   
   // Verify Admin authorization
   applyUserProfile({ firstName: "RegularUser", email: "user@example.com" });
