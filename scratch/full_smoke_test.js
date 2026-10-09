@@ -335,6 +335,16 @@ function runSuite(name, fn) {
     let adminVisitorViewMode = 'state'; // 'state' (group by state) or 'city' (city & state log)
     let adminVisitorSearchQuery = '';
 
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAVf8ykV2FrZi4AkBFDCeNZhZuN-QH1QXk",
+      authDomain: "showup-app-ca372.firebaseapp.com",
+      projectId: "showup-app-ca372",
+      storageBucket: "showup-app-ca372.firebasestorage.app",
+      messagingSenderId: "489093591529",
+      appId: "1:489093591529:web:058f0ef15e744128ecdb78",
+      measurementId: "G-JK14YSDNP3"
+    };
+
 /* ==========================================================================
    showUp Centralized Storage & Session State Engine
    Defensive JSON parsing, typed keys, and systematic session eradication
@@ -5695,9 +5705,30 @@ function updateVisitorCounterUI(count) {
   if (settingsIdEl) settingsIdEl.innerText = localStorage.getItem(VISITOR_STORAGE_KEY) || 'Active';
 }
 
-// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO abhi13@gmail.com) =================
+// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO abhi13@gmail.com, hithesh@gmail.com) =================
 
+let firestoreDb = null;
+let unsubscribeAdminTelemetry = null;
 
+function getFirestoreDb() {
+  if (firestoreDb) return firestoreDb;
+  try {
+    if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+      if (!firebase.apps || !firebase.apps.length) {
+        if (typeof FIREBASE_CONFIG !== 'undefined') {
+          firebase.initializeApp(FIREBASE_CONFIG);
+        }
+      }
+      if (firebase.apps && firebase.apps.length) {
+        firestoreDb = firebase.firestore();
+        return firestoreDb;
+      }
+    }
+  } catch (err) {
+    console.debug("Firestore initialization notice:", err);
+  }
+  return null;
+}
 
 function isGlobalVisitorTelemetryAdmin() {
   const user = getAppUser();
@@ -5706,6 +5737,7 @@ function isGlobalVisitorTelemetryAdmin() {
 }
 
 function initGlobalVisitorTelemetry() {
+  getFirestoreDb();
   getGlobalVisitorsLog();
   updateGlobalVisitorTelemetryUI();
 }
@@ -5784,6 +5816,34 @@ function recordCurrentVisitorLocation(loc) {
 
   saveGlobalVisitorsLog(log);
   updateGlobalVisitorTelemetryUI();
+
+  // Cross-device cloud sync: Upsert anonymous location record in Firestore
+  try {
+    const db = getFirestoreDb();
+    if (db) {
+      const docData = {
+        id: visitorId,
+        city: parsed.city,
+        state: parsed.state,
+        stateName: parsed.stateName,
+        zip: loc.zip || '',
+        country: 'US',
+        lat: loc.lat || 0,
+        lng: loc.lng || 0,
+        lastSeen: (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldValue)
+          ? firebase.firestore.FieldValue.serverTimestamp()
+          : nowISO,
+        firstSeen: (existingIndex >= 0 && log[existingIndex].firstSeen) ? log[existingIndex].firstSeen : nowISO,
+        visitCount: (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldValue)
+          ? firebase.firestore.FieldValue.increment(1)
+          : 1
+      };
+      db.collection('global_visitors').doc(visitorId).set(docData, { merge: true })
+        .catch(err => console.debug("Firestore visitor log sync notice:", err));
+    }
+  } catch (err) {
+    console.debug("Firestore cloud record exception:", err);
+  }
 }
 
 function setAdminVisitorViewMode(mode) {
@@ -5820,8 +5880,99 @@ function handleAdminVisitorSearch(query) {
   renderAdminGlobalVisitorTelemetry();
 }
 
-function refreshAdminVisitorData() {
+function subscribeAdminGlobalVisitorTelemetry() {
+  if (!isGlobalVisitorTelemetryAdmin()) return;
+  const db = getFirestoreDb();
+  if (!db) return;
+  if (unsubscribeAdminTelemetry) {
+    unsubscribeAdminTelemetry();
+    unsubscribeAdminTelemetry = null;
+  }
+  try {
+    unsubscribeAdminTelemetry = db.collection('global_visitors').onSnapshot((snapshot) => {
+      const remoteLog = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        let lastSeenISO = new Date().toISOString();
+        if (d.lastSeen && typeof d.lastSeen.toDate === 'function') {
+          lastSeenISO = d.lastSeen.toDate().toISOString();
+        } else if (typeof d.lastSeen === 'string') {
+          lastSeenISO = d.lastSeen;
+        }
+        let firstSeenISO = lastSeenISO;
+        if (d.firstSeen && typeof d.firstSeen.toDate === 'function') {
+          firstSeenISO = d.firstSeen.toDate().toISOString();
+        } else if (typeof d.firstSeen === 'string') {
+          firstSeenISO = d.firstSeen;
+        }
+        remoteLog.push({
+          id: d.id || doc.id,
+          city: d.city || 'Unknown',
+          state: d.state || 'VA',
+          stateName: d.stateName || 'Virginia',
+          zip: d.zip || '',
+          country: d.country || 'US',
+          lat: d.lat || 0,
+          lng: d.lng || 0,
+          firstSeen: firstSeenISO,
+          lastSeen: lastSeenISO,
+          visitCount: typeof d.visitCount === 'number' ? d.visitCount : 1
+        });
+      });
+      if (remoteLog.length > 0) {
+        saveGlobalVisitorsLog(remoteLog);
+        renderAdminGlobalVisitorTelemetry();
+      }
+    }, (err) => {
+      console.warn("Firestore live telemetry subscription notice:", err);
+    });
+  } catch (err) {
+    console.debug("Firestore live subscription exception:", err);
+  }
+}
+
+async function refreshAdminVisitorData() {
   detectUserZipFromIP();
+  const db = getFirestoreDb();
+  if (db) {
+    try {
+      const snapshot = await db.collection('global_visitors').get();
+      const remoteLog = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        let lastSeenISO = new Date().toISOString();
+        if (d.lastSeen && typeof d.lastSeen.toDate === 'function') {
+          lastSeenISO = d.lastSeen.toDate().toISOString();
+        } else if (typeof d.lastSeen === 'string') {
+          lastSeenISO = d.lastSeen;
+        }
+        let firstSeenISO = lastSeenISO;
+        if (d.firstSeen && typeof d.firstSeen.toDate === 'function') {
+          firstSeenISO = d.firstSeen.toDate().toISOString();
+        } else if (typeof d.firstSeen === 'string') {
+          firstSeenISO = d.firstSeen;
+        }
+        remoteLog.push({
+          id: d.id || doc.id,
+          city: d.city || 'Unknown',
+          state: d.state || 'VA',
+          stateName: d.stateName || 'Virginia',
+          zip: d.zip || '',
+          country: d.country || 'US',
+          lat: d.lat || 0,
+          lng: d.lng || 0,
+          firstSeen: firstSeenISO,
+          lastSeen: lastSeenISO,
+          visitCount: typeof d.visitCount === 'number' ? d.visitCount : 1
+        });
+      });
+      if (remoteLog.length > 0) {
+        saveGlobalVisitorsLog(remoteLog);
+      }
+    } catch (err) {
+      console.warn("Firestore refresh notice:", err);
+    }
+  }
   renderAdminGlobalVisitorTelemetry();
   showToast("Global visitor telemetry updated", "success");
 }
@@ -5857,6 +6008,10 @@ function updateGlobalVisitorTelemetryUI() {
 
   const isAdmin = isGlobalVisitorTelemetryAdmin();
   if (!isAdmin) {
+    if (unsubscribeAdminTelemetry) {
+      unsubscribeAdminTelemetry();
+      unsubscribeAdminTelemetry = null;
+    }
     if (section) {
       section.classList.add('hidden');
       section.style.display = 'none';
@@ -5872,6 +6027,7 @@ function updateGlobalVisitorTelemetryUI() {
   if (menuBadge) menuBadge.classList.remove('hidden');
 
   renderAdminGlobalVisitorTelemetry();
+  subscribeAdminGlobalVisitorTelemetry();
 }
 
 function renderAdminGlobalVisitorTelemetry() {
@@ -6955,6 +7111,11 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
 
   applyUserProfile({ firstName: "Hithesh", email: "hithesh@gmail.com" });
   assert(isGlobalVisitorTelemetryAdmin() === true, "hithesh@gmail.com is recognized as admin for visitor telemetry");
+
+  // Verify Firebase Firestore configuration
+  assert(typeof FIREBASE_CONFIG === "object" && FIREBASE_CONFIG !== null, "FIREBASE_CONFIG is defined");
+  assert(FIREBASE_CONFIG.projectId === "showup-app-ca372", "FIREBASE_CONFIG projectId is showup-app-ca372");
+  assert(typeof FIREBASE_CONFIG.apiKey === "string" && FIREBASE_CONFIG.apiKey.length > 10, "FIREBASE_CONFIG apiKey is valid");
 });
 
 runSuite("9. Backup & Offline JSON Sync Engine", () => {

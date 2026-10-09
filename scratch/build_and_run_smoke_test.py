@@ -417,6 +417,11 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
 
   applyUserProfile({ firstName: "Hithesh", email: "hithesh@gmail.com" });
   assert(isGlobalVisitorTelemetryAdmin() === true, "hithesh@gmail.com is recognized as admin for visitor telemetry");
+
+  // Verify Firebase Firestore configuration
+  assert(typeof FIREBASE_CONFIG === "object" && FIREBASE_CONFIG !== null, "FIREBASE_CONFIG is defined");
+  assert(FIREBASE_CONFIG.projectId === "showup-app-ca372", "FIREBASE_CONFIG projectId is showup-app-ca372");
+  assert(typeof FIREBASE_CONFIG.apiKey === "string" && FIREBASE_CONFIG.apiKey.length > 10, "FIREBASE_CONFIG apiKey is valid");
 });
 
 runSuite("9. Backup & Offline JSON Sync Engine", () => {

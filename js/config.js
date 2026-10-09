@@ -159,3 +159,13 @@
     const GLOBAL_VISITORS_LOG_KEY = 'showUp_global_visitors_log_v1';
     let adminVisitorViewMode = 'state'; // 'state' (group by state) or 'city' (city & state log)
     let adminVisitorSearchQuery = '';
+
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAVf8ykV2FrZi4AkBFDCeNZhZuN-QH1QXk",
+      authDomain: "showup-app-ca372.firebaseapp.com",
+      projectId: "showup-app-ca372",
+      storageBucket: "showup-app-ca372.firebasestorage.app",
+      messagingSenderId: "489093591529",
+      appId: "1:489093591529:web:058f0ef15e744128ecdb78",
+      measurementId: "G-JK14YSDNP3"
+    };
