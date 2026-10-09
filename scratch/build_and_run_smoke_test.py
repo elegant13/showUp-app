@@ -225,8 +225,26 @@ function runSuite(name, fn) {
 }
 """
 
-    # Add the extracted inline scripts
-    app_code = "\n".join(inline_scripts)
+    # Add the inline scripts plus external js files in exact order
+    js_files = [
+        'js/config.js',
+        'js/utils.js',
+        'js/theme.js',
+        'js/auth.js',
+        'js/workout.js',
+        'js/history.js',
+        'js/progress.js',
+        'js/squads.js',
+        'js/map.js',
+        'js/visitors.js',
+        'js/backup.js',
+        'js/main.js'
+    ]
+    external_code = []
+    for js_f in js_files:
+        with open(js_f, 'r', encoding='utf-8') as f:
+            external_code.append(f.read())
+    app_code = "\n".join(inline_scripts + external_code)
 
     # Add Test Assertions
     assertions_code = """
