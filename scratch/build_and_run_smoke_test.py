@@ -414,6 +414,9 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   
   applyUserProfile({ firstName: "Abhi", email: "abhi13@gmail.com" });
   assert(isGlobalVisitorTelemetryAdmin() === true, "abhi13@gmail.com is recognized as admin for visitor telemetry");
+
+  applyUserProfile({ firstName: "Hithesh", email: "hithesh@gmail.com" });
+  assert(isGlobalVisitorTelemetryAdmin() === true, "hithesh@gmail.com is recognized as admin for visitor telemetry");
 });
 
 runSuite("9. Backup & Offline JSON Sync Engine", () => {
