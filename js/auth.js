@@ -49,6 +49,11 @@
       }
       googleAccessToken = null;
 
+      // Systematic user session and telemetry purge
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.clearUserSession === 'function') {
+        AppStorage.clearUserSession();
+      }
+
       // 1. Wipe all authentication tokens & athlete profile
       localStorage.removeItem('showUp_google_token');
       localStorage.removeItem('showUp_user_profile');

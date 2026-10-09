@@ -228,6 +228,7 @@ function runSuite(name, fn) {
     # Add the inline scripts plus external js files in exact order
     js_files = [
         'js/config.js',
+        'js/storage.js',
         'js/utils.js',
         'js/theme.js',
         'js/auth.js',
@@ -298,6 +299,15 @@ runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9
   assert(localStorage.getItem('showUp_user_ip_lat') === null, "Logout cleared showUp_user_ip_lat");
   assert(localStorage.getItem('showUp_user_ip_lng') === null, "Logout cleared showUp_user_ip_lng");
   assert(localStorage.getItem('showUp_global_visitors_log_v1') === null, "Logout cleared showUp_global_visitors_log_v1");
+
+  // Verify AppStorage module API
+  assert(typeof AppStorage !== 'undefined', "AppStorage module initialized");
+  assert(typeof AppStorage.KEYS.USER_PROFILE === 'string', "AppStorage.KEYS contains typed constants");
+  AppStorage.set('showUp_test_storage_key', { athlete: 'Tester', score: 100 });
+  const retrieved = AppStorage.get('showUp_test_storage_key');
+  assert(retrieved && retrieved.athlete === 'Tester', "AppStorage.get/set handles structured JSON defensively");
+  AppStorage.remove('showUp_test_storage_key');
+  assert(AppStorage.get('showUp_test_storage_key', 'fallback_val') === 'fallback_val', "AppStorage.get fallback default works");
 });
 
 runSuite("4. Workout Tracking & Logging Engine", () => {

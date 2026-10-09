@@ -4,6 +4,7 @@ import re
 
 files = [
     'js/config.js',
+    'js/storage.js',
     'js/utils.js',
     'js/theme.js',
     'js/auth.js',
