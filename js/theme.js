@@ -124,3 +124,59 @@
         }
       });
     }
+
+    // ================= UI/UX DESIGN PARADIGM MANAGEMENT (V3) =================
+
+    function setAppUIMode(modeKey) {
+      if (!modeKey || !['precision', 'zen', 'hud'].includes(modeKey)) {
+        modeKey = 'precision';
+      }
+      const body = document.getElementById('app-body');
+      if (body) {
+        body.className = body.className.replace(/\bui-mode-\S+/g, '').trim();
+        body.classList.add(`ui-mode-${modeKey}`);
+      }
+      document.documentElement.className = (document.documentElement.className || '').replace(/\bui-mode-\S+/g, '').trim() + ` ui-mode-${modeKey}`;
+      localStorage.setItem('showUp_ui_mode', modeKey);
+      updateUIModeButtons(modeKey);
+    }
+
+    function cycleAppUIMode() {
+      const current = localStorage.getItem('showUp_ui_mode') || 'precision';
+      const modes = ['precision', 'zen', 'hud'];
+      const nextIdx = (modes.indexOf(current) + 1) % modes.length;
+      const nextMode = modes[nextIdx];
+      setAppUIMode(nextMode);
+      const labels = {
+        precision: 'Precision Glass UI',
+        zen: 'Executive Zen UI (Minimalist)',
+        hud: 'Cyber Kinetic HUD (Telemetry)'
+      };
+      if (typeof showToast === 'function') {
+        showToast(`Switched to ${labels[nextMode]}`, 'info');
+      }
+    }
+
+    function restoreAppUIMode() {
+      const saved = localStorage.getItem('showUp_ui_mode') || 'precision';
+      setAppUIMode(saved);
+    }
+
+    function updateUIModeButtons(activeMode) {
+      const modes = ['precision', 'zen', 'hud'];
+      modes.forEach(m => {
+        const btn = document.getElementById(`ui-mode-btn-${m}`);
+        if (btn) {
+          if (m === activeMode) {
+            btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden";
+          } else {
+            btn.className = "p-3 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95";
+          }
+        }
+      });
+      const quickToggleLabel = document.getElementById('quick-ui-mode-name');
+      if (quickToggleLabel) {
+        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD' };
+        quickToggleLabel.innerText = names[activeMode] || 'Glass';
+      }
+    }

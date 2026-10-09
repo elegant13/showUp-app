@@ -13,6 +13,7 @@
       restoreSavedSession();
       restoreThemePreferences();
       restoreFontPreferences();
+      restoreAppUIMode();
       initSquads();
       detectUserZipFromIP();
       checkAndResetDailyETCounter();

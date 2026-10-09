@@ -1,6 +1,6 @@
 # showUp - Functional Regression Suite
 
-**Document Version:** 2.0 (V2)  
+**Document Version:** 3.0 (V3)  
 **Target Application:** showUp (`index.html`)  
 **Status:** ALL TESTS PASSING (100% Verified)  
 **Last Run:** October 8, 2026  
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary & Test Metrics
 
-This Functional Regression Suite serves as the canonical test specification and quality audit for the **showUp V2** progressive web application. It verifies end-to-end user journeys, DOM integrity, state persistence, strict squad privacy isolation, verified global daily counter accuracy, and privacy compliance across all application features.
+This Functional Regression Suite serves as the canonical test specification and quality audit for the **showUp V3** progressive web application. It verifies end-to-end user journeys, DOM integrity, state persistence, strict squad privacy isolation, verified global daily counter accuracy, and privacy compliance across all application features.
 
 | Metric | Measurement | Result |
 | :--- | :--- | :--- |

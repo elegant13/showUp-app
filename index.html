@@ -30,7 +30,8 @@
     (function() {
       try {
         const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
-        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ' theme-' + savedTheme;
+        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'precision';
+        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').replace(/\bui-mode-\S+/g, '').trim() + ' theme-' + savedTheme + ' ui-mode-' + savedUIMode;
       } catch (e) {}
     })();
   </script>
@@ -47,7 +48,9 @@
     (function() {
       try {
         const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
+        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'precision';
         document.body.classList.add('theme-' + savedTheme);
+        document.body.classList.add('ui-mode-' + savedUIMode);
       } catch (e) {}
     })();
   </script>
@@ -64,6 +67,7 @@
       <div>
         <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
           <span>show<span class="m3-accent-text">Up</span></span>
+          <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">V3</span>
         </h1>
         <p class="text-[11px] font-bold tracking-wider m3-accent-text uppercase">Compound your progress</p>
       </div>
@@ -81,6 +85,11 @@
         <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
         <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
       </div>
+
+      <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95" title="Toggle UI Paradigm (Glass / Zen / HUD)">
+        <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
+        <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200">Glass</span>
+      </button>
 
       <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
         <i class="fa-solid fa-sliders text-sm"></i>
@@ -197,6 +206,47 @@
           <span>Material 3 • Privacy-First Telemetry</span>
           <i class="fa-solid fa-expand text-[9px] opacity-70"></i>
         </span>
+      </div>
+
+      <!-- V3 UI/UX DESIGN PARADIGM SWITCHER -->
+      <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>
+            UI/UX Design Paradigm (V3)
+          </label>
+          <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">3 Modes</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Select your preferred user experience mode. Retains all data and functionality seamlessly.</p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+          <!-- Option A: Precision Glass -->
+          <button type="button" onclick="triggerHaptic('light'); setAppUIMode('precision')" id="ui-mode-btn-precision" class="p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa-solid fa-gem text-xs text-emerald-400"></i>
+              <span class="text-xs font-bold">Precision Glass</span>
+            </div>
+            <div class="text-[10px] text-slate-400 opacity-90 leading-tight">Refined M3 frosted cards with soft ambient glow & depth.</div>
+          </button>
+
+          <!-- Option B: Executive Zen -->
+          <button type="button" onclick="triggerHaptic('light'); setAppUIMode('zen')" id="ui-mode-btn-zen" class="p-3 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa-solid fa-spa text-xs text-slate-300"></i>
+              <span class="text-xs font-bold">Executive Zen</span>
+            </div>
+            <div class="text-[10px] text-slate-400 opacity-90 leading-tight">OLED minimalist canvas. Maximum density with zero clutter.</div>
+          </button>
+
+          <!-- Option C: Cyber HUD -->
+          <button type="button" onclick="triggerHaptic('light'); setAppUIMode('hud')" id="ui-mode-btn-hud" class="p-3 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fa-solid fa-microchip text-xs text-blue-400"></i>
+              <span class="text-xs font-bold">Cyber HUD</span>
+            </div>
+            <div class="text-[10px] text-slate-400 opacity-90 leading-tight">Athletic tactical command center with glowing telemetry.</div>
+          </button>
+        </div>
       </div>
 
       <!-- PHYSICAL PROFILE INPUTS (HEIGHT & WEIGHT) -->
@@ -369,7 +419,7 @@
       <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
         <div class="flex items-center gap-1.5">
           <span class="font-bold text-slate-400">showUp</span>
-          <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">V2</span>
+          <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">V3</span>
         </div>
         <div class="flex items-center gap-3">
           <a href="privacy.html" target="_blank" class="hover:text-emerald-400 transition underline underline-offset-2">Privacy Policy</a>

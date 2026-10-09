@@ -332,3 +332,120 @@ input[type="range"] {
   background: var(--m3-outline);
   border-radius: 4px;
 }
+
+/* ==========================================================================
+   V3 UI/UX DESIGN PARADIGMS (Precision Glass, Executive Zen, Cyber HUD)
+   ========================================================================== */
+
+/* Base transition for seamless paradigm toggling */
+body, .m3-card, header, nav {
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* 1. Precision Glass (Refined M3 Glassmorphism) */
+body.ui-mode-precision {
+  background-color: #0b0f19;
+  background-image: radial-gradient(circle at 50% 0%, rgba(30, 41, 59, 0.5) 0%, transparent 75%);
+}
+.ui-mode-precision .m3-card {
+  background: rgba(15, 23, 42, 0.78) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 0 15px -3px var(--m3-primaryContainer);
+}
+.ui-mode-precision header {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.ui-mode-precision nav {
+  background: rgba(15, 23, 42, 0.9) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 2. Executive Zen (Minimalist, Distraction-Free, High-Density) */
+body.ui-mode-zen {
+  background-color: #000000 !important;
+  background-image: none !important;
+}
+.ui-mode-zen .m3-card {
+  background: #090d16 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+  border-radius: 1.25rem !important;
+}
+.ui-mode-zen header {
+  background: #000000f0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(10px);
+}
+.ui-mode-zen nav {
+  background: #000000f5 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+/* Zen mode suppresses verbose redundant paragraphs and subtitles */
+.ui-mode-zen .zen-suppress,
+.ui-mode-zen p.text-\[11px\].text-slate-400 {
+  display: none !important;
+}
+.ui-mode-zen h3 {
+  letter-spacing: -0.025em;
+}
+
+/* 3. Cyber Kinetic HUD (Athletic Telemetry Command Center) */
+body.ui-mode-hud {
+  background-color: #040711 !important;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 0), linear-gradient(to bottom, rgba(15, 23, 42, 0.9), #040711) !important;
+  background-size: 20px 20px, 100% 100% !important;
+}
+.ui-mode-hud .m3-card {
+  background: rgba(8, 14, 28, 0.92) !important;
+  border: 1px solid rgba(var(--m3-primary-rgb, 16, 185, 129), 0.35) !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 0 20px -5px rgba(var(--m3-primary-rgb, 16, 185, 129), 0.15), inset 0 0 20px rgba(var(--m3-primary-rgb, 16, 185, 129), 0.02) !important;
+  position: relative;
+}
+.ui-mode-hud .m3-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 12px;
+  height: 12px;
+  border-top: 2px solid var(--m3-primary);
+  border-left: 2px solid var(--m3-primary);
+  border-top-left-radius: 0.75rem;
+  pointer-events: none;
+}
+.ui-mode-hud .m3-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-bottom: 2px solid var(--m3-primary);
+  border-right: 2px solid var(--m3-primary);
+  border-bottom-right-radius: 0.75rem;
+  pointer-events: none;
+}
+.ui-mode-hud header {
+  background: rgba(4, 7, 17, 0.95) !important;
+  border-bottom: 1px solid var(--m3-primary) !important;
+  box-shadow: 0 4px 20px -5px rgba(var(--m3-primary-rgb, 16, 185, 129), 0.25) !important;
+}
+.ui-mode-hud nav {
+  background: rgba(4, 7, 17, 0.97) !important;
+  border-top: 1px solid var(--m3-primary) !important;
+}
+.ui-mode-hud span.font-mono,
+.ui-mode-hud span[id$="-count"],
+.ui-mode-hud span[id$="-total"] {
+  text-shadow: 0 0 10px rgba(var(--m3-primary-rgb, 16, 185, 129), 0.4);
+}

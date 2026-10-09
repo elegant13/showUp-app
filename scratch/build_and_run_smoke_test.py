@@ -271,6 +271,17 @@ runSuite("2. Theme Palette & Typography Engine", () => {
     setFontFamily(f);
     assert(localStorage.getItem('showUp_font') === f, "Font persistence for: " + f);
   });
+
+  const uiModes = ['precision', 'zen', 'hud'];
+  uiModes.forEach(m => {
+    setAppUIMode(m);
+    assert(localStorage.getItem('showUp_ui_mode') === m, "UI Mode persistence for: " + m);
+  });
+  setAppUIMode('precision');
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycle UI Mode from precision to zen");
+  cycleAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'hud', "Cycle UI Mode from zen to hud");
 });
 
 runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9.2)", () => {
