@@ -212,13 +212,18 @@
           client_id: getGoogleClientId(),
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
           prompt: '', // Silent request without popup or re-consent
-          callback: (response) => {
+          callback: async (response) => {
             if (response && response.access_token) {
               googleAccessToken = response.access_token;
               localStorage.setItem('showUp_google_token', googleAccessToken);
               // Extend 1-week session validity
               localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
               updateCloudBackupUI();
+              try {
+                await restoreFromGoogleDrive(true);
+              } catch (e) {
+                console.warn("Silent drive restore notice:", e);
+              }
             }
           },
           error_callback: (err) => {
@@ -326,6 +331,20 @@
       const userEmail = profileObj.email || '';
       const picture = profileObj.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
+      // Strict Athlete Isolation: Do not pull from local/guest profile unless athlete is a guest
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        const isolatedKey = 'showUp_user_workouts_' + userEmail.toLowerCase().trim();
+        const isolatedWorkouts = JSON.parse(localStorage.getItem(isolatedKey) || 'null');
+        if (Array.isArray(isolatedWorkouts)) {
+          completedWorkoutsHistory = isolatedWorkouts;
+          localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+        } else {
+          // If no isolated cloud/account workouts yet, do not pollute account with guest workouts
+          completedWorkoutsHistory = [];
+          localStorage.setItem('showUp_synced_workouts', JSON.stringify([]));
+        }
+      }
+
       updateProfileUI(firstName, userEmail, picture);
       document.getElementById('btn-google-login').classList.add('hidden');
       document.getElementById('google-user-profile').classList.remove('hidden');
@@ -335,6 +354,8 @@
       updateSquadBeacon();
       updateGlobalStatsUI();
       renderHeatMap();
+      renderCalendar();
+      renderMonthlyHistory();
       updateGlobalVisitorTelemetryUI();
       closeAuthLoginModal();
     }
@@ -376,18 +397,15 @@
         showToast("Signed in successfully!", "success");
       }
 
-      // 3. Asynchronously trigger silent Drive check in background
+      // 3. Immediately restore cloud backup from Google Drive by default on login!
+      // This ensures squads and activity from Google backup are instantly reflected upon login.
       setTimeout(async () => {
         try {
-          if (completedWorkoutsHistory.length === 0) {
-            await restoreFromGoogleDrive(true);
-          } else {
-            await syncToGoogleDrive(true);
-          }
+          await restoreFromGoogleDrive(false);
         } catch (driveErr) {
-          console.warn("Background drive sync notice:", driveErr);
+          console.warn("Auto-restore on login notice:", driveErr);
         }
-      }, 1000);
+      }, 300);
     }
 
     function handleGoogleSignIn() {

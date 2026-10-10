@@ -38,6 +38,7 @@ const STORAGE_KEYS = {
   THEME_ACCENT: 'showUp_theme_accent',
   FONT: 'showUp_font',
   HR_COLLAPSED: 'showUp_hr_collapsed',
+  SQUADS_DEFAULT_COLLAPSED: 'showUp_squads_default_collapsed',
 
   // Global Telemetry & Visitor Tracking
   GLOBAL_COUNTER_COUNT: 'showUp_global_counter_count',
@@ -97,6 +98,26 @@ const AppStorage = {
     } catch (e) {
       console.warn(`[AppStorage] Failed to remove key: ${key}`, e);
       return false;
+    }
+  },
+
+  /**
+   * Save athlete workouts with per-user persistent isolation
+   */
+  saveAthleteWorkouts(workouts) {
+    if (!Array.isArray(workouts)) return;
+    if (typeof completedWorkoutsHistory !== 'undefined') {
+      completedWorkoutsHistory = workouts;
+    }
+    try {
+      localStorage.setItem(STORAGE_KEYS.SYNCED_WORKOUTS, JSON.stringify(workouts));
+      const profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || 'null');
+      const userEmail = (profile?.email || '').toLowerCase().trim();
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        localStorage.setItem('showUp_user_workouts_' + userEmail, JSON.stringify(workouts));
+      }
+    } catch (e) {
+      console.warn("[AppStorage] Error saving workouts:", e);
     }
   },
 

@@ -446,6 +446,16 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
 });
 
 runSuite("9. Backup & Offline JSON Sync Engine", () => {
+  // Ensure workout exists for current user
+  if (completedWorkoutsHistory.length === 0) {
+    completedWorkoutsHistory.push({
+      date: "2026-10-10",
+      workoutName: "Backup Verification Workout",
+      totalVolume: 1200,
+      sets: [{ exerciseName: "Bench Press", setNumber: 1, reps: 10, weight: 120 }]
+    });
+    AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+  }
   // Test export JSON generation
   exportJSONBackup();
   const backupWorkouts = completedWorkoutsHistory;
@@ -491,6 +501,58 @@ runSuite("10. Multi-Tier Restore & Data Integrity Engine", () => {
   assert(localStorage.getItem('showUp_font') === "font-mono", "Restore applied font: font-mono");
   assert(completedWorkoutsHistory.length === 1, "Restore restored 1 workout");
   assert(completedWorkoutsHistory[0].workoutName === "Test Bench Press", "Restored workout title accurate");
+});
+
+runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
+  // Test 1: Squad collapse toggle functions exist
+  assert(typeof toggleSquadCollapse === "function", "toggleSquadCollapse is a defined function");
+  assert(typeof toggleSquadsDefaultCollapse === "function", "toggleSquadsDefaultCollapse is a defined function");
+  assert(typeof toggleSquadsDefaultCollapsePref === "function", "toggleSquadsDefaultCollapsePref is a defined function");
+  assert(typeof updateSquadsDefaultCollapseUI === "function", "updateSquadsDefaultCollapseUI is a defined function");
+
+  // Test 2: Default collapse preference toggle
+  toggleSquadsDefaultCollapsePref(true);
+  assert(localStorage.getItem('showUp_squads_default_collapsed') === "true", "Default collapse preference saved as true");
+  toggleSquadsDefaultCollapsePref(false);
+  assert(localStorage.getItem('showUp_squads_default_collapsed') === "false", "Default collapse preference saved as false");
+
+  // Test 3: Individual squad collapse toggle
+  applyUserProfile({ firstName: "AlphaAthlete", email: "alpha@example.com" });
+  const activeUser = getAppUser();
+  const testSquads = [
+    {
+      id: "squad_alpha",
+      name: "Alpha Squad",
+      creatorId: activeUser.email,
+      members: [{ id: activeUser.id || activeUser.email, name: "Alpha", email: activeUser.email, isCreator: true }]
+    }
+  ];
+  saveSquads(testSquads);
+  toggleSquadCollapse("squad_alpha");
+  const updatedSquads = getSquads();
+  assert(updatedSquads.length > 0, "Squad returned for active user");
+  assert(updatedSquads[0].isCollapsed === true, "Squad isCollapsed toggled to true");
+  toggleSquadCollapse("squad_alpha");
+  const updatedSquads2 = getSquads();
+  assert(updatedSquads2[0].isCollapsed === false, "Squad isCollapsed toggled to false");
+
+  // Test 4: Athlete workout isolation vs Guest workout
+  // Guest workouts in showUp_workouts_history
+  localStorage.setItem('showUp_workouts_history', JSON.stringify([{ workoutName: "Guest Workout 1" }]));
+  
+  // Athlete profile applied with email
+  applyUserProfile({ firstName: "AthleteOne", email: "athlete1@showup.app" });
+  const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || '{}');
+  assert(profile.email === "athlete1@showup.app", "Active user is athlete1");
+  // Athlete should not inherit guest workout directly if athlete store is initialized
+  AppStorage.saveAthleteWorkouts([{ workoutName: "Athlete Workout 1" }]);
+  const athleteStored = JSON.parse(localStorage.getItem('showUp_user_workouts_athlete1@showup.app') || '[]');
+  assert(athleteStored.length === 1 && athleteStored[0].workoutName === "Athlete Workout 1", "Athlete isolated store preserved");
+
+  // Switch to another athlete
+  applyUserProfile({ firstName: "AthleteTwo", email: "athlete2@showup.app" });
+  const athlete2Stored = JSON.parse(localStorage.getItem('showUp_user_workouts_athlete2@showup.app') || '[]');
+  assert(athlete2Stored.length === 0, "New athlete starts with clean isolated workout store");
 });
 
 print("\\n============================================================");

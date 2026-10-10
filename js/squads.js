@@ -481,9 +481,60 @@
       const squad = squads.find(s => s.id === squadId);
       if (!squad) return;
 
-      squad.isCollapsed = !squad.isCollapsed;
+      const isDefaultCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
+      const currentCollapsed = squad.isCollapsed !== undefined ? squad.isCollapsed : isDefaultCollapsed;
+      squad.isCollapsed = !currentCollapsed;
       saveSquads(squads);
       renderSquadsTab();
+    }
+
+    // Toggle default collapse behavior and collapse/expand all active squads
+    function toggleSquadsDefaultCollapse() {
+      const isDefaultCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
+      const newPref = !isDefaultCollapsed;
+      localStorage.setItem('showUp_squads_default_collapsed', String(newPref));
+
+      // Synchronize in settings modal if open
+      const prefCheckbox = document.getElementById('pref-squads-collapsed');
+      if (prefCheckbox) prefCheckbox.checked = newPref;
+
+      // Apply to all current squads
+      const squads = getSquads();
+      squads.forEach(sq => {
+        sq.isCollapsed = newPref;
+      });
+      saveSquads(squads);
+      renderSquadsTab();
+      updateSquadsDefaultCollapseUI();
+      showToast(newPref ? "Default set: Squads collapsed" : "Default set: Squads expanded", "info");
+    }
+
+    // Preference toggled from Settings Modal
+    function toggleSquadsDefaultCollapsePref(checked) {
+      localStorage.setItem('showUp_squads_default_collapsed', String(checked));
+      const squads = getSquads();
+      squads.forEach(sq => {
+        sq.isCollapsed = checked;
+      });
+      saveSquads(squads);
+      renderSquadsTab();
+      updateSquadsDefaultCollapseUI();
+    }
+
+    // Update Header Toggle Button UI
+    function updateSquadsDefaultCollapseUI() {
+      const btn = document.getElementById('btn-toggle-squads-default-collapse');
+      if (!btn) return;
+      const isDefaultCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
+      const icon = btn.querySelector('i');
+      const text = btn.querySelector('span');
+      if (icon) {
+        icon.className = isDefaultCollapsed ? 'fa-solid fa-expand text-slate-400' : 'fa-solid fa-compress text-slate-400';
+      }
+      if (text) {
+        text.innerText = isDefaultCollapsed ? 'Expand All' : 'Collapse All';
+      }
+      btn.title = isDefaultCollapsed ? 'Default is collapsed. Click to expand all squads' : 'Default is expanded. Click to collapse all squads';
     }
 
     // Creator Deletes Squad
@@ -1029,6 +1080,8 @@
         return;
       }
 
+      const defaultCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
+
       const squadsHtml = squads.map(sq => {
         const isUserCreator = (sq.creatorId === user.id) || sq.members.some(m => (m.id === user.id || m.email === user.email) && m.isCreator);
         const userMember = sq.members.find(m => m.id === user.id || m.email === user.email);
@@ -1038,7 +1091,7 @@
         const needsBackupCreatorWarning = isUserCreator && otherMembers.length > 0 && !hasBackupCreatorAssigned;
 
         const prefs = sq.notificationPreferences || { inAppPill: true, beaconPulse: true, hapticPulse: true, soundChime: true, browserNotify: false };
-        const isCollapsed = !!sq.isCollapsed;
+        const isCollapsed = sq.isCollapsed !== undefined ? !!sq.isCollapsed : defaultCollapsed;
         const activeMembersInSquad = sq.members.filter(m => m.isWorkingOut);
         
         const accentColors = {
@@ -1358,6 +1411,7 @@
       }).join('');
 
       container.innerHTML = (invitesHtml ? invitesHtml : '') + squadsHtml;
+      updateSquadsDefaultCollapseUI();
     }
 
 

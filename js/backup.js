@@ -268,8 +268,9 @@
 
       try {
         // 1. Search for existing showUp backup file in Google Drive
+        const query = encodeURIComponent(`(name='${BACKUP_FILENAME}' or name='showUp_workout_data.json' or name='showUp_backup.json') and trashed=false`);
         const searchRes = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}' and trashed=false&fields=files(id,name,modifiedTime)`,
+          `https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime)`,
           {
             headers: { 'Authorization': `Bearer ${googleAccessToken}` }
           }
@@ -439,11 +440,12 @@
         return;
       }
 
-      if (!isAutoCheck) showToast("Searching for Google Drive backup...", "info");
+      if (!isAutoCheck) showToast("Syncing cloud activity & squads from Google Drive...", "info");
 
       try {
+        const query = encodeURIComponent(`(name='${BACKUP_FILENAME}' or name='showUp_workout_data.json' or name='showUp_backup.json') and trashed=false`);
         const searchRes = await fetch(
-          `https://www.googleapis.com/drive/v3/files?q=name='${BACKUP_FILENAME}' and trashed=false&fields=files(id,name,modifiedTime)`,
+          `https://www.googleapis.com/drive/v3/files?q=${query}&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime)`,
           {
             headers: { 'Authorization': `Bearer ${googleAccessToken}` }
           }
@@ -494,10 +496,18 @@
         const backupData = await downloadRes.json();
         let restoredCount = 0;
         let restoredSquadsCount = 0;
+        const user = getAppUser();
+        const userEmail = (user?.email || '').toLowerCase().trim();
+        const userName = (user?.rawName || user?.name || '').toLowerCase().trim();
 
         if (backupData.workouts && Array.isArray(backupData.workouts)) {
           completedWorkoutsHistory = backupData.workouts;
           localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+          if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+            try {
+              localStorage.setItem('showUp_user_workouts_' + userEmail, JSON.stringify(completedWorkoutsHistory));
+            } catch (e) {}
+          }
           restoredCount = backupData.workouts.length;
         }
 
@@ -531,25 +541,55 @@
 
         if (backupData.squads && Array.isArray(backupData.squads)) {
           const cleanSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
-          const user = getAppUser();
           cleanSquads.forEach(sq => {
             if (!sq.members) sq.members = [];
-            const match = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
-            if (match) {
+
+            // 1. Re-assign creator ownership to the authenticated athlete if it was local_user or matches
+            if (!sq.creatorId || sq.creatorId === 'local_user' || (sq.creatorEmail && sq.creatorEmail.toLowerCase().trim() === userEmail) || (sq.creator && sq.creator.toLowerCase().trim() === userName)) {
+              sq.creatorId = user.id;
+              sq.creatorEmail = user.email;
+              sq.creatorName = user.name;
+            }
+
+            // 2. Ensure the athlete is represented in sq.members
+            let match = sq.members.find(m => {
+              if (!m) return false;
+              if (typeof m === 'string') return m === user.id || (userEmail && m.toLowerCase().trim() === userEmail);
+              return m.id === user.id || (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) || m.id === 'local_user';
+            });
+
+            if (match && typeof match === 'object') {
               match.id = user.id;
               match.name = user.name;
               match.rawName = user.rawName;
               match.email = user.email;
               if (user.picture) match.avatar = user.picture;
+              if (sq.creatorId === user.id) match.isCreator = true;
+            } else if (!match) {
+              sq.members.push({
+                id: user.id,
+                name: user.name,
+                rawName: user.rawName,
+                email: user.email,
+                avatar: user.picture,
+                isCreator: (sq.creatorId === user.id),
+                isBackupCreator: false,
+                isWorkingOut: false,
+                currentWorkout: null,
+                lastActive: 'Active'
+              });
             }
           });
+
           saveSquads(cleanSquads);
+          initSquads();
           restoredSquadsCount = cleanSquads.length;
         }
 
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        initSquads();
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();
@@ -557,8 +597,12 @@
 
         localStorage.setItem('showUp_last_drive_sync', new Date().toISOString());
 
-        const squadMsg = restoredSquadsCount > 0 ? ` and ${restoredSquadsCount} squad${restoredSquadsCount === 1 ? '' : 's'}` : '';
-        showToast(`Restored ${restoredCount} workout${restoredCount === 1 ? '' : 's'}${squadMsg} from Google Drive!`, "success");
+        if (restoredCount > 0 || restoredSquadsCount > 0) {
+          const squadMsg = restoredSquadsCount > 0 ? ` and ${restoredSquadsCount} squad${restoredSquadsCount === 1 ? '' : 's'}` : '';
+          showToast(`Restored ${restoredCount} workout${restoredCount === 1 ? '' : 's'}${squadMsg} from Google Drive!`, "success");
+        } else if (!isAutoCheck) {
+          showToast("Cloud backup synced with Google Drive.", "info");
+        }
 
       } catch (err) {
         console.error("Google Drive restore error:", err);

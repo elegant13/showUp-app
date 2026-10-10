@@ -94,6 +94,10 @@
       if (savedHRCollapsed) {
         toggleHRCardVisibility(true);
       }
+
+      const savedSquadsCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
+      const prefSquadsEl = document.getElementById('pref-squads-collapsed');
+      if (prefSquadsEl) prefSquadsEl.checked = savedSquadsCollapsed;
     }
 
 

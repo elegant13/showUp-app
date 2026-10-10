@@ -476,7 +476,11 @@
       } else {
         completedWorkoutsHistory.push(workoutObj);
       }
-      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+        AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+      } else {
+        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      }
 
       document.getElementById('summary-title').innerHTML = workoutName ? `<i class="fa-solid fa-trophy"></i> ${workoutName}` : `<i class="fa-solid fa-chart-line"></i> Physiology Summary`;
       document.getElementById('summary-timestamp').innerText = `Recorded for ${targetDate}`;

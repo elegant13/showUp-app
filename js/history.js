@@ -206,7 +206,11 @@
         setObj.reps = parseInt(newReps) || 1;
       }
 
-      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+        AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+      } else {
+        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      }
       renderMonthlyHistory();
 
       if (googleAccessToken) {
@@ -218,7 +222,11 @@
       if (!confirm(`Are you sure you want to delete the workout entry for ${dateStr}?`)) return;
 
       completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
-      localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+        AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+      } else {
+        localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+      }
       renderCalendar();
       renderMonthlyHistory();
 
