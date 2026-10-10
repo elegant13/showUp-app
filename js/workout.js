@@ -498,7 +498,7 @@
 
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
-      broadcastUserWorkoutEnded();
+      broadcastUserWorkoutEnded(workoutName);
       incrementGlobalWorkoutCounter();
 
       renderLoggedSets();

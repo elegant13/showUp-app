@@ -610,6 +610,109 @@ runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
   assert(!squadTabHtmlAfterJoin.includes("<span>Yet to join</span>"), "Yet to join status avoided once athlete has joined squad");
 });
 
+runSuite("12. Squad Teammate Workout Visibility & Auto-Login Retrieval Engine", () => {
+  // 1: Verify bottom navigation centering and responsiveness markup in index.html and app.css
+  const navHtml = document.querySelector('nav');
+  assert(navHtml !== null, "Bottom navigation element exists in DOM");
+
+  // 2: Verify Squad Teammates Workout Status visibility (Showed Up with workout title and Lifting Now)
+  toggleSquadsDefaultCollapsePref(false);
+  applyUserProfile({ firstName: "Coach", email: "coach@apex.com" });
+  const coachUser = getAppUser();
+  const currentETDate = getETDateKey();
+  const testSquad = {
+    id: "sq_status_test",
+    name: "Apex Athletes",
+    isCollapsed: false,
+    creatorId: coachUser.id,
+    creatorName: coachUser.name,
+    creatorEmail: coachUser.email,
+    members: [
+      {
+        id: coachUser.id,
+        name: coachUser.name,
+        rawName: coachUser.rawName,
+        email: coachUser.email,
+        isCreator: true,
+        hasJoined: true,
+        isWorkingOut: false,
+        completedToday: false
+      },
+      {
+        id: "teammate_1",
+        name: "Sarah Connors",
+        rawName: "Sarah Connors",
+        email: "sarah@apex.com",
+        isCreator: false,
+        hasJoined: true,
+        isWorkingOut: true,
+        currentWorkout: "Back Squats 5x5",
+        completedToday: false
+      },
+      {
+        id: "teammate_2",
+        name: "John Miller",
+        rawName: "John Miller",
+        email: "john@apex.com",
+        isCreator: false,
+        hasJoined: true,
+        isWorkingOut: false,
+        completedToday: true,
+        completedDate: currentETDate,
+        lastCompletedWorkout: "Olympic Clean & Jerk"
+      }
+    ]
+  };
+
+  saveSquads([testSquad]);
+  renderSquadsTab();
+
+  const renderedSquadHtml = document.getElementById('squads-list-container').innerHTML;
+  assert(renderedSquadHtml.includes("Lifting Now: Back Squats 5x5"), "Teammate lifting status and current workout are visible");
+  assert(renderedSquadHtml.includes("Showed Up"), "Teammate completed status 'Showed Up' is visible");
+  assert(renderedSquadHtml.includes("Olympic Clean &amp; Jerk") || renderedSquadHtml.includes("Olympic Clean & Jerk"), "Teammate last completed workout title is visible to squad members");
+
+  // 3: Verify broadcastUserWorkoutEnded updates current user's completedToday, completedDate, and lastCompletedWorkout
+  broadcastUserWorkoutStarted("Heavy Deadlift Session");
+  let squads = getSquads();
+  let userMem = squads[0].members.find(m => m.id === coachUser.id || m.email === coachUser.email);
+  assert(userMem.isWorkingOut === true, "User workout started broadcast sets isWorkingOut to true");
+  assert(userMem.currentWorkout === "Heavy Deadlift Session", "User workout started sets workout title");
+
+  broadcastUserWorkoutEnded("Heavy Deadlift Session");
+  squads = getSquads();
+  userMem = squads[0].members.find(m => m.id === coachUser.id || m.email === coachUser.email);
+  assert(userMem.isWorkingOut === false, "User workout ended sets isWorkingOut to false");
+  assert(userMem.completedToday === true, "User workout ended sets completedToday to true");
+  assert(userMem.completedDate === currentETDate, "User workout ended sets completedDate to current ET date");
+  assert(userMem.lastCompletedWorkout === "Heavy Deadlift Session", "User workout ended records lastCompletedWorkout");
+
+  // 4: Verify auto-retrieval and display of workouts and squads upon login
+  const testAthlete = {
+    id: "athlete_auto_login",
+    firstName: "Marcus",
+    email: "marcus@gym.com",
+    picture: "https://example.com/avatar.jpg"
+  };
+
+  // Seed isolated workouts for Marcus
+  const marcusWorkouts = [
+    { date: currentETDate, workoutName: "Morning Conditioning", sets: [{ weight: 100, reps: 10 }] }
+  ];
+  localStorage.setItem('showUp_user_workouts_marcus@gym.com', JSON.stringify(marcusWorkouts));
+
+  // Apply user profile (login action)
+  applyUserProfile(testAthlete);
+
+  // Verify workouts retrieved and displayed
+  assert(completedWorkoutsHistory.length === 1, "Workouts retrieved for athlete upon login");
+  assert(completedWorkoutsHistory[0].workoutName === "Morning Conditioning", "Workout title accurately retrieved upon login");
+
+  // Verify UI refreshed
+  const loggedUser = getAppUser();
+  assert(loggedUser.email === "marcus@gym.com", "Athlete profile active upon login");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

@@ -318,7 +318,16 @@ input[type="range"] {
    ========================================================================== */
 
 .bottom-nav-safe {
+  width: 100%;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
 }
 
 ::-webkit-scrollbar {

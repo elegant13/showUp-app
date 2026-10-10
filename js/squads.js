@@ -212,10 +212,24 @@
               const localMembers = currentSquads[idx].members || [];
               (remSq.members || []).forEach(m => {
                 if (!m) return;
-                const hasM = localMembers.some(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
-                if (!hasM) {
+                const localMemberIdx = localMembers.findIndex(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
+                if (localMemberIdx === -1) {
                   localMembers.push(m);
                   hasChanges = true;
+                } else {
+                  // Update teammate workout status if not current local athlete
+                  const lm = localMembers[localMemberIdx];
+                  const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
+                  if (!isCurrentAthlete) {
+                    if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
+                    if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
+                    if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
+                    if (m.completedDate !== undefined && m.completedDate !== lm.completedDate) { lm.completedDate = m.completedDate; hasChanges = true; }
+                    if (m.lastCompletedWorkout !== undefined && m.lastCompletedWorkout !== lm.lastCompletedWorkout) { lm.lastCompletedWorkout = m.lastCompletedWorkout; hasChanges = true; }
+                    if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
+                    if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
+                    if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
+                  }
                 }
               });
               currentSquads[idx].members = localMembers;
@@ -232,8 +246,73 @@
             updateGlobalStatsUI();
           }
         }
+
+        // Attach real-time snapshot listener for live squad teammate workout status updates
+        setupSquadsFirestoreListener(user);
       } catch (err) {
         console.debug("Firestore athlete squads fetch notice:", err);
+      }
+    }
+
+    let squadsListenerUnsubscribe = null;
+    function setupSquadsFirestoreListener(user) {
+      if (squadsListenerUnsubscribe) return; // Already listening
+      if (!user) user = getAppUser();
+      if (!isCustomerLoggedIn()) return;
+      try {
+        if (typeof getFirestoreDb !== 'function') return;
+        const db = getFirestoreDb();
+        if (!db) return;
+
+        squadsListenerUnsubscribe = db.collection('squads').onSnapshot(snapshot => {
+          if (!snapshot || snapshot.empty) return;
+          const currentSquads = getSquads();
+          let hasChanges = false;
+          snapshot.forEach(doc => {
+            const remSq = doc.data();
+            if (!remSq || !remSq.id || !isAthleteMemberOrCreator(remSq, user)) return;
+            const idx = currentSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
+            if (idx >= 0) {
+              const localMembers = currentSquads[idx].members || [];
+              (remSq.members || []).forEach(m => {
+                if (!m) return;
+                const localMemberIdx = localMembers.findIndex(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
+                if (localMemberIdx === -1) {
+                  localMembers.push(m);
+                  hasChanges = true;
+                } else {
+                  const lm = localMembers[localMemberIdx];
+                  const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
+                  if (!isCurrentAthlete) {
+                    if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
+                    if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
+                    if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
+                    if (m.completedDate !== undefined && m.completedDate !== lm.completedDate) { lm.completedDate = m.completedDate; hasChanges = true; }
+                    if (m.lastCompletedWorkout !== undefined && m.lastCompletedWorkout !== lm.lastCompletedWorkout) { lm.lastCompletedWorkout = m.lastCompletedWorkout; hasChanges = true; }
+                    if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
+                    if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
+                    if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
+                  }
+                }
+              });
+              currentSquads[idx].members = localMembers;
+            } else {
+              currentSquads.push(remSq);
+              hasChanges = true;
+            }
+          });
+
+          if (hasChanges) {
+            saveSquads(currentSquads);
+            renderSquadsTab();
+            updateSquadBeacon();
+            updateGlobalStatsUI();
+          }
+        }, err => {
+          console.debug("Squads real-time listener notice:", err);
+        });
+      } catch (err) {
+        console.debug("Setup squads listener notice:", err);
       }
     }
 
@@ -1401,10 +1480,18 @@
                                   <span>Yet to join</span>
                                 </span>
                               ` : hasCompletedToday ? `
-                                <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-sm">
-                                  <i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i>
-                                  <span>Showed Up</span>
-                                </span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                  <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-sm">
+                                    <i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i>
+                                    <span>Showed Up</span>
+                                  </span>
+                                  ${(m.lastCompletedWorkout || (isThisUser && userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate)?.workoutName)) ? `
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full" title="Completed workout today">
+                                      <i class="fa-solid fa-dumbbell text-[8px]"></i>
+                                      <span>${escapeHtml(m.lastCompletedWorkout || userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate)?.workoutName || 'Completed')}</span>
+                                    </span>
+                                  ` : ''}
+                                </div>
                               ` : `
                                 <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
                                   <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
@@ -2139,10 +2226,11 @@
         const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
         if (userMember && !userMember.isWorkingOut) {
           userMember.isWorkingOut = true;
-          userMember.currentWorkout = exerciseName;
+          userMember.currentWorkout = exerciseName || 'Active Session';
           userMember.workoutStartedAt = new Date().toISOString();
           userMember.lastActive = 'Active now';
           changed = true;
+          try { syncSquadToFirestore(sq); } catch (e) {}
         }
       });
 
@@ -2153,18 +2241,27 @@
       renderHeatMap();
     }
 
-    function broadcastUserWorkoutEnded() {
+    function broadcastUserWorkoutEnded(workoutName) {
       const squads = getSquads();
       const user = getAppUser();
+      const currentETDate = getETDateKey();
       let changed = false;
 
       squads.forEach(sq => {
         const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
-        if (userMember && userMember.isWorkingOut) {
+        if (userMember) {
           userMember.isWorkingOut = false;
-          userMember.lastActive = 'Just now';
+          userMember.completedToday = true;
+          userMember.completedDate = currentETDate;
+          if (workoutName) {
+            userMember.lastCompletedWorkout = workoutName;
+            userMember.lastActive = 'Completed ' + workoutName;
+          } else {
+            userMember.lastActive = 'Completed workout today';
+          }
           userMember.currentWorkout = null;
           changed = true;
+          try { syncSquadToFirestore(sq); } catch (e) {}
         }
       });
 

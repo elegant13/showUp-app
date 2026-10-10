@@ -350,6 +350,9 @@
       document.getElementById('google-user-profile').classList.remove('hidden');
       updateCloudBackupUI();
       initSquads();
+      if (typeof fetchAthleteSquadsFromFirestore === 'function') {
+        try { fetchAthleteSquadsFromFirestore(profileObj); } catch (e) {}
+      }
       renderSquadsTab();
       updateSquadBeacon();
       updateGlobalStatsUI();
@@ -358,6 +361,17 @@
       renderMonthlyHistory();
       updateGlobalVisitorTelemetryUI();
       closeAuthLoginModal();
+
+      // Automatically retrieve cloud workouts and squads from Google Drive if authorized
+      if (googleAccessToken && typeof restoreFromGoogleDrive === 'function') {
+        setTimeout(async () => {
+          try {
+            await restoreFromGoogleDrive(true);
+          } catch (e) {
+            console.debug("Silent auto-restore on login profile notice:", e);
+          }
+        }, 150);
+      }
     }
 
     async function handleSuccessfulOAuthToken(token) {
