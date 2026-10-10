@@ -7,30 +7,48 @@
       if (!user) user = getAppUser();
       const userId = user.id;
       const userEmail = (user.email || '').toLowerCase().trim();
+      const userName = (user.rawName || user.name || '').toLowerCase().trim();
 
       // 1. Is athlete the squad creator?
-      const isCreatorById = squad.creatorId && (squad.creatorId === userId || squad.creatorId === 'local_user');
+      const isCreatorById = squad.creatorId && (squad.creatorId === userId || (userEmail && squad.creatorId === userEmail) || squad.creatorId === 'local_user');
       const isCreatorByEmail = userEmail && squad.creatorEmail && (squad.creatorEmail.toLowerCase().trim() === userEmail);
+      const isCreatorByName = userName && ((squad.creatorName && squad.creatorName.toLowerCase().trim() === userName) || (typeof squad.creator === 'string' && squad.creator.toLowerCase().trim() === userName));
       const isCreatorInMembers = Array.isArray(squad.members) && squad.members.some(m => {
         if (!m) return false;
-        const matchId = m.id === userId || m.id === 'local_user';
+        if (typeof m === 'string') {
+          const str = m.toLowerCase().trim();
+          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+        }
+        const matchId = m.id === userId || (userEmail && m.id === userEmail) || m.id === 'local_user';
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        return (matchId || matchEmail) && m.isCreator === true;
+        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName;
+        return (matchId || matchEmail || matchName) && m.isCreator === true;
       });
 
-      if (isCreatorById || isCreatorByEmail || isCreatorInMembers) {
+      if (isCreatorById || isCreatorByEmail || isCreatorByName || isCreatorInMembers) {
         return true;
       }
 
-      // 2. Is athlete an active member who joined the squad?
+      // 2. Is athlete an active member who joined or was invited to the squad?
       const isMember = Array.isArray(squad.members) && squad.members.some(m => {
         if (!m) return false;
-        const matchId = m.id === userId;
+        if (typeof m === 'string') {
+          const str = m.toLowerCase().trim();
+          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+        }
+        const matchId = (m.id && (m.id === userId || (userEmail && m.id === userEmail))) || (m.id === 'local_user' && squad.creatorId === userId);
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        return matchId || matchEmail;
+        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName && (m.inviteStatus === 'accepted' || m.isBackupCreator || m.isCreator || m.isMember !== false);
+        return matchId || matchEmail || matchName;
       });
 
-      return !!isMember;
+      if (isMember) return true;
+
+      // 3. Backup creator match
+      if (squad.backupCreatorId && (squad.backupCreatorId === userId || squad.backupCreatorId === userEmail)) return true;
+      if (squad.backupCreatorEmail && userEmail && squad.backupCreatorEmail.toLowerCase().trim() === userEmail) return true;
+
+      return false;
     }
 
     function sanitizeSquadMembers(squad, user) {
@@ -51,7 +69,7 @@
         const isCurrentUserEntity = (
           m.id === user.id || 
           (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()) || 
-          m.id === 'local_user'
+          (m.id === 'local_user' && (squad.creatorId === user.id || squad.creatorId === 'local_user'))
         );
 
         const key = isCurrentUserEntity 
@@ -66,10 +84,11 @@
             m.rawName = user.rawName;
             m.email = user.email;
             if (user.picture) m.avatar = user.picture;
-            if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
+            if (squad.creatorId === user.id || squad.creatorId === 'local_user' || (squad.creatorEmail && user.email && squad.creatorEmail.toLowerCase().trim() === user.email.toLowerCase().trim())) {
               m.isCreator = true;
               squad.creatorId = user.id;
               squad.creatorName = user.rawName || user.name;
+              squad.creatorEmail = user.email || squad.creatorEmail;
             }
           }
           deduped.push(m);
@@ -77,7 +96,7 @@
       }
 
       // If user is creator but not yet in members list, ensure they are in members
-      if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
+      if (squad.creatorId === user.id || squad.creatorId === 'local_user' || (squad.creatorEmail && user.email && squad.creatorEmail.toLowerCase().trim() === user.email.toLowerCase().trim())) {
         const hasUser = deduped.some(m => m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
         if (!hasUser) {
           deduped.unshift({
@@ -97,10 +116,81 @@
         }
         squad.creatorId = user.id;
         squad.creatorName = user.rawName || user.name;
+        squad.creatorEmail = user.email || squad.creatorEmail;
       }
 
       squad.members = deduped;
       return squad;
+    }
+
+    function syncSquadToFirestore(squad) {
+      if (!squad || !squad.id) return;
+      try {
+        if (typeof getFirestoreDb === 'function') {
+          const db = getFirestoreDb();
+          if (db) {
+            const cleanSquad = JSON.parse(JSON.stringify(squad));
+            cleanSquad.updatedAt = new Date().toISOString();
+            db.collection('squads').doc(squad.id).set(cleanSquad, { merge: true })
+              .catch(err => console.debug("Firestore squad sync notice:", err));
+          }
+        }
+      } catch (err) {
+        console.debug("Firestore squad record exception:", err);
+      }
+    }
+
+    async function fetchAthleteSquadsFromFirestore(user) {
+      if (!user) user = getAppUser();
+      if (!isCustomerLoggedIn()) return;
+      try {
+        if (typeof getFirestoreDb !== 'function') return;
+        const db = getFirestoreDb();
+        if (!db) return;
+
+        const snapshot = await db.collection('squads').get();
+        if (!snapshot || snapshot.empty) return;
+
+        const remoteSquads = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data && data.id && isAthleteMemberOrCreator(data, user)) {
+            remoteSquads.push(data);
+          }
+        });
+
+        if (remoteSquads.length > 0) {
+          const currentSquads = getSquads();
+          let hasChanges = false;
+          remoteSquads.forEach(remSq => {
+            const idx = currentSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
+            if (idx >= 0) {
+              const localMembers = currentSquads[idx].members || [];
+              (remSq.members || []).forEach(m => {
+                if (!m) return;
+                const hasM = localMembers.some(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
+                if (!hasM) {
+                  localMembers.push(m);
+                  hasChanges = true;
+                }
+              });
+              currentSquads[idx].members = localMembers;
+            } else {
+              currentSquads.push(remSq);
+              hasChanges = true;
+            }
+          });
+
+          if (hasChanges) {
+            saveSquads(currentSquads);
+            renderSquadsTab();
+            updateSquadBeacon();
+            updateGlobalStatsUI();
+          }
+        }
+      } catch (err) {
+        console.debug("Firestore athlete squads fetch notice:", err);
+      }
     }
 
     function initSquads() {
@@ -109,18 +199,72 @@
         // Logged-out athlete: zero squads or personal data loaded
         localStorage.removeItem('showUp_squads');
         updateSquadBeacon();
-        return;
+        return [];
       }
 
-      let squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
       const user = getAppUser();
+      const userEmail = (user.email || '').toLowerCase().trim();
 
-      if (!Array.isArray(squads)) {
-        squads = [];
+      // Gather candidate squads across all persistence tiers:
+      // 1. Current active squads in showUp_squads
+      let localSquads = [];
+      try {
+        localSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+      } catch (e) { localSquads = []; }
+
+      // 2. Global squad registry
+      const globalReg = getGlobalSquadRegistry();
+
+      // 3. Per-athlete persistent cache (preserves squads across re-logins)
+      let userCacheSquads = [];
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          userCacheSquads = JSON.parse(localStorage.getItem('showUp_user_squads_' + userEmail) || '[]');
+        } catch (e) { userCacheSquads = []; }
       }
 
-      // Strict isolation: only keep squads created by athlete or joined by athlete
-      squads = squads.filter(sq => sq && sq.id && isAthleteMemberOrCreator(sq, user));
+      // 4. Squad archive
+      let archiveSquads = [];
+      try {
+        archiveSquads = JSON.parse(localStorage.getItem('showUp_squad_archive') || '[]');
+      } catch (e) { archiveSquads = []; }
+
+      // Combine and deduplicate candidates by squad.id or inviteCode
+      const candidates = [
+        ...(Array.isArray(localSquads) ? localSquads : []),
+        ...(Array.isArray(globalReg) ? globalReg : []),
+        ...(Array.isArray(userCacheSquads) ? userCacheSquads : []),
+        ...(Array.isArray(archiveSquads) ? archiveSquads : [])
+      ];
+
+      const squadMap = new Map();
+
+      candidates.forEach(sq => {
+        if (!sq || !sq.name) return;
+        const key = sq.id || (sq.inviteCode ? `code_${sq.inviteCode}` : null);
+        if (!key) return;
+
+        if (isAthleteMemberOrCreator(sq, user)) {
+          if (!squadMap.has(key)) {
+            squadMap.set(key, sq);
+          } else {
+            // Merge member lists and latest metadata
+            const existing = squadMap.get(key);
+            const mergedMembers = [...(existing.members || [])];
+            (sq.members || []).forEach(newM => {
+              if (!newM) return;
+              const hasM = mergedMembers.some(m => (m.id && m.id === newM.id) || (m.email && newM.email && m.email.toLowerCase().trim() === newM.email.toLowerCase().trim()));
+              if (!hasM) mergedMembers.push(newM);
+            });
+            existing.members = mergedMembers;
+            if (sq.updatedAt && (!existing.updatedAt || new Date(sq.updatedAt) > new Date(existing.updatedAt))) {
+              squadMap.set(key, { ...existing, ...sq, members: mergedMembers });
+            }
+          }
+        }
+      });
+
+      let squads = Array.from(squadMap.values());
 
       // Sanitize and deduplicate members across all valid squads
       squads = squads.map(sq => sanitizeSquadMembers(sq, user));
@@ -149,6 +293,13 @@
           }, 350);
         }
       } catch (e) {}
+
+      // Asynchronously fetch cloud squads from Firestore in background
+      try {
+        fetchAthleteSquadsFromFirestore(user);
+      } catch (e) {}
+
+      return squads;
     }
 
     function assignBackupCreator(squadId, memberId) {
@@ -275,7 +426,16 @@
       const user = getAppUser();
       const filtered = squads.filter(sq => sq && isAthleteMemberOrCreator(sq, user));
       localStorage.setItem('showUp_squads', JSON.stringify(filtered));
-      filtered.forEach(sq => saveSquadToGlobalRegistry(sq));
+      const userEmail = (user.email || '').toLowerCase().trim();
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(filtered));
+        } catch (e) {}
+      }
+      filtered.forEach(sq => {
+        saveSquadToGlobalRegistry(sq);
+        syncSquadToFirestore(sq);
+      });
       updateSquadBeacon();
     }
 
@@ -1274,6 +1434,7 @@
         createdAt: new Date().toISOString(),
         creatorId: user.id,
         creatorName: user.rawName,
+        creatorEmail: user.email || '',
         notificationPreferences: {
           inAppPill: true,
           beaconPulse: true,

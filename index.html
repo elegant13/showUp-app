@@ -59,92 +59,94 @@
   <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
 
   <!-- ================= HEADER & TOP CONTROLS ================= -->
-  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 flex items-center justify-between shadow-lg">
-    <div class="flex items-center space-x-3">
-      <div onclick="triggerHaptic('light'); openLargeLogoModal()" class="relative flex items-center justify-center h-11 w-11 rounded-2xl bg-black/80 border border-slate-700/80 p-1 shadow-lg shadow-black/60 overflow-hidden ring-1 ring-white/10 shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-transform" title="Click to view large icon">
-        <img src="showup_emblem.png" alt="showUp Logo" class="h-full w-full object-contain filter drop-shadow">
-      </div>
-      <div>
-        <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
-          <span>show<span class="m3-accent-text">Up</span></span>
-          <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">V3</span>
-        </h1>
-        <p class="text-[11px] font-bold tracking-wider m3-accent-text uppercase">Compound your progress</p>
-      </div>
-    </div>
-
-    <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
-    <div class="relative flex items-center gap-2">
-      <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-      <div id="header-visitor-pill" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Cumulative unique visitors across showUp">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-        </span>
-        <i class="fa-solid fa-users text-xs text-purple-400"></i>
-        <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
-        <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
-      </div>
-
-      <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
-        <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
-        <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200">Glass</span>
-      </button>
-
-      <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
-        <i class="fa-solid fa-sliders text-sm"></i>
-      </button>
-
-      <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-        <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
-          <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
-          
-          <div class="flex flex-col text-left leading-tight">
-            <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
-            <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
-          </div>
-          <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
-        </button>
-
-        <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
-          <div class="px-3.5 py-2">
-            <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
-            <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
-          </div>
-
-          <!-- ADMIN GLOBAL TELEMETRY (ONLY VISIBLE FOR abhi13@gmail.com) -->
-          <div id="profile-admin-telemetry-item" class="hidden py-1">
-            <button onclick="triggerHaptic('light'); scrollToAdminTelemetry()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 transition flex items-center gap-2">
-              <i class="fa-solid fa-earth-americas text-xs text-purple-400"></i>
-              <span>Global Visitor Telemetry</span>
-            </button>
-          </div>
-
-          <!-- LEGAL & PRIVACY POSITIONED UNDER PROFILE -->
-          <div class="py-1">
-            <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-user-shield text-xs text-emerald-400"></i>
-              <span>Privacy Policy</span>
-            </a>
-            <a href="terms.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
-              <i class="fa-solid fa-file-contract text-xs text-blue-400"></i>
-              <span>Terms of Service</span>
-            </a>
-          </div>
-
-          <div class="py-1">
-            <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
-              <i class="fa-solid fa-right-from-bracket text-xs"></i>
-              <span>Log out</span>
-            </button>
-          </div>
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 shadow-lg w-full">
+    <div class="max-w-3xl mx-auto w-full flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div onclick="triggerHaptic('light'); openLargeLogoModal()" class="relative flex items-center justify-center h-11 w-11 rounded-2xl bg-black/80 border border-slate-700/80 p-1 shadow-lg shadow-black/60 overflow-hidden ring-1 ring-white/10 shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-transform" title="Click to view large icon">
+          <img src="showup_emblem.png" alt="showUp Logo" class="h-full w-full object-contain filter drop-shadow">
+        </div>
+        <div>
+          <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
+            <span>show<span class="m3-accent-text">Up</span></span>
+            <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">V3</span>
+          </h1>
+          <p class="text-[11px] font-bold tracking-wider m3-accent-text uppercase">Compound your progress</p>
         </div>
       </div>
 
-      <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-xl shadow transition-all">
-        <i class="fa-brands fa-google text-red-500"></i>
-        <span>Sign in</span>
-      </button>
+      <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
+      <div class="relative flex items-center gap-2">
+        <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
+        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800 transition flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Click to view Global Visitor Telemetry">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+          </span>
+          <i class="fa-solid fa-users text-xs text-purple-400"></i>
+          <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
+          <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
+        </div>
+
+        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
+          <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
+          <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200">Glass</span>
+        </button>
+
+        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
+          <i class="fa-solid fa-sliders text-sm"></i>
+        </button>
+
+        <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
+          <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
+            <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
+            
+            <div class="flex flex-col text-left leading-tight">
+              <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
+              <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
+            </div>
+            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
+          </button>
+
+          <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
+            <div class="px-3.5 py-2">
+              <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Signed in as</p>
+              <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
+            </div>
+
+            <!-- ADMIN GLOBAL TELEMETRY (ONLY VISIBLE FOR abhi13@gmail.com) -->
+            <div id="profile-admin-telemetry-item" class="hidden py-1">
+              <button onclick="triggerHaptic('light'); scrollToAdminTelemetry()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 transition flex items-center gap-2">
+                <i class="fa-solid fa-earth-americas text-xs text-purple-400"></i>
+                <span>Global Visitor Telemetry</span>
+              </button>
+            </div>
+
+            <!-- LEGAL & PRIVACY POSITIONED UNDER PROFILE -->
+            <div class="py-1">
+              <a href="privacy.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
+                <i class="fa-solid fa-user-shield text-xs text-emerald-400"></i>
+                <span>Privacy Policy</span>
+              </a>
+              <a href="terms.html" target="_blank" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
+                <i class="fa-solid fa-file-contract text-xs text-blue-400"></i>
+                <span>Terms of Service</span>
+              </a>
+            </div>
+
+            <div class="py-1">
+              <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
+                <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-xl shadow transition-all">
+          <i class="fa-brands fa-google text-red-500"></i>
+          <span>Sign in</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -421,6 +423,10 @@
             </div>
           </div>
           <p class="text-[10px] text-slate-500">Cumulative unique visitor counter across showUp. Privacy-preserving client telemetry without tracking cookies.</p>
+          <button type="button" onclick="triggerHaptic('medium'); toggleSettingsModal(); openGlobalVisitorTelemetryModal()" class="w-full mt-2 py-2.5 px-3 rounded-xl bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/30 text-purple-200 text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]">
+            <i class="fa-solid fa-earth-americas text-xs text-purple-400"></i>
+            <span>View Global Visitors Telemetry</span>
+          </button>
         </div>
       </div>
 
@@ -441,6 +447,119 @@
         Done
       </button>
     </div>
+  </div>
+
+  <!-- ================= GLOBAL VISITORS TELEMETRY MODAL ================= -->
+  <div id="global-visitors-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 transition-all duration-200" onclick="if(event.target === this) closeGlobalVisitorTelemetryModal()">
+    <section id="admin-global-visitor-telemetry" class="m3-card rounded-3xl p-5 sm:p-6 border shadow-2xl relative overflow-hidden space-y-4 bg-slate-900/95 border-purple-500/30 w-full max-w-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/30 text-lg shadow-sm shrink-0">
+            <i class="fa-solid fa-earth-americas"></i>
+          </span>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-sm sm:text-base font-extrabold text-slate-100 tracking-tight">Global Visitors Telemetry</h2>
+              <span class="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-[10px] font-mono font-bold text-purple-300 flex items-center gap-1">
+                <i class="fa-solid fa-globe text-[9px]"></i> Live Telemetry
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-0.5">Real-time visitor distribution grouped by timeframes & geographical locations</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="triggerHaptic('light'); refreshAdminVisitorData()" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5 active:scale-95" title="Refresh Telemetry">
+            <i class="fa-solid fa-rotate text-xs text-purple-400"></i>
+            <span class="hidden sm:inline">Refresh</span>
+          </button>
+          <button onclick="triggerHaptic('light'); exportVisitorDataJSON()" class="px-2.5 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 transition flex items-center gap-1.5 active:scale-95" title="Export JSON Log">
+            <i class="fa-solid fa-download text-xs"></i>
+            <span class="hidden sm:inline">Export</span>
+          </button>
+          <button onclick="closeGlobalVisitorTelemetryModal()" class="text-slate-500 hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-800 transition" title="Close Modal">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- TELEMETRY SUMMARY TILES -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total Visitors</span>
+          <span id="admin-telemetry-total-visitors" class="text-lg sm:text-xl font-black font-mono text-purple-400 mt-0.5 block">0</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">States / Regions</span>
+          <span id="admin-telemetry-total-states" class="text-lg sm:text-xl font-black font-mono text-emerald-400 mt-0.5 block">0</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Top State</span>
+          <span id="admin-telemetry-top-state" class="text-sm sm:text-base font-extrabold text-slate-100 truncate mt-0.5 block">-</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Cities</span>
+          <span id="admin-telemetry-total-cities" class="text-lg sm:text-xl font-black font-mono text-blue-400 mt-0.5 block">0</span>
+        </div>
+      </div>
+
+      <!-- CONTROLS: TIMEFRAME & VIEW TOGGLE TABS + INSTANT SEARCH -->
+      <div class="flex flex-col gap-2.5 pt-1">
+        <!-- View Toggle Tabs (Day / Week / Month / Year / State / City) -->
+        <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 overflow-x-auto scrollbar-none">
+          <button id="admin-view-tab-day" onclick="triggerHaptic('light'); setAdminVisitorViewMode('day')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-calendar-day text-[11px]"></i>
+            <span>Day</span>
+          </button>
+          <button id="admin-view-tab-week" onclick="triggerHaptic('light'); setAdminVisitorViewMode('week')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-calendar-week text-[11px]"></i>
+            <span>Week</span>
+          </button>
+          <button id="admin-view-tab-month" onclick="triggerHaptic('light'); setAdminVisitorViewMode('month')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-calendar text-[11px]"></i>
+            <span>Month</span>
+          </button>
+          <button id="admin-view-tab-year" onclick="triggerHaptic('light'); setAdminVisitorViewMode('year')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-calendar-check text-[11px]"></i>
+            <span>Year</span>
+          </button>
+          <button id="admin-view-tab-state" onclick="triggerHaptic('light'); setAdminVisitorViewMode('state')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-layer-group text-[11px]"></i>
+            <span>State</span>
+          </button>
+          <button id="admin-view-tab-city" onclick="triggerHaptic('light'); setAdminVisitorViewMode('city')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-list-ul text-[11px]"></i>
+            <span>City Log</span>
+          </button>
+        </div>
+
+        <!-- Instant Search -->
+        <div class="relative w-full">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+          <input type="text" id="admin-visitor-search-input" oninput="handleAdminVisitorSearch(this.value)" placeholder="Search by date, city, or state..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
+        </div>
+      </div>
+
+      <!-- CONTAINER 0: TIMEFRAME GROUPINGS (DAY / WEEK / MONTH / YEAR) -->
+      <div id="admin-timeframe-groups-container" class="space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
+        <!-- Dynamically populated with timeframe breakdown -->
+      </div>
+
+      <!-- CONTAINER 1: GROUP COUNT BY STATE (CARDS & PROGRESS BARS) -->
+      <div id="admin-state-groups-container" class="hidden space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
+        <!-- Dynamically populated with state breakdown -->
+      </div>
+
+      <!-- CONTAINER 2: CITY & STATE DETAILED LOG -->
+      <div id="admin-city-log-container" class="hidden space-y-2 max-h-[46vh] overflow-y-auto pr-1">
+        <!-- Dynamically populated with city/state list -->
+      </div>
+
+      <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500">
+        <span><i class="fa-solid fa-shield-halved mr-1 text-purple-400"></i> Privacy-preserving client telemetry</span>
+        <span id="admin-telemetry-last-sync">Live</span>
+      </div>
+    </section>
   </div>
 
   <!-- ================= LOG HISTORICAL BODY WEIGHT MODAL ================= -->
@@ -1863,93 +1982,6 @@
             <i class="fa-solid fa-magnifying-glass-location"></i>
             <span>Zoom to Zip</span>
           </button>
-        </div>
-      </section>
-
-      <!-- 2.1 ADMIN GLOBAL VISITOR TELEMETRY (STRICTLY RESTRICTED TO abhi13@gmail.com PROFILE) -->
-      <section id="admin-global-visitor-telemetry" class="hidden m3-card rounded-3xl p-5 border shadow-xl relative overflow-hidden space-y-4 bg-slate-900/95 border-purple-500/30">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
-          <div class="flex items-start gap-3">
-            <span class="inline-flex items-center justify-center w-10 h-10 rounded-2xl bg-purple-500/10 text-purple-400 border border-purple-500/30 text-lg shadow-sm shrink-0 mt-0.5">
-              <i class="fa-solid fa-earth-americas"></i>
-            </span>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h3 class="text-sm font-extrabold text-slate-100 tracking-tight">Global Visitors Telemetry</h3>
-                <span class="px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-[10px] font-mono font-bold text-purple-300 flex items-center gap-1">
-                  <i class="fa-solid fa-shield-halved text-[9px]"></i> abhi13@gmail.com Only
-                </span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-0.5">Real-time city & state distribution with aggregated group counts by state</p>
-            </div>
-          </div>
-
-          <div class="flex items-center gap-2 self-start sm:self-auto">
-            <button onclick="triggerHaptic('light'); refreshAdminVisitorData()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5 active:scale-95" title="Refresh Telemetry">
-              <i class="fa-solid fa-rotate text-xs text-purple-400"></i>
-              <span>Refresh</span>
-            </button>
-            <button onclick="triggerHaptic('light'); exportVisitorDataJSON()" class="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 transition flex items-center gap-1.5 active:scale-95" title="Export JSON Log">
-              <i class="fa-solid fa-download text-xs"></i>
-              <span>Export</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- TELEMETRY SUMMARY TILES -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total Visitors</span>
-            <span id="admin-telemetry-total-visitors" class="text-lg sm:text-xl font-black font-mono text-purple-400 mt-0.5 block">0</span>
-          </div>
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">States / Regions</span>
-            <span id="admin-telemetry-total-states" class="text-lg sm:text-xl font-black font-mono text-emerald-400 mt-0.5 block">0</span>
-          </div>
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Top State</span>
-            <span id="admin-telemetry-top-state" class="text-sm sm:text-base font-extrabold text-slate-100 truncate mt-0.5 block">-</span>
-          </div>
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
-            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Cities</span>
-            <span id="admin-telemetry-total-cities" class="text-lg sm:text-xl font-black font-mono text-blue-400 mt-0.5 block">0</span>
-          </div>
-        </div>
-
-        <!-- CONTROLS: VIEW TOGGLE & SEARCH FILTER -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
-          <!-- View Toggle Tabs -->
-          <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 self-start sm:self-auto">
-            <button id="admin-view-tab-state" onclick="triggerHaptic('light'); setAdminVisitorViewMode('state')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5">
-              <i class="fa-solid fa-layer-group text-xs"></i>
-              <span>Group by State</span>
-            </button>
-            <button id="admin-view-tab-city" onclick="triggerHaptic('light'); setAdminVisitorViewMode('city')" class="px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5">
-              <i class="fa-solid fa-list-ul text-xs"></i>
-              <span>City & State Log</span>
-            </button>
-          </div>
-
-          <!-- Instant Search -->
-          <div class="relative w-full sm:w-64">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-            <input type="text" id="admin-visitor-search-input" oninput="handleAdminVisitorSearch(this.value)" placeholder="Search city or state..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
-          </div>
-        </div>
-
-        <!-- CONTAINER 1: GROUP COUNT BY STATE (CARDS & PROGRESS BARS) -->
-        <div id="admin-state-groups-container" class="space-y-2.5">
-          <!-- Dynamically populated with state breakdown -->
-        </div>
-
-        <!-- CONTAINER 2: CITY & STATE DETAILED LOG -->
-        <div id="admin-city-log-container" class="hidden space-y-2">
-          <!-- Dynamically populated with city/state list -->
-        </div>
-
-        <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500">
-          <span><i class="fa-solid fa-shield-halved mr-1 text-purple-400"></i> Strict privacy isolation • Only visible to abhi13@gmail.com</span>
-          <span id="admin-telemetry-last-sync">Live</span>
         </div>
       </section>
 

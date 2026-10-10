@@ -539,4 +539,41 @@ body.ui-mode-light {
   color: #0f172a !important;
 }
 
+/* ==========================================================================
+   Viewport Centering & Fluid Responsive Shell
+   Requirement 3: The overall view shall be centered and responsive to the viewport size
+   ========================================================================== */
+#app-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
 
+header,
+main,
+nav {
+  width: 100%;
+}
+
+/* Ensure modal overlays center their dialogs responsively across all viewports */
+#global-visitors-modal,
+#settings-modal,
+#auth-login-modal,
+#log-weight-modal,
+#large-logo-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#global-visitors-modal.hidden,
+#settings-modal.hidden,
+#auth-login-modal.hidden,
+#log-weight-modal.hidden,
+#large-logo-modal.hidden {
+  display: none !important;
+}

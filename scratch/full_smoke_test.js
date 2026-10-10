@@ -988,7 +988,7 @@ const AppStorage = {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
       if (savedProfile && (savedProfile.firstName || savedProfile.email)) {
         return {
-          id: savedProfile.email || 'local_user',
+          id: savedProfile.id || savedProfile.uid || savedProfile.email || 'local_user',
           name: savedProfile.firstName ? `${savedProfile.firstName} (You)` : 'You',
           rawName: savedProfile.firstName || 'You',
           email: savedProfile.email || 'user@showup.app',
@@ -1312,6 +1312,9 @@ const AppStorage = {
       document.getElementById('btn-google-login').classList.add('hidden');
       document.getElementById('google-user-profile').classList.remove('hidden');
       updateCloudBackupUI();
+      initSquads();
+      renderSquadsTab();
+      updateSquadBeacon();
       updateGlobalStatsUI();
       renderHeatMap();
       updateGlobalVisitorTelemetryUI();
@@ -2752,30 +2755,48 @@ const AppStorage = {
       if (!user) user = getAppUser();
       const userId = user.id;
       const userEmail = (user.email || '').toLowerCase().trim();
+      const userName = (user.rawName || user.name || '').toLowerCase().trim();
 
       // 1. Is athlete the squad creator?
-      const isCreatorById = squad.creatorId && (squad.creatorId === userId || squad.creatorId === 'local_user');
+      const isCreatorById = squad.creatorId && (squad.creatorId === userId || (userEmail && squad.creatorId === userEmail) || squad.creatorId === 'local_user');
       const isCreatorByEmail = userEmail && squad.creatorEmail && (squad.creatorEmail.toLowerCase().trim() === userEmail);
+      const isCreatorByName = userName && ((squad.creatorName && squad.creatorName.toLowerCase().trim() === userName) || (typeof squad.creator === 'string' && squad.creator.toLowerCase().trim() === userName));
       const isCreatorInMembers = Array.isArray(squad.members) && squad.members.some(m => {
         if (!m) return false;
-        const matchId = m.id === userId || m.id === 'local_user';
+        if (typeof m === 'string') {
+          const str = m.toLowerCase().trim();
+          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+        }
+        const matchId = m.id === userId || (userEmail && m.id === userEmail) || m.id === 'local_user';
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        return (matchId || matchEmail) && m.isCreator === true;
+        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName;
+        return (matchId || matchEmail || matchName) && m.isCreator === true;
       });
 
-      if (isCreatorById || isCreatorByEmail || isCreatorInMembers) {
+      if (isCreatorById || isCreatorByEmail || isCreatorByName || isCreatorInMembers) {
         return true;
       }
 
-      // 2. Is athlete an active member who joined the squad?
+      // 2. Is athlete an active member who joined or was invited to the squad?
       const isMember = Array.isArray(squad.members) && squad.members.some(m => {
         if (!m) return false;
-        const matchId = m.id === userId;
+        if (typeof m === 'string') {
+          const str = m.toLowerCase().trim();
+          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+        }
+        const matchId = (m.id && (m.id === userId || (userEmail && m.id === userEmail))) || (m.id === 'local_user' && squad.creatorId === userId);
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        return matchId || matchEmail;
+        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName && (m.inviteStatus === 'accepted' || m.isBackupCreator || m.isCreator || m.isMember !== false);
+        return matchId || matchEmail || matchName;
       });
 
-      return !!isMember;
+      if (isMember) return true;
+
+      // 3. Backup creator match
+      if (squad.backupCreatorId && (squad.backupCreatorId === userId || squad.backupCreatorId === userEmail)) return true;
+      if (squad.backupCreatorEmail && userEmail && squad.backupCreatorEmail.toLowerCase().trim() === userEmail) return true;
+
+      return false;
     }
 
     function sanitizeSquadMembers(squad, user) {
@@ -2796,7 +2817,7 @@ const AppStorage = {
         const isCurrentUserEntity = (
           m.id === user.id || 
           (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()) || 
-          m.id === 'local_user'
+          (m.id === 'local_user' && (squad.creatorId === user.id || squad.creatorId === 'local_user'))
         );
 
         const key = isCurrentUserEntity 
@@ -2811,10 +2832,11 @@ const AppStorage = {
             m.rawName = user.rawName;
             m.email = user.email;
             if (user.picture) m.avatar = user.picture;
-            if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
+            if (squad.creatorId === user.id || squad.creatorId === 'local_user' || (squad.creatorEmail && user.email && squad.creatorEmail.toLowerCase().trim() === user.email.toLowerCase().trim())) {
               m.isCreator = true;
               squad.creatorId = user.id;
               squad.creatorName = user.rawName || user.name;
+              squad.creatorEmail = user.email || squad.creatorEmail;
             }
           }
           deduped.push(m);
@@ -2822,7 +2844,7 @@ const AppStorage = {
       }
 
       // If user is creator but not yet in members list, ensure they are in members
-      if (squad.creatorId === user.id || squad.creatorId === 'local_user') {
+      if (squad.creatorId === user.id || squad.creatorId === 'local_user' || (squad.creatorEmail && user.email && squad.creatorEmail.toLowerCase().trim() === user.email.toLowerCase().trim())) {
         const hasUser = deduped.some(m => m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
         if (!hasUser) {
           deduped.unshift({
@@ -2842,10 +2864,81 @@ const AppStorage = {
         }
         squad.creatorId = user.id;
         squad.creatorName = user.rawName || user.name;
+        squad.creatorEmail = user.email || squad.creatorEmail;
       }
 
       squad.members = deduped;
       return squad;
+    }
+
+    function syncSquadToFirestore(squad) {
+      if (!squad || !squad.id) return;
+      try {
+        if (typeof getFirestoreDb === 'function') {
+          const db = getFirestoreDb();
+          if (db) {
+            const cleanSquad = JSON.parse(JSON.stringify(squad));
+            cleanSquad.updatedAt = new Date().toISOString();
+            db.collection('squads').doc(squad.id).set(cleanSquad, { merge: true })
+              .catch(err => console.debug("Firestore squad sync notice:", err));
+          }
+        }
+      } catch (err) {
+        console.debug("Firestore squad record exception:", err);
+      }
+    }
+
+    async function fetchAthleteSquadsFromFirestore(user) {
+      if (!user) user = getAppUser();
+      if (!isCustomerLoggedIn()) return;
+      try {
+        if (typeof getFirestoreDb !== 'function') return;
+        const db = getFirestoreDb();
+        if (!db) return;
+
+        const snapshot = await db.collection('squads').get();
+        if (!snapshot || snapshot.empty) return;
+
+        const remoteSquads = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data && data.id && isAthleteMemberOrCreator(data, user)) {
+            remoteSquads.push(data);
+          }
+        });
+
+        if (remoteSquads.length > 0) {
+          const currentSquads = getSquads();
+          let hasChanges = false;
+          remoteSquads.forEach(remSq => {
+            const idx = currentSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
+            if (idx >= 0) {
+              const localMembers = currentSquads[idx].members || [];
+              (remSq.members || []).forEach(m => {
+                if (!m) return;
+                const hasM = localMembers.some(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
+                if (!hasM) {
+                  localMembers.push(m);
+                  hasChanges = true;
+                }
+              });
+              currentSquads[idx].members = localMembers;
+            } else {
+              currentSquads.push(remSq);
+              hasChanges = true;
+            }
+          });
+
+          if (hasChanges) {
+            saveSquads(currentSquads);
+            renderSquadsTab();
+            updateSquadBeacon();
+            updateGlobalStatsUI();
+          }
+        }
+      } catch (err) {
+        console.debug("Firestore athlete squads fetch notice:", err);
+      }
     }
 
     function initSquads() {
@@ -2854,18 +2947,72 @@ const AppStorage = {
         // Logged-out athlete: zero squads or personal data loaded
         localStorage.removeItem('showUp_squads');
         updateSquadBeacon();
-        return;
+        return [];
       }
 
-      let squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
       const user = getAppUser();
+      const userEmail = (user.email || '').toLowerCase().trim();
 
-      if (!Array.isArray(squads)) {
-        squads = [];
+      // Gather candidate squads across all persistence tiers:
+      // 1. Current active squads in showUp_squads
+      let localSquads = [];
+      try {
+        localSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+      } catch (e) { localSquads = []; }
+
+      // 2. Global squad registry
+      const globalReg = getGlobalSquadRegistry();
+
+      // 3. Per-athlete persistent cache (preserves squads across re-logins)
+      let userCacheSquads = [];
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          userCacheSquads = JSON.parse(localStorage.getItem('showUp_user_squads_' + userEmail) || '[]');
+        } catch (e) { userCacheSquads = []; }
       }
 
-      // Strict isolation: only keep squads created by athlete or joined by athlete
-      squads = squads.filter(sq => sq && sq.id && isAthleteMemberOrCreator(sq, user));
+      // 4. Squad archive
+      let archiveSquads = [];
+      try {
+        archiveSquads = JSON.parse(localStorage.getItem('showUp_squad_archive') || '[]');
+      } catch (e) { archiveSquads = []; }
+
+      // Combine and deduplicate candidates by squad.id or inviteCode
+      const candidates = [
+        ...(Array.isArray(localSquads) ? localSquads : []),
+        ...(Array.isArray(globalReg) ? globalReg : []),
+        ...(Array.isArray(userCacheSquads) ? userCacheSquads : []),
+        ...(Array.isArray(archiveSquads) ? archiveSquads : [])
+      ];
+
+      const squadMap = new Map();
+
+      candidates.forEach(sq => {
+        if (!sq || !sq.name) return;
+        const key = sq.id || (sq.inviteCode ? `code_${sq.inviteCode}` : null);
+        if (!key) return;
+
+        if (isAthleteMemberOrCreator(sq, user)) {
+          if (!squadMap.has(key)) {
+            squadMap.set(key, sq);
+          } else {
+            // Merge member lists and latest metadata
+            const existing = squadMap.get(key);
+            const mergedMembers = [...(existing.members || [])];
+            (sq.members || []).forEach(newM => {
+              if (!newM) return;
+              const hasM = mergedMembers.some(m => (m.id && m.id === newM.id) || (m.email && newM.email && m.email.toLowerCase().trim() === newM.email.toLowerCase().trim()));
+              if (!hasM) mergedMembers.push(newM);
+            });
+            existing.members = mergedMembers;
+            if (sq.updatedAt && (!existing.updatedAt || new Date(sq.updatedAt) > new Date(existing.updatedAt))) {
+              squadMap.set(key, { ...existing, ...sq, members: mergedMembers });
+            }
+          }
+        }
+      });
+
+      let squads = Array.from(squadMap.values());
 
       // Sanitize and deduplicate members across all valid squads
       squads = squads.map(sq => sanitizeSquadMembers(sq, user));
@@ -2894,6 +3041,13 @@ const AppStorage = {
           }, 350);
         }
       } catch (e) {}
+
+      // Asynchronously fetch cloud squads from Firestore in background
+      try {
+        fetchAthleteSquadsFromFirestore(user);
+      } catch (e) {}
+
+      return squads;
     }
 
     function assignBackupCreator(squadId, memberId) {
@@ -3020,7 +3174,16 @@ const AppStorage = {
       const user = getAppUser();
       const filtered = squads.filter(sq => sq && isAthleteMemberOrCreator(sq, user));
       localStorage.setItem('showUp_squads', JSON.stringify(filtered));
-      filtered.forEach(sq => saveSquadToGlobalRegistry(sq));
+      const userEmail = (user.email || '').toLowerCase().trim();
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(filtered));
+        } catch (e) {}
+      }
+      filtered.forEach(sq => {
+        saveSquadToGlobalRegistry(sq);
+        syncSquadToFirestore(sq);
+      });
       updateSquadBeacon();
     }
 
@@ -4019,6 +4182,7 @@ const AppStorage = {
         createdAt: new Date().toISOString(),
         creatorId: user.id,
         creatorName: user.rawName,
+        creatorEmail: user.email || '',
         notificationPreferences: {
           inAppPill: true,
           beaconPulse: true,
@@ -5916,38 +6080,62 @@ function recordCurrentVisitorLocation(loc) {
   }
 }
 
+function openGlobalVisitorTelemetryModal() {
+  const modal = document.getElementById('global-visitors-modal');
+  const section = document.getElementById('admin-global-visitor-telemetry');
+  if (modal) modal.classList.remove('hidden');
+  if (section) {
+    section.classList.remove('hidden');
+    section.style.display = 'block';
+  }
+  const dropdown = document.getElementById('profile-dropdown-menu');
+  if (dropdown) dropdown.classList.add('hidden');
+  renderAdminGlobalVisitorTelemetry(true);
+}
+
+function closeGlobalVisitorTelemetryModal() {
+  const modal = document.getElementById('global-visitors-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
 function setAdminVisitorViewMode(mode) {
   adminVisitorViewMode = mode;
-  const stateTab = document.getElementById('admin-view-tab-state');
-  const cityTab = document.getElementById('admin-view-tab-city');
+  const modes = ['day', 'week', 'month', 'year', 'state', 'city'];
+  modes.forEach(m => {
+    const tab = document.getElementById(`admin-view-tab-${m}`);
+    if (tab) {
+      if (m === mode) {
+        tab.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5";
+      } else {
+        tab.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
+      }
+    }
+  });
+
+  const tfContainer = document.getElementById('admin-timeframe-groups-container');
   const stateContainer = document.getElementById('admin-state-groups-container');
   const cityContainer = document.getElementById('admin-city-log-container');
 
   if (mode === 'state') {
-    if (stateTab) {
-      stateTab.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5";
-    }
-    if (cityTab) {
-      cityTab.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
-    }
+    if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.remove('hidden');
     if (cityContainer) cityContainer.classList.add('hidden');
-  } else {
-    if (stateTab) {
-      stateTab.className = "px-3 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1.5";
-    }
-    if (cityTab) {
-      cityTab.className = "px-3 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1.5";
-    }
+  } else if (mode === 'city') {
+    if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.add('hidden');
     if (cityContainer) cityContainer.classList.remove('hidden');
+  } else {
+    // 'day', 'week', 'month', 'year'
+    if (tfContainer) tfContainer.classList.remove('hidden');
+    if (stateContainer) stateContainer.classList.add('hidden');
+    if (cityContainer) cityContainer.classList.add('hidden');
   }
-  renderAdminGlobalVisitorTelemetry();
+  renderAdminGlobalVisitorTelemetry(true);
 }
 
 function handleAdminVisitorSearch(query) {
   adminVisitorSearchQuery = (query || '').toLowerCase().trim();
-  renderAdminGlobalVisitorTelemetry();
+  renderAdminGlobalVisitorTelemetry(true);
 }
 
 function subscribeAdminGlobalVisitorTelemetry() {
@@ -6065,14 +6253,7 @@ function exportVisitorDataJSON() {
 }
 
 function scrollToAdminTelemetry() {
-  const section = document.getElementById('admin-global-visitor-telemetry');
-  if (section) {
-    section.classList.remove('hidden');
-    section.style.display = 'block';
-    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  const dropdown = document.getElementById('profile-dropdown-menu');
-  if (dropdown) dropdown.classList.add('hidden');
+  openGlobalVisitorTelemetryModal();
 }
 
 function updateGlobalVisitorTelemetryUI() {
@@ -6085,7 +6266,9 @@ function updateGlobalVisitorTelemetryUI() {
       unsubscribeAdminTelemetry();
       unsubscribeAdminTelemetry = null;
     }
-    if (section) {
+    const modal = document.getElementById('global-visitors-modal');
+    const modalOpen = modal && !modal.classList.contains('hidden');
+    if (!modalOpen && section) {
       section.classList.add('hidden');
       section.style.display = 'none';
     }
@@ -6103,10 +6286,63 @@ function updateGlobalVisitorTelemetryUI() {
   subscribeAdminGlobalVisitorTelemetry();
 }
 
-function renderAdminGlobalVisitorTelemetry() {
-  if (!isGlobalVisitorTelemetryAdmin()) return;
+function getTimeframeBucket(dateStr, mode) {
+  const d = new Date(dateStr || Date.now());
+  if (isNaN(d.getTime())) return { key: 'Recent', label: 'Recent', sortVal: 0 };
+
+  if (mode === 'year') {
+    const year = d.getFullYear();
+    return {
+      key: String(year),
+      label: `Year ${year}`,
+      sortVal: new Date(year, 0, 1).getTime()
+    };
+  }
+
+  if (mode === 'month') {
+    const year = d.getFullYear();
+    const month = d.getMonth();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return {
+      key: `${year}-${String(month + 1).padStart(2, '0')}`,
+      label: `${monthNames[month]} ${year}`,
+      sortVal: new Date(year, month, 1).getTime()
+    };
+  }
+
+  if (mode === 'week') {
+    const curr = new Date(d);
+    const day = curr.getDay(); // 0 is Sun
+    const diff = curr.getDate() - day + (day === 0 ? -6 : 1); // Monday
+    const monday = new Date(curr.setDate(diff));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const monStr = monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const sunStr = sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    return {
+      key: monday.toISOString().slice(0, 10),
+      label: `Week of ${monStr} – ${sunStr}`,
+      sortVal: monday.getTime()
+    };
+  }
+
+  // Default 'day'
+  const key = d.toISOString().slice(0, 10);
+  const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return {
+    key,
+    label,
+    sortVal: new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  };
+}
+
+function renderAdminGlobalVisitorTelemetry(force = false) {
+  const modal = document.getElementById('global-visitors-modal');
+  const modalOpen = modal && !modal.classList.contains('hidden');
+  if (!isGlobalVisitorTelemetryAdmin() && !force && !modalOpen) return;
 
   const log = getGlobalVisitorsLog();
+  const tfContainer = document.getElementById('admin-timeframe-groups-container');
   const stateContainer = document.getElementById('admin-state-groups-container');
   const cityContainer = document.getElementById('admin-city-log-container');
   const totalVisitorsEl = document.getElementById('admin-telemetry-total-visitors');
@@ -6168,6 +6404,105 @@ function renderAdminGlobalVisitorTelemetry() {
 
   // 2. Filter data by search query if present
   const q = adminVisitorSearchQuery;
+
+  // 3. Render Timeframe Groups View (Day, Week, Month, Year)
+  if (tfContainer && ['day', 'week', 'month', 'year'].includes(adminVisitorViewMode)) {
+    const tfGroups = {};
+    log.forEach(item => {
+      const bucket = getTimeframeBucket(item.lastSeen || item.firstSeen, adminVisitorViewMode);
+      const key = bucket.key;
+      const visits = Number(item.visitCount) || 1;
+      const locStr = `${item.city || 'Ashburn'}, ${item.state || 'VA'}`;
+
+      if (!tfGroups[key]) {
+        tfGroups[key] = {
+          key,
+          label: bucket.label,
+          sortVal: bucket.sortVal,
+          visitorCount: 0,
+          visitsTotal: 0,
+          locations: {}
+        };
+      }
+      tfGroups[key].visitorCount += 1;
+      tfGroups[key].visitsTotal += visits;
+      tfGroups[key].locations[locStr] = (tfGroups[key].locations[locStr] || 0) + visits;
+    });
+
+    const sortedTf = Object.values(tfGroups).sort((a, b) => b.sortVal - a.sortVal);
+    const filteredTf = sortedTf.filter(tf => {
+      if (!q) return true;
+      const matchLabel = tf.label.toLowerCase().includes(q);
+      const matchLoc = Object.keys(tf.locations).some(l => l.toLowerCase().includes(q));
+      return matchLabel || matchLoc;
+    });
+
+    if (filteredTf.length === 0) {
+      tfContainer.innerHTML = `
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+          <i class="fa-solid fa-clock mb-2 text-base text-slate-600 block"></i>
+          No visitor activity records matched "${q}".
+        </div>
+      `;
+    } else {
+      tfContainer.innerHTML = filteredTf.map((tf, idx) => {
+        const percentage = totalVisitorsCount > 0 ? ((tf.visitorCount / totalVisitorsCount) * 100).toFixed(1) : '0.0';
+        const sortedLocs = Object.keys(tf.locations).sort((a, b) => tf.locations[b] - tf.locations[a]);
+        const modeIcons = {
+          day: 'calendar-day',
+          week: 'calendar-week',
+          month: 'calendar',
+          year: 'calendar-check'
+        };
+        const iconName = modeIcons[adminVisitorViewMode] || 'calendar-days';
+
+        return `
+          <div class="bg-slate-950 p-3.5 rounded-2xl border border-slate-800/90 hover:border-purple-500/40 transition space-y-2.5">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 flex items-center justify-center shrink-0 text-xs shadow-sm">
+                  <i class="fa-solid fa-${iconName}"></i>
+                </span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-slate-100 text-xs sm:text-sm">${tf.label}</span>
+                    <span class="text-[10px] text-slate-500 font-mono">#${idx + 1}</span>
+                  </div>
+                  <p class="text-[10px] text-slate-400">
+                    ${sortedLocs.length} ${sortedLocs.length === 1 ? 'Location' : 'Locations'} Active • ${tf.visitsTotal} ${tf.visitsTotal === 1 ? 'visit' : 'total visits'}
+                  </p>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0">
+                <span class="text-xs sm:text-sm font-black font-mono text-purple-400">${tf.visitorCount} ${tf.visitorCount === 1 ? 'Visitor' : 'Visitors'}</span>
+                <span class="text-[10px] text-slate-400 block font-mono font-bold">${percentage}% share</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar Distribution -->
+            <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-slate-800">
+              <div class="bg-gradient-to-r from-purple-500 via-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: ${Math.max(4, percentage)}%;"></div>
+            </div>
+
+            <!-- Active Locations in this Period -->
+            <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mr-1">Locations:</span>
+              ${sortedLocs.slice(0, 8).map(loc => `
+                <span class="px-2 py-0.5 rounded-lg bg-slate-900 border border-slate-800 text-[10px] text-slate-300 flex items-center gap-1">
+                  <span class="font-medium text-slate-200">${loc}</span>
+                  <span class="text-purple-400 font-mono font-bold">(${tf.locations[loc]})</span>
+                </span>
+              `).join('')}
+              ${sortedLocs.length > 8 ? `<span class="text-[10px] text-slate-500">+${sortedLocs.length - 8} more</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 4. Render State Groups View
   const filteredStates = sortedStates.filter(st => {
     if (!q) return true;
     const matchState = st.stateName.toLowerCase().includes(q) || st.stateCode.toLowerCase().includes(q);
@@ -6175,8 +6510,7 @@ function renderAdminGlobalVisitorTelemetry() {
     return matchState || matchCity;
   });
 
-  // 3. Render State Groups View
-  if (stateContainer) {
+  if (stateContainer && adminVisitorViewMode === 'state') {
     if (filteredStates.length === 0) {
       stateContainer.innerHTML = `
             <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
@@ -6234,8 +6568,8 @@ function renderAdminGlobalVisitorTelemetry() {
     }
   }
 
-  // 4. Render City & State Detailed Log View
-  if (cityContainer) {
+  // 5. Render City & State Detailed Log View
+  if (cityContainer && adminVisitorViewMode === 'city') {
     const filteredLog = log.filter(item => {
       if (!q) return true;
       const c = (item.city || '').toLowerCase();

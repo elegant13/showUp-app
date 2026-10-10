@@ -6,7 +6,7 @@
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
       if (savedProfile && (savedProfile.firstName || savedProfile.email)) {
         return {
-          id: savedProfile.email || 'local_user',
+          id: savedProfile.id || savedProfile.uid || savedProfile.email || 'local_user',
           name: savedProfile.firstName ? `${savedProfile.firstName} (You)` : 'You',
           rawName: savedProfile.firstName || 'You',
           email: savedProfile.email || 'user@showup.app',
@@ -330,6 +330,9 @@
       document.getElementById('btn-google-login').classList.add('hidden');
       document.getElementById('google-user-profile').classList.remove('hidden');
       updateCloudBackupUI();
+      initSquads();
+      renderSquadsTab();
+      updateSquadBeacon();
       updateGlobalStatsUI();
       renderHeatMap();
       updateGlobalVisitorTelemetryUI();
