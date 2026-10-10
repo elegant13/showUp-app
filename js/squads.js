@@ -123,6 +123,50 @@
       return squad;
     }
 
+    function isMemberYetToJoin(member, squad, user) {
+      if (!member) return false;
+      if (!user) user = getAppUser();
+
+      // 1. Creators have always joined
+      if (member.isCreator === true) return false;
+      if (squad && squad.creatorId && (member.id === squad.creatorId || (user.email && squad.creatorEmail && member.email && member.email.toLowerCase().trim() === squad.creatorEmail.toLowerCase().trim()))) {
+        return false;
+      }
+
+      // 2. The viewing athlete on their own account has joined
+      const isMe = (
+        (member.id && (member.id === user.id || (user.email && member.id === user.email))) ||
+        (user.email && member.email && member.email.toLowerCase().trim() === user.email.toLowerCase().trim()) ||
+        (member.id === 'local_user' && (squad.creatorId === user.id || squad.creatorId === 'local_user'))
+      );
+      if (isMe) return false;
+
+      // 3. Explicitly confirmed joined or invite accepted
+      if (member.hasJoined === true || member.joined === true || member.inviteStatus === 'accepted') {
+        return false;
+      }
+
+      // 4. If athlete has workout data / activity recorded, they have joined
+      if (member.completedToday === true || member.completedDate || member.isWorkingOut === true || (Array.isArray(member.workouts) && member.workouts.length > 0)) {
+        return false;
+      }
+
+      // 5. Athlete was invited via email, phone, or manual invitation and has not yet joined
+      if (
+        member.hasJoined === false ||
+        member.inviteStatus === 'delivered' ||
+        member.inviteStatus === 'pending' ||
+        member.invitedByEmail === true ||
+        member.invitedByPhone === true ||
+        member.lastActive === 'Just invited' ||
+        Boolean(member.inviteEmail || member.invitePhone)
+      ) {
+        return true;
+      }
+
+      return false;
+    }
+
     function syncSquadToFirestore(squad) {
       if (!squad || !squad.id) return;
       try {
@@ -760,6 +804,7 @@
         targetSquad.members[memberIndex].rawName = user.rawName;
         targetSquad.members[memberIndex].email = user.email;
         targetSquad.members[memberIndex].avatar = user.picture;
+        targetSquad.members[memberIndex].hasJoined = true;
         targetSquad.members[memberIndex].inviteStatus = 'accepted';
         targetSquad.members[memberIndex].lastActive = 'Just joined';
       } else {
@@ -769,6 +814,8 @@
           rawName: user.rawName,
           email: user.email,
           avatar: user.picture,
+          hasJoined: true,
+          inviteStatus: 'accepted',
           isCreator: false,
           isBackupCreator: false,
           isWorkingOut: false,
@@ -870,6 +917,8 @@
             rawName: user.rawName,
             email: user.email,
             avatar: user.picture,
+            hasJoined: true,
+            inviteStatus: 'accepted',
             isCreator: false,
             isBackupCreator: false,
             isWorkingOut: false,
@@ -901,6 +950,8 @@
           squadToImport.members[memberIdx].rawName = user.rawName;
           squadToImport.members[memberIdx].email = user.email;
           squadToImport.members[memberIdx].avatar = user.picture;
+          squadToImport.members[memberIdx].hasJoined = true;
+          squadToImport.members[memberIdx].inviteStatus = 'accepted';
           squadToImport.members[memberIdx].lastActive = 'Just joined';
         } else {
           squadToImport.members.push({
@@ -909,6 +960,8 @@
             rawName: user.rawName,
             email: user.email,
             avatar: user.picture,
+            hasJoined: true,
+            inviteStatus: 'accepted',
             isCreator: false,
             isBackupCreator: false,
             isWorkingOut: false,
@@ -1210,11 +1263,13 @@
                 }
                 return true;
               });
-              const showedUpCount = sq.members.filter(mem => {
+              const joinedMembers = sq.members.filter(mem => !isMemberYetToJoin(mem, sq, user));
+              const yetToJoinCount = sq.members.length - joinedMembers.length;
+              const showedUpCount = joinedMembers.filter(mem => {
                 const isMe = (mem.id === user.id || mem.email === user.email || mem.id === 'local_user');
                 return isMe ? userCompleted : !!(mem.completedToday === true && mem.completedDate === currentETDate);
               }).length;
-              const yetToShowUpCount = sq.members.length - showedUpCount;
+              const yetToShowUpCount = joinedMembers.length - showedUpCount;
 
               return `
                 <div class="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3 text-xs">
@@ -1232,6 +1287,10 @@
                       <span class="text-emerald-400 font-semibold">${showedUpCount} Showed Up</span>
                       <span class="text-slate-500 mx-1">•</span>
                       <span class="text-slate-400">${yetToShowUpCount} Yet to show up</span>
+                      ${yetToJoinCount > 0 ? `
+                        <span class="text-slate-500 mx-1">•</span>
+                        <span class="text-amber-400/90 font-medium">${yetToJoinCount} Yet to join</span>
+                      ` : ''}
                       ${activeMembersInSquad.length > 0 
                         ? `<span class="text-emerald-400 font-semibold ml-1.5"><i class="fa-solid fa-bolt text-[10px]"></i> ${activeMembersInSquad.length} lifting now</span>`
                         : ''
@@ -1273,7 +1332,8 @@
                     const isThisUser = (m.id === user.id || m.email === user.email || m.id === 'local_user');
                     const isMemberBackupCreator = m.isBackupCreator || (sq.backupCreatorId === m.id);
                     const initials = getInitials(m.rawName || m.name);
-                    const showDeliveryBadge = isUserCreator && (m.invitedByEmail || m.inviteStatus === 'delivered');
+                    const isYetToJoin = isMemberYetToJoin(m, sq, user);
+                    const showDeliveryBadge = isUserCreator && isYetToJoin && (m.invitedByEmail || m.invitedByPhone || m.inviteStatus === 'delivered');
                     
                     const currentETDate = getETDateKey();
                     const userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
@@ -1320,11 +1380,10 @@
                                   ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/30 flex items-center gap-0.5" title="Secondary / Backup Creator"><i class="fa-solid fa-shield-halved text-[8px]"></i> Backup Creator</span>`
                                   : ''
                               }
-                              <!-- VISIBLE EMAIL DELIVERY BADGE FOR CREATOR AGAINST MEMBER NAME -->
+                              <!-- VISIBLE INVITE DELIVERY ICON (MAIL WITH CHECK MARK) ONLY BEFORE ATHLETE JOINS -->
                               ${showDeliveryBadge ? `
-                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/25 shadow-sm" title="Invite delivered to ${escapeHtml(m.inviteEmail || m.email || m.invitePhone || '')} at ${escapeHtml(m.inviteDeliveredAt || 'Recently')}">
-                                  <i class="fa-solid fa-envelope-circle-check text-[10px] text-emerald-400"></i>
-                                  <span>Invite Delivered (${escapeHtml(m.inviteEmail || m.invitePhone || m.email || '')})</span>
+                                <span class="inline-flex items-center text-emerald-400 text-xs ml-0.5 hover:text-emerald-300 transition" title="Invite delivered to ${escapeHtml(m.inviteEmail || m.invitePhone || m.email || '')}${m.inviteDeliveredAt ? ` at ${escapeHtml(m.inviteDeliveredAt)}` : ''}">
+                                  <i class="fa-solid fa-envelope-circle-check"></i>
                                 </span>
                               ` : ''}
                               ${m.phone ? `
@@ -1335,8 +1394,13 @@
                               ` : ''}
                             </div>
                             <div class="mt-1 flex items-center gap-2 flex-wrap">
-                              <!-- ATHLETE STATUS: "Showed Up" if completed workout today, else "Yet to show up" -->
-                              ${hasCompletedToday ? `
+                              <!-- ATHLETE STATUS BADGE -->
+                              ${isYetToJoin ? `
+                                <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full" title="Invited — waiting for teammate to join">
+                                  <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
+                                  <span>Yet to join</span>
+                                </span>
+                              ` : hasCompletedToday ? `
                                 <span class="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-0.5 rounded-full shadow-sm">
                                   <i class="fa-solid fa-circle-check text-emerald-400 text-[9px]"></i>
                                   <span>Showed Up</span>
@@ -1374,10 +1438,12 @@
                                 ? `<span class="text-[10px] font-bold text-sky-400 bg-sky-500/10 border border-sky-500/30 px-2 py-1 rounded-xl flex items-center gap-1" title="Assigned Backup Creator"><i class="fa-solid fa-shield-check text-[9px]"></i> Assigned Backup</span>`
                                 : `<button onclick="triggerHaptic('light'); assignBackupCreator('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-slate-300 hover:text-sky-300 bg-slate-900 hover:bg-sky-500/10 border border-slate-700 hover:border-sky-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1" title="Assign backup creator role to ${escapeHtml(m.rawName || m.name)}"><i class="fa-regular fa-star text-[9px] text-sky-400"></i> Make Backup</button>`
                               }
-                              <button onclick="triggerHaptic('light'); resendSquadInvite('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 bg-slate-900 hover:bg-emerald-500/10 border border-slate-700 hover:border-emerald-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1 shadow-sm" title="Resend squad invitation to ${escapeHtml(m.rawName || m.name)}">
-                                <i class="fa-solid fa-paper-plane text-[9px] text-emerald-400"></i>
-                                <span>Resend Invite</span>
-                              </button>
+                              ${isYetToJoin ? `
+                                <button onclick="triggerHaptic('light'); resendSquadInvite('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 bg-slate-900 hover:bg-emerald-500/10 border border-slate-700 hover:border-emerald-500/30 px-2 py-1 rounded-xl transition flex items-center gap-1 shadow-sm" title="Resend squad invitation to ${escapeHtml(m.rawName || m.name)}">
+                                  <i class="fa-solid fa-paper-plane text-[9px] text-emerald-400"></i>
+                                  <span>Resend Invite</span>
+                                </button>
+                              ` : ''}
                               <button onclick="triggerHaptic('medium'); removeSquadMember('${sq.id}', '${m.id}')" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-rose-500/10 transition" title="Remove member (Creator only)">
                                 <i class="fa-solid fa-user-minus text-xs"></i>
                               </button>
@@ -1711,6 +1777,7 @@
         sendSquadInviteSMS(squad, member);
       }
 
+      member.hasJoined = false;
       member.inviteStatus = 'delivered';
       member.inviteDeliveredAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       member.lastInviteSentAt = new Date().toISOString();
@@ -1806,6 +1873,7 @@
         inviteEmail: email,
         invitePhone: phone,
         inviteStatus: 'delivered',
+        hasJoined: false,
         inviteDeliveredAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         lastInviteSentAt: new Date().toISOString(),
         avatar: null,

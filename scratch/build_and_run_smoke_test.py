@@ -553,6 +553,61 @@ runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
   applyUserProfile({ firstName: "AthleteTwo", email: "athlete2@showup.app" });
   const athlete2Stored = JSON.parse(localStorage.getItem('showUp_user_workouts_athlete2@showup.app') || '[]');
   assert(athlete2Stored.length === 0, "New athlete starts with clean isolated workout store");
+
+  // Test 5: Squad Member Invite Delivered and 'Yet to join' Engine
+  applyUserProfile({ firstName: "CreatorCoach", email: "coach@showup.app" });
+  const coachUser = getAppUser();
+  const squadWithInvite = {
+    id: "squad_invite_test",
+    name: "Invitations Squad",
+    creatorId: coachUser.id,
+    creatorEmail: coachUser.email,
+    members: [
+      {
+        id: coachUser.id,
+        name: coachUser.name,
+        rawName: coachUser.rawName,
+        email: coachUser.email,
+        isCreator: true,
+        hasJoined: true
+      },
+      {
+        id: "member_invited_pending",
+        name: "Pending Teammate",
+        rawName: "Pending Teammate",
+        email: "pending@showup.app",
+        invitedByEmail: true,
+        inviteEmail: "pending@showup.app",
+        inviteStatus: "delivered",
+        inviteDeliveredAt: "10:20 AM",
+        hasJoined: false,
+        lastActive: "Just invited"
+      }
+    ]
+  };
+
+  // 5a: Verify isMemberYetToJoin returns true for pending invite and false for creator
+  assert(typeof isMemberYetToJoin === "function", "isMemberYetToJoin function is defined");
+  assert(isMemberYetToJoin(squadWithInvite.members[0], squadWithInvite, coachUser) === false, "Creator is joined, not yet to join");
+  assert(isMemberYetToJoin(squadWithInvite.members[1], squadWithInvite, coachUser) === true, "Pending teammate is marked as Yet to join");
+
+  // 5b: Render squads tab and verify 'Yet to join' and mail checkmark icon present
+  saveSquads([squadWithInvite]);
+  renderSquadsTab();
+  const squadTabHtml = document.getElementById('squads-list-container').innerHTML;
+  assert(squadTabHtml.includes("<span>Yet to join</span>"), "Squad card contains 'Yet to join' status pill");
+  assert(squadTabHtml.includes("fa-envelope-circle-check"), "Squad card contains small mail checkmark icon");
+  assert(!squadTabHtml.includes("Invite Delivered ("), "Bulky 'Invite Delivered (...)' text pill is avoided");
+
+  // 5c: Once athlete joins, verify Yet to join & delivery badge are avoided
+  squadWithInvite.members[1].hasJoined = true;
+  squadWithInvite.members[1].inviteStatus = "accepted";
+  assert(isMemberYetToJoin(squadWithInvite.members[1], squadWithInvite, coachUser) === false, "Joined teammate is no longer yet to join");
+  saveSquads([squadWithInvite]);
+  renderSquadsTab();
+  const squadTabHtmlAfterJoin = document.getElementById('squads-list-container').innerHTML;
+  assert(!squadTabHtmlAfterJoin.includes("fa-envelope-circle-check"), "Delivery badge icon avoided once athlete has joined squad");
+  assert(!squadTabHtmlAfterJoin.includes("<span>Yet to join</span>"), "Yet to join status avoided once athlete has joined squad");
 });
 
 print("\\n============================================================");
