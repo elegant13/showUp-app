@@ -608,6 +608,57 @@ runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
   const squadTabHtmlAfterJoin = document.getElementById('squads-list-container').innerHTML;
   assert(!squadTabHtmlAfterJoin.includes("fa-envelope-circle-check"), "Delivery badge icon avoided once athlete has joined squad");
   assert(!squadTabHtmlAfterJoin.includes("<span>Yet to join</span>"), "Yet to join status avoided once athlete has joined squad");
+
+  // 5d: Fellow athlete joins via submitJoinSquadByCode with squad invite code
+  const squadCoach = {
+    id: "squad_code_join_test",
+    name: "Thunderbirds",
+    inviteCode: "THUNDER1",
+    creatorId: coachUser.id,
+    creatorEmail: coachUser.email,
+    members: [
+      {
+        id: coachUser.id,
+        name: coachUser.name,
+        rawName: coachUser.rawName,
+        email: coachUser.email,
+        isCreator: true,
+        hasJoined: true
+      },
+      {
+        id: "member_sarah_invited",
+        name: "Sarah Runner",
+        rawName: "Sarah Runner",
+        email: "sarah@showup.app",
+        invitedByEmail: true,
+        inviteEmail: "sarah@showup.app",
+        inviteStatus: "delivered",
+        hasJoined: false,
+        lastActive: "Just invited"
+      }
+    ]
+  };
+  saveSquads([squadCoach]);
+  saveSquadToGlobalRegistry(squadCoach);
+
+  // Sarah logs in and enters the invite code THUNDER1
+  applyUserProfile({ firstName: "Sarah", lastName: "Runner", email: "sarah@showup.app" });
+  document.getElementById('join-squad-code-input').value = "THUNDER1";
+  submitJoinSquadByCode();
+
+  // Switch back to Coach's view and fetch squads
+  applyUserProfile({ firstName: "CreatorCoach", email: "coach@showup.app" });
+  const coachRetrievedSquads = getSquads();
+  const coachThunderSquad = coachRetrievedSquads.find(s => s.id === "squad_code_join_test");
+  assert(coachThunderSquad !== undefined, "Coach squad retrieved");
+  const coachSarahMember = coachThunderSquad.members.find(m => m.email === "sarah@showup.app");
+  assert(coachSarahMember !== undefined, "Sarah member found in coach's squad");
+  assert(isMemberYetToJoin(coachSarahMember, coachThunderSquad, coachUser) === false, "Sarah is no longer Yet to join in coach's view");
+  renderSquadsTab();
+  const coachViewHtml = document.getElementById('squads-list-container').innerHTML;
+  assert(!coachViewHtml.includes("<span>Yet to join</span>"), "Coach view does NOT show 'Yet to join' after fellow athlete joins");
+  assert(!coachViewHtml.includes("fa-envelope-circle-check"), "Coach view does NOT show invite delivered envelope after fellow athlete joins");
+  assert(coachViewHtml.includes("Yet to show up") || coachViewHtml.includes("Showed Up"), "Coach view shows active teammate workout status");
 });
 
 runSuite("12. Squad Teammate Workout Visibility & Auto-Login Retrieval Engine", () => {

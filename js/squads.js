@@ -55,8 +55,8 @@
       if (!squad || !Array.isArray(squad.members)) return squad;
       if (!user) user = getAppUser();
 
-      const seen = new Set();
       const deduped = [];
+      const memberMap = new Map();
 
       for (const m of squad.members) {
         if (!m) continue;
@@ -72,26 +72,66 @@
           (m.id === 'local_user' && (squad.creatorId === user.id || squad.creatorId === 'local_user'))
         );
 
-        const key = isCurrentUserEntity 
-          ? '__CURRENT_USER__' 
-          : (m.id || m.email || (m.rawName || m.name || '').toLowerCase());
+        let key = '';
+        if (isCurrentUserEntity) {
+          key = '__CURRENT_USER__';
+        } else if (m.email && m.email.trim()) {
+          key = 'email:' + m.email.toLowerCase().trim();
+        } else if (m.inviteEmail && m.inviteEmail.trim()) {
+          key = 'email:' + m.inviteEmail.toLowerCase().trim();
+        } else if (m.phone && m.phone.trim()) {
+          key = 'phone:' + m.phone.replace(/\D/g, '');
+        } else if (m.id && !m.id.startsWith('member_')) {
+          key = 'id:' + m.id;
+        } else {
+          key = 'name:' + (m.rawName || m.name || '').toLowerCase().trim();
+        }
 
-        if (!seen.has(key)) {
-          seen.add(key);
+        if (memberMap.has(key)) {
+          const existing = memberMap.get(key);
+          // Merge properties, prioritizing joined / confirmed state
+          if (m.hasJoined === true || existing.hasJoined === true) {
+            existing.hasJoined = true;
+          }
+          if (m.joined === true || existing.joined === true) {
+            existing.joined = true;
+          }
+          if (m.inviteStatus === 'accepted' || existing.inviteStatus === 'accepted') {
+            existing.inviteStatus = 'accepted';
+          }
+          if (m.id && !m.id.startsWith('member_')) {
+            existing.id = m.id;
+          }
+          if (m.avatar && !existing.avatar) {
+            existing.avatar = m.avatar;
+          }
+          if (m.name && (!existing.name || existing.name === existing.email)) {
+            existing.name = m.name;
+            existing.rawName = m.rawName || m.name;
+          }
+          if (m.isWorkingOut || existing.isWorkingOut) existing.isWorkingOut = true;
+          if (m.completedToday || existing.completedToday) existing.completedToday = true;
+          if (m.currentWorkout) existing.currentWorkout = m.currentWorkout;
+          if (m.completedDate) existing.completedDate = m.completedDate;
+          if (m.lastCompletedWorkout) existing.lastCompletedWorkout = m.lastCompletedWorkout;
+          if (m.lastActive && m.lastActive !== 'Just invited') existing.lastActive = m.lastActive;
+        } else {
+          const cloned = { ...m };
           if (isCurrentUserEntity) {
-            m.id = user.id;
-            m.name = user.name;
-            m.rawName = user.rawName;
-            m.email = user.email;
-            if (user.picture) m.avatar = user.picture;
+            cloned.id = user.id;
+            cloned.name = user.name;
+            cloned.rawName = user.rawName;
+            cloned.email = user.email;
+            if (user.picture) cloned.avatar = user.picture;
             if (squad.creatorId === user.id || squad.creatorId === 'local_user' || (squad.creatorEmail && user.email && squad.creatorEmail.toLowerCase().trim() === user.email.toLowerCase().trim())) {
-              m.isCreator = true;
+              cloned.isCreator = true;
               squad.creatorId = user.id;
               squad.creatorName = user.rawName || user.name;
               squad.creatorEmail = user.email || squad.creatorEmail;
             }
           }
-          deduped.push(m);
+          memberMap.set(key, cloned);
+          deduped.push(cloned);
         }
       }
 
@@ -151,7 +191,68 @@
         return false;
       }
 
-      // 5. Athlete was invited via email, phone, or manual invitation and has not yet joined
+      // 5. Cross-reference invite records: if invite for this member was accepted, they have joined
+      const memberEmail = (member.email || member.inviteEmail || '').toLowerCase().trim();
+      if (memberEmail && squad && squad.id) {
+        try {
+          const allInvites = getSquadInvites();
+          const hasAcceptedInvite = allInvites.some(inv => 
+            inv.squadId === squad.id && 
+            inv.targetEmail && inv.targetEmail.toLowerCase().trim() === memberEmail && 
+            inv.status === 'accepted'
+          );
+          if (hasAcceptedInvite) {
+            member.hasJoined = true;
+            member.inviteStatus = 'accepted';
+            return false;
+          }
+        } catch (e) {}
+      }
+
+      // 6. Cross-reference global squad registry: if global squad shows member joined, update and return false
+      if (squad && squad.id) {
+        try {
+          const globalReg = getGlobalSquadRegistry();
+          const regSq = globalReg.find(s => s && (s.id === squad.id || (s.inviteCode && squad.inviteCode && s.inviteCode.toUpperCase() === squad.inviteCode.toUpperCase())));
+          if (regSq && Array.isArray(regSq.members)) {
+            const regM = regSq.members.find(rm => 
+              (rm && rm.id && member.id && rm.id === member.id) ||
+              (memberEmail && rm.email && rm.email.toLowerCase().trim() === memberEmail) ||
+              (member.rawName && rm.rawName && rm.rawName.toLowerCase().trim() === member.rawName.toLowerCase().trim())
+            );
+            if (regM && (regM.hasJoined === true || regM.joined === true || regM.inviteStatus === 'accepted' || regM.completedToday === true || regM.isWorkingOut === true)) {
+              member.hasJoined = true;
+              member.inviteStatus = 'accepted';
+              if (regM.id && !regM.id.startsWith('member_')) member.id = regM.id;
+              if (regM.avatar) member.avatar = regM.avatar;
+              return false;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 7. Check if another entry for this athlete in squad.members has already joined
+      if (squad && Array.isArray(squad.members)) {
+        const otherJoined = squad.members.some(other => 
+          other !== member && 
+          ((memberEmail && other.email && other.email.toLowerCase().trim() === memberEmail) ||
+           (member.rawName && other.rawName && other.rawName.toLowerCase().trim() === member.rawName.toLowerCase().trim())) &&
+          (other.hasJoined === true || other.joined === true || other.inviteStatus === 'accepted' || other.completedToday === true || other.isWorkingOut === true)
+        );
+        if (otherJoined) {
+          member.hasJoined = true;
+          member.inviteStatus = 'accepted';
+          return false;
+        }
+      }
+
+      // 8. If member is active or has joined indicator
+      if (member.lastActive && member.lastActive !== 'Just invited') {
+        member.hasJoined = true;
+        return false;
+      }
+
+      // 9. Athlete was invited via email, phone, or manual invitation and has not yet joined
       if (
         member.hasJoined === false ||
         member.inviteStatus === 'delivered' ||
@@ -252,6 +353,11 @@
                 const lm = localMembers[localMemberIdx];
                 const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
                 if (!isCurrentAthlete) {
+                  if (m.hasJoined !== undefined && m.hasJoined !== lm.hasJoined) { lm.hasJoined = m.hasJoined; hasChanges = true; }
+                  if (m.joined !== undefined && m.joined !== lm.joined) { lm.joined = m.joined; hasChanges = true; }
+                  if (m.id && m.id !== lm.id && !m.id.startsWith('member_')) { lm.id = m.id; hasChanges = true; }
+                  if (m.avatar && m.avatar !== lm.avatar) { lm.avatar = m.avatar; hasChanges = true; }
+                  if (m.name && m.name !== lm.name) { lm.name = m.name; lm.rawName = m.rawName || m.name; hasChanges = true; }
                   if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
                   if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
                   if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
@@ -264,6 +370,7 @@
               }
             });
             remainingSquads[idx].members = localMembers;
+            remainingSquads[idx] = sanitizeSquadMembers(remainingSquads[idx], user);
           } else {
             remainingSquads.push(remSq);
             hasChanges = true;
@@ -336,6 +443,11 @@
                   const lm = localMembers[localMemberIdx];
                   const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
                   if (!isCurrentAthlete) {
+                    if (m.hasJoined !== undefined && m.hasJoined !== lm.hasJoined) { lm.hasJoined = m.hasJoined; hasChanges = true; }
+                    if (m.joined !== undefined && m.joined !== lm.joined) { lm.joined = m.joined; hasChanges = true; }
+                    if (m.id && m.id !== lm.id && !m.id.startsWith('member_')) { lm.id = m.id; hasChanges = true; }
+                    if (m.avatar && m.avatar !== lm.avatar) { lm.avatar = m.avatar; hasChanges = true; }
+                    if (m.name && m.name !== lm.name) { lm.name = m.name; lm.rawName = m.rawName || m.name; hasChanges = true; }
                     if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
                     if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
                     if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
@@ -348,6 +460,7 @@
                 }
               });
               remainingSquads[idx].members = localMembers;
+              remainingSquads[idx] = sanitizeSquadMembers(remainingSquads[idx], user);
             } else {
               remainingSquads.push(remSq);
               hasChanges = true;
@@ -428,8 +541,28 @@
             const mergedMembers = [...(existing.members || [])];
             (sq.members || []).forEach(newM => {
               if (!newM) return;
-              const hasM = mergedMembers.some(m => (m.id && m.id === newM.id) || (m.email && newM.email && m.email.toLowerCase().trim() === newM.email.toLowerCase().trim()));
-              if (!hasM) mergedMembers.push(newM);
+              const existingIdx = mergedMembers.findIndex(m => 
+                (m.id && newM.id && m.id === newM.id) || 
+                (m.email && newM.email && m.email.toLowerCase().trim() === newM.email.toLowerCase().trim()) ||
+                (m.phone && newM.phone && m.phone.replace(/\D/g, '') === newM.phone.replace(/\D/g, ''))
+              );
+              if (existingIdx === -1) {
+                mergedMembers.push(newM);
+              } else {
+                const em = mergedMembers[existingIdx];
+                if (newM.hasJoined === true || em.hasJoined === true) { em.hasJoined = true; }
+                if (newM.joined === true || em.joined === true) { em.joined = true; }
+                if (newM.inviteStatus === 'accepted' || em.inviteStatus === 'accepted') { em.inviteStatus = 'accepted'; }
+                if (newM.id && !newM.id.startsWith('member_')) { em.id = newM.id; }
+                if (newM.avatar && !em.avatar) { em.avatar = newM.avatar; }
+                if (newM.rawName && (!em.rawName || em.rawName === em.email)) { em.rawName = newM.rawName; }
+                if (newM.name && (!em.name || em.name === em.email)) { em.name = newM.name; }
+                if (newM.isWorkingOut !== undefined) { em.isWorkingOut = newM.isWorkingOut; }
+                if (newM.completedToday !== undefined) { em.completedToday = newM.completedToday; }
+                if (newM.completedDate) { em.completedDate = newM.completedDate; }
+                if (newM.lastCompletedWorkout) { em.lastCompletedWorkout = newM.lastCompletedWorkout; }
+                if (newM.lastActive && newM.lastActive !== 'Invite sent' && newM.lastActive !== 'Just invited') { em.lastActive = newM.lastActive; }
+              }
             });
             existing.members = mergedMembers;
             if (sq.updatedAt && (!existing.updatedAt || new Date(sq.updatedAt) > new Date(existing.updatedAt))) {
@@ -1001,6 +1134,7 @@
 
       saveSquads(squads);
       saveSquadToGlobalRegistry(targetSquad);
+      syncSquadToFirestore(targetSquad);
       renderSquadsTab();
       updateGlobalStatsUI();
       updateSquadBeacon();
@@ -1072,10 +1206,33 @@
       // 1. Check if already in user's squads
       const existingInUserSquads = squads.find(s => (s.inviteCode && s.inviteCode.toUpperCase() === rawCode));
       if (existingInUserSquads) {
-        const isMember = existingInUserSquads.members.some(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
-        if (isMember) {
-          showToast(`You are already a member of "${existingInUserSquads.name}"!`, "info");
+        const memberIdx = existingInUserSquads.members.findIndex(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
+        if (memberIdx >= 0) {
+          const m = existingInUserSquads.members[memberIdx];
+          const wasPending = !m.hasJoined || m.inviteStatus !== 'accepted';
+          m.id = user.id;
+          m.name = user.name;
+          m.rawName = user.rawName;
+          m.email = user.email;
+          m.avatar = user.picture;
+          m.hasJoined = true;
+          m.inviteStatus = 'accepted';
+          m.lastActive = 'Just joined';
+          saveSquads(squads);
+          saveSquadToGlobalRegistry(existingInUserSquads);
+          syncSquadToFirestore(existingInUserSquads);
           closeJoinSquadModal();
+          renderSquadsTab();
+          updateGlobalStatsUI();
+          updateSquadBeacon();
+          if (wasPending) {
+            showToast(`🎉 Joined "${existingInUserSquads.name}"! You are now an active member.`, "success");
+          } else {
+            showToast(`You are already an active member of "${existingInUserSquads.name}"!`, "info");
+          }
+          if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+            syncToGoogleDrive(false);
+          }
           return;
         } else {
           existingInUserSquads.members.push({
@@ -1094,6 +1251,7 @@
           });
           saveSquads(squads);
           saveSquadToGlobalRegistry(existingInUserSquads);
+          syncSquadToFirestore(existingInUserSquads);
           closeJoinSquadModal();
           renderSquadsTab();
           updateGlobalStatsUI();
@@ -1138,6 +1296,8 @@
         }
         squads.unshift(squadToImport);
         saveSquads(squads);
+        saveSquadToGlobalRegistry(squadToImport);
+        syncSquadToFirestore(squadToImport);
         closeJoinSquadModal();
         renderSquadsTab();
         updateGlobalStatsUI();
@@ -1186,6 +1346,8 @@
             rawName: user.rawName,
             email: user.email,
             avatar: user.picture,
+            hasJoined: true,
+            inviteStatus: 'accepted',
             isCreator: false,
             isBackupCreator: false,
             isWorkingOut: false,
@@ -1198,6 +1360,7 @@
       squads.unshift(newJoinedSquad);
       saveSquads(squads);
       saveSquadToGlobalRegistry(newJoinedSquad);
+      syncSquadToFirestore(newJoinedSquad);
       closeJoinSquadModal();
       renderSquadsTab();
       updateGlobalStatsUI();
