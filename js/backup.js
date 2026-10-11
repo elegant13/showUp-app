@@ -540,7 +540,9 @@
         }
 
         if (backupData.squads && Array.isArray(backupData.squads)) {
-          const cleanSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+          const rawSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+          // Only restore squads where athlete is creator or legitimately in members
+          const cleanSquads = rawSquads.filter(sq => isAthleteMemberOrCreator(sq, user));
           cleanSquads.forEach(sq => {
             if (!sq.members) sq.members = [];
 
@@ -565,19 +567,6 @@
               match.email = user.email;
               if (user.picture) match.avatar = user.picture;
               if (sq.creatorId === user.id) match.isCreator = true;
-            } else if (!match) {
-              sq.members.push({
-                id: user.id,
-                name: user.name,
-                rawName: user.rawName,
-                email: user.email,
-                avatar: user.picture,
-                isCreator: (sq.creatorId === user.id),
-                isBackupCreator: false,
-                isWorkingOut: false,
-                currentWorkout: null,
-                lastActive: 'Active'
-              });
             }
           });
 
@@ -696,8 +685,9 @@
               loadPhysicalProfile();
             }
             if (Array.isArray(data.squads)) {
-              const cleanSquads = data.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
               const user = getAppUser();
+              const rawSquads = data.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+              const cleanSquads = rawSquads.filter(sq => isAthleteMemberOrCreator(sq, user));
               cleanSquads.forEach(sq => {
                 if (!sq.members) sq.members = [];
                 const match = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');

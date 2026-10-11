@@ -713,6 +713,95 @@ runSuite("12. Squad Teammate Workout Visibility & Auto-Login Retrieval Engine", 
   assert(loggedUser.email === "marcus@gym.com", "Athlete profile active upon login");
 });
 
+runSuite("13. Leave Squad Immediate Removal & Accurate Retrieval Engine", function() {
+  // Test User
+  const athleteUser = {
+    id: "athlete_leave_test",
+    firstName: "Elena",
+    rawName: "Elena Rostova",
+    name: "Elena Rostova",
+    email: "elena@fitness.com"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(athleteUser));
+
+  // Create two squads: one as creator, one as regular member
+  const squadCreated = {
+    id: "squad_elena_created",
+    name: "Elena's Lifters",
+    creatorId: athleteUser.id,
+    creatorEmail: athleteUser.email,
+    creatorName: athleteUser.name,
+    members: [
+      { id: athleteUser.id, name: athleteUser.name, rawName: athleteUser.rawName, email: athleteUser.email, isCreator: true },
+      { id: "member_teammate_1", name: "Boris", rawName: "Boris", email: "boris@gym.com", isCreator: false }
+    ]
+  };
+
+  const squadJoined = {
+    id: "squad_team_beast",
+    name: "Team Beast",
+    creatorId: "coach_beast",
+    creatorEmail: "coach@beast.com",
+    creatorName: "Coach Beast",
+    members: [
+      { id: "coach_beast", name: "Coach Beast", email: "coach@beast.com", isCreator: true },
+      { id: athleteUser.id, name: athleteUser.name, rawName: athleteUser.rawName, email: athleteUser.email, isCreator: false }
+    ]
+  };
+
+  saveSquads([squadCreated, squadJoined]);
+  let squads = getSquads();
+  assert(squads.length === 2, "Both squads saved and visible to athlete");
+
+  // Verify athlete leaves squadJoined as regular member
+  leaveSquadAsMember("squad_team_beast");
+  squads = getSquads();
+  assert(squads.length === 1, "Immediate removal: Squads count decremented to 1");
+  assert(squads.some(s => s.id === "squad_team_beast") === false, "Left squad is immediately removed from Squads view");
+
+  // Verify athlete isolated cache does not contain left squad
+  const userCached = JSON.parse(localStorage.getItem('showUp_user_squads_elena@fitness.com') || '[]');
+  assert(userCached.some(s => s.id === "squad_team_beast") === false, "Left squad purged from user cache");
+
+  // Verify global registry has user removed from squadJoined
+  const globalReg = getGlobalSquadRegistry();
+  const leftSqInGlobal = globalReg.find(s => s.id === "squad_team_beast");
+  assert(leftSqInGlobal && !leftSqInGlobal.members.some(m => m.id === athleteUser.id), "User removed from global squad registry membership");
+
+  // Verify creator transfer and leave
+  transferTargetSquadId = "squad_elena_created";
+  // Mock radio selection in DOM
+  const mockRadio = getOrCreateElement("radio_mock");
+  mockRadio.value = "member_teammate_1";
+  document.querySelector = (sel) => {
+    if (sel.includes('successor-creator-radio')) return mockRadio;
+    return getOrCreateElement("dummy_" + Math.random().toString(36).substr(2, 4));
+  };
+
+  confirmTransferAndLeave();
+  squads = getSquads();
+  assert(squads.length === 0, "Creator transferred and left: Squad immediately removed from view");
+
+  // Verify deleteSquadPrompt removes squad completely and permanently
+  const singleSquad = {
+    id: "squad_temp_to_delete",
+    name: "Temp Squad",
+    creatorId: athleteUser.id,
+    creatorEmail: athleteUser.email,
+    members: [{ id: athleteUser.id, email: athleteUser.email, isCreator: true }]
+  };
+  saveSquads([singleSquad]);
+  assert(getSquads().length === 1, "Temp squad added");
+
+  deleteSquadPrompt("squad_temp_to_delete");
+  assert(getSquads().length === 0, "deleteSquadPrompt immediately removes squad from view");
+  assert(getGlobalSquadRegistry().some(s => s.id === "squad_temp_to_delete") === false, "deleteSquadPrompt purges squad from global registry");
+
+  // Verify accurate squad retrieval: left squad is NOT resurrected
+  const candidateSquads = initSquads();
+  assert(candidateSquads.length === 0, "Accurate squad retrieval: No phantom/left squads retrieved");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

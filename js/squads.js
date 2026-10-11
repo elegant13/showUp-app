@@ -184,6 +184,21 @@
       }
     }
 
+    function deleteSquadFromFirestore(squadId) {
+      if (!squadId) return;
+      try {
+        if (typeof getFirestoreDb === 'function') {
+          const db = getFirestoreDb();
+          if (db) {
+            db.collection('squads').doc(squadId).delete()
+              .catch(err => console.debug("Firestore squad delete notice:", err));
+          }
+        }
+      } catch (err) {
+        console.debug("Firestore squad delete exception:", err);
+      }
+    }
+
     async function fetchAthleteSquadsFromFirestore(user) {
       if (!user) user = getAppUser();
       if (!isCustomerLoggedIn()) return;
@@ -193,58 +208,73 @@
         if (!db) return;
 
         const snapshot = await db.collection('squads').get();
-        if (!snapshot || snapshot.empty) return;
+        if (!snapshot) return;
 
         const remoteSquads = [];
+        const remoteSquadIds = new Set();
         snapshot.forEach(doc => {
           const data = doc.data();
-          if (data && data.id && isAthleteMemberOrCreator(data, user)) {
-            remoteSquads.push(data);
+          if (data && data.id) {
+            remoteSquadIds.add(data.id);
+            if (isAthleteMemberOrCreator(data, user)) {
+              remoteSquads.push(data);
+            }
           }
         });
 
-        if (remoteSquads.length > 0) {
-          const currentSquads = getSquads();
-          let hasChanges = false;
-          remoteSquads.forEach(remSq => {
-            const idx = currentSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
-            if (idx >= 0) {
-              const localMembers = currentSquads[idx].members || [];
-              (remSq.members || []).forEach(m => {
-                if (!m) return;
-                const localMemberIdx = localMembers.findIndex(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
-                if (localMemberIdx === -1) {
-                  localMembers.push(m);
-                  hasChanges = true;
-                } else {
-                  // Update teammate workout status if not current local athlete
-                  const lm = localMembers[localMemberIdx];
-                  const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
-                  if (!isCurrentAthlete) {
-                    if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
-                    if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
-                    if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
-                    if (m.completedDate !== undefined && m.completedDate !== lm.completedDate) { lm.completedDate = m.completedDate; hasChanges = true; }
-                    if (m.lastCompletedWorkout !== undefined && m.lastCompletedWorkout !== lm.lastCompletedWorkout) { lm.lastCompletedWorkout = m.lastCompletedWorkout; hasChanges = true; }
-                    if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
-                    if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
-                    if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
-                  }
-                }
-              });
-              currentSquads[idx].members = localMembers;
-            } else {
-              currentSquads.push(remSq);
-              hasChanges = true;
-            }
-          });
+        const currentSquads = getSquads();
+        let hasChanges = false;
 
-          if (hasChanges) {
-            saveSquads(currentSquads);
-            renderSquadsTab();
-            updateSquadBeacon();
-            updateGlobalStatsUI();
+        // If athlete was removed from a squad remotely, or squad was deleted from Firestore
+        const remainingSquads = currentSquads.filter(localSq => {
+          if (!localSq || !localSq.id) return false;
+          // If remote squad exists in Firestore but athlete is no longer member or creator, purge it
+          const remoteMatch = remoteSquads.find(rs => rs.id === localSq.id || (rs.inviteCode && localSq.inviteCode && rs.inviteCode === localSq.inviteCode));
+          if (!remoteMatch && remoteSquadIds.has(localSq.id)) {
+            hasChanges = true;
+            return false;
           }
+          return true;
+        });
+
+        remoteSquads.forEach(remSq => {
+          const idx = remainingSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
+          if (idx >= 0) {
+            const localMembers = remainingSquads[idx].members || [];
+            (remSq.members || []).forEach(m => {
+              if (!m) return;
+              const localMemberIdx = localMembers.findIndex(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
+              if (localMemberIdx === -1) {
+                localMembers.push(m);
+                hasChanges = true;
+              } else {
+                // Update teammate workout status if not current local athlete
+                const lm = localMembers[localMemberIdx];
+                const isCurrentAthlete = (lm.id === user.id || (user.email && lm.email && lm.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
+                if (!isCurrentAthlete) {
+                  if (m.isWorkingOut !== undefined && m.isWorkingOut !== lm.isWorkingOut) { lm.isWorkingOut = m.isWorkingOut; hasChanges = true; }
+                  if (m.currentWorkout !== undefined && m.currentWorkout !== lm.currentWorkout) { lm.currentWorkout = m.currentWorkout; hasChanges = true; }
+                  if (m.completedToday !== undefined && m.completedToday !== lm.completedToday) { lm.completedToday = m.completedToday; hasChanges = true; }
+                  if (m.completedDate !== undefined && m.completedDate !== lm.completedDate) { lm.completedDate = m.completedDate; hasChanges = true; }
+                  if (m.lastCompletedWorkout !== undefined && m.lastCompletedWorkout !== lm.lastCompletedWorkout) { lm.lastCompletedWorkout = m.lastCompletedWorkout; hasChanges = true; }
+                  if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
+                  if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
+                  if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
+                }
+              }
+            });
+            remainingSquads[idx].members = localMembers;
+          } else {
+            remainingSquads.push(remSq);
+            hasChanges = true;
+          }
+        });
+
+        if (hasChanges) {
+          saveSquads(remainingSquads);
+          renderSquadsTab();
+          updateSquadBeacon();
+          updateGlobalStatsUI();
         }
 
         // Attach real-time snapshot listener for live squad teammate workout status updates
@@ -265,15 +295,37 @@
         if (!db) return;
 
         squadsListenerUnsubscribe = db.collection('squads').onSnapshot(snapshot => {
-          if (!snapshot || snapshot.empty) return;
+          if (!snapshot) return;
           const currentSquads = getSquads();
           let hasChanges = false;
+          const remoteDocMap = new Map();
+
+          snapshot.forEach(doc => {
+            const remSq = doc.data();
+            if (remSq && remSq.id) {
+              remoteDocMap.set(remSq.id, remSq);
+            }
+          });
+
+          // Check for squads athlete is no longer a member of in Firestore
+          const remainingSquads = currentSquads.filter(sq => {
+            if (!sq || !sq.id) return false;
+            if (remoteDocMap.has(sq.id)) {
+              const remSq = remoteDocMap.get(sq.id);
+              if (!isAthleteMemberOrCreator(remSq, user)) {
+                hasChanges = true;
+                return false;
+              }
+            }
+            return true;
+          });
+
           snapshot.forEach(doc => {
             const remSq = doc.data();
             if (!remSq || !remSq.id || !isAthleteMemberOrCreator(remSq, user)) return;
-            const idx = currentSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
+            const idx = remainingSquads.findIndex(s => s.id === remSq.id || (s.inviteCode && remSq.inviteCode && s.inviteCode === remSq.inviteCode));
             if (idx >= 0) {
-              const localMembers = currentSquads[idx].members || [];
+              const localMembers = remainingSquads[idx].members || [];
               (remSq.members || []).forEach(m => {
                 if (!m) return;
                 const localMemberIdx = localMembers.findIndex(lm => (lm.id && lm.id === m.id) || (lm.email && m.email && lm.email.toLowerCase().trim() === m.email.toLowerCase().trim()));
@@ -295,15 +347,15 @@
                   }
                 }
               });
-              currentSquads[idx].members = localMembers;
+              remainingSquads[idx].members = localMembers;
             } else {
-              currentSquads.push(remSq);
+              remainingSquads.push(remSq);
               hasChanges = true;
             }
           });
 
           if (hasChanges) {
-            saveSquads(currentSquads);
+            saveSquads(remainingSquads);
             renderSquadsTab();
             updateSquadBeacon();
             updateGlobalStatsUI();
@@ -674,8 +726,30 @@
       }
 
       if (confirm(`Are you sure you want to delete squad "${squad.name}"?`)) {
+        // 1. Immediately delete from local active squads
         const updated = squads.filter(s => s.id !== squadId);
         localStorage.setItem('showUp_squads', JSON.stringify(updated));
+
+        // 2. Remove from athlete isolated user cache
+        const userEmail = (user.email || '').toLowerCase().trim();
+        if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+          try {
+            localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(updated));
+          } catch (e) {}
+        }
+
+        // 3. Remove from global registry and archive
+        removeSquadFromGlobalRegistry(squadId);
+
+        // 4. Delete squad document from Firestore cloud database
+        deleteSquadFromFirestore(squadId);
+
+        // 5. Sync to Google Drive if athlete has connected Google backup
+        if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+          try { syncToGoogleDrive(true); } catch (e) {}
+        }
+
+        // 6. Immediately update display
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();
@@ -759,6 +833,20 @@
         reg.push(squad);
       }
       localStorage.setItem('showUp_global_squad_registry', JSON.stringify(reg));
+    }
+
+    function removeSquadFromGlobalRegistry(squadId) {
+      if (!squadId) return;
+      try {
+        const reg = getGlobalSquadRegistry();
+        const filtered = reg.filter(s => s && s.id !== squadId);
+        localStorage.setItem('showUp_global_squad_registry', JSON.stringify(filtered));
+      } catch (e) {}
+      try {
+        const archive = JSON.parse(localStorage.getItem('showUp_squad_archive') || '[]');
+        const filteredArch = archive.filter(s => s && s.id !== squadId);
+        localStorage.setItem('showUp_squad_archive', JSON.stringify(filteredArch));
+      } catch (e) {}
     }
 
     function getSquadInvites() {
@@ -1715,11 +1803,34 @@
 
       if (otherMembers.length === 0) {
         if (confirm(`You are the only member in "${squad.name}". Leaving will permanently disband and delete this squad. Continue?`)) {
+          // 1. Immediately delete from local active squads
           const updated = squads.filter(s => s.id !== squadId);
-          saveSquads(updated);
+          localStorage.setItem('showUp_squads', JSON.stringify(updated));
+
+          // 2. Remove from athlete isolated user cache
+          const userEmail = (user.email || '').toLowerCase().trim();
+          if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+            try {
+              localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(updated));
+            } catch (e) {}
+          }
+
+          // 3. Remove from global registry and archive
+          removeSquadFromGlobalRegistry(squadId);
+
+          // 4. Delete squad document from Firestore cloud database
+          deleteSquadFromFirestore(squadId);
+
+          // 5. Sync to Google Drive if athlete has connected Google backup
+          if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+            try { syncToGoogleDrive(true); } catch (e) {}
+          }
+
+          // 6. Immediately update display
           renderSquadsTab();
           updateSquadBeacon();
           updateGlobalStatsUI();
+          renderHeatMap();
           showToast(`Squad "${squad.name}" disbanded.`, "info");
         }
         return;
@@ -1775,16 +1886,40 @@
       // Transfer Creator Role
       squad.creatorId = newCreator.id;
       squad.creatorName = newCreator.rawName || newCreator.name;
+      squad.creator = newCreator.rawName || newCreator.name;
+      squad.creatorEmail = newCreator.email || '';
       newCreator.isCreator = true;
 
       // Remove leaving creator
       squad.members = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
 
-      saveSquads(squads);
+      // 1. Sync updated squad (with new creator & leaving athlete removed) to Firestore and global registry
+      saveSquadToGlobalRegistry(squad);
+      syncSquadToFirestore(squad);
+
+      // 2. Immediately remove squad from leaving athlete's active squads
+      const remainingUserSquads = squads.filter(s => s.id !== transferTargetSquadId);
+      localStorage.setItem('showUp_squads', JSON.stringify(remainingUserSquads));
+
+      // 3. Update athlete isolated user cache
+      const userEmail = (user.email || '').toLowerCase().trim();
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(remainingUserSquads));
+        } catch (e) {}
+      }
+
+      // 4. Sync to Google Drive if athlete has connected Google backup
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        try { syncToGoogleDrive(true); } catch (e) {}
+      }
+
+      // 5. Close modal and immediately update display
       closeTransferModal();
       renderSquadsTab();
       updateSquadBeacon();
       updateGlobalStatsUI();
+      renderHeatMap();
       showToast(`Transferred creator role to ${newCreator.rawName || newCreator.name} and left squad.`, "success");
     }
 
@@ -1804,11 +1939,35 @@
         return;
       }
 
+      // 1. Remove user from squad members
       squad.members = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
-      saveSquads(squads);
+
+      // 2. Sync updated squad (with user removed) to Firestore and global registry
+      saveSquadToGlobalRegistry(squad);
+      syncSquadToFirestore(squad);
+
+      // 3. Immediately remove squad from user's active squads
+      const remainingUserSquads = squads.filter(s => s.id !== squadId);
+      localStorage.setItem('showUp_squads', JSON.stringify(remainingUserSquads));
+
+      // 4. Update athlete isolated user cache
+      const userEmail = (user.email || '').toLowerCase().trim();
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        try {
+          localStorage.setItem('showUp_user_squads_' + userEmail, JSON.stringify(remainingUserSquads));
+        } catch (e) {}
+      }
+
+      // 5. Sync to Google Drive if athlete has connected Google backup
+      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+        try { syncToGoogleDrive(true); } catch (e) {}
+      }
+
+      // 6. Immediately update display
       renderSquadsTab();
       updateSquadBeacon();
       updateGlobalStatsUI();
+      renderHeatMap();
       showToast(`You have left "${squad.name}".`, "info");
     }
 
