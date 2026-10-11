@@ -318,16 +318,94 @@ input[type="range"] {
    ========================================================================== */
 
 .bottom-nav-safe {
-  width: 100%;
+  position: fixed;
+  bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
+  z-index: 40;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
-  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
-  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   box-sizing: border-box;
+}
+
+/* Bottom Navigation Buttons & Active States */
+#nav-btn-workout,
+#nav-btn-calendar,
+#nav-btn-squads {
+  border-radius: 0.875rem;
+  padding: 0.35rem 0.5rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 48px;
+}
+
+#nav-btn-workout.text-emerald-400,
+#nav-btn-calendar.text-emerald-400,
+#nav-btn-squads.text-emerald-400 {
+  color: var(--m3-primary) !important;
+  background: var(--m3-primaryContainer);
+  box-shadow: 0 0 14px -3px var(--m3-primaryContainer);
+  font-weight: 700;
+}
+
+#nav-btn-workout:hover:not(.text-emerald-400),
+#nav-btn-calendar:hover:not(.text-emerald-400),
+#nav-btn-squads:hover:not(.text-emerald-400) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ui-mode-light #nav-btn-workout:hover:not(.text-emerald-400),
+.ui-mode-light #nav-btn-calendar:hover:not(.text-emerald-400),
+.ui-mode-light #nav-btn-squads:hover:not(.text-emerald-400) {
+  background: #f1f5f9;
+}
+
+@media (min-width: 640px) {
+  nav.bottom-nav-safe,
+  .ui-mode-precision nav.bottom-nav-safe,
+  .ui-mode-zen nav.bottom-nav-safe,
+  .ui-mode-hud nav.bottom-nav-safe,
+  .ui-mode-light nav.bottom-nav-safe {
+    bottom: 1.25rem !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    background: transparent !important;
+    border-top: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+  }
+
+  .ui-mode-precision .bottom-nav-dock {
+    background: rgba(15, 23, 42, 0.88) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 0 15px -3px var(--m3-primaryContainer) !important;
+  }
+  .ui-mode-zen .bottom-nav-dock {
+    background: #090d16 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: none !important;
+  }
+  .ui-mode-hud .bottom-nav-dock {
+    background: rgba(8, 14, 28, 0.94) !important;
+    border: 1px solid rgba(var(--m3-primary-rgb, 16, 185, 129), 0.35) !important;
+    box-shadow: 0 0 20px -5px rgba(var(--m3-primary-rgb, 16, 185, 129), 0.25) !important;
+  }
+  .ui-mode-light .bottom-nav-dock {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04) !important;
+  }
 }
 
 ::-webkit-scrollbar {

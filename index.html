@@ -59,26 +59,26 @@
   <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
 
   <!-- ================= HEADER & TOP CONTROLS ================= -->
-  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-2.5 shadow-lg w-full">
-    <div class="max-w-3xl mx-auto w-full flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div onclick="triggerHaptic('light'); openLargeLogoModal()" class="relative flex items-center justify-center h-11 w-11 rounded-2xl bg-black/80 border border-slate-700/80 p-1 shadow-lg shadow-black/60 overflow-hidden ring-1 ring-white/10 shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-transform" title="Click to view large icon">
+  <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-lg w-full">
+    <div class="max-w-3xl mx-auto w-full px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center space-x-2.5 sm:space-x-3 shrink-0 min-w-0">
+        <div onclick="triggerHaptic('light'); openLargeLogoModal()" class="relative flex items-center justify-center h-9 w-9 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl bg-black/80 border border-slate-700/80 p-1 shadow-lg shadow-black/60 overflow-hidden ring-1 ring-white/10 shrink-0 cursor-pointer hover:scale-105 active:scale-95 transition-transform" title="Click to view large icon">
           <img src="showup_emblem.png" alt="showUp Logo" class="h-full w-full object-contain filter drop-shadow">
         </div>
-        <div>
-          <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl font-black tracking-tight text-white flex items-center gap-1.5 sm:gap-2">
             <span>show<span class="m3-accent-text">Up</span></span>
-            <span class="text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">V3</span>
+            <span class="text-[9px] sm:text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">V3</span>
           </h1>
-          <p class="text-[11px] font-bold tracking-wider m3-accent-text uppercase">Compound your progress</p>
+          <p class="text-[10px] sm:text-[11px] font-bold tracking-wider m3-accent-text uppercase hidden min-[480px]:block truncate">Compound your progress</p>
         </div>
       </div>
 
       <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
-      <div class="relative flex items-center gap-2">
+      <div class="relative flex items-center gap-1 sm:gap-2 shrink-0">
         <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800 transition flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm" title="Click to view Global Visitor Telemetry">
-          <span class="relative flex h-2 w-2">
+        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800 transition flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm shrink-0" title="Click to view Global Visitor Telemetry">
+          <span class="relative flex h-2 w-2 shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
           </span>
@@ -87,24 +87,24 @@
           <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
         </div>
 
-        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
+        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
           <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
-          <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200">Glass</span>
+          <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200 hidden sm:inline">Glass</span>
         </button>
 
-        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition" title="UI Customization & Physical Profile">
-          <i class="fa-solid fa-sliders text-sm"></i>
+        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition shrink-0" title="UI Customization & Physical Profile">
+          <i class="fa-solid fa-sliders text-xs sm:text-sm"></i>
         </button>
 
-        <div id="google-user-profile" class="hidden relative flex items-center gap-2.5 bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-700 shadow-inner">
-          <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-2.5 text-left focus:outline-none group" title="Account Menu">
-            <img id="user-avatar" class="w-7 h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
+        <div id="google-user-profile" class="hidden relative flex items-center gap-1.5 sm:gap-2.5 bg-slate-800/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border border-slate-700 shadow-inner shrink-0">
+          <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-1.5 sm:gap-2.5 text-left focus:outline-none group" title="Account Menu">
+            <img id="user-avatar" class="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-emerald-400 object-cover shrink-0 group-hover:border-emerald-300 transition" src="https://lh3.googleusercontent.com/a/default-user=s96-c" alt="User Avatar">
             
-            <div class="flex flex-col text-left leading-tight">
-              <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[100px] truncate">User</span>
-              <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate">user@email.com</span>
+            <div class="flex flex-col text-left leading-tight hidden min-[480px]:flex">
+              <span id="user-first-name" class="text-xs font-bold text-slate-100 max-w-[70px] sm:max-w-[100px] truncate">User</span>
+              <span id="user-email" class="text-[10px] text-slate-400 max-w-[120px] truncate hidden md:inline">user@email.com</span>
             </div>
-            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
+            <i class="fa-solid fa-chevron-down text-[9px] sm:text-[10px] text-slate-400 group-hover:text-slate-200 ml-0.5 transition"></i>
           </button>
 
           <div id="profile-dropdown-menu" class="hidden absolute right-0 top-12 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 divide-y divide-slate-800">
@@ -142,7 +142,7 @@
           </div>
         </div>
 
-        <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-3 py-2 rounded-xl shadow transition-all">
+        <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-1.5 sm:gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow transition-all shrink-0">
           <i class="fa-brands fa-google text-red-500"></i>
           <span>Sign in</span>
         </button>
@@ -2061,24 +2061,28 @@
   </main>
 
   <!-- ================= FIXED BOTTOM NAVIGATION ================= -->
-  <nav class="fixed bottom-0 inset-x-0 z-40 w-full flex justify-center bg-slate-900/95 backdrop-blur-md border-t border-slate-800 bottom-nav-safe">
-    <div class="w-full max-w-3xl mx-auto grid grid-cols-3 px-3 py-2 text-center text-xs">
-      <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative">
-        <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
-        <span>Workout</span>
-      </button>
-      <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
-        <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
-        <span>Calendar</span>
-      </button>
-      <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
-        <div class="relative">
-          <i class="fa-solid fa-people-group text-lg mb-0.5"></i>
-          <span id="squad-nav-beacon" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
-          <span id="squad-nav-beacon-dot" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full"></span>
+  <nav id="app-bottom-nav" class="fixed bottom-0 inset-x-0 z-40 w-full flex justify-center bg-slate-900/95 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-t sm:border-t-0 border-slate-800 bottom-nav-safe pointer-events-none">
+    <div class="pointer-events-auto w-full max-w-3xl mx-auto px-4 py-1.5 sm:py-0">
+      <div class="bottom-nav-dock w-full sm:max-w-md md:max-w-lg mx-auto sm:bg-slate-900/95 sm:backdrop-blur-md sm:border sm:border-slate-800 sm:rounded-2xl sm:shadow-2xl sm:shadow-black/70 sm:p-1.5">
+        <div class="grid grid-cols-3 gap-1 sm:gap-2 text-center text-xs">
+          <button id="nav-btn-workout" onclick="triggerHaptic('medium'); switchTab('workout')" class="flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative">
+            <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
+            <span>Workout</span>
+          </button>
+          <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
+            <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
+            <span>Calendar</span>
+          </button>
+          <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
+            <div class="relative">
+              <i class="fa-solid fa-people-group text-lg mb-0.5"></i>
+              <span id="squad-nav-beacon" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
+              <span id="squad-nav-beacon-dot" class="hidden absolute -top-0.5 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full"></span>
+            </div>
+            <span>Squads</span>
+          </button>
         </div>
-        <span>Squads</span>
-      </button>
+      </div>
     </div>
   </nav>
 
