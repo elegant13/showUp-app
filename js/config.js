@@ -20,6 +20,24 @@
     let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
     let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
 
+    // --- WORKOUT SESSION TIMER STATE ---
+    let workoutTimerSeconds = 0;
+    let workoutTimerState = 'stopped'; // 'stopped' | 'running' | 'paused'
+    let workoutTimerInterval = null;
+    let workoutTimerStartTimestamp = null;
+
+    // --- SET TIMER & REST TIMER STATE ---
+    let isSetInProgress = false;
+    let activeSetStartTime = null;
+    let activeSetElapsedSeconds = 0;
+    let activeSetTimerInterval = null;
+
+    let isRestTimerRunning = false;
+    let restTimerSeconds = 0;
+    let restTimerStartTime = null;
+    let restTimerInterval = null;
+    let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
+
     const defaultCatalog = [
       { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders", "Back", "Core/Abs", "Quads"] },
       { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },

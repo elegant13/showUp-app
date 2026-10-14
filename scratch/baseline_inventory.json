@@ -1,5 +1,5 @@
 {
-  "dom_ids_count": 215,
+  "dom_ids_count": 240,
   "dom_ids": [
     "add-member-modal",
     "add-member-modal-squad-name",
@@ -11,17 +11,21 @@
     "admin-telemetry-total-cities",
     "admin-telemetry-total-states",
     "admin-telemetry-total-visitors",
+    "admin-timeframe-groups-container",
     "admin-view-tab-city",
+    "admin-view-tab-day",
+    "admin-view-tab-month",
     "admin-view-tab-state",
+    "admin-view-tab-week",
+    "admin-view-tab-year",
     "admin-visitor-search-input",
     "aerobic-te-label",
     "aerobic-te-score",
     "anaerobic-te-label",
     "anaerobic-te-score",
     "app-body",
+    "app-bottom-nav",
     "auth-login-modal",
-    "auth-modal-email-input",
-    "auth-modal-name-input",
     "backup-banner-badge",
     "backup-banner-desc",
     "backup-banner-google-btn",
@@ -39,10 +43,16 @@
     "body-triceps",
     "btn-connect-hrm",
     "btn-google-login",
+    "btn-log-set",
+    "btn-log-set-label",
     "btn-settings-gdrive-backup",
     "btn-settings-gdrive-restore",
     "btn-share-full-workout",
+    "btn-start-set",
+    "btn-start-set-icon",
+    "btn-start-set-label",
     "btn-toggle-sim",
+    "btn-toggle-squads-default-collapse",
     "btn-zoom-to-selected-zip",
     "cal-current-weight-val",
     "cal-weight-change-val",
@@ -80,6 +90,7 @@
     "global-active-sentence",
     "global-active-sentence-text",
     "global-daily-counter",
+    "global-visitors-modal",
     "google-maps-canvas",
     "google-user-profile",
     "graph-avg-weight",
@@ -150,11 +161,21 @@
     "pref-haptic",
     "pref-hr-collapsed",
     "pref-pill",
+    "pref-squads-collapsed",
     "profile-admin-telemetry-item",
     "profile-dropdown-menu",
     "quick-date-chips-container",
+    "quick-ui-mode-name",
+    "quick-ui-mode-toggle",
+    "rest-timer-banner",
+    "rest-timer-caption",
+    "rest-timer-val",
     "rpe-select",
     "session-timer",
+    "session-timer-icon",
+    "session-timer-pulse",
+    "session-timer-restart-btn",
+    "session-timer-toggle-btn",
     "set-count-badge",
     "settings-backup-status-badge",
     "settings-device-card",
@@ -197,6 +218,10 @@
     "toast-container",
     "transfer-candidates-list",
     "transfer-creator-modal",
+    "ui-mode-btn-hud",
+    "ui-mode-btn-light",
+    "ui-mode-btn-precision",
+    "ui-mode-btn-zen",
     "user-avatar",
     "user-email",
     "user-first-name",
@@ -217,221 +242,11 @@
     "zip-detail-title",
     "zip-ticker-container"
   ],
-  "functions_count": 211,
+  "functions_count": 1,
   "functions": [
-    "acceptSquadInvite",
-    "addMemberSubmit",
-    "adjustEnduranceDistance",
-    "adjustEnduranceTime",
-    "adjustErgDistance",
-    "adjustErgTime",
-    "adjustLogWeight",
-    "adjustReps",
-    "adjustSwimDistance",
-    "adjustSwimTime",
-    "adjustWeight",
-    "applyUserProfile",
-    "assignBackupCreator",
-    "attemptSilentTokenRefresh",
-    "avgW",
-    "broadcastUserWorkoutEnded",
-    "broadcastUserWorkoutStarted",
-    "checkAndResetDailyETCounter",
-    "checkAndRun",
-    "closeAddMemberModal",
-    "closeAuthLoginModal",
-    "closeCreateSquadModal",
-    "closeGDriveBackupModal",
-    "closeJoinSquadModal",
-    "closeLargeLogoModal",
-    "closeLogWeightModal",
-    "closeProfileDropdownOutside",
-    "closeSquadNotificationsModal",
-    "closeSummary",
-    "closeTransferModal",
-    "closeUserZipModal",
-    "closeWeightNumpadModal",
-    "confirmTransferAndLeave",
-    "copySquadInviteCode",
-    "createNewSquadSubmit",
-    "declineSquadInvite",
-    "deleteHistoricalWorkout",
-    "deleteSet",
-    "deleteSquadPrompt",
-    "deleteWeightEntry",
-    "detectUserZipFromIP",
-    "dismissSimulatedWorkout",
-    "dismissSquadPill",
-    "draw",
-    "editHistoricalSet",
-    "escapeHtml",
-    "evaluateAndFinishWorkout",
-    "exportJSONBackup",
-    "exportVisitorDataJSON",
-    "fillAuthProfilePreset",
-    "formatBytes",
-    "formatHistoricalDate",
-    "formatTimeAgo",
-    "getActiveAndCompletedZipNodes",
-    "getAggregatedNodesForZoom",
-    "getAppUser",
-    "getBackupPayload",
-    "getETDateKey",
-    "getFormattedBackupSize",
-    "getGlobalActiveAthletesCount",
-    "getGlobalSquadRegistry",
-    "getGlobalVisitorsLog",
-    "getGoogleClientId",
-    "getInitials",
-    "getLocalDateISO",
-    "getOrSetUniqueVisitorId",
-    "getPendingSquadInvites",
-    "getSquadInvites",
-    "getSquads",
-    "getUserZip",
-    "getZipCoordinates",
-    "gm_authFailure",
-    "handleAdminVisitorSearch",
-    "handleCreatorLeave",
-    "handleDateChange",
-    "handleExerciseInput",
-    "handleGoogleLogin",
-    "handleGoogleSignIn",
-    "handleImplementChange",
-    "handleLogWeightDateChange",
-    "handleLogout",
-    "handleSuccessfulOAuthToken",
-    "importJSONBackup",
-    "incrementGlobalWorkoutCounter",
-    "initCatalog",
-    "initDatePickerConstraints",
-    "initGlobalVisitorTelemetry",
-    "initGoogleMapsBaseLayer",
-    "initSparkline",
-    "initSquads",
-    "initUniqueVisitorCounter",
-    "isAthleteMemberOrCreator",
-    "isCustomerLoggedIn",
-    "isGlobalVisitorTelemetryAdmin",
-    "isValidZip",
-    "leaveSquadAsMember",
-    "loadPhysicalProfile",
-    "logBodyWeightEntry",
-    "logSet",
-    "navigateCalendarMonth",
-    "numpadBackspace",
-    "numpadClear",
-    "numpadConfirm",
-    "numpadInput",
-    "numpadQuickAdjust",
-    "openAddMemberModal",
-    "openAuthLoginModal",
-    "openCreateSquadModal",
-    "openGDriveBackupModal",
-    "openJoinSquadModal",
-    "openLargeLogoModal",
-    "openLogWeightModal",
-    "openSquadNotificationsModal",
-    "openUserZipModal",
-    "openWeightNumpadForHistorical",
-    "openWeightNumpadModal",
-    "openWeightTrendGraph",
-    "parseCityAndState",
-    "parseJwtPayload",
-    "parseLocationHierarchy",
-    "pasteJoinCodeFromClipboard",
-    "pickUpMantlePrompt",
-    "playUnobtrusiveChime",
-    "previewCurrentSquadNotifications",
-    "promptAssignFirstBackupCreator",
-    "recordCurrentVisitorLocation",
-    "recordSquadInvite",
-    "refreshAdminVisitorData",
-    "removeSquadMember",
-    "renderAdminGlobalVisitorTelemetry",
-    "renderCalendar",
-    "renderGoogleMapMarkers",
-    "renderGoogleMapsEmbed",
-    "renderHeatMap",
-    "renderLoggedSets",
-    "renderMapZipBoundariesOverlay",
-    "renderMonthlyHistory",
-    "renderSquadsTab",
-    "renderWeightHistory",
-    "renderWeightTrendGraphSVG",
-    "requestDriveAuthorization",
-    "requestTokenSilently",
-    "resendSquadInvite",
-    "resetGoogleLoginButtonUI",
-    "resetToTodayDate",
-    "restoreFontPreferences",
-    "restoreFromGoogleDrive",
-    "restoreSavedSession",
-    "restoreThemePreferences",
-    "reverseGeocodeCoords",
-    "sanitizeSquadMembers",
-    "saveGlobalVisitorsLog",
-    "saveLogWeightEntry",
-    "savePhysicalProfile",
-    "saveSquadNotificationsSubmit",
-    "saveSquadToGlobalRegistry",
-    "saveSquads",
-    "saveUserZipSubmit",
-    "scrollToAdminTelemetry",
-    "seedInitialGlobalVisitorsLog",
-    "selectSquadAccent",
-    "selectSquadIcon",
-    "selectZipNode",
-    "sendBrowserNotification",
-    "sendSquadInviteEmail",
-    "sendSquadInviteSMS",
-    "setAdminVisitorViewMode",
-    "setFontFamily",
-    "setGoogleLoginLoading",
-    "setLogWeightQuickDate",
-    "setThemePalette",
-    "setUserZip",
-    "shareWorkoutToWhatsApp",
-    "showSquadNotificationPill",
-    "showToast",
-    "simulateTeammateWorkout",
-    "stopSpecificMemberWorkout",
-    "submitJoinSquadByCode",
-    "submitManualAuthProfile",
-    "switchTab",
-    "syncToGoogleDrive",
-    "toggleHRCardVisibility",
-    "toggleHRCollapsePref",
-    "toggleHRSimulator",
-    "toggleProfileDropdown",
-    "toggleSettingsModal",
-    "toggleSquadCollapse",
-    "toggleWeightGraphModal",
-    "toggleWorkoutAccordion",
-    "triggerGoogleOAuthFromModal",
-    "triggerHaptic",
-    "triggerManualFileRestore",
-    "triggerSquadHaptic",
-    "triggerSquadWorkoutNotification",
-    "tryGoogleOneTap",
-    "updateAnatomicalBodyMap",
-    "updateCloudBackupUI",
-    "updateFontUI",
-    "updateGlobalStatsUI",
-    "updateGlobalVisitorTelemetryUI",
-    "updateMapZoomStatusUI",
-    "updateNumpadDisplay",
-    "updateProfileUI",
-    "updateQuickDateChipsUI",
-    "updateSquadBeacon",
-    "updateThemeButtonsUI",
-    "updateVisitorCounterUI",
-    "updateZipDetailCard",
-    "zoomGoogleMap",
-    "zoomToSelectedZip",
-    "zoomToUserZipLevel"
+    "gm_authFailure"
   ],
-  "inline_handlers_count": 173,
+  "inline_handlers_count": 190,
   "inline_handlers": [
     [
       "body",
@@ -442,6 +257,16 @@
       "div",
       "onclick",
       "triggerHaptic('light'); openLargeLogoModal()"
+    ],
+    [
+      "div",
+      "onclick",
+      "triggerHaptic('light'); openGlobalVisitorTelemetryModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); cycleAppUIMode()"
     ],
     [
       "button",
@@ -486,27 +311,32 @@
     [
       "button",
       "onclick",
-      "triggerHaptic('light'); fillAuthProfilePreset('Abhi', 'abhi13@gmail.com')"
-    ],
-    [
-      "button",
-      "onclick",
-      "triggerHaptic('light'); fillAuthProfilePreset('Athlete', 'athlete@showup.app')"
-    ],
-    [
-      "form",
-      "onsubmit",
-      "submitManualAuthProfile(event)"
-    ],
-    [
-      "button",
-      "onclick",
       "toggleSettingsModal()"
     ],
     [
       "div",
       "onclick",
       "triggerHaptic('light'); openLargeLogoModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAppUIMode('precision')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAppUIMode('zen')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAppUIMode('hud')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAppUIMode('light')"
     ],
     [
       "input",
@@ -584,6 +414,11 @@
       "toggleHRCollapsePref(this.checked)"
     ],
     [
+      "input",
+      "onchange",
+      "toggleSquadsDefaultCollapsePref(this.checked)"
+    ],
+    [
       "button",
       "onclick",
       "triggerHaptic('medium'); syncToGoogleDrive()"
@@ -611,7 +446,67 @@
     [
       "button",
       "onclick",
+      "triggerHaptic('medium'); toggleSettingsModal(); openGlobalVisitorTelemetryModal()"
+    ],
+    [
+      "button",
+      "onclick",
       "toggleSettingsModal()"
+    ],
+    [
+      "div",
+      "onclick",
+      "if(event.target === this) closeGlobalVisitorTelemetryModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); refreshAdminVisitorData()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); exportVisitorDataJSON()"
+    ],
+    [
+      "button",
+      "onclick",
+      "closeGlobalVisitorTelemetryModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('day')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('week')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('month')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('year')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('state')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); setAdminVisitorViewMode('city')"
+    ],
+    [
+      "input",
+      "oninput",
+      "handleAdminVisitorSearch(this.value)"
     ],
     [
       "div",
@@ -1006,6 +901,16 @@
     [
       "button",
       "onclick",
+      "triggerHaptic('light'); toggleWorkoutTimer()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); restartWorkoutTimer()"
+    ],
+    [
+      "button",
+      "onclick",
       "resetToTodayDate()"
     ],
     [
@@ -1181,6 +1086,21 @@
     [
       "button",
       "onclick",
+      "triggerHaptic('light'); adjustRestTimer(30)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); skipRestTimer()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); startSet()"
+    ],
+    [
+      "button",
+      "onclick",
       "triggerHaptic('heavy'); logSet()"
     ],
     [
@@ -1241,27 +1161,7 @@
     [
       "button",
       "onclick",
-      "triggerHaptic('light'); refreshAdminVisitorData()"
-    ],
-    [
-      "button",
-      "onclick",
-      "triggerHaptic('light'); exportVisitorDataJSON()"
-    ],
-    [
-      "button",
-      "onclick",
-      "triggerHaptic('light'); setAdminVisitorViewMode('state')"
-    ],
-    [
-      "button",
-      "onclick",
-      "triggerHaptic('light'); setAdminVisitorViewMode('city')"
-    ],
-    [
-      "input",
-      "oninput",
-      "handleAdminVisitorSearch(this.value)"
+      "triggerHaptic('light'); toggleSquadsDefaultCollapse()"
     ],
     [
       "button",
@@ -1299,35 +1199,10 @@
       "triggerHaptic('medium'); switchTab('squads')"
     ]
   ],
-  "localStorage_keys_count": 28,
+  "localStorage_keys_count": 3,
   "localStorage_keys": [
-    "showUp_active_workout_sets",
-    "showUp_font",
-    "showUp_global_counter_count",
-    "showUp_global_counter_et_date",
-    "showUp_global_squad_registry",
-    "showUp_gmaps_api_key",
-    "showUp_google_token",
-    "showUp_hr_collapsed",
-    "showUp_last_drive_sync",
-    "showUp_session_expiry",
-    "showUp_squad_archive",
-    "showUp_squad_invites",
-    "showUp_squads",
-    "showUp_synced_workouts",
     "showUp_theme",
     "showUp_theme_accent",
-    "showUp_user_city",
-    "showUp_user_height",
-    "showUp_user_ip_city",
-    "showUp_user_ip_lat",
-    "showUp_user_ip_lng",
-    "showUp_user_ip_zip",
-    "showUp_user_location_name",
-    "showUp_user_profile",
-    "showUp_user_state",
-    "showUp_user_weight",
-    "showUp_user_zip",
-    "showUp_weight_history"
+    "showUp_ui_mode"
   ]
 }

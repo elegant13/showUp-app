@@ -263,29 +263,314 @@
       input.value = `${hrs}:${mins}:${secs}`;
     }
 
+    // ================= TIMER ENGINE: WORKOUT, SET & REST TIMERS =================
+
+    function formatTimerHMS(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const hrs = String(Math.floor(s / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+      const secs = String(s % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function formatDurationSecs(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const mins = Math.floor(s / 60);
+      const secs = s % 60;
+      if (mins === 0) return `${secs}s`;
+      return `${mins}m ${secs}s`;
+    }
+
+    // 1. WORKOUT SESSION TIMER: START, PAUSE & RESTART
+    function startWorkoutTimer() {
+      if (workoutTimerState === 'running') return;
+      workoutTimerStartTimestamp = Date.now() - (workoutTimerSeconds * 1000);
+      workoutTimerState = 'running';
+      if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+      workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
+      saveWorkoutTimerState();
+      updateWorkoutTimerUI();
+    }
+
+    function pauseWorkoutTimer() {
+      if (workoutTimerState !== 'running') return;
+      if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+      workoutTimerInterval = null;
+      workoutTimerState = 'paused';
+      saveWorkoutTimerState();
+      updateWorkoutTimerUI();
+    }
+
+    function restartWorkoutTimer() {
+      if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+      workoutTimerInterval = null;
+      workoutTimerSeconds = 0;
+      workoutTimerStartTimestamp = Date.now();
+      workoutTimerState = 'running';
+      workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
+      saveWorkoutTimerState();
+      updateWorkoutTimerUI();
+      if (typeof showToast === 'function') {
+        showToast("Session timer restarted at 00:00:00", "info");
+      }
+    }
+
+    function toggleWorkoutTimer() {
+      if (workoutTimerState === 'running') {
+        pauseWorkoutTimer();
+      } else {
+        startWorkoutTimer();
+      }
+    }
+
+    function tickWorkoutTimer() {
+      if (!workoutTimerStartTimestamp || workoutTimerState !== 'running') return;
+      workoutTimerSeconds = Math.max(0, Math.floor((Date.now() - workoutTimerStartTimestamp) / 1000));
+      updateWorkoutTimerUI();
+    }
+
+    function updateWorkoutTimerUI() {
+      const timerEl = document.getElementById('session-timer');
+      const toggleBtn = document.getElementById('session-timer-toggle-btn');
+      const iconEl = document.getElementById('session-timer-icon');
+      const pulseEl = document.getElementById('session-timer-pulse');
+
+      if (timerEl) {
+        timerEl.innerText = formatTimerHMS(workoutTimerSeconds);
+      }
+
+      if (iconEl && toggleBtn) {
+        if (workoutTimerState === 'running') {
+          iconEl.className = "fa-solid fa-pause text-amber-400";
+          toggleBtn.title = "Pause Session Timer";
+          toggleBtn.className = "w-6 h-6 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 flex items-center justify-center text-[10px] transition";
+          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block";
+        } else if (workoutTimerState === 'paused') {
+          iconEl.className = "fa-solid fa-play text-emerald-400";
+          toggleBtn.title = "Resume Session Timer";
+          toggleBtn.className = "w-6 h-6 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center text-[10px] transition";
+          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-amber-400 inline-block";
+        } else {
+          iconEl.className = "fa-solid fa-play text-slate-400";
+          toggleBtn.title = "Start Session Timer";
+          toggleBtn.className = "w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px] transition";
+          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-slate-600 inline-block";
+        }
+      }
+    }
+
+    function saveWorkoutTimerState() {
+      try {
+        localStorage.setItem('showUp_session_timer', JSON.stringify({
+          seconds: workoutTimerSeconds,
+          state: workoutTimerState,
+          timestamp: Date.now()
+        }));
+      } catch (e) {}
+    }
+
+    function restoreWorkoutTimerState() {
+      try {
+        const raw = localStorage.getItem('showUp_session_timer');
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && typeof data.seconds === 'number') {
+            if (data.state === 'running' && data.timestamp) {
+              const deltaSec = Math.floor((Date.now() - data.timestamp) / 1000);
+              workoutTimerSeconds = data.seconds + Math.max(0, deltaSec);
+              startWorkoutTimer();
+            } else {
+              workoutTimerSeconds = data.seconds;
+              workoutTimerState = data.state || 'stopped';
+              updateWorkoutTimerUI();
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
+    function startSet() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+
+      // Requirement 3: When a second set is started the rest timer shall stop and get recorded
+      // as the rest period between the prior set and the newly started set.
+      if (isRestTimerRunning) {
+        const elapsedRest = Math.max(1, Math.floor((Date.now() - (restTimerStartTime || Date.now())) / 1000));
+        currentPendingRestPeriod = elapsedRest;
+        stopRestTimer();
+        if (typeof showToast === 'function') {
+          showToast(`Rest recorded: ${formatDurationSecs(currentPendingRestPeriod)}. Starting set!`, "info");
+        }
+      }
+
+      // Auto-start session timer if not active
+      if (workoutTimerState === 'stopped') {
+        startWorkoutTimer();
+      }
+
+      isSetInProgress = true;
+      activeSetStartTime = Date.now();
+      activeSetElapsedSeconds = 0;
+
+      if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+      activeSetTimerInterval = setInterval(tickActiveSet, 1000);
+
+      updateSetControlsUI();
+    }
+
+    function tickActiveSet() {
+      if (!activeSetStartTime || !isSetInProgress) return;
+      activeSetElapsedSeconds = Math.max(0, Math.floor((Date.now() - activeSetStartTime) / 1000));
+      const nextSetNum = currentSessionSets.length + 1;
+      const label = document.getElementById('btn-start-set-label');
+      if (label) {
+        label.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
+      }
+    }
+
+    function startRestTimer(initialSeconds = 0) {
+      if (restTimerInterval) clearInterval(restTimerInterval);
+      isRestTimerRunning = true;
+      restTimerSeconds = initialSeconds;
+      restTimerStartTime = Date.now() - (initialSeconds * 1000);
+      restTimerInterval = setInterval(tickRestTimer, 1000);
+      updateRestTimerUI();
+      updateSetControlsUI();
+    }
+
+    function stopRestTimer() {
+      if (restTimerInterval) clearInterval(restTimerInterval);
+      restTimerInterval = null;
+      isRestTimerRunning = false;
+      restTimerStartTime = null;
+      restTimerSeconds = 0;
+      updateRestTimerUI();
+      updateSetControlsUI();
+    }
+
+    function tickRestTimer() {
+      if (!restTimerStartTime || !isRestTimerRunning) return;
+      restTimerSeconds = Math.max(0, Math.floor((Date.now() - restTimerStartTime) / 1000));
+      updateRestTimerUI();
+    }
+
+    function adjustRestTimer(deltaSecs) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (isRestTimerRunning && restTimerStartTime) {
+        restTimerStartTime -= (deltaSecs * 1000);
+        tickRestTimer();
+      }
+    }
+
+    function skipRestTimer() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (isRestTimerRunning) {
+        currentPendingRestPeriod = Math.max(1, Math.floor((Date.now() - (restTimerStartTime || Date.now())) / 1000));
+        stopRestTimer();
+        if (typeof showToast === 'function') {
+          showToast(`Rest period skipped (${formatDurationSecs(currentPendingRestPeriod)} recorded).`, "info");
+        }
+      }
+    }
+
+    function updateRestTimerUI() {
+      const banner = document.getElementById('rest-timer-banner');
+      const valEl = document.getElementById('rest-timer-val');
+      const captionEl = document.getElementById('rest-timer-caption');
+
+      if (!banner) return;
+
+      if (isRestTimerRunning) {
+        banner.classList.remove('hidden');
+        if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
+        if (captionEl) {
+          const setNum = currentSessionSets.length;
+          const nextNum = setNum + 1;
+          captionEl.innerText = `Resting after Set ${setNum}... Tap "Start Set ${nextNum}" to record rest & lift!`;
+        }
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function updateSetControlsUI() {
+      const startBtn = document.getElementById('btn-start-set');
+      const startLabel = document.getElementById('btn-start-set-label');
+      const startIcon = document.getElementById('btn-start-set-icon');
+      const logLabel = document.getElementById('btn-log-set-label');
+      const nextSetNum = currentSessionSets.length + 1;
+
+      if (logLabel) {
+        logLabel.innerText = `Log Set ${nextSetNum}`;
+      }
+
+      if (startBtn && startLabel && startIcon) {
+        if (isSetInProgress) {
+          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-amber-500/50 bg-amber-500/20 text-amber-300 active:scale-[0.99] transition flex items-center justify-center gap-2 animate-pulse";
+          startIcon.className = "fa-solid fa-stopwatch text-amber-400";
+          startLabel.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
+        } else if (isRestTimerRunning) {
+          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-emerald-500/20";
+          startIcon.className = "fa-solid fa-play text-slate-950";
+          startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
+        } else {
+          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 active:scale-[0.99] transition flex items-center justify-center gap-2";
+          startIcon.className = "fa-solid fa-play";
+          startLabel.innerText = `Start Set ${nextSetNum}`;
+        }
+      }
+    }
+
     function logSet() {
-      const exerciseName = document.getElementById('exercise-name-input').value.trim() || "Custom Exercise";
-      const implement = document.getElementById('implement-select').value;
-      const muscle = document.getElementById('muscle-group-select').value;
-      const rpe = parseFloat(document.getElementById('rpe-select').value) || 8;
+      const exerciseInput = document.getElementById('exercise-name-input');
+      const exerciseName = (exerciseInput ? exerciseInput.value.trim() : '') || "Custom Exercise";
+      const implementEl = document.getElementById('implement-select');
+      const implement = implementEl ? implementEl.value : 'Bodyweight';
+      const muscleEl = document.getElementById('muscle-group-select');
+      const muscle = muscleEl ? muscleEl.value : 'Full Body';
+      const rpeEl = document.getElementById('rpe-select');
+      const rpe = rpeEl ? (parseFloat(rpeEl.value) || 8) : 8;
 
       let weight = 0, reps = 1, ergDistance = 0, ergTime = "";
       let swimDistance = 0, swimTime = "";
       let enduranceDistance = 0, enduranceTime = "";
 
       if (implement === "Row Erg") {
-        ergDistance = parseInt(document.getElementById('input-erg-distance').value) || 500;
-        ergTime = document.getElementById('input-erg-time').value || "02:00";
+        ergDistance = parseInt(document.getElementById('input-erg-distance')?.value) || 500;
+        ergTime = document.getElementById('input-erg-time')?.value || "02:00";
       } else if (implement === "Swimming") {
-        swimDistance = parseInt(document.getElementById('input-swim-distance').value) || 500;
-        swimTime = document.getElementById('input-swim-time').value || "10:00";
+        swimDistance = parseInt(document.getElementById('input-swim-distance')?.value) || 500;
+        swimTime = document.getElementById('input-swim-time')?.value || "10:00";
       } else if (["Walking", "Hiking", "Biking"].includes(implement)) {
-        enduranceDistance = parseFloat(document.getElementById('input-endurance-distance').value) || 1.0;
-        enduranceTime = document.getElementById('input-endurance-time').value || "00:30:00";
+        enduranceDistance = parseFloat(document.getElementById('input-endurance-distance')?.value) || 1.0;
+        enduranceTime = document.getElementById('input-endurance-time')?.value || "00:30:00";
       } else {
-        weight = parseFloat(document.getElementById('input-weight').value) || 0;
-        reps = parseInt(document.getElementById('input-reps').value) || 1;
+        weight = parseFloat(document.getElementById('input-weight')?.value) || 0;
+        reps = parseInt(document.getElementById('input-reps')?.value) || 1;
       }
+
+      // Calculate set active duration if Start Set was used
+      let setDuration = 0;
+      if (isSetInProgress && activeSetStartTime) {
+        setDuration = Math.max(1, Math.floor((Date.now() - activeSetStartTime) / 1000));
+      }
+
+      // If user logged set directly while resting without tapping Start Set
+      if (isRestTimerRunning) {
+        currentPendingRestPeriod = Math.max(1, Math.floor((Date.now() - (restTimerStartTime || Date.now())) / 1000));
+        stopRestTimer();
+      }
+
+      const restPeriod = currentPendingRestPeriod || 0;
+      currentPendingRestPeriod = 0;
+
+      // Reset active set status
+      isSetInProgress = false;
+      activeSetStartTime = null;
+      activeSetElapsedSeconds = 0;
+      if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+      activeSetTimerInterval = null;
 
       const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
       const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
@@ -305,7 +590,9 @@
         swimTime,
         enduranceDistance,
         enduranceTime,
-        hr: currentHR
+        hr: currentHR,
+        setDuration,
+        restPeriod
       };
 
       currentSessionSets.push(setObj);
@@ -316,45 +603,81 @@
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
+
+      if (workoutTimerState === 'stopped') {
+        startWorkoutTimer();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      if (typeof playUnobtrusiveChime === 'function') {
+        playUnobtrusiveChime();
+      }
+
+      // Requirement 2: Once a set is logged, a rest timer shall start.
+      startRestTimer();
+      updateSetControlsUI();
     }
-
-
 
     function renderLoggedSets() {
       const container = document.getElementById('logged-sets-list');
-      document.getElementById('set-count-badge').innerText = `${currentSessionSets.length} Sets`;
+      const badge = document.getElementById('set-count-badge');
+      if (badge) badge.innerText = `${currentSessionSets.length} Sets`;
+
+      if (!container) return;
 
       if (currentSessionSets.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
+        updateSetControlsUI();
         return;
       }
 
-      container.innerHTML = currentSessionSets.map((s) => `
-        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-          <div>
-            <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
-            <div class="text-xs text-slate-400 gap-2 flex items-center mt-0.5">
-              <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded-lg">${s.implement}</span>
-              ${s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
-                s.implement === "Swimming" ? `<span>${s.swimDistance} yds | ${s.swimTime}</span>` :
-                ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
-                `<span>${s.weight} lbs × ${s.reps} reps</span>`}
-              <span class="text-slate-500">RPE ${s.rpe}</span>
+      let html = '';
+      currentSessionSets.forEach((s, idx) => {
+        // Requirement 3: Rest period recorded between prior set and newly started set is visualized
+        if (s.restPeriod && s.restPeriod > 0) {
+          html += `
+            <div class="flex items-center justify-center gap-2 py-1 text-[11px] text-slate-400 font-mono">
+              <div class="h-px bg-slate-800 flex-1"></div>
+              <span class="bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full text-emerald-400 flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-hourglass-half text-[10px] text-emerald-400"></i> Rest: ${formatDurationSecs(s.restPeriod)}
+              </span>
+              <div class="h-px bg-slate-800 flex-1"></div>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
+              <div class="text-xs text-slate-400 gap-2 flex items-center flex-wrap mt-0.5">
+                <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded-lg font-semibold">${s.implement}</span>
+                ${s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
+                  s.implement === "Swimming" ? `<span>${s.swimDistance} yds | ${s.swimTime}</span>` :
+                  ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
+                  `<span>${s.weight} lbs × ${s.reps} reps</span>`}
+                <span class="text-slate-500">RPE ${s.rpe}</span>
+                ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-1.5 py-0.5 rounded-lg font-mono text-[10px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Set">
+                <i class="fa-solid fa-trash-can text-sm"></i>
+              </button>
             </div>
           </div>
-          <div class="flex items-center gap-1">
-            <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition">
-              <i class="fa-solid fa-trash-can text-sm"></i>
-            </button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      });
+
+      container.innerHTML = html;
+      updateSetControlsUI();
     }
 
     function deleteSet(id) {
       currentSessionSets = currentSessionSets.filter(s => s.id !== id);
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       renderLoggedSets();
+      updateSetControlsUI();
 
       if (googleAccessToken) {
         syncToGoogleDrive();
@@ -455,6 +778,17 @@
 
       updateAnatomicalBodyMap(muscleMap, Array.from(secondaryMuscleSet));
 
+      // Stop rest timer and active set timer if running
+      stopRestTimer();
+      if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+      isSetInProgress = false;
+      activeSetStartTime = null;
+      activeSetElapsedSeconds = 0;
+      currentPendingRestPeriod = 0;
+
+      const durationSecs = workoutTimerSeconds;
+      pauseWorkoutTimer();
+
       const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
       const workoutObj = {
         date: targetDate,
@@ -465,6 +799,8 @@
         aerobicTE,
         anaerobicTE,
         caloriesBurned,
+        workoutDuration: durationSecs,
+        workoutDurationFormatted: formatTimerHMS(durationSecs),
         sets: [...currentSessionSets]
       };
 
@@ -498,6 +834,11 @@
 
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
+      workoutTimerSeconds = 0;
+      workoutTimerState = 'stopped';
+      saveWorkoutTimerState();
+      updateWorkoutTimerUI();
+      updateSetControlsUI();
       broadcastUserWorkoutEnded(workoutName);
       incrementGlobalWorkoutCounter();
 

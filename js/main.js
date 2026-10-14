@@ -7,6 +7,8 @@
       initDatePickerConstraints();
       loadPhysicalProfile();
       renderLoggedSets();
+      restoreWorkoutTimerState();
+      updateSetControlsUI();
       renderCalendar();
       renderWeightHistory();
       initSparkline();

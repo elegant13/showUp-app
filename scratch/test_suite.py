@@ -59,6 +59,13 @@ def test_codebase():
     print(f"[DOM Audit] Total <script> blocks found: {len(parser.scripts)}")
     print(f"[DOM Audit] Total inline event handlers: {len(parser.inline_handlers)}")
     
+    # Also include external js/*.js scripts referenced in index.html
+    import os
+    for script_src in re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content):
+        if script_src.startswith('js/') and os.path.exists(script_src):
+            with open(script_src, 'r', encoding='utf-8') as sf:
+                parser.scripts.append(sf.read())
+
     all_scripts = "\n".join(parser.scripts)
     
     # Extract function declarations and arrow functions

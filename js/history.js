@@ -149,6 +149,8 @@
                         ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
                         `<span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>`}
                       <span class="text-slate-500">RPE ${s.rpe}</span>
+                      ${s.setDuration ? `<span class="text-slate-400"><i class="fa-regular fa-clock mr-1 text-slate-500"></i>${typeof formatDurationSecs === 'function' ? formatDurationSecs(s.setDuration) : (s.setDuration + 's')}</span>` : ''}
+                      ${s.restPeriod ? `<span class="text-emerald-400/80"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-500"></i>Rest: ${typeof formatDurationSecs === 'function' ? formatDurationSecs(s.restPeriod) : (s.restPeriod + 's')}</span>` : ''}
                     </div>
                   </div>
 

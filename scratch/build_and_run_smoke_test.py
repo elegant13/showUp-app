@@ -367,6 +367,70 @@ runSuite("4. Workout Tracking & Logging Engine", () => {
   }
   assert(calcEpley1RM(225, 5) === 262.5, "Epley 1RM calculation accurate for 225x5: " + calcEpley1RM(225, 5));
   assert(calcEpley1RM(315, 1) === 315, "Epley 1RM calculation accurate for 315x1: " + calcEpley1RM(315, 1));
+
+  // --- TIMER REVIVAL VALIDATION (Req 1, 2, 3) ---
+  // Req 1: Timer shall have start, pause, and restart options.
+  assert(typeof startWorkoutTimer === 'function', "startWorkoutTimer is defined");
+  assert(typeof pauseWorkoutTimer === 'function', "pauseWorkoutTimer is defined");
+  assert(typeof restartWorkoutTimer === 'function', "restartWorkoutTimer is defined");
+
+  workoutTimerSeconds = 0;
+  startWorkoutTimer();
+  assert(workoutTimerState === 'running', "Workout session timer starts");
+  workoutTimerSeconds = 45;
+  pauseWorkoutTimer();
+  assert(workoutTimerState === 'paused', "Workout session timer pauses");
+  assert(workoutTimerSeconds === 45, "Paused timer retains elapsed duration");
+  restartWorkoutTimer();
+  assert(workoutTimerState === 'running', "Workout session timer restarts");
+  assert(workoutTimerSeconds === 0, "Restart resets timer to 0");
+  pauseWorkoutTimer();
+
+  // Req 2: Each set shall have a start set and log set option from a timer standpoint.
+  // Once a set is logged, a rest timer shall start.
+  currentSessionSets = [];
+  getOrCreateElement('exercise-name-input').value = "Incline Dumbbell Press";
+  getOrCreateElement('implement-select').value = "Dumbbell";
+  getOrCreateElement('muscle-group-select').value = "Chest";
+  getOrCreateElement('rpe-select').value = "8";
+  getOrCreateElement('input-weight').value = "80";
+  getOrCreateElement('input-reps').value = "10";
+
+  assert(typeof startSet === 'function', "startSet option is defined");
+  assert(typeof logSet === 'function', "logSet option is defined");
+
+  // Athlete clicks "Start Set 1"
+  startSet();
+  assert(isSetInProgress === true, "Active set 1 is in progress");
+  assert(activeSetStartTime !== null, "Active set start time is recorded");
+
+  // Athlete finishes set 1 and clicks "Log Set 1"
+  logSet();
+  assert(currentSessionSets.length === 1, "Set 1 logged successfully");
+  assert(isSetInProgress === false, "Set in progress is reset after logging");
+  assert(isRestTimerRunning === true, "Rest timer automatically started after set 1 is logged");
+
+  // Simulate 90 seconds of rest
+  restTimerStartTime = Date.now() - (90 * 1000);
+
+  // Req 3: When a second set is started the rest timer shall stop and get recorded as the rest period
+  // between the prior set and the newly started set.
+  startSet();
+  assert(isRestTimerRunning === false, "Rest timer stopped when second set started");
+  assert(currentPendingRestPeriod >= 89 && currentPendingRestPeriod <= 91, "Rest period recorded accurately (~90s): " + currentPendingRestPeriod);
+  assert(isSetInProgress === true, "Set 2 is in progress");
+
+  // Log set 2
+  getOrCreateElement('input-reps').value = "8";
+  logSet();
+  assert(currentSessionSets.length === 2, "Set 2 logged successfully");
+  const set2 = currentSessionSets[1];
+  assert(set2.restPeriod >= 89 && set2.restPeriod <= 91, "Set 2 captured recorded rest period from prior set: " + set2.restPeriod);
+  assert(isRestTimerRunning === true, "Rest timer started again after set 2");
+
+  // Cleanup rest timer
+  stopRestTimer();
+  assert(isRestTimerRunning === false, "Rest timer cleanly stopped");
 });
 
 runSuite("5. History, Calendar & 'Showed Up' Logic (TC-4.1)", () => {
