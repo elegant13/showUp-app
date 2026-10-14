@@ -664,3 +664,81 @@ nav {
 #large-logo-modal.hidden {
   display: none !important;
 }
+
+/* ==========================================================================
+   V3 Ergonomic Polish: Easy on the eyes, tactile steppers & hero victory HUD
+   ========================================================================== */
+
+/* Tactile steppers for weight & reps */
+.m3-stepper-btn {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-weight: 700;
+  border-radius: 0.75rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.m3-stepper-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.m3-stepper-btn:active {
+  transform: scale(0.94);
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.m3-stepper-btn-accent {
+  background: color-mix(in srgb, var(--m3-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--m3-primary) 30%, transparent);
+  color: var(--m3-primary-light, var(--m3-primary));
+}
+
+.m3-stepper-btn-accent:hover {
+  background: color-mix(in srgb, var(--m3-primary) 22%, transparent);
+  border-color: color-mix(in srgb, var(--m3-primary) 45%, transparent);
+  color: #ffffff;
+}
+
+/* Hero Victory Celebration Card styling */
+.hero-victory-card {
+  position: relative;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.95) 40%, rgba(10, 15, 29, 0.98) 100%);
+  border: 1px solid color-mix(in srgb, var(--m3-primary) 30%, transparent);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 25px -5px color-mix(in srgb, var(--m3-primary) 25%, transparent);
+}
+
+/* Exercise Quick Chips */
+.quick-exercise-chip {
+  padding: 0.35rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-exercise-chip:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f1f5f9;
+  border-color: color-mix(in srgb, var(--m3-primary) 40%, transparent);
+}
+
+.quick-exercise-chip:active {
+  transform: scale(0.95);
+}
+
+/* Soften nested border overload */
+.m3-subtle-border {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+

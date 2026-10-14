@@ -187,6 +187,50 @@
       } else {
         standardPanel.classList.remove('hidden');
       }
+
+      const impSelect = document.getElementById('implement-select');
+      if (impSelect && impSelect.value !== implementVal) {
+        impSelect.value = implementVal;
+      }
+      updateWorkoutExtraOptionsPreview();
+    }
+
+    function toggleWorkoutExtraOptions() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const panel = document.getElementById('workout-extra-options-panel');
+      const chevron = document.getElementById('extra-options-chevron');
+      if (!panel) return;
+      const isHidden = panel.classList.contains('hidden');
+      if (isHidden) {
+        panel.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotate-180');
+      } else {
+        panel.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
+      }
+    }
+
+    function updateWorkoutExtraOptionsPreview() {
+      const previewEl = document.getElementById('extra-options-preview');
+      if (!previewEl) return;
+      const implementEl = document.getElementById('implement-select');
+      const muscleEl = document.getElementById('muscle-group-select');
+      const rpeEl = document.getElementById('rpe-select');
+      const imp = implementEl ? implementEl.value : 'Bodyweight';
+      const mus = muscleEl ? muscleEl.value : 'Full Body';
+      const rpe = rpeEl ? `RPE ${rpeEl.value}` : 'RPE 8';
+      previewEl.innerText = `${imp} • ${mus} • ${rpe}`;
+    }
+
+    function selectQuickExercise(name) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const input = document.getElementById('exercise-name-input');
+      if (input) {
+        input.value = name;
+        if (typeof handleExerciseInput === 'function') {
+          handleExerciseInput(name);
+        }
+      }
     }
 
     function adjustWeight(delta) {
@@ -883,6 +927,9 @@
       }
 
       document.getElementById('workout-summary-card').classList.remove('hidden');
+      if (typeof switchSummaryTab === 'function') {
+        switchSummaryTab('overview');
+      }
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
       currentSessionSets = [];
@@ -963,6 +1010,76 @@
     }
 
 
+
+    function switchSummaryTab(tabName) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const tabs = ['overview', 'muscles', 'sets'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-summary-${t}`);
+        const pane = document.getElementById(`tab-pane-summary-${t}`);
+        if (btn) {
+          if (t === tabName) {
+            btn.className = "flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm transition flex items-center justify-center gap-1.5";
+          } else {
+            btn.className = "flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800 transition flex items-center justify-center gap-1.5";
+          }
+        }
+        if (pane) {
+          if (t === tabName) {
+            pane.classList.remove('hidden');
+          } else {
+            pane.classList.add('hidden');
+          }
+        }
+      });
+
+      if (tabName === 'sets') {
+        renderSummarySetsList();
+      }
+    }
+
+    function renderSummarySetsList() {
+      const container = document.getElementById('summary-sets-chronology');
+      if (!container) return;
+      const sets = lastEvaluatedSummary && lastEvaluatedSummary.sets ? lastEvaluatedSummary.sets : currentSessionSets;
+      if (!sets || sets.length === 0) {
+        container.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs italic">No set breakdown available for this workout.</div>`;
+        return;
+      }
+      let html = '';
+      sets.forEach((s, idx) => {
+        const metricDisplay = s.implement === "Row Erg" ? `${s.ergDistance || 0}m | ${s.ergTime || '00:00'}` :
+          s.implement === "Swimming" ? `${s.swimDistance || 0} yds | ${s.swimTime || '00:00'}` :
+          ["Walking", "Hiking", "Biking"].includes(s.implement) ? `${s.enduranceDistance || 0} mi | ${s.enduranceTime || '00:00'}` :
+          `${s.weight || 0} lbs × ${s.reps || 0} reps`;
+
+        html += `
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2.5">
+              <span class="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-400 font-mono font-bold flex items-center justify-center text-[11px] border border-emerald-500/20">
+                ${idx + 1}
+              </span>
+              <div>
+                <div class="font-bold text-slate-200">${s.exerciseName}</div>
+                <div class="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                  <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.2 rounded font-semibold text-[10px]">${s.implement}</span>
+                  <span>•</span>
+                  <span class="text-slate-300 font-mono">${metricDisplay}</span>
+                  <span>•</span>
+                  <span class="text-slate-500">RPE ${s.rpe}</span>
+                </div>
+              </div>
+            </div>
+            ${s.restPeriod ? `
+              <div class="font-mono text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <i class="fa-solid fa-hourglass-half text-[9px]"></i> ${formatDurationSecs(s.restPeriod)}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
 
     function closeSummary() {
       document.getElementById('workout-summary-card').classList.add('hidden');

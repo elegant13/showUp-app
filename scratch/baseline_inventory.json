@@ -1,5 +1,5 @@
 {
-  "dom_ids_count": 247,
+  "dom_ids_count": 259,
   "dom_ids": [
     "add-member-modal",
     "add-member-modal-squad-name",
@@ -42,6 +42,7 @@
     "body-shoulders-post",
     "body-triceps",
     "btn-connect-hrm",
+    "btn-dismiss-cloud-backup",
     "btn-google-login",
     "btn-log-set",
     "btn-log-set-label",
@@ -51,6 +52,7 @@
     "btn-start-set",
     "btn-start-set-icon",
     "btn-start-set-label",
+    "btn-toggle-extra-options",
     "btn-toggle-sim",
     "btn-toggle-squads-default-collapse",
     "btn-zoom-to-selected-zip",
@@ -69,6 +71,8 @@
     "erg-metrics-panel",
     "exercise-catalog-list",
     "exercise-name-input",
+    "extra-options-chevron",
+    "extra-options-preview",
     "font-btn-jakarta",
     "font-btn-lexend",
     "font-btn-mono",
@@ -212,13 +216,20 @@
     "summary-rest-bar",
     "summary-rest-pct",
     "summary-rest-time",
+    "summary-sets-chronology",
     "summary-timestamp",
     "summary-title",
     "summary-total-time",
     "svg-anterior",
     "svg-posterior",
     "swim-metrics-panel",
+    "tab-btn-summary-muscles",
+    "tab-btn-summary-overview",
+    "tab-btn-summary-sets",
     "tab-calendar-view",
+    "tab-pane-summary-muscles",
+    "tab-pane-summary-overview",
+    "tab-pane-summary-sets",
     "tab-squads-view",
     "tab-workout-view",
     "theme-palette-grid",
@@ -239,6 +250,7 @@
     "weight-numpad-modal",
     "weight-trend-svg",
     "workout-date-picker",
+    "workout-extra-options-panel",
     "workout-notes-input",
     "workout-summary-card",
     "workout-title-input",
@@ -253,7 +265,7 @@
   "functions": [
     "gm_authFailure"
   ],
-  "inline_handlers_count": 190,
+  "inline_handlers_count": 208,
   "inline_handlers": [
     [
       "body",
@@ -284,6 +296,11 @@
       "button",
       "onclick",
       "triggerHaptic('light'); toggleProfileDropdown(event)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); openGlobalVisitorTelemetryModal()"
     ],
     [
       "button",
@@ -873,6 +890,11 @@
     [
       "button",
       "onclick",
+      "triggerHaptic('light'); dismissCloudBackupBanner()"
+    ],
+    [
+      "button",
+      "onclick",
       "triggerHaptic('medium'); handleGoogleLogin()"
     ],
     [
@@ -926,9 +948,54 @@
       "handleExerciseInput(this.value)"
     ],
     [
-      "select",
-      "onchange",
-      "handleImplementChange(this.value)"
+      "button",
+      "onclick",
+      "selectQuickExercise('Pushups')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Pullups')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Squats')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Bench Press')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Barbell Deadlift')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Sapaate')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Row Erg')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Swimming')"
+    ],
+    [
+      "button",
+      "onclick",
+      "selectQuickExercise('Walking')"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight')"
     ],
     [
       "button",
@@ -1093,6 +1160,26 @@
     [
       "button",
       "onclick",
+      "triggerHaptic('light'); toggleWorkoutExtraOptions()"
+    ],
+    [
+      "select",
+      "onchange",
+      "handleImplementChange(this.value)"
+    ],
+    [
+      "select",
+      "onchange",
+      "updateWorkoutExtraOptionsPreview()"
+    ],
+    [
+      "select",
+      "onchange",
+      "updateWorkoutExtraOptionsPreview()"
+    ],
+    [
+      "button",
+      "onclick",
       "triggerHaptic('light'); adjustRestTimer(30)"
     ],
     [
@@ -1124,6 +1211,21 @@
       "button",
       "onclick",
       "triggerHaptic('light'); closeSummary()"
+    ],
+    [
+      "button",
+      "onclick",
+      "switchSummaryTab('overview')"
+    ],
+    [
+      "button",
+      "onclick",
+      "switchSummaryTab('muscles')"
+    ],
+    [
+      "button",
+      "onclick",
+      "switchSummaryTab('sets')"
     ],
     [
       "button",

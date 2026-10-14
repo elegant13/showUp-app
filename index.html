@@ -75,24 +75,24 @@
       </div>
 
       <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
-      <div class="relative flex items-center gap-1 sm:gap-2 shrink-0">
+      <div class="relative flex items-center gap-1.5 sm:gap-2 shrink-0">
         <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800 transition flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/80 shadow-sm shrink-0" title="Click to view Global Visitor Telemetry">
+        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/90 active:scale-95 transition flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-sm shrink-0" title="Click to view Global Visitor Telemetry">
           <span class="relative flex h-2 w-2 shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
           </span>
           <i class="fa-solid fa-users text-xs text-purple-400"></i>
           <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
-          <span class="text-[10px] font-semibold text-slate-400 hidden sm:inline">Visitors</span>
+          <span class="text-[10px] font-semibold text-slate-400 hidden min-[540px]:inline">Visitors</span>
         </div>
 
-        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1 sm:gap-1.5 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
+        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
           <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
           <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200 hidden sm:inline">Glass</span>
         </button>
 
-        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition shrink-0" title="UI Customization & Physical Profile">
+        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition active:scale-95 shrink-0" title="UI Customization & Physical Profile">
           <i class="fa-solid fa-sliders text-xs sm:text-sm"></i>
         </button>
 
@@ -113,11 +113,19 @@
               <p id="dropdown-user-email" class="text-xs font-medium text-slate-300 truncate mt-0.5">user@email.com</p>
             </div>
 
+            <!-- GLOBAL VISITOR TELEMETRY QUICK ACCESS -->
+            <div class="py-1">
+              <button onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition flex items-center gap-2">
+                <i class="fa-solid fa-users text-xs text-purple-400"></i>
+                <span>Global Visitors Log</span>
+              </button>
+            </div>
+
             <!-- ADMIN GLOBAL TELEMETRY (ONLY VISIBLE FOR abhi13@gmail.com) -->
             <div id="profile-admin-telemetry-item" class="hidden py-1">
               <button onclick="triggerHaptic('light'); scrollToAdminTelemetry()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-950/40 hover:text-purple-200 transition flex items-center gap-2">
                 <i class="fa-solid fa-earth-americas text-xs text-purple-400"></i>
-                <span>Global Visitor Telemetry</span>
+                <span>Admin Map & Live Feed</span>
               </button>
             </div>
 
@@ -1335,9 +1343,14 @@
             <i class="fa-solid fa-cloud-arrow-up"></i>
           </div>
           <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h3 id="backup-banner-title" class="text-sm sm:text-base font-bold text-slate-100 tracking-tight">Protect Your Workout & Squad Data</h3>
-              <span id="backup-banner-badge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Sign-in Recommended</span>
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h3 id="backup-banner-title" class="text-sm sm:text-base font-bold text-slate-100 tracking-tight">Protect Your Workout & Squad Data</h3>
+                <span id="backup-banner-badge" class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Sign-in Recommended</span>
+              </div>
+              <button id="btn-dismiss-cloud-backup" type="button" onclick="triggerHaptic('light'); dismissCloudBackupBanner()" class="text-slate-400 hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-800/80 transition shrink-0 ml-1" title="Dismiss Backup Notice">
+                <i class="fa-solid fa-xmark text-sm"></i>
+              </button>
             </div>
             <p id="backup-banner-desc" class="text-xs text-slate-300/90 leading-relaxed mt-1">Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.</p>
           </div>
@@ -1436,106 +1449,68 @@
           <button onclick="resetToTodayDate()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/30 px-2 py-0.5 rounded-lg underline transition">Reset to Today</button>
         </div>
 
-        <!-- OPTIONAL WORKOUT NAME & NOTES INPUTS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">
-              Workout Name <span class="text-slate-500 font-normal">(Optional)</span>
-            </label>
-            <input type="text" id="workout-title-input" placeholder="e.g. Leg Day, Morning Swim, Outdoor Ride..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+        <!-- PRIMARY EXERCISE SELECTION & QUICK CHIPS -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">Exercise Name</label>
+            <span class="text-[10px] text-slate-500 font-medium">Type or pick quick chip</span>
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">
-              Session Notes <span class="text-slate-500 font-normal">(Optional)</span>
-            </label>
-            <input type="text" id="workout-notes-input" placeholder="e.g. Great cadence, solid aerobic output..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Exercise Name</label>
-            <div class="relative">
-              <input type="text" id="exercise-name-input" placeholder="e.g. Swimming, Biking, Walking, Sapaate..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
-              <datalist id="exercise-catalog-list"></datalist>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+              <i class="fa-solid fa-dumbbell text-xs"></i>
             </div>
+            <input type="text" id="exercise-name-input" placeholder="e.g. Incline Dumbbell Press, Squats, Swimming..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700/80 rounded-2xl pl-9 pr-3 py-2.5 text-sm font-semibold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <datalist id="exercise-catalog-list"></datalist>
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Category</label>
-            <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="Bodyweight" selected>Bodyweight</option>
-              <option value="Row Erg">Row Erg</option>
-              <option value="Swimming">Swimming</option>
-              <option value="Walking">Walking</option>
-              <option value="Hiking">Hiking</option>
-              <option value="Biking">Biking</option>
-              <option value="Kettlebell">Kettlebell</option>
-              <option value="Macebell / Gada">Macebell / Gada</option>
-              <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
-              <option value="Gymnastics Rings">Gymnastics Rings</option>
-              <option value="Barbell">Barbell</option>
-              <option value="Dumbbell">Dumbbell</option>
-              <option value="Resistance Band">Resistance Band</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Primary Muscle Target</label>
-            <select id="muscle-group-select" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="Full Body">Full Body / Compound</option>
-              <option value="Chest">Chest</option>
-              <option value="Back">Back</option>
-              <option value="Shoulders">Shoulders</option>
-              <option value="Quads">Quads</option>
-              <option value="Hamstrings/Glutes">Hamstrings / Glutes</option>
-              <option value="Biceps">Biceps</option>
-              <option value="Triceps">Triceps</option>
-              <option value="Core/Abs">Core / Abs</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">Perceived Effort (RPE)</label>
-            <select id="rpe-select" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition">
-              <option value="6">RPE 6 - Light Effort</option>
-              <option value="7">RPE 7 - Moderate Effort</option>
-              <option value="8" selected>RPE 8 - Hard Effort (2 reps in tank)</option>
-              <option value="9">RPE 9 - Very Hard (1 rep in tank)</option>
-              <option value="10">RPE 10 - Maximum Effort / Failure</option>
-            </select>
+          <!-- QUICK EXERCISE SHORTCUT CHIPS -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <button type="button" onclick="selectQuickExercise('Pushups')" class="quick-exercise-chip">Pushups</button>
+            <button type="button" onclick="selectQuickExercise('Pullups')" class="quick-exercise-chip">Pullups</button>
+            <button type="button" onclick="selectQuickExercise('Squats')" class="quick-exercise-chip">Squats</button>
+            <button type="button" onclick="selectQuickExercise('Bench Press')" class="quick-exercise-chip">Bench Press</button>
+            <button type="button" onclick="selectQuickExercise('Barbell Deadlift')" class="quick-exercise-chip">Deadlift</button>
+            <button type="button" onclick="selectQuickExercise('Sapaate')" class="quick-exercise-chip">Sapaate</button>
+            <button type="button" onclick="selectQuickExercise('Row Erg')" class="quick-exercise-chip">Row Erg</button>
+            <button type="button" onclick="selectQuickExercise('Swimming')" class="quick-exercise-chip">Swimming</button>
+            <button type="button" onclick="selectQuickExercise('Walking')" class="quick-exercise-chip">Walking</button>
           </div>
         </div>
 
         <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) -->
-        <div id="standard-metrics-panel" class="grid grid-cols-2 gap-4 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+        <div id="standard-metrics-panel" class="grid grid-cols-2 gap-3.5 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Weight (lbs / kg)</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-28 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Weight (lbs / kg)</label>
+              <button type="button" onclick="triggerHaptic('light'); openWeightNumpadModal('input-weight', 'Exercise Weight')" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1" title="Open Tactile Numpad">
+                <i class="fa-solid fa-calculator text-[10px]"></i> Numpad
+              </button>
+            </div>
+            <div class="flex items-center justify-center">
+              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustWeight(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(2.5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+2.5</button>
-              <button onclick="triggerHaptic('light'); adjustWeight(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-5)" class="m3-stepper-btn text-xs py-1.5">-5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="m3-stepper-btn text-xs py-1.5">-2.5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustWeight(2.5)" class="m3-stepper-btn m3-stepper-btn-accent text-xs py-1.5">+2.5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustWeight(5)" class="m3-stepper-btn m3-stepper-btn-accent text-xs py-1.5">+5</button>
             </div>
           </div>
 
           <div class="space-y-2">
-            <label class="block text-xs font-semibold text-slate-400 text-center uppercase tracking-wider">Reps</label>
-            <div class="flex items-center justify-center gap-2">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-24 bg-slate-900 border border-slate-700 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 focus:outline-none focus:border-emerald-500">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Reps</label>
+              <span class="text-[10px] text-slate-500 font-mono">Count</span>
+            </div>
+            <div class="flex items-center justify-center">
+              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-2xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner">
             </div>
             <div class="grid grid-cols-4 gap-1 pt-1">
-              <button onclick="triggerHaptic('light'); adjustReps(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
-              <button onclick="triggerHaptic('light'); adjustReps(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1</button>
-              <button onclick="triggerHaptic('light'); adjustReps(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustReps(-5)" class="m3-stepper-btn text-xs py-1.5">-5</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustReps(-1)" class="m3-stepper-btn text-xs py-1.5">-1</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustReps(1)" class="m3-stepper-btn m3-stepper-btn-accent text-xs py-1.5">+1</button>
+              <button type="button" onclick="triggerHaptic('light'); adjustReps(5)" class="m3-stepper-btn m3-stepper-btn-accent text-xs py-1.5">+5</button>
             </div>
           </div>
         </div>
@@ -1627,6 +1602,86 @@
           </div>
         </div>
 
+        <!-- PROGRESSIVE DISCLOSURE: SESSION DETAILS & EXERCISE OPTIONS DRAWER -->
+        <div class="pt-1">
+          <button id="btn-toggle-extra-options" type="button" onclick="triggerHaptic('light'); toggleWorkoutExtraOptions()" class="w-full flex items-center justify-between py-2.5 px-3.5 rounded-2xl bg-slate-950/70 hover:bg-slate-900/90 border border-slate-800/80 text-xs text-slate-300 transition active:scale-[0.99]" title="Toggle Session Details, Implement, Muscle Group & RPE">
+            <span class="flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-emerald-400"></i>
+              <span class="font-bold text-slate-200">Session & Exercise Details</span>
+              <span id="extra-options-preview" class="text-[10px] text-slate-400 font-mono hidden min-[480px]:inline">Bodyweight • Full Body • RPE 8</span>
+            </span>
+            <i id="extra-options-chevron" class="fa-solid fa-chevron-down text-slate-500 text-xs transition-transform duration-200"></i>
+          </button>
+
+          <div id="workout-extra-options-panel" class="hidden space-y-3 pt-3">
+            <!-- OPTIONAL WORKOUT NAME & NOTES INPUTS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">
+                  Workout Name <span class="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <input type="text" id="workout-title-input" placeholder="e.g. Leg Day, Morning Swim, Outdoor Ride..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">
+                  Session Notes <span class="text-slate-500 font-normal">(Optional)</span>
+                </label>
+                <input type="text" id="workout-notes-input" placeholder="e.g. Great cadence, solid aerobic output..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition">
+              </div>
+            </div>
+
+            <!-- IMPLEMENT / CATEGORY, MUSCLE & RPE SELECTORS -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Category</label>
+                <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+                  <option value="Bodyweight" selected>Bodyweight</option>
+                  <option value="Row Erg">Row Erg</option>
+                  <option value="Swimming">Swimming</option>
+                  <option value="Walking">Walking</option>
+                  <option value="Hiking">Hiking</option>
+                  <option value="Biking">Biking</option>
+                  <option value="Kettlebell">Kettlebell</option>
+                  <option value="Macebell / Gada">Macebell / Gada</option>
+                  <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
+                  <option value="Gymnastics Rings">Gymnastics Rings</option>
+                  <option value="Barbell">Barbell</option>
+                  <option value="Dumbbell">Dumbbell</option>
+                  <option value="Resistance Band">Resistance Band</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Primary Muscle Target</label>
+                <select id="muscle-group-select" onchange="updateWorkoutExtraOptionsPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+                  <option value="Full Body">Full Body / Compound</option>
+                  <option value="Chest">Chest</option>
+                  <option value="Back">Back</option>
+                  <option value="Shoulders">Shoulders</option>
+                  <option value="Quads">Quads</option>
+                  <option value="Hamstrings/Glutes">Hamstrings / Glutes</option>
+                  <option value="Biceps">Biceps</option>
+                  <option value="Triceps">Triceps</option>
+                  <option value="Core/Abs">Core / Abs</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1">Perceived Effort (RPE)</label>
+                <select id="rpe-select" onchange="updateWorkoutExtraOptionsPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
+                  <option value="6">RPE 6 - Light Effort</option>
+                  <option value="7">RPE 7 - Moderate Effort</option>
+                  <option value="8" selected>RPE 8 - Hard Effort (2 reps in tank)</option>
+                  <option value="9">RPE 9 - Very Hard (1 rep in tank)</option>
+                  <option value="10">RPE 10 - Maximum Effort / Failure</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- REST TIMER HUD BANNER -->
         <div id="rest-timer-banner" class="hidden bg-emerald-950/40 border border-emerald-500/40 rounded-2xl p-3.5 space-y-2 transition-all">
           <div class="flex items-center justify-between">
@@ -1688,21 +1743,31 @@
       </section>
 
       <!-- POST-WORKOUT SUMMARY CARD INCLUDING ESTIMATED CALORIES BURNED -->
-      <section id="workout-summary-card" class="hidden m3-card rounded-3xl p-5 border shadow-2xl space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 id="summary-title" class="text-base font-black text-emerald-400 flex items-center gap-2">
-              <i class="fa-solid fa-chart-line"></i>
-              Physiology & Training Effect Summary
-            </h2>
-            <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
+      <section id="workout-summary-card" class="hidden hero-victory-card rounded-3xl p-5 border shadow-2xl space-y-5 transition-all">
+        <!-- HERO VICTORY HEADER -->
+        <div class="flex items-start justify-between gap-3 border-b border-slate-800/80 pb-3.5">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shadow-lg shadow-emerald-500/10 shrink-0">
+              <i class="fa-solid fa-trophy"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Workout Complete</span>
+                <span class="text-[10px] font-bold text-slate-500">1% Better</span>
+              </div>
+              <h2 id="summary-title" class="text-base sm:text-lg font-black text-slate-100 flex items-center gap-2 mt-0.5">
+                <i class="fa-solid fa-chart-line text-emerald-400 text-sm"></i>
+                Physiology & Training Summary
+              </h2>
+              <p class="text-xs text-slate-400" id="summary-timestamp">Completed just now</p>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition">
+          <div class="flex items-center gap-2 shrink-0">
+            <button id="btn-share-full-workout" onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp()" class="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/35 text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition" title="Share summary to WhatsApp">
               <i class="fa-brands fa-whatsapp text-sm text-emerald-400"></i>
-              <span>Share via WhatsApp</span>
+              <span class="hidden sm:inline">Share</span>
             </button>
-            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-500 hover:text-slate-300 p-1">
+            <button onclick="triggerHaptic('light'); closeSummary()" class="text-slate-400 hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-800/80 transition" title="Close Summary">
               <i class="fa-solid fa-xmark text-lg"></i>
             </button>
           </div>
@@ -1710,142 +1775,176 @@
 
         <div id="summary-notes-display" class="hidden bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 italic"></div>
 
-        <!-- WORKOUT TIME & REST BREAKDOWN (TOTAL TIME, REST TIME, ACTIVE TIME) -->
-        <div class="space-y-3">
+        <!-- SEGMENTED NAVIGATION TABS -->
+        <div class="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-slate-800/80">
+          <button id="tab-btn-summary-overview" type="button" onclick="switchSummaryTab('overview')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-stopwatch text-xs"></i>
+            <span>Overview & Time</span>
+          </button>
+          <button id="tab-btn-summary-muscles" type="button" onclick="switchSummaryTab('muscles')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800 transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-child text-xs"></i>
+            <span>Muscles</span>
+          </button>
+          <button id="tab-btn-summary-sets" type="button" onclick="switchSummaryTab('sets')" class="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-900/80 text-slate-400 hover:text-slate-200 border border-slate-800 transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-list-check text-xs"></i>
+            <span>Sets Log</span>
+          </button>
+        </div>
+
+        <!-- TAB PANE 1: OVERVIEW & TIME BREAKDOWN -->
+        <div id="tab-pane-summary-overview" class="space-y-4">
+          <!-- WORKOUT TIME & REST BREAKDOWN (TOTAL TIME, REST TIME, ACTIVE TIME) -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+              <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-clock text-emerald-400"></i>
+                Session Time Breakdown
+              </h3>
+              <span class="text-[11px] font-mono text-slate-500">Active vs Rest Analysis</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                  <span>Total Time</span>
+                  <i class="fa-solid fa-stopwatch text-cyan-400 text-xs"></i>
+                </div>
+                <div id="summary-total-time" class="text-base sm:text-2xl font-black text-cyan-400 font-mono">00:00:00</div>
+                <div class="text-[10px] font-semibold text-slate-500">Full Session</div>
+              </div>
+
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                  <span>Rest Time</span>
+                  <i class="fa-solid fa-hourglass-half text-amber-400 text-xs"></i>
+                </div>
+                <div id="summary-rest-time" class="text-base sm:text-2xl font-black text-amber-400 font-mono">0s</div>
+                <div class="text-[10px] font-semibold text-slate-500">Between Sets</div>
+              </div>
+
+              <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                  <span>Active Time</span>
+                  <i class="fa-solid fa-bolt text-emerald-400 text-xs"></i>
+                </div>
+                <div id="summary-active-time" class="text-base sm:text-2xl font-black text-emerald-400 font-mono">0s</div>
+                <div class="text-[10px] font-semibold text-slate-500">Total − Rest</div>
+              </div>
+            </div>
+
+            <!-- RATIO BAR -->
+            <div class="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800/80 space-y-1.5">
+              <div class="flex justify-between items-center text-[11px] font-semibold">
+                <span class="text-slate-400 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                  Active: <b id="summary-active-pct" class="text-emerald-400 font-mono">0%</b>
+                </span>
+                <span class="text-slate-400 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                  Rest: <b id="summary-rest-pct" class="text-amber-400 font-mono">0%</b>
+                </span>
+              </div>
+              <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 flex">
+                <div id="summary-active-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 50%"></div>
+                <div id="summary-rest-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: 50%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TRI-METRIC BOARD: AEROBIC, ANAEROBIC, AND ESTIMATED CALORIES BURNED -->
+          <div class="grid grid-cols-3 gap-2.5">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Aerobic</span>
+                <i class="fa-solid fa-lungs text-blue-400"></i>
+              </div>
+              <div id="aerobic-te-score" class="text-xl sm:text-2xl font-black text-blue-400">0.0</div>
+              <div id="aerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Anaerobic</span>
+                <i class="fa-solid fa-bolt text-amber-400"></i>
+              </div>
+              <div id="anaerobic-te-score" class="text-xl sm:text-2xl font-black text-amber-400">0.0</div>
+              <div id="anaerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Calories</span>
+                <i class="fa-solid fa-fire text-rose-500"></i>
+              </div>
+              <div id="calories-burned-score" class="text-xl sm:text-2xl font-black text-rose-400">0</div>
+              <div class="text-[10px] font-semibold text-slate-400">Est. kcal</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB PANE 2: MUSCLE ANATOMY & TONNAGE BREAKDOWN -->
+        <div id="tab-pane-summary-muscles" class="hidden space-y-4">
+          <!-- TARGETED MUSCLE MAP SVG CONTAINER -->
+          <div id="muscle-map-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
+            
+            <div class="flex justify-center items-center gap-8 py-2">
+              <div class="w-36 flex flex-col items-center">
+                <svg id="svg-anterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
+                </svg>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
+              </div>
+
+              <div class="w-36 flex flex-col items-center">
+                <svg id="svg-posterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                  <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
+                  <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
+                </svg>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
+                <span class="text-slate-300 font-semibold">Primary Muscles</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
+                <span class="text-slate-300 font-semibold">Secondary Muscles</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
+                <span class="text-slate-500">Untargeted</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
+            <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800"></div>
+          </div>
+        </div>
+
+        <!-- TAB PANE 3: SET BREAKDOWN CHRONOLOGY -->
+        <div id="tab-pane-summary-sets" class="hidden space-y-3">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-clock text-emerald-400"></i>
-              Session Time Breakdown
+              <i class="fa-solid fa-list-ol text-emerald-400"></i>
+              Chronological Sets Log
             </h3>
-            <span class="text-[11px] font-mono text-slate-500">Active vs Rest Analysis</span>
+            <span class="text-[11px] font-mono text-slate-500">Performance History</span>
           </div>
-
-          <div class="grid grid-cols-3 gap-3">
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-                <span>Total Time</span>
-                <i class="fa-solid fa-stopwatch text-cyan-400"></i>
-              </div>
-              <div id="summary-total-time" class="text-lg sm:text-2xl font-black text-cyan-400 font-mono">00:00:00</div>
-              <div class="text-[10px] font-semibold text-slate-400">Full Session</div>
-            </div>
-
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-                <span>Rest Time</span>
-                <i class="fa-solid fa-hourglass-half text-amber-400"></i>
-              </div>
-              <div id="summary-rest-time" class="text-lg sm:text-2xl font-black text-amber-400 font-mono">0s</div>
-              <div class="text-[10px] font-semibold text-slate-400">Between Sets</div>
-            </div>
-
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-                <span>Active Time</span>
-                <i class="fa-solid fa-bolt text-emerald-400"></i>
-              </div>
-              <div id="summary-active-time" class="text-lg sm:text-2xl font-black text-emerald-400 font-mono">0s</div>
-              <div class="text-[10px] font-semibold text-slate-400">Total − Rest</div>
-            </div>
-          </div>
-
-          <!-- RATIO BAR -->
-          <div class="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800/80 space-y-1.5">
-            <div class="flex justify-between items-center text-[11px] font-semibold">
-              <span class="text-slate-400 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-                Active: <b id="summary-active-pct" class="text-emerald-400 font-mono">0%</b>
-              </span>
-              <span class="text-slate-400 flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
-                Rest: <b id="summary-rest-pct" class="text-amber-400 font-mono">0%</b>
-              </span>
-            </div>
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 flex">
-              <div id="summary-active-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 50%"></div>
-              <div id="summary-rest-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: 50%"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TRI-METRIC BOARD: AEROBIC, ANAEROBIC, AND ESTIMATED CALORIES BURNED -->
-        <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Aerobic</span>
-              <i class="fa-solid fa-lungs text-blue-400"></i>
-            </div>
-            <div id="aerobic-te-score" class="text-2xl font-black text-blue-400">0.0</div>
-            <div id="aerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Anaerobic</span>
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-            </div>
-            <div id="anaerobic-te-score" class="text-2xl font-black text-amber-400">0.0</div>
-            <div id="anaerobic-te-label" class="text-[10px] font-semibold text-slate-400 truncate">Impact</div>
-          </div>
-
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-              <span>Calories</span>
-              <i class="fa-solid fa-fire text-rose-500"></i>
-            </div>
-            <div id="calories-burned-score" class="text-2xl font-black text-rose-400">0</div>
-            <div class="text-[10px] font-semibold text-slate-400">Est. kcal</div>
-          </div>
-        </div>
-
-        <!-- TARGETED MUSCLE MAP SVG CONTAINER -->
-        <div id="muscle-map-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
-          
-          <div class="flex justify-center items-center gap-8 py-2">
-            <div class="w-36 flex flex-col items-center">
-              <svg id="svg-anterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
-              </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
-            </div>
-
-            <div class="w-36 flex flex-col items-center">
-              <svg id="svg-posterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
-                <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
-              </svg>
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
-            </div>
-          </div>
-
-          <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
-              <span class="text-slate-300 font-semibold">Primary Muscles</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
-              <span class="text-slate-300 font-semibold">Secondary Muscles</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
-              <span class="text-slate-500">Untargeted</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Muscle Group Tonnage Breakdown</h3>
-          <div id="muscle-breakdown-bars" class="space-y-2 bg-slate-950 p-3 rounded-2xl border border-slate-800"></div>
+          <div id="summary-sets-chronology" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
         </div>
       </section>
 

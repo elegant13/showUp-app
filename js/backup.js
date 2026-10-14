@@ -115,6 +115,26 @@
       if (modal) modal.classList.add('hidden');
     }
 
+    function dismissCloudBackupBanner() {
+      try {
+        localStorage.setItem('showUp_backup_banner_dismissed', 'true');
+      } catch (e) {}
+      const banner = document.getElementById('cloud-backup-reminder-banner');
+      if (banner) {
+        banner.style.transition = 'opacity 0.25s ease, max-height 0.3s ease, margin 0.3s ease, padding 0.3s ease';
+        banner.style.opacity = '0';
+        banner.style.maxHeight = '0px';
+        banner.style.paddingTop = '0px';
+        banner.style.paddingBottom = '0px';
+        banner.style.marginTop = '0px';
+        banner.style.marginBottom = '0px';
+        setTimeout(() => {
+          banner.classList.add('hidden');
+          banner.style = '';
+        }, 300);
+      }
+    }
+
     function updateCloudBackupUI() {
       const banner = document.getElementById('cloud-backup-reminder-banner');
       const bannerBadge = document.getElementById('backup-banner-badge');
@@ -141,18 +161,30 @@
         }
       }
 
-      if (googleAccessToken) {
-        // Once athlete is signed in with Google, hide reminder banner
+      const isDismissed = (function() {
+        try {
+          return localStorage.getItem('showUp_backup_banner_dismissed') === 'true';
+        } catch (e) {
+          return false;
+        }
+      })();
+
+      if (googleAccessToken || isDismissed) {
+        // Once athlete is signed in with Google or manually dismissed, hide reminder banner
         if (banner) {
           banner.classList.add('hidden');
         }
         if (settingsBadge) {
-          settingsBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
-          settingsBadge.innerText = "Cloud Synced";
+          settingsBadge.className = googleAccessToken 
+            ? "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
+            : "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
+          settingsBadge.innerText = googleAccessToken ? "Cloud Synced" : "Offline Device";
         }
         if (gdrivePill) {
-          gdrivePill.className = "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
-          gdrivePill.innerText = "Connected";
+          gdrivePill.className = googleAccessToken
+            ? "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+            : "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+          gdrivePill.innerText = googleAccessToken ? "Connected" : "Offline";
         }
       } else {
         if (banner) {
