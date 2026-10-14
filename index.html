@@ -1710,6 +1710,64 @@
 
         <div id="summary-notes-display" class="hidden bg-slate-950 p-3 rounded-2xl border border-slate-800 text-xs text-slate-300 italic"></div>
 
+        <!-- WORKOUT TIME & REST BREAKDOWN (TOTAL TIME, REST TIME, ACTIVE TIME) -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-clock text-emerald-400"></i>
+              Session Time Breakdown
+            </h3>
+            <span class="text-[11px] font-mono text-slate-500">Active vs Rest Analysis</span>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Total Time</span>
+                <i class="fa-solid fa-stopwatch text-cyan-400"></i>
+              </div>
+              <div id="summary-total-time" class="text-lg sm:text-2xl font-black text-cyan-400 font-mono">00:00:00</div>
+              <div class="text-[10px] font-semibold text-slate-400">Full Session</div>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Rest Time</span>
+                <i class="fa-solid fa-hourglass-half text-amber-400"></i>
+              </div>
+              <div id="summary-rest-time" class="text-lg sm:text-2xl font-black text-amber-400 font-mono">0s</div>
+              <div class="text-[10px] font-semibold text-slate-400">Between Sets</div>
+            </div>
+
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
+                <span>Active Time</span>
+                <i class="fa-solid fa-bolt text-emerald-400"></i>
+              </div>
+              <div id="summary-active-time" class="text-lg sm:text-2xl font-black text-emerald-400 font-mono">0s</div>
+              <div class="text-[10px] font-semibold text-slate-400">Total − Rest</div>
+            </div>
+          </div>
+
+          <!-- RATIO BAR -->
+          <div class="bg-slate-950/80 p-2.5 rounded-2xl border border-slate-800/80 space-y-1.5">
+            <div class="flex justify-between items-center text-[11px] font-semibold">
+              <span class="text-slate-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+                Active: <b id="summary-active-pct" class="text-emerald-400 font-mono">0%</b>
+              </span>
+              <span class="text-slate-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>
+                Rest: <b id="summary-rest-pct" class="text-amber-400 font-mono">0%</b>
+              </span>
+            </div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800 flex">
+              <div id="summary-active-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 50%"></div>
+              <div id="summary-rest-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: 50%"></div>
+            </div>
+          </div>
+        </div>
+
         <!-- TRI-METRIC BOARD: AEROBIC, ANAEROBIC, AND ESTIMATED CALORIES BURNED -->
         <div class="grid grid-cols-3 gap-3">
           <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1.5">

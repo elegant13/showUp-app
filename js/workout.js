@@ -778,6 +778,54 @@
 
       updateAnatomicalBodyMap(muscleMap, Array.from(secondaryMuscleSet));
 
+      // Calculate Total Rest Time across all sets
+      let totalRestSeconds = 0;
+      currentSessionSets.forEach(s => {
+        totalRestSeconds += (Number(s.restPeriod) || 0);
+      });
+      if (isRestTimerRunning && restTimerStartTime) {
+        totalRestSeconds += Math.max(0, Math.floor((Date.now() - restTimerStartTime) / 1000));
+      }
+
+      // Calculate logged set duration
+      let totalLoggedSetSeconds = 0;
+      currentSessionSets.forEach(s => {
+        totalLoggedSetSeconds += (Number(s.setDuration) || 0);
+      });
+
+      // Calculate Total Workout Time
+      let totalWorkoutSeconds = workoutTimerSeconds;
+      if (totalWorkoutSeconds < (totalRestSeconds + totalLoggedSetSeconds)) {
+        totalWorkoutSeconds = totalRestSeconds + totalLoggedSetSeconds;
+      }
+      if (totalWorkoutSeconds === 0) {
+        totalWorkoutSeconds = Math.max(totalRestSeconds, Math.round(totalDurationMin * 60));
+      }
+
+      // Active Time = diff between total and rest
+      const totalActiveSeconds = Math.max(0, totalWorkoutSeconds - totalRestSeconds);
+
+      // Populate Evaluation Summary UI: Total Time, Rest Time, Active Time
+      const totalTimeEl = document.getElementById('summary-total-time');
+      const restTimeEl = document.getElementById('summary-rest-time');
+      const activeTimeEl = document.getElementById('summary-active-time');
+      const activePctEl = document.getElementById('summary-active-pct');
+      const restPctEl = document.getElementById('summary-rest-pct');
+      const activeBarEl = document.getElementById('summary-active-bar');
+      const restBarEl = document.getElementById('summary-rest-bar');
+
+      if (totalTimeEl) totalTimeEl.innerText = formatTimerHMS(totalWorkoutSeconds);
+      if (restTimeEl) restTimeEl.innerText = formatDurationSecs(totalRestSeconds);
+      if (activeTimeEl) activeTimeEl.innerText = formatDurationSecs(totalActiveSeconds);
+
+      const activePct = totalWorkoutSeconds > 0 ? Math.round((totalActiveSeconds / totalWorkoutSeconds) * 100) : 0;
+      const restPct = totalWorkoutSeconds > 0 ? (100 - activePct) : 0;
+
+      if (activePctEl) activePctEl.innerText = `${activePct}%`;
+      if (restPctEl) restPctEl.innerText = `${restPct}%`;
+      if (activeBarEl) activeBarEl.style.width = `${activePct}%`;
+      if (restBarEl) restBarEl.style.width = `${restPct}%`;
+
       // Stop rest timer and active set timer if running
       stopRestTimer();
       if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
@@ -786,7 +834,6 @@
       activeSetElapsedSeconds = 0;
       currentPendingRestPeriod = 0;
 
-      const durationSecs = workoutTimerSeconds;
       pauseWorkoutTimer();
 
       const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
@@ -799,8 +846,14 @@
         aerobicTE,
         anaerobicTE,
         caloriesBurned,
-        workoutDuration: durationSecs,
-        workoutDurationFormatted: formatTimerHMS(durationSecs),
+        totalWorkoutSeconds,
+        totalWorkoutTimeFormatted: formatTimerHMS(totalWorkoutSeconds),
+        totalRestSeconds,
+        totalRestTimeFormatted: formatDurationSecs(totalRestSeconds),
+        totalActiveSeconds,
+        totalActiveTimeFormatted: formatDurationSecs(totalActiveSeconds),
+        workoutDuration: totalWorkoutSeconds,
+        workoutDurationFormatted: formatTimerHMS(totalWorkoutSeconds),
         sets: [...currentSessionSets]
       };
 
@@ -933,6 +986,7 @@
                  `📅 *Date:* ${w.date || targetDate}\n` +
                  `${notesPart}` +
                  `📊 *Total Sets:* ${setsCount} | *Volume:* ${vol}\n` +
+                 (w.totalWorkoutSeconds ? `⏱️ *Time:* ${w.totalWorkoutTimeFormatted || formatDurationSecs(w.totalWorkoutSeconds)} (Active: ${w.totalActiveTimeFormatted || formatDurationSecs(w.totalActiveSeconds)} | Rest: ${w.totalRestTimeFormatted || formatDurationSecs(w.totalRestSeconds)})\n` : ``) +
                  `${cals}`;
 
       if (w.aerobicTE && w.anaerobicTE) {

@@ -428,6 +428,19 @@ runSuite("4. Workout Tracking & Logging Engine", () => {
   assert(set2.restPeriod >= 89 && set2.restPeriod <= 91, "Set 2 captured recorded rest period from prior set: " + set2.restPeriod);
   assert(isRestTimerRunning === true, "Rest timer started again after set 2");
 
+  // Test Evaluation Summary timing breakdown (Total time, Rest time, Active time = total - rest)
+  workoutTimerSeconds = 300; // 5 min workout
+  evaluateAndFinishWorkout();
+
+  assert(completedWorkoutsHistory.length > 0, "Workout evaluated and finished");
+  const finishedWorkout = completedWorkoutsHistory[completedWorkoutsHistory.length - 1];
+  assert(finishedWorkout.totalWorkoutSeconds >= 300, "totalWorkoutSeconds recorded in workout summary: " + finishedWorkout.totalWorkoutSeconds);
+  assert(finishedWorkout.totalRestSeconds >= 89 && finishedWorkout.totalRestSeconds <= 91, "totalRestSeconds recorded in workout summary: " + finishedWorkout.totalRestSeconds);
+  assert(finishedWorkout.totalActiveSeconds === (finishedWorkout.totalWorkoutSeconds - finishedWorkout.totalRestSeconds), "totalActiveSeconds is strictly the difference between total and rest: " + finishedWorkout.totalActiveSeconds);
+  assert(document.getElementById('summary-total-time').innerText.length > 0, "summary-total-time rendered in DOM");
+  assert(document.getElementById('summary-rest-time').innerText.length > 0, "summary-rest-time rendered in DOM");
+  assert(document.getElementById('summary-active-time').innerText.length > 0, "summary-active-time rendered in DOM");
+
   // Cleanup rest timer
   stopRestTimer();
   assert(isRestTimerRunning === false, "Rest timer cleanly stopped");

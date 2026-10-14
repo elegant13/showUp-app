@@ -1,5 +1,5 @@
 {
-  "dom_ids_count": 240,
+  "dom_ids_count": 247,
   "dom_ids": [
     "add-member-modal",
     "add-member-modal-squad-name",
@@ -205,9 +205,16 @@
     "squad-notifications-modal",
     "squads-list-container",
     "standard-metrics-panel",
+    "summary-active-bar",
+    "summary-active-pct",
+    "summary-active-time",
     "summary-notes-display",
+    "summary-rest-bar",
+    "summary-rest-pct",
+    "summary-rest-time",
     "summary-timestamp",
     "summary-title",
+    "summary-total-time",
     "svg-anterior",
     "svg-posterior",
     "swim-metrics-panel",

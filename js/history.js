@@ -135,6 +135,15 @@
 
             <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
               ${notesStr ? `<div class="text-xs text-slate-300 italic bg-slate-950/80 p-2 rounded-lg border border-slate-800 mb-2">Notes: "${notesStr}"</div>` : ''}
+              ${typeof w === 'object' && w.totalWorkoutSeconds ? `
+                <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono bg-slate-950 p-2 rounded-xl border border-slate-800 text-slate-400">
+                  <span class="text-cyan-400"><i class="fa-solid fa-stopwatch mr-1"></i>Total: ${w.totalWorkoutTimeFormatted || (w.totalWorkoutSeconds + 's')}</span>
+                  <span class="text-slate-600">•</span>
+                  <span class="text-emerald-400"><i class="fa-solid fa-bolt mr-1"></i>Active: ${w.totalActiveTimeFormatted || (w.totalActiveSeconds + 's')}</span>
+                  <span class="text-slate-600">•</span>
+                  <span class="text-amber-400"><i class="fa-solid fa-hourglass-half mr-1"></i>Rest: ${w.totalRestTimeFormatted || (w.totalRestSeconds + 's')}</span>
+                </div>
+              ` : ''}
               <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Logged Exercise Sets</div>
               ${setsList.length === 0 ? `
                 <div class="text-xs text-slate-500 italic py-1">Basic summary log recorded (no detailed sets).</div>
