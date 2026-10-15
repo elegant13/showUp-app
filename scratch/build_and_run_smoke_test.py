@@ -444,6 +444,47 @@ runSuite("4. Workout Tracking & Logging Engine", () => {
   // Cleanup rest timer
   stopRestTimer();
   assert(isRestTimerRunning === false, "Rest timer cleanly stopped");
+
+  // --- HRM Minimalist Pill, Connectivity Modal & Auto-Expanding Card Tests ---
+  assert(typeof isHRMConnected === 'function', "isHRMConnected is defined");
+  assert(typeof openHRMModal === 'function', "openHRMModal is defined");
+  assert(typeof closeHRMModal === 'function', "closeHRMModal is defined");
+  assert(typeof connectHRM === 'function', "connectHRM is defined");
+  assert(typeof toggleHRSimulator === 'function', "toggleHRSimulator is defined");
+  assert(typeof disconnectHRM === 'function', "disconnectHRM is defined");
+
+  const hrCardEl = getOrCreateElement('hr-card');
+  const hrModalEl = getOrCreateElement('hrm-connectivity-modal');
+  const hrPillLabelEl = getOrCreateElement('hr-pill-label');
+  const hrPillBpmEl = getOrCreateElement('hr-pill-bpm');
+  const liveHrDisplayEl = getOrCreateElement('live-hr-display');
+
+  // Disconnected resting state
+  disconnectHRM();
+  assert(isHRMConnected() === false, "HRM is initially disconnected");
+  assert(hrCardEl.classList.contains('hidden'), "Full HR telemetry card is hidden in minimalistic disconnected state");
+  assert(hrPillLabelEl.innerText === "HRM Disconnected", "Minimalist pill shows HRM Disconnected");
+
+  // Open & Close modal
+  openHRMModal();
+  assert(!hrModalEl.classList.contains('hidden'), "HRM connectivity modal opens on demand");
+  closeHRMModal();
+  assert(hrModalEl.classList.contains('hidden'), "HRM connectivity modal closes cleanly");
+
+  // Connect via HR Simulator
+  toggleHRSimulator();
+  assert(isHRMConnected() === true, "HRM simulator is actively connected");
+  assert(!hrCardEl.classList.contains('hidden'), "Full HR telemetry card auto-expands once connected");
+  assert(liveHrDisplayEl.innerText !== "--", "Live HR display renders active BPM: " + liveHrDisplayEl.innerText);
+  assert(hrPillLabelEl.innerText === "HRM Live:", "Minimalist pill updates to live telemetry state");
+  assert(!hrPillBpmEl.classList.contains('hidden'), "Minimalist pill displays live BPM");
+
+  // Disconnect HR
+  disconnectHRM();
+  assert(isHRMConnected() === false, "HRM cleanly disconnected");
+  assert(hrCardEl.classList.contains('hidden'), "Full HR telemetry card collapses back to hidden when disconnected");
+  assert(liveHrDisplayEl.innerText === "--", "Live HR display resets to --");
+  assert(hrPillLabelEl.innerText === "HRM Disconnected", "Minimalist pill resets to disconnected resting state");
 });
 
 runSuite("5. History, Calendar & 'Showed Up' Logic (TC-4.1)", () => {

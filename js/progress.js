@@ -350,48 +350,343 @@
 
     function initSparkline() {
       const canvas = document.getElementById('hr-sparkline');
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
       
       function draw() {
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.parentElement.clientHeight;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (canvas.parentElement && canvas.parentElement.clientWidth > 0 && canvas.parentElement.clientHeight > 0) {
+          canvas.width = canvas.parentElement.clientWidth;
+          canvas.height = canvas.parentElement.clientHeight;
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (hrHistory.length > 1) {
-          ctx.beginPath();
-          ctx.strokeStyle = '#f43f5e';
-          ctx.lineWidth = 2;
-          const step = canvas.width / (hrHistory.length - 1);
-          
-          hrHistory.forEach((val, i) => {
-            const x = i * step;
-            const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          });
-          ctx.stroke();
+          if (hrHistory.length > 1) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 2;
+            const step = canvas.width / (hrHistory.length - 1);
+            
+            hrHistory.forEach((val, i) => {
+              const x = i * step;
+              const y = canvas.height - ((val - 40) / (180 - 40)) * canvas.height;
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+          }
         }
         requestAnimationFrame(draw);
       }
       draw();
     }
 
-    function toggleHRSimulator() {
-      if (hrSimInterval) {
-        clearInterval(hrSimInterval);
-        hrSimInterval = null;
-        document.getElementById('btn-toggle-sim').innerText = "Simulate";
-        document.getElementById('live-hr-display').innerText = "--";
+    function isHRMConnected() {
+      return Boolean(currentHR > 0 || hrSimInterval || (bleHRDevice && bleHRDevice.gatt && bleHRDevice.gatt.connected));
+    }
+
+    function handleHRMPillClick() {
+      if (isHRMConnected()) {
+        const hrCard = document.getElementById('hr-card');
+        if (hrCard) {
+          if (hrCard.classList.contains('hidden')) {
+            hrCard.classList.remove('hidden');
+            hrCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            openHRMModal();
+          }
+        }
+      } else {
+        openHRMModal();
+      }
+    }
+
+    function openHRMModal() {
+      const modal = document.getElementById('hrm-connectivity-modal');
+      if (!modal) return;
+
+      const bleMsg = document.getElementById('hrm-ble-unsupported-msg');
+      if (bleMsg) {
+        if (!navigator.bluetooth) {
+          bleMsg.classList.remove('hidden');
+        } else {
+          bleMsg.classList.add('hidden');
+        }
+      }
+
+      const isConn = isHRMConnected();
+      const statusText = document.getElementById('hrm-modal-status-text');
+      const simBtnText = document.getElementById('modal-sim-btn-text');
+
+      if (statusText) {
+        if (isConn) {
+          statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span><span class="text-emerald-400 font-bold">Connected (${currentHR > 0 ? currentHR + ' BPM' : 'Active'})</span>`;
+        } else {
+          statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span><span class="text-slate-400 font-bold">Disconnected</span>`;
+        }
+      }
+
+      if (simBtnText) {
+        simBtnText.innerText = hrSimInterval ? "Stop HR Simulator" : "Start HR Simulator";
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeHRMModal() {
+      const modal = document.getElementById('hrm-connectivity-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function connectHRM(fromModal = false) {
+      if (!navigator.bluetooth) {
+        const bleMsg = document.getElementById('hrm-ble-unsupported-msg');
+        if (bleMsg) bleMsg.classList.remove('hidden');
+        if (typeof showToast === 'function') {
+          showToast('Web Bluetooth is not supported on this browser/device. Try Chrome/Edge or run the Simulator.', 'warning');
+        } else {
+          alert('Web Bluetooth is not supported on this browser/device. Try Chrome/Edge or run the Simulator.');
+        }
         return;
       }
 
-      document.getElementById('btn-toggle-sim').innerText = "Stop Sim";
+      try {
+        const statusText = document.getElementById('hrm-modal-status-text');
+        if (statusText) {
+          statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping inline-block"></span><span class="text-amber-300 font-bold">Pairing...</span>`;
+        }
+
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['heart_rate'] }],
+          optionalServices: ['battery_service']
+        });
+
+        bleHRDevice = device;
+        device.addEventListener('gattserverdisconnected', onBLEDisconnected);
+
+        const server = await device.gatt.connect();
+        bleHRServer = server;
+
+        const service = await server.getPrimaryService('heart_rate');
+        const characteristic = await service.getCharacteristic('heart_rate_measurement');
+        bleHRCharacteristic = characteristic;
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', (event) => {
+          parseHeartRateMeasurement(event);
+        });
+
+        onHRMConnected(device.name || 'Bluetooth Heart Rate Monitor');
+
+        if (fromModal) {
+          closeHRMModal();
+        }
+        if (typeof showToast === 'function') {
+          showToast(`Connected to ${device.name || 'HR Monitor'}`, 'success');
+        }
+      } catch (err) {
+        console.warn('Bluetooth HRM pairing cancelled or failed:', err);
+        const statusText = document.getElementById('hrm-modal-status-text');
+        if (statusText) {
+          statusText.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span><span class="text-slate-400 font-bold">Disconnected</span>`;
+        }
+      }
+    }
+
+    function parseHeartRateMeasurement(event) {
+      const value = event.target.value;
+      if (!value || value.byteLength < 2) return;
+      const flags = value.getUint8(0);
+      const is16Bit = (flags & 0x01) === 0x01;
+      const bpm = is16Bit ? value.getUint16(1, true) : value.getUint8(1);
+      updateHRTelemetry(bpm);
+    }
+
+    function onBLEDisconnected() {
+      disconnectHRM();
+      if (typeof showToast === 'function') {
+        showToast('Bluetooth HRM disconnected', 'info');
+      }
+    }
+
+    function toggleHRSimulator(fromModal = false) {
+      if (hrSimInterval) {
+        disconnectHRM();
+        return;
+      }
+
+      if (bleHRDevice && bleHRDevice.gatt && bleHRDevice.gatt.connected) {
+        bleHRDevice.gatt.disconnect();
+      }
+
+      onHRMConnected('Simulator');
+      if (fromModal) {
+        closeHRMModal();
+      }
+
+      // Initial reading immediately
+      currentHR = Math.floor(125 + Math.random() * 30);
+      updateHRTelemetry(currentHR);
+
       hrSimInterval = setInterval(() => {
-        currentHR = Math.floor(120 + Math.random() * 40);
-        document.getElementById('live-hr-display').innerText = currentHR;
-        hrHistory.push(currentHR);
-        if (hrHistory.length > 50) hrHistory.shift();
+        // Natural fluctuations around working heart rate
+        const delta = Math.floor((Math.random() - 0.48) * 6);
+        currentHR = Math.max(90, Math.min(185, currentHR + delta));
+        updateHRTelemetry(currentHR);
       }, 1000);
+    }
+
+    function disconnectHRM() {
+      if (hrSimInterval) {
+        clearInterval(hrSimInterval);
+        hrSimInterval = null;
+      }
+      if (bleHRDevice && bleHRDevice.gatt && bleHRDevice.gatt.connected) {
+        try {
+          bleHRDevice.gatt.disconnect();
+        } catch (e) {
+          console.warn('Error disconnecting BLE device:', e);
+        }
+      }
+      bleHRDevice = null;
+      bleHRServer = null;
+      bleHRCharacteristic = null;
+
+      onHRMDisconnected();
+    }
+
+    function onHRMConnected(sourceName = 'HRM') {
+      const hrCard = document.getElementById('hr-card');
+      if (hrCard) hrCard.classList.remove('hidden');
+
+      const btnSim = document.getElementById('btn-toggle-sim');
+      if (btnSim) btnSim.innerText = hrSimInterval ? "Stop Sim" : "Simulate";
+
+      const modalSimBtn = document.getElementById('modal-sim-btn-text');
+      if (modalSimBtn) modalSimBtn.innerText = hrSimInterval ? "Stop HR Simulator" : "Start HR Simulator";
+
+      const btnConnect = document.getElementById('btn-connect-hrm');
+      if (btnConnect) {
+        btnConnect.innerHTML = `<i class="fa-solid fa-bluetooth text-emerald-400"></i><span>${sourceName === 'Simulator' ? 'Sim Active' : 'Connected'}</span>`;
+      }
+    }
+
+    function onHRMDisconnected() {
+      const hrCard = document.getElementById('hr-card');
+      if (hrCard) hrCard.classList.add('hidden');
+
+      currentHR = 0;
+      const display = document.getElementById('live-hr-display');
+      if (display) display.innerText = "--";
+
+      const zone = document.getElementById('live-hr-zone');
+      if (zone) {
+        zone.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600 inline-block"></span><span>Disconnected</span>`;
+      }
+
+      const ping = document.getElementById('hr-pulse-ping');
+      if (ping) ping.classList.add('opacity-0');
+
+      const dot = document.getElementById('hr-pulse-dot');
+      if (dot) dot.className = "relative inline-flex rounded-full h-3 w-3 bg-slate-600";
+
+      const btnSim = document.getElementById('btn-toggle-sim');
+      if (btnSim) btnSim.innerText = "Simulate";
+
+      const modalSimBtn = document.getElementById('modal-sim-btn-text');
+      if (modalSimBtn) modalSimBtn.innerText = "Start HR Simulator";
+
+      const btnConnect = document.getElementById('btn-connect-hrm');
+      if (btnConnect) {
+        btnConnect.innerHTML = `<i class="fa-solid fa-bluetooth"></i><span>Connect HRM</span>`;
+      }
+
+      // Reset Minimalist Pill
+      const pillHeart = document.getElementById('hr-pill-heart-icon');
+      const pillDot = document.getElementById('hr-pill-pulse-dot');
+      const pillPing = document.getElementById('hr-pill-pulse-ping');
+      const pillLabel = document.getElementById('hr-pill-label');
+      const pillBpm = document.getElementById('hr-pill-bpm');
+      const pillAction = document.getElementById('hr-pill-action');
+
+      if (pillHeart) pillHeart.className = "fa-solid fa-heart text-slate-500 text-xs group-hover:text-rose-400 transition-colors";
+      if (pillDot) pillDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600 transition-colors";
+      if (pillPing) pillPing.classList.add('hidden');
+      if (pillLabel) pillLabel.innerText = "HRM Disconnected";
+      if (pillBpm) {
+        pillBpm.classList.add('hidden');
+        pillBpm.innerText = "";
+      }
+      if (pillAction) {
+        pillAction.innerHTML = `<i class="fa-solid fa-bluetooth text-[10px]"></i><span>Tap to Connect</span>`;
+      }
+    }
+
+    function updateHRTelemetry(bpm) {
+      currentHR = bpm;
+      hrHistory.push(bpm);
+      if (hrHistory.length > 50) hrHistory.shift();
+
+      const display = document.getElementById('live-hr-display');
+      if (display) display.innerText = bpm;
+
+      // Dynamic Zone calculation based on standard cardiovascular ranges (~185 max HR)
+      let zoneLabel = "Warm Up (Zone 1)";
+      let zoneBadgeColor = "text-slate-400";
+      let dotColor = "bg-slate-400";
+      let shortZone = "Warmup";
+
+      if (bpm >= 165) {
+        zoneLabel = "Redline / Peak (Zone 5)";
+        zoneBadgeColor = "text-rose-400";
+        dotColor = "bg-rose-500";
+        shortZone = "Peak";
+      } else if (bpm >= 145) {
+        zoneLabel = "Anaerobic (Zone 4)";
+        zoneBadgeColor = "text-amber-400";
+        dotColor = "bg-amber-400";
+        shortZone = "Anaerobic";
+      } else if (bpm >= 125) {
+        zoneLabel = "Aerobic (Zone 3)";
+        zoneBadgeColor = "text-emerald-400";
+        dotColor = "bg-emerald-400";
+        shortZone = "Aerobic";
+      } else if (bpm >= 105) {
+        zoneLabel = "Fat Burn (Zone 2)";
+        zoneBadgeColor = "text-cyan-400";
+        dotColor = "bg-cyan-400";
+        shortZone = "Fat Burn";
+      }
+
+      const zone = document.getElementById('live-hr-zone');
+      if (zone) {
+        zone.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor} inline-block animate-pulse"></span><span class="${zoneBadgeColor}">${zoneLabel}</span>`;
+      }
+
+      const ping = document.getElementById('hr-pulse-ping');
+      if (ping) ping.classList.remove('opacity-0');
+
+      const dot = document.getElementById('hr-pulse-dot');
+      if (dot) dot.className = `relative inline-flex rounded-full h-3 w-3 ${dotColor}`;
+
+      // Minimalist Pill Live State
+      const pillHeart = document.getElementById('hr-pill-heart-icon');
+      const pillDot = document.getElementById('hr-pill-pulse-dot');
+      const pillPing = document.getElementById('hr-pill-pulse-ping');
+      const pillLabel = document.getElementById('hr-pill-label');
+      const pillBpm = document.getElementById('hr-pill-bpm');
+      const pillAction = document.getElementById('hr-pill-action');
+
+      if (pillHeart) pillHeart.className = "fa-solid fa-heart text-rose-500 text-xs animate-pulse";
+      if (pillDot) pillDot.className = `relative inline-flex rounded-full h-2.5 w-2.5 ${dotColor}`;
+      if (pillPing) pillPing.classList.remove('hidden');
+      if (pillLabel) pillLabel.innerText = "HRM Live:";
+      if (pillBpm) {
+        pillBpm.classList.remove('hidden');
+        pillBpm.innerText = `${bpm} BPM`;
+      }
+      if (pillAction) {
+        pillAction.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dotColor} inline-block"></span><span>${shortZone}</span>`;
+      }
     }
 
 

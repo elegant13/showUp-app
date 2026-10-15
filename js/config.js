@@ -16,6 +16,9 @@
     let hrHistory = [];
     let currentHR = 0;
     let hrSimInterval = null;
+    let bleHRDevice = null;
+    let bleHRServer = null;
+    let bleHRCharacteristic = null;
     let calendarDate = new Date();
     let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
     let selectedWorkoutDate = new Date().toISOString().slice(0, 10);

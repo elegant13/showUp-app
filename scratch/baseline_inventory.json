@@ -1,5 +1,5 @@
 {
-  "dom_ids_count": 259,
+  "dom_ids_count": 274,
   "dom_ids": [
     "add-member-modal",
     "add-member-modal-squad-name",
@@ -42,6 +42,7 @@
     "body-shoulders-post",
     "body-triceps",
     "btn-connect-hrm",
+    "btn-disconnect-hrm",
     "btn-dismiss-cloud-backup",
     "btn-google-login",
     "btn-log-set",
@@ -107,9 +108,20 @@
     "hr-card",
     "hr-card-body",
     "hr-collapse-icon",
+    "hr-minimal-pill",
+    "hr-pill-action",
+    "hr-pill-bpm",
+    "hr-pill-heart-icon",
+    "hr-pill-label",
+    "hr-pill-pulse-dot",
+    "hr-pill-pulse-ping",
     "hr-pulse-dot",
     "hr-pulse-ping",
     "hr-sparkline",
+    "hrm-ble-unsupported-msg",
+    "hrm-connectivity-modal",
+    "hrm-modal-status-box",
+    "hrm-modal-status-text",
     "implement-select",
     "input-endurance-distance",
     "input-endurance-time",
@@ -137,6 +149,9 @@
     "map-unique-visitor-count",
     "map-zip-boundaries-overlay",
     "map-zoom-status",
+    "modal-btn-connect-hrm",
+    "modal-btn-toggle-sim",
+    "modal-sim-btn-text",
     "modal-squad-invite-code",
     "monthly-count-badge",
     "monthly-history-list",
@@ -265,7 +280,7 @@
   "functions": [
     "gm_authFailure"
   ],
-  "inline_handlers_count": 208,
+  "inline_handlers_count": 215,
   "inline_handlers": [
     [
       "body",
@@ -908,6 +923,36 @@
       "triggerHaptic('light'); triggerManualFileRestore()"
     ],
     [
+      "div",
+      "onclick",
+      "if(event.target === this) closeHRMModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); closeHRMModal()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); connectHRM(true)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); toggleHRSimulator(true)"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('light'); closeHRMModal()"
+    ],
+    [
+      "div",
+      "onclick",
+      "triggerHaptic('light'); handleHRMPillClick()"
+    ],
+    [
       "button",
       "onclick",
       "triggerHaptic('medium'); connectHRM()"
@@ -916,6 +961,11 @@
       "button",
       "onclick",
       "triggerHaptic('medium'); toggleHRSimulator()"
+    ],
+    [
+      "button",
+      "onclick",
+      "triggerHaptic('medium'); disconnectHRM()"
     ],
     [
       "button",
