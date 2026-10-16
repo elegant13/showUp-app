@@ -628,6 +628,21 @@ runSuite("10. Multi-Tier Restore & Data Integrity Engine", () => {
   assert(localStorage.getItem('showUp_font') === "font-mono", "Restore applied font: font-mono");
   assert(completedWorkoutsHistory.length === 1, "Restore restored 1 workout");
   assert(completedWorkoutsHistory[0].workoutName === "Test Bench Press", "Restored workout title accurate");
+
+  // Non-destructive workout merging test:
+  // Today's workout recorded locally must NOT be erased by an incoming cloud restore
+  const localTodayWorkout = { date: "2026-10-16", workoutName: "Today Heavy Deadlifts", totalVolume: 4500, sets: [{ reps: 5, weight: 315 }] };
+  const cloudPastWorkouts = [
+    { date: "2026-10-15", workoutName: "Yesterday Pull Ups", totalVolume: 1200, sets: [] },
+    { date: "2026-10-16", workoutName: "Partial Sync Deadlifts", totalVolume: 1000, sets: [] } // Older/less complete sync
+  ];
+
+  const merged = AppStorage.mergeWorkouts([localTodayWorkout], cloudPastWorkouts);
+  assert(merged.length === 2, "Merge preserves both today and past workouts");
+  const mergedToday = merged.find(w => w.date === "2026-10-16");
+  assert(mergedToday !== undefined, "Merged workouts retain today's session");
+  assert(mergedToday.workoutName === "Today Heavy Deadlifts", "Merge retains the higher-fidelity local workout");
+  assert(merged.some(w => w.date === "2026-10-15"), "Merge retains cloud past workout");
 });
 
 runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {

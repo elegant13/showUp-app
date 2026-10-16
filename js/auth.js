@@ -164,6 +164,21 @@
         document.getElementById('google-user-profile').classList.remove('hidden');
         updateCloudBackupUI();
 
+        // Ensure user workouts are restored from storage immediately on app start
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const loaded = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(loaded) && loaded.length > 0) {
+            completedWorkoutsHistory = loaded;
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+          }
+        }
+
+        if (typeof renderHomeTab === 'function') {
+          try { renderHomeTab(); } catch (e) {}
+        }
+        renderCalendar();
+        renderMonthlyHistory();
+
         // Check and silently refresh Google Drive OAuth token in background without annoying popups
         attemptSilentTokenRefresh();
       } else if (savedProfile && sessionExpiry <= now) {
@@ -193,6 +208,9 @@
         .then(res => {
           if (res.ok) {
             updateCloudBackupUI();
+            if (typeof restoreFromGoogleDrive === 'function') {
+              restoreFromGoogleDrive(true);
+            }
           } else if (res.status === 401) {
             requestTokenSilently();
           }
@@ -324,6 +342,9 @@
     }
 
     function applyUserProfile(profileObj) {
+      const prevProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+      const prevEmail = (prevProfile?.email || '').toLowerCase().trim();
+
       localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
       localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
 
@@ -331,17 +352,33 @@
       const userEmail = profileObj.email || '';
       const picture = profileObj.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
 
-      // Strict Athlete Isolation: Do not pull from local/guest profile unless athlete is a guest
+      // Athlete Profile Isolation & Preservation:
       if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
         const isolatedKey = 'showUp_user_workouts_' + userEmail.toLowerCase().trim();
         const isolatedWorkouts = JSON.parse(localStorage.getItem(isolatedKey) || 'null');
-        if (Array.isArray(isolatedWorkouts)) {
-          completedWorkoutsHistory = isolatedWorkouts;
+        const isSwitchingFromDifferentAthlete = prevEmail && prevEmail !== 'you@showup.app' && prevEmail !== 'user@showup.app' && prevEmail !== userEmail.toLowerCase().trim();
+
+        if (Array.isArray(isolatedWorkouts) && isolatedWorkouts.length > 0) {
+          const currentLocal = isSwitchingFromDifferentAthlete ? [] : JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+          completedWorkoutsHistory = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+            ? AppStorage.mergeWorkouts(isolatedWorkouts, currentLocal)
+            : isolatedWorkouts;
           localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+          localStorage.setItem(isolatedKey, JSON.stringify(completedWorkoutsHistory));
+        } else if (!isSwitchingFromDifferentAthlete) {
+          const currentLocal = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+          if (Array.isArray(currentLocal) && currentLocal.length > 0) {
+            completedWorkoutsHistory = currentLocal;
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+            localStorage.setItem(isolatedKey, JSON.stringify(completedWorkoutsHistory));
+          } else {
+            completedWorkoutsHistory = [];
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify([]));
+          }
         } else {
-          // If no isolated cloud/account workouts yet, do not pollute account with guest workouts
           completedWorkoutsHistory = [];
           localStorage.setItem('showUp_synced_workouts', JSON.stringify([]));
+          localStorage.setItem(isolatedKey, JSON.stringify([]));
         }
       }
 
@@ -357,6 +394,9 @@
       updateSquadBeacon();
       updateGlobalStatsUI();
       renderHeatMap();
+      if (typeof renderHomeTab === 'function') {
+        try { renderHomeTab(); } catch (e) {}
+      }
       renderCalendar();
       renderMonthlyHistory();
       updateGlobalVisitorTelemetryUI();

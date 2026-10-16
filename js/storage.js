@@ -102,6 +102,87 @@ const AppStorage = {
   },
 
   /**
+   * Intelligently union/merge workout lists by date so that no historical
+   * or newly logged workout is ever accidentally dropped or overwritten.
+   */
+  mergeWorkouts(localWorkouts, incomingWorkouts) {
+    if (!Array.isArray(localWorkouts)) localWorkouts = [];
+    if (!Array.isArray(incomingWorkouts)) incomingWorkouts = [];
+
+    const map = new Map();
+
+    const getDateKey = (w) => {
+      if (!w) return null;
+      if (typeof w === 'string') return w;
+      return w.date || null;
+    };
+
+    const scoreWorkout = (w) => {
+      if (!w) return 0;
+      if (typeof w === 'string') return 1;
+      let score = 10;
+      if (w.workoutName) score += 5;
+      if (w.totalVolume) score += 5;
+      if (Array.isArray(w.sets) && w.sets.length > 0) score += w.sets.length * 2;
+      if (w.totalWorkoutSeconds) score += 5;
+      if (w.notes) score += 2;
+      return score;
+    };
+
+    localWorkouts.forEach(w => {
+      const k = getDateKey(w);
+      if (k) map.set(k, w);
+    });
+
+    incomingWorkouts.forEach(w => {
+      const k = getDateKey(w);
+      if (!k) return;
+      if (!map.has(k)) {
+        map.set(k, w);
+      } else {
+        const existing = map.get(k);
+        if (scoreWorkout(w) >= scoreWorkout(existing)) {
+          map.set(k, w);
+        }
+      }
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      const da = getDateKey(a) || '';
+      const db = getDateKey(b) || '';
+      return db.localeCompare(da);
+    });
+  },
+
+  /**
+   * Load athlete workouts with defensive recovery across user-specific and synced stores
+   */
+  getAthleteWorkouts() {
+    try {
+      const profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || 'null');
+      const userEmail = (profile?.email || '').toLowerCase().trim();
+      let workouts = [];
+
+      if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+        const userWorkouts = JSON.parse(localStorage.getItem('showUp_user_workouts_' + userEmail) || 'null');
+        if (Array.isArray(userWorkouts) && userWorkouts.length > 0) {
+          workouts = userWorkouts;
+        }
+      }
+
+      const synced = JSON.parse(localStorage.getItem(STORAGE_KEYS.SYNCED_WORKOUTS) || 'null');
+      if (Array.isArray(synced) && synced.length > 0) {
+        workouts = this.mergeWorkouts(workouts, synced);
+      }
+
+      return workouts;
+    } catch (e) {
+      console.warn("[AppStorage] Error retrieving workouts:", e);
+      return [];
+    }
+  },
+
+  /**
    * Save athlete workouts with per-user persistent isolation
    */
   saveAthleteWorkouts(workouts) {
@@ -171,3 +252,8 @@ const AppStorage = {
     } catch (e) {}
   }
 };
+
+if (typeof window !== 'undefined') {
+  window.AppStorage = AppStorage;
+}
+

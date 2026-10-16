@@ -278,6 +278,14 @@
       if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs animate-pulse text-amber-400";
       if (!isSilent) showToast("Backing up workout data to Google Drive...", "info");
 
+      let workoutsToSync = (Array.isArray(completedWorkoutsHistory) && completedWorkoutsHistory.length > 0)
+        ? completedWorkoutsHistory
+        : (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function' ? AppStorage.getAthleteWorkouts() : []);
+
+      if (workoutsToSync.length > 0 && typeof completedWorkoutsHistory !== 'undefined' && completedWorkoutsHistory.length === 0) {
+        completedWorkoutsHistory = workoutsToSync;
+      }
+
       const backupPayload = {
         app: "showUp",
         version: "2.0",
@@ -290,13 +298,13 @@
         },
         theme: localStorage.getItem('showUp_theme') || 'emerald',
         font: localStorage.getItem('showUp_font') || 'font-jakarta',
-        workouts: completedWorkoutsHistory,
+        workouts: workoutsToSync,
         weightHistory: weightHistory,
         squads: getSquads(),
         activeSession: currentSessionSets
       };
 
-      const fileContent = JSON.stringify(backupPayload, null, 2);
+      let fileContent = JSON.stringify(backupPayload, null, 2);
 
       try {
         // 1. Search for existing showUp backup file in Google Drive
@@ -342,6 +350,32 @@
 
         if (searchData.files && searchData.files.length > 0) {
           fileId = searchData.files[0].id;
+
+          // Merge with any existing remote workouts so historical data is never wiped
+          try {
+            const existingRes = await fetch(
+              `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+              { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+            );
+            if (existingRes.ok) {
+              const existingData = await existingRes.json().catch(() => null);
+              if (existingData && Array.isArray(existingData.workouts) && existingData.workouts.length > 0) {
+                const merged = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+                  ? AppStorage.mergeWorkouts(workoutsToSync, existingData.workouts)
+                  : workoutsToSync;
+                workoutsToSync = merged;
+                completedWorkoutsHistory = merged;
+                if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+                  AppStorage.saveAthleteWorkouts(merged);
+                }
+                backupPayload.workouts = merged;
+                fileContent = JSON.stringify(backupPayload, null, 2);
+              }
+            }
+          } catch (e) {
+            console.debug("Existing file read notice during sync:", e);
+          }
+
           // 2a. Update existing file content directly via media upload
           const updateRes = await fetch(
             `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
@@ -533,14 +567,30 @@
         const userName = (user?.rawName || user?.name || '').toLowerCase().trim();
 
         if (backupData.workouts && Array.isArray(backupData.workouts)) {
-          completedWorkoutsHistory = backupData.workouts;
-          localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
-          if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
-            try {
-              localStorage.setItem('showUp_user_workouts_' + userEmail, JSON.stringify(completedWorkoutsHistory));
-            } catch (e) {}
+          const currentLocal = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
+            ? AppStorage.getAthleteWorkouts()
+            : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
+          const merged = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+            ? AppStorage.mergeWorkouts(currentLocal, backupData.workouts)
+            : backupData.workouts;
+
+          completedWorkoutsHistory = merged;
+          if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+          } else {
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+            if (userEmail && userEmail !== 'you@showup.app' && userEmail !== 'user@showup.app') {
+              try {
+                localStorage.setItem('showUp_user_workouts_' + userEmail, JSON.stringify(completedWorkoutsHistory));
+              } catch (e) {}
+            }
           }
-          restoredCount = backupData.workouts.length;
+          restoredCount = completedWorkoutsHistory.length;
+
+          // If local had unsynced workouts that were just merged, silently push merged backup to Drive
+          if (completedWorkoutsHistory.length > backupData.workouts.length) {
+            setTimeout(() => { syncToGoogleDrive(true); }, 800);
+          }
         }
 
         if (backupData.weightHistory && Array.isArray(backupData.weightHistory)) {
@@ -607,6 +657,9 @@
           restoredSquadsCount = cleanSquads.length;
         }
 
+        if (typeof renderHomeTab === 'function') {
+          try { renderHomeTab(); } catch (e) { console.error("renderHomeTab error:", e); }
+        }
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
@@ -685,14 +738,18 @@
           let squadsCount = 0;
 
           if (Array.isArray(data)) {
-            completedWorkoutsHistory = data;
-            count = data.length;
+            completedWorkoutsHistory = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+              ? AppStorage.mergeWorkouts(completedWorkoutsHistory, data)
+              : data;
+            count = completedWorkoutsHistory.length;
           } else if (data && typeof data === 'object') {
             if (data.theme) setThemePalette(data.theme);
             if (data.font && typeof setFontFamily === 'function') setFontFamily(data.font);
             if (Array.isArray(data.workouts)) {
-              completedWorkoutsHistory = data.workouts;
-              count = data.workouts.length;
+              completedWorkoutsHistory = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+                ? AppStorage.mergeWorkouts(completedWorkoutsHistory, data.workouts)
+                : data.workouts;
+              count = completedWorkoutsHistory.length;
             }
             if (Array.isArray(data.weightHistory)) {
               weightHistory = data.weightHistory;
@@ -736,7 +793,15 @@
             }
           }
 
-          localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+          if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+          } else {
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+          }
+
+          if (typeof renderHomeTab === 'function') {
+            try { renderHomeTab(); } catch (e) {}
+          }
           renderCalendar();
           renderMonthlyHistory();
           renderWeightHistory();
