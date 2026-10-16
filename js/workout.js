@@ -945,6 +945,9 @@
       renderLoggedSets();
       renderCalendar();
       renderMonthlyHistory();
+      if (typeof renderHomeTab === 'function') {
+        renderHomeTab();
+      }
 
       if (googleAccessToken) {
         syncToGoogleDrive();

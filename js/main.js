@@ -25,6 +25,9 @@
       initUniqueVisitorCounter();
       initGlobalVisitorTelemetry();
       updateGlobalVisitorTelemetryUI();
+      if (typeof renderHomeTab === 'function') {
+        renderHomeTab();
+      }
     });
 
     window.addEventListener('online', () => {

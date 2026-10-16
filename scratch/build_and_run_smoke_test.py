@@ -971,6 +971,99 @@ runSuite("13. Leave Squad Immediate Removal & Accurate Retrieval Engine", functi
   assert(candidateSquads.length === 0, "Accurate squad retrieval: No phantom/left squads retrieved");
 });
 
+runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration", () => {
+  // 1. Verify Calendar Day Headers Start on Monday and End on Sunday
+  const calGrid = getOrCreateElement('calendar-grid');
+  renderCalendar();
+  assert(calGrid.innerHTML.includes('>M<') && calGrid.innerHTML.includes('>S<'), "Calendar grid renders Monday-to-Sunday day headers");
+  
+  // Verify Weekday Monday calculation
+  // Thursday Oct 1, 2026: Date.getDay() = 4. Monday offset = (4 + 6) % 7 = 3.
+  const testDate = new Date(2026, 9, 15); // Thursday Oct 15, 2026
+  const weekBounds = getWeekWorkoutBounds(testDate);
+  assert(weekBounds.days.length === 7, "Weekly bounds contains exactly 7 days (Monday through Sunday)");
+  assert(weekBounds.days[0].dayNameShort === "Mon", "First day of week is strictly Monday");
+  assert(weekBounds.days[6].dayNameShort === "Sun", "Last day of week is strictly Sunday");
+  assert(weekBounds.startDateKey === "2026-10-12", "Week start key is Monday Oct 12, 2026");
+  assert(weekBounds.endDateKey === "2026-10-18", "Week end key is Sunday Oct 18, 2026");
+
+  // 2. Verify Tab Switching to Home Section
+  const homeView = getOrCreateElement('tab-home-view');
+  const workoutView = getOrCreateElement('tab-workout-view');
+  const btnHome = getOrCreateElement('nav-btn-home');
+  const btnWorkout = getOrCreateElement('nav-btn-workout');
+
+  switchTab('home');
+  assert(!homeView.classList.contains('hidden'), "Home tab view is visible when active");
+  assert(workoutView.classList.contains('hidden'), "Workout tab view is hidden when Home is active");
+  assert(btnHome.className.includes('text-emerald-400'), "Home nav button has active emerald highlight");
+  assert(btnWorkout.className.includes('text-slate-400'), "Workout nav button is unhighlighted");
+
+  // 3. Verify Home Section Weekly Positive Outlook & Celebration (Requirement 1)
+  const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
+  completedWorkoutsHistory = [
+    {
+      date: todayKey,
+      workoutName: "Full Body Blast",
+      totalSets: 12,
+      totalVolume: 5400,
+      totalWorkoutSeconds: 2400,
+      totalWorkoutTimeFormatted: "40:00",
+      totalRestSeconds: 600,
+      totalRestTimeFormatted: "10:00",
+      totalActiveSeconds: 1800,
+      totalActiveTimeFormatted: "30:00",
+      sets: [
+        { exerciseName: "Bench Press", muscle: "Chest", weight: 225, reps: 5, rpe: 8 }
+      ]
+    }
+  ];
+
+  const weekStats = getWeekWorkoutStats();
+  assert(weekStats.daysCount >= 1, "Week stats accurately captures weekly workouts");
+  assert(weekStats.weekVolume >= 5400, "Week stats captures weekly volume");
+  assert(typeof weekStats.outlookHeadline === 'string' && weekStats.outlookHeadline.length > 0, "Positive celebration headline generated for the week");
+  assert(typeof weekStats.outlookMessage === 'string' && weekStats.outlookMessage.length > 0, "Positive celebration message generated for the week");
+
+  // 4. Verify Congratulatory Casual Message for Today's Workout (Requirement 2)
+  const dailyCongrat = getDailyWorkoutCongratulation();
+  assert(dailyCongrat.completed === true, "Daily status recognizes workout done for the day");
+  assert(dailyCongrat.headline.length > 0, "Congratulatory headline provided");
+  assert(dailyCongrat.subtext.length > 0, "Casual congratulatory message provided");
+  assert(dailyCongrat.workoutName === "Full Body Blast", "Workout name displayed in congratulation");
+
+  // 5. Verify Full Home Tab DOM Rendering
+  renderHomeTab();
+  const todayCard = getOrCreateElement('home-today-status-card');
+  assert(todayCard.innerHTML.includes('Full Body Blast'), "Today status card renders workout title in DOM");
+  assert(todayCard.innerHTML.includes(escapeHtml(dailyCongrat.headline)), "Today status card renders congratulatory headline");
+  assert(todayCard.className.includes('hero-victory-card'), "Today status card uses hero-victory-card celebratory styling");
+
+  const weekPills = getOrCreateElement('home-week-pills-container');
+  assert(weekPills.innerHTML.includes('M') && weekPills.innerHTML.includes('S'), "Week pills container renders Monday to Sunday day initials");
+
+  const celebrationBanner = getOrCreateElement('home-week-celebration-banner');
+  assert(celebrationBanner.innerHTML.includes(escapeHtml(weekStats.outlookHeadline)), "Celebration banner renders weekly positive outlook headline");
+
+  const workoutsMetric = getOrCreateElement('home-metric-workouts');
+  assert(workoutsMetric.innerText.includes('/ 7'), "Weekly workouts metric renders ratio of 7 days");
+
+  // 6. Verify Daily Status when No Workout Done Today
+  completedWorkoutsHistory = [
+    {
+      date: "2020-01-01",
+      workoutName: "Past Workout",
+      totalSets: 5,
+      totalVolume: 1000,
+      sets: []
+    }
+  ];
+  const restDayStatus = getDailyWorkoutCongratulation();
+  assert(restDayStatus.completed === false, "Daily status recognizes no workout done today");
+  renderHomeTab();
+  assert(todayCard.innerHTML.includes("Start Today's Workout"), "Renders motivational call-to-action when workout yet to be done today");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

@@ -105,27 +105,35 @@
 
 
     function switchTab(tabName) {
+      const homeView = document.getElementById('tab-home-view');
       const workoutView = document.getElementById('tab-workout-view');
       const calendarView = document.getElementById('tab-calendar-view');
       const squadsView = document.getElementById('tab-squads-view');
+      const btnHome = document.getElementById('nav-btn-home');
       const btnWorkout = document.getElementById('nav-btn-workout');
       const btnCalendar = document.getElementById('nav-btn-calendar');
       const btnSquads = document.getElementById('nav-btn-squads');
 
-      workoutView.classList.add('hidden');
-      calendarView.classList.add('hidden');
+      if (homeView) homeView.classList.add('hidden');
+      if (workoutView) workoutView.classList.add('hidden');
+      if (calendarView) calendarView.classList.add('hidden');
       if (squadsView) squadsView.classList.add('hidden');
 
-      btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
-      btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      if (btnHome) btnHome.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      if (btnWorkout) btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      if (btnCalendar) btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
       if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
 
-      if (tabName === 'workout') {
-        workoutView.classList.remove('hidden');
-        btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+      if (tabName === 'home') {
+        if (homeView) homeView.classList.remove('hidden');
+        if (btnHome) btnHome.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+        if (typeof renderHomeTab === 'function') renderHomeTab();
+      } else if (tabName === 'workout') {
+        if (workoutView) workoutView.classList.remove('hidden');
+        if (btnWorkout) btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
       } else if (tabName === 'calendar') {
-        calendarView.classList.remove('hidden');
-        btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+        if (calendarView) calendarView.classList.remove('hidden');
+        if (btnCalendar) btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
