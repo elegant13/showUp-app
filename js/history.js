@@ -521,94 +521,39 @@
         bestStreakEl.innerText = `${weekStats.streak} days`;
       }
 
-      // 1. Render Today's Status Card (Requirement 2)
+      // 1. Render Today's Casual Congratulation (Requirement 2: inside This Week's Outlook)
       const todayCard = document.getElementById('home-today-status-card');
       if (todayCard) {
         if (dailyStatus.completed) {
-          todayCard.className = "hero-victory-card rounded-3xl p-5 border border-emerald-500/40 shadow-2xl space-y-4 transition-all";
+          todayCard.classList.remove('hidden');
+          todayCard.className = "hero-victory-card rounded-2xl p-4 border border-emerald-500/40 shadow-xl space-y-2.5 transition-all";
           const safeKicker = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.kicker) : dailyStatus.kicker;
           const safeHeadline = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.headline) : dailyStatus.headline;
           const safeSubtext = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.subtext) : dailyStatus.subtext;
           const safeWorkoutName = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.workoutName) : dailyStatus.workoutName;
 
           todayCard.innerHTML = `
-            <div class="flex items-start justify-between gap-3 border-b border-emerald-500/20 pb-3">
-              <div class="flex items-center gap-3">
-                <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20 shrink-0">
-                  <i class="fa-solid fa-trophy"></i>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm">
-                      <i class="fa-solid fa-circle-check text-emerald-400"></i> ${safeKicker}
-                    </span>
-                    <span class="text-[10px] font-mono font-bold text-slate-400">Today</span>
-                  </div>
-                  <h3 class="text-base sm:text-lg font-black text-slate-100 mt-1">
-                    ${safeHeadline}
-                  </h3>
-                </div>
-              </div>
+            <div class="flex items-center justify-between gap-2 border-b border-emerald-500/20 pb-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm">
+                <i class="fa-solid fa-trophy text-emerald-400"></i> ${safeKicker}
+              </span>
+              <span class="text-xs font-bold text-emerald-400 font-mono">${safeWorkoutName}</span>
             </div>
-
-            <p class="text-xs text-slate-300 leading-relaxed italic bg-slate-950/70 p-3 rounded-2xl border border-emerald-500/20">
+            <h3 class="text-sm font-black text-slate-100">
+              ${safeHeadline}
+            </h3>
+            <p class="text-xs text-slate-300 leading-relaxed italic bg-slate-950/70 p-2.5 rounded-xl border border-emerald-500/20">
               "${safeSubtext}"
             </p>
-
-            <div class="bg-slate-950/90 rounded-2xl p-3 border border-slate-800/80 flex items-center justify-between gap-3 flex-wrap">
-              <div class="flex items-center gap-2">
-                <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xs">
-                  <i class="fa-solid fa-dumbbell"></i>
-                </span>
-                <div>
-                  <div class="text-xs font-bold text-slate-100">${safeWorkoutName}</div>
-                  <div class="text-[10px] text-slate-400 flex items-center gap-1.5 flex-wrap">
-                    <span>${dailyStatus.setsCount} sets logged</span>
-                    ${dailyStatus.vol ? `<span>• ${dailyStatus.vol}</span>` : ''}
-                    ${dailyStatus.timeStr ? `<span>• ${dailyStatus.timeStr}</span>` : ''}
-                  </div>
-                </div>
-              </div>
-              <div class="flex items-center gap-2">
-                <button type="button" onclick="triggerHaptic('light'); switchTab('workout')" class="text-xs font-bold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 rounded-xl transition flex items-center gap-1">
-                  <span>Log More</span>
-                  <i class="fa-solid fa-arrow-right text-[10px]"></i>
-                </button>
-              </div>
+            <div class="text-[10px] text-slate-400 flex items-center gap-2 pt-0.5">
+              <span>${dailyStatus.setsCount} sets logged</span>
+              ${dailyStatus.vol ? `<span>• ${dailyStatus.vol}</span>` : ''}
+              ${dailyStatus.timeStr ? `<span>• ${dailyStatus.timeStr}</span>` : ''}
             </div>
           `;
         } else {
-          todayCard.className = "m3-card rounded-3xl p-5 border border-slate-800 shadow-xl space-y-3.5 bg-gradient-to-br from-slate-900/90 to-slate-950";
-          const safeKicker = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.kicker) : dailyStatus.kicker;
-          const safeHeadline = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.headline) : dailyStatus.headline;
-          const safeMessage = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.message) : dailyStatus.message;
-
-          todayCard.innerHTML = `
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center justify-center text-lg shrink-0">
-                  <i class="fa-regular fa-clock"></i>
-                </div>
-                <div>
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
-                    ${safeKicker}
-                  </span>
-                  <h3 class="text-sm sm:text-base font-bold text-slate-100 mt-1">
-                    ${safeHeadline}
-                  </h3>
-                </div>
-              </div>
-            </div>
-
-            <p class="text-xs text-slate-400 leading-relaxed">
-              ${safeMessage}
-            </p>
-
-            <button type="button" onclick="triggerHaptic('medium'); switchTab('workout')" class="w-full py-3 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 transition">
-              <i class="fa-solid fa-play text-xs"></i>
-              <span>Start Today's Workout</span>
-            </button>
-          `;
+          todayCard.classList.add('hidden');
+          todayCard.innerHTML = '';
         }
       }
 
@@ -616,33 +561,37 @@
       const rangeLabelEl = document.getElementById('home-week-range-label');
       if (rangeLabelEl) rangeLabelEl.innerText = weekStats.rangeLabel;
       const weekCountBadgeEl = document.getElementById('home-week-count-badge');
-      if (weekCountBadgeEl) weekCountBadgeEl.innerText = `${weekStats.daysCount} / 7 Days`;
+      if (weekCountBadgeEl) weekCountBadgeEl.innerText = `${weekStats.daysCount} / 7 Days Showed Up`;
 
-      // 3. Render 7-day visual pills (Monday to Sunday)
+      // 3. Render 7-day visual pills (Monday to Sunday) - days when showed up are filled with the theme color
       const pillsContainer = document.getElementById('home-week-pills-container');
       if (pillsContainer) {
         pillsContainer.innerHTML = weekStats.days.map(d => {
           if (d.hasWorkout) {
             return `
-              <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 shadow-sm ${d.isToday ? 'ring-2 ring-emerald-400 shadow-emerald-500/20' : ''}" title="${d.dayNameShort}: Workout Complete!">
-                <span class="text-[10px] font-bold uppercase text-emerald-400">${d.dayInitial}</span>
-                <span class="text-xs font-black font-mono my-0.5">${d.dayNumber}</span>
-                <i class="fa-solid fa-circle-check text-emerald-400 text-[11px] mt-0.5"></i>
+              <div class="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl transition-all shadow-md ${d.isToday ? 'ring-2 ring-white/80' : ''}"
+                   style="background-color: var(--m3-primary); color: var(--m3-onPrimary); border: 1px solid var(--m3-primary); box-shadow: 0 4px 14px -2px color-mix(in srgb, var(--m3-primary) 40%, transparent);"
+                   title="${d.dayNameShort}: Showed Up!">
+                <span class="text-[10px] font-black uppercase tracking-wider opacity-90">${d.dayInitial}</span>
+                <span class="text-xs sm:text-sm font-black font-mono my-0.5">${d.dayNumber}</span>
+                <i class="fa-solid fa-circle-check text-xs mt-0.5"></i>
               </div>
             `;
           } else if (d.isToday) {
             return `
-              <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 ring-2 ring-emerald-400/80 shadow-md" title="${d.dayNameShort}: Today">
+              <div class="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 ring-2 ring-emerald-400/80 shadow-md"
+                   title="${d.dayNameShort}: Today">
                 <span class="text-[10px] font-bold uppercase text-emerald-400">${d.dayInitial}</span>
-                <span class="text-xs font-black font-mono my-0.5">${d.dayNumber}</span>
+                <span class="text-xs sm:text-sm font-black font-mono my-0.5">${d.dayNumber}</span>
                 <span class="text-[9px] font-semibold text-slate-400">Today</span>
               </div>
             `;
           } else {
             return `
-              <div class="flex flex-col items-center justify-center py-2 px-1 rounded-2xl bg-slate-950/80 border border-slate-800/80 text-slate-500" title="${d.dayNameShort}: Rest or upcoming">
+              <div class="flex flex-col items-center justify-center py-2.5 px-1 rounded-2xl bg-slate-950/80 border border-slate-800/80 text-slate-500"
+                   title="${d.dayNameShort}: Rest or upcoming">
                 <span class="text-[10px] font-bold uppercase">${d.dayInitial}</span>
-                <span class="text-xs font-bold font-mono my-0.5 text-slate-400">${d.dayNumber}</span>
+                <span class="text-xs sm:text-sm font-bold font-mono my-0.5 text-slate-400">${d.dayNumber}</span>
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-800 mt-1"></span>
               </div>
             `;

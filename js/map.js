@@ -683,7 +683,7 @@
       const existingIframe = document.getElementById('google-maps-iframe');
       const targetSrc = `https://maps.google.com/maps?q=${query}&t=m&z=${zoom}&output=embed`;
 
-      if (existingIframe && existingIframe.dataset.query === query && existingIframe.dataset.zoom === String(zoom)) {
+      if (existingIframe && existingIframe.dataset && existingIframe.dataset.query === query && existingIframe.dataset.zoom === String(zoom)) {
         return;
       }
 

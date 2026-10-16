@@ -105,6 +105,12 @@
 
 
     function switchTab(tabName) {
+      try {
+        if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+          window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+      } catch (e) {}
+
       const homeView = document.getElementById('tab-home-view');
       const workoutView = document.getElementById('tab-workout-view');
       const calendarView = document.getElementById('tab-calendar-view');
@@ -119,31 +125,42 @@
       if (calendarView) calendarView.classList.add('hidden');
       if (squadsView) squadsView.classList.add('hidden');
 
-      if (btnHome) btnHome.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
-      if (btnWorkout) btnWorkout.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
-      if (btnCalendar) btnCalendar.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
-      if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      const inactiveClass = "flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative";
+      const activeClass = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+
+      if (btnHome) btnHome.className = inactiveClass;
+      if (btnWorkout) btnWorkout.className = inactiveClass;
+      if (btnCalendar) btnCalendar.className = inactiveClass;
+      if (btnSquads) btnSquads.className = inactiveClass;
 
       if (tabName === 'home') {
         if (homeView) homeView.classList.remove('hidden');
-        if (btnHome) btnHome.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
-        if (typeof renderHomeTab === 'function') renderHomeTab();
+        if (btnHome) btnHome.className = activeClass;
+        try {
+          if (typeof renderHomeTab === 'function') renderHomeTab();
+        } catch (err) {
+          console.error("renderHomeTab error:", err);
+        }
       } else if (tabName === 'workout') {
         if (workoutView) workoutView.classList.remove('hidden');
-        if (btnWorkout) btnWorkout.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
+        if (btnWorkout) btnWorkout.className = activeClass;
       } else if (tabName === 'calendar') {
         if (calendarView) calendarView.classList.remove('hidden');
-        if (btnCalendar) btnCalendar.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
-        renderCalendar();
-        renderMonthlyHistory();
-        renderWeightHistory();
+        if (btnCalendar) btnCalendar.className = activeClass;
+        try { if (typeof renderCalendar === 'function') renderCalendar(); } catch (err) { console.error("renderCalendar error:", err); }
+        try { if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory(); } catch (err) { console.error("renderMonthlyHistory error:", err); }
+        try { if (typeof renderWeightHistory === 'function') renderWeightHistory(); } catch (err) { console.error("renderWeightHistory error:", err); }
       } else if (tabName === 'squads') {
         if (squadsView) squadsView.classList.remove('hidden');
-        if (btnSquads) btnSquads.className = "flex flex-col items-center justify-center py-1 text-emerald-400 hover:text-emerald-300 transition relative";
-        renderSquadsTab();
-        renderHeatMap();
-        updateGlobalStatsUI();
+        if (btnSquads) btnSquads.className = activeClass;
+        try { if (typeof renderSquadsTab === 'function') renderSquadsTab(); } catch (err) { console.error("renderSquadsTab error:", err); }
+        try { if (typeof renderHeatMap === 'function') renderHeatMap(); } catch (err) { console.error("renderHeatMap error:", err); }
+        try { if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI(); } catch (err) { console.error("updateGlobalStatsUI error:", err); }
       }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.switchTab = switchTab;
     }
 
     function parseJwtPayload(token) {

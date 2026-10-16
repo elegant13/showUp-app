@@ -58,6 +58,7 @@
       if (typeof renderHeatMap === 'function') renderHeatMap();
       if (typeof renderCalendar === 'function') renderCalendar();
       if (typeof renderWeightHistory === 'function') renderWeightHistory();
+      if (typeof renderHomeTab === 'function') renderHomeTab();
     }
 
     function updateThemeButtonsUI(activeTheme) {

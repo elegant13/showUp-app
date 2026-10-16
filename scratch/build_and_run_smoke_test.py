@@ -69,7 +69,16 @@ def generate_and_run_smoke_test():
         print(f"[PASS] DOM IDs integrity verified ({len(auditor.ids)} elements present)")
 
     # 2. Check inline handlers
-    print(f"[PASS] Audited {len(auditor.inline_handlers)} inline event handlers")
+    # 3. Check that #tab-home-view has only 1 container (#home-weekly-outlook-card)
+    home_match = re.search(r'<div id="tab-home-view"[^>]*>(.*?)</div>\s*<!-- VIEW TAB 1:', html, re.DOTALL)
+    if home_match:
+        home_content = home_match.group(1)
+        containers = re.findall(r'<section\s+id="([^"]+)"', home_content)
+        if containers == ['home-weekly-outlook-card']:
+            print(f"[PASS] Home section container verified: #home-weekly-outlook-card is the ONLY container")
+        else:
+            print(f"[FAIL] Expected only #home-weekly-outlook-card in Home section, found: {containers}")
+            return False
 
     # Build the JSC Smoke Test JS File
     harness_code = """
@@ -987,17 +996,36 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(weekBounds.startDateKey === "2026-10-12", "Week start key is Monday Oct 12, 2026");
   assert(weekBounds.endDateKey === "2026-10-18", "Week end key is Sunday Oct 18, 2026");
 
-  // 2. Verify Tab Switching to Home Section
+  // 2. Verify Tab Switching Across All Sections (Home, Workout, Calendar, Squads)
   const homeView = getOrCreateElement('tab-home-view');
   const workoutView = getOrCreateElement('tab-workout-view');
+  const calView = getOrCreateElement('tab-calendar-view');
+  const squadsView = getOrCreateElement('tab-squads-view');
   const btnHome = getOrCreateElement('nav-btn-home');
   const btnWorkout = getOrCreateElement('nav-btn-workout');
+  const btnCal = getOrCreateElement('nav-btn-calendar');
+  const btnSquads = getOrCreateElement('nav-btn-squads');
 
   switchTab('home');
   assert(!homeView.classList.contains('hidden'), "Home tab view is visible when active");
   assert(workoutView.classList.contains('hidden'), "Workout tab view is hidden when Home is active");
   assert(btnHome.className.includes('text-emerald-400'), "Home nav button has active emerald highlight");
   assert(btnWorkout.className.includes('text-slate-400'), "Workout nav button is unhighlighted");
+
+  switchTab('workout');
+  assert(!workoutView.classList.contains('hidden'), "Workout tab view is visible when active");
+  assert(homeView.classList.contains('hidden'), "Home tab view is hidden when Workout is active");
+
+  switchTab('calendar');
+  assert(!calView.classList.contains('hidden'), "Calendar tab view is visible when active");
+  assert(workoutView.classList.contains('hidden'), "Workout tab view is hidden when Calendar is active");
+
+  switchTab('squads');
+  assert(!squadsView.classList.contains('hidden'), "Squads tab view is visible when active");
+  assert(calView.classList.contains('hidden'), "Calendar tab view is hidden when Squads is active");
+
+  switchTab('home');
+  assert(!homeView.classList.contains('hidden'), "Home tab view restored when switched back");
 
   // 3. Verify Home Section Weekly Positive Outlook & Celebration (Requirement 1)
   const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
@@ -1032,7 +1060,7 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(dailyCongrat.subtext.length > 0, "Casual congratulatory message provided");
   assert(dailyCongrat.workoutName === "Full Body Blast", "Workout name displayed in congratulation");
 
-  // 5. Verify Full Home Tab DOM Rendering
+  // 5. Verify Full Home Tab DOM Rendering & Theme Color Fill
   renderHomeTab();
   const todayCard = getOrCreateElement('home-today-status-card');
   assert(todayCard.innerHTML.includes('Full Body Blast'), "Today status card renders workout title in DOM");
@@ -1041,6 +1069,7 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
 
   const weekPills = getOrCreateElement('home-week-pills-container');
   assert(weekPills.innerHTML.includes('M') && weekPills.innerHTML.includes('S'), "Week pills container renders Monday to Sunday day initials");
+  assert(weekPills.innerHTML.includes('background-color: var(--m3-primary)'), "Week calendar view displays showed-up days filled with theme color");
 
   const celebrationBanner = getOrCreateElement('home-week-celebration-banner');
   assert(celebrationBanner.innerHTML.includes(escapeHtml(weekStats.outlookHeadline)), "Celebration banner renders weekly positive outlook headline");
@@ -1048,7 +1077,7 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   const workoutsMetric = getOrCreateElement('home-metric-workouts');
   assert(workoutsMetric.innerText.includes('/ 7'), "Weekly workouts metric renders ratio of 7 days");
 
-  // 6. Verify Daily Status when No Workout Done Today
+  // 6. Verify Daily Status when No Workout Done Today (Hidden, Single Container Clean State)
   completedWorkoutsHistory = [
     {
       date: "2020-01-01",
@@ -1061,7 +1090,8 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   const restDayStatus = getDailyWorkoutCongratulation();
   assert(restDayStatus.completed === false, "Daily status recognizes no workout done today");
   renderHomeTab();
-  assert(todayCard.innerHTML.includes("Start Today's Workout"), "Renders motivational call-to-action when workout yet to be done today");
+  assert(todayCard.classList.contains('hidden'), "Today status card is cleanly hidden when no workout done today");
+  assert(todayCard.innerHTML === '', "Today status card has no lingering DOM markup when no workout done today");
 });
 
 print("\\n============================================================");
