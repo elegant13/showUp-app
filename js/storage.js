@@ -175,6 +175,41 @@ const AppStorage = {
         workouts = this.mergeWorkouts(workouts, synced);
       }
 
+      // Defensive Auto-Recovery: If today's workout is missing from the list but exists in Squads telemetry
+      try {
+        const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
+        const hasTodayWorkout = workouts.some(w => (typeof w === 'string' ? w : w.date) === todayKey);
+        if (!hasTodayWorkout) {
+          const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
+          if (Array.isArray(squads)) {
+            for (const sq of squads) {
+              if (Array.isArray(sq.members)) {
+                const member = sq.members.find(m => m && (
+                  (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) ||
+                  m.id === 'local_user' ||
+                  (profile && m.id === profile.id)
+                ));
+                if (member && member.completedToday && member.completedDate === todayKey) {
+                  const recoveredWorkout = {
+                    date: todayKey,
+                    workoutName: member.lastCompletedWorkout || "Workout Session",
+                    totalVolume: 0,
+                    totalSets: 1,
+                    recoveredFromSquad: true,
+                    sets: []
+                  };
+                  workouts.unshift(recoveredWorkout);
+                  this.saveAthleteWorkouts(workouts);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      } catch (recoveryErr) {
+        console.warn("[AppStorage] Auto-recovery notice:", recoveryErr);
+      }
+
       return workouts;
     } catch (e) {
       console.warn("[AppStorage] Error retrieving workouts:", e);
