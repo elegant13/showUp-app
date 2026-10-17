@@ -186,7 +186,8 @@
                     <div class="font-bold text-slate-200">${s.exerciseName}</div>
                     <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px]">
                       <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.2 rounded-lg">${s.implement}</span>
-                      ${s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
+                      ${s.implement === "Running" ? `<span>${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
+                        s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
                         s.implement === "Swimming" ? `<span>${s.swimDistance} yds | ${s.swimTime}</span>` :
                         ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
                         `<span><b class="text-slate-100">${s.weight}</b> lbs × <b class="text-slate-100">${s.reps}</b> reps</span>`}
@@ -228,7 +229,18 @@
       const setObj = workout.sets.find(s => s.id === setId);
       if (!setObj) return;
 
-      if (setObj.implement === "Row Erg") {
+      if (setObj.implement === "Running") {
+        const newDist = prompt(`Edit Distance (miles) for ${setObj.exerciseName}:`, setObj.runningDistance);
+        if (newDist === null) return;
+        const newTime = prompt(`Edit Time (hh:mm:ss) for ${setObj.exerciseName}:`, setObj.runningTime || "00:25:00");
+        if (newTime === null) return;
+        const newAvg = prompt(`Edit Avg HR (bpm) for ${setObj.exerciseName}:`, setObj.runningAvgHR || "");
+        const newMax = prompt(`Edit Max HR (bpm) for ${setObj.exerciseName}:`, setObj.runningMaxHR || "");
+        setObj.runningDistance = parseFloat(newDist) || 1.0;
+        setObj.runningTime = newTime.trim() || "00:25:00";
+        setObj.runningAvgHR = newAvg ? parseInt(newAvg) : null;
+        setObj.runningMaxHR = newMax ? parseInt(newMax) : null;
+      } else if (setObj.implement === "Row Erg") {
         const newDist = prompt(`Edit Distance (meters) for ${setObj.exerciseName}:`, setObj.ergDistance);
         if (newDist === null) return;
         setObj.ergDistance = parseInt(newDist) || 500;

@@ -568,6 +568,10 @@
       if (btnConnect) {
         btnConnect.innerHTML = `<i class="fa-solid fa-bluetooth text-emerald-400"></i><span>${sourceName === 'Simulator' ? 'Sim Active' : 'Connected'}</span>`;
       }
+
+      if (typeof updateRunningHRMUI === 'function') {
+        updateRunningHRMUI();
+      }
     }
 
     function onHRMDisconnected() {
@@ -619,12 +623,27 @@
       if (pillAction) {
         pillAction.innerHTML = `<i class="fa-solid fa-bluetooth text-[10px]"></i><span>Tap to Connect</span>`;
       }
+
+      if (typeof updateRunningHRMUI === 'function') {
+        updateRunningHRMUI();
+      }
     }
 
     function updateHRTelemetry(bpm) {
       currentHR = bpm;
       hrHistory.push(bpm);
       if (hrHistory.length > 50) hrHistory.shift();
+
+      if (!window.runningHRSamples) window.runningHRSamples = [];
+      window.runningHRSamples.push(bpm);
+      if (window.runningHRSamples.length > 500) window.runningHRSamples.shift();
+
+      if (typeof updateRunningHRMUI === 'function') {
+        const impEl = document.getElementById('implement-select');
+        if (impEl && impEl.value === 'Running') {
+          updateRunningHRMUI();
+        }
+      }
 
       const display = document.getElementById('live-hr-display');
       if (display) display.innerText = bpm;

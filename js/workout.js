@@ -158,7 +158,8 @@
         handleImplementChange(match.implement);
       } else {
         const lower = val.toLowerCase();
-        if (lower.includes('swim')) handleImplementChange("Swimming");
+        if (lower.includes('run') || lower.includes('jog') || lower.includes('sprint')) handleImplementChange("Running");
+        else if (lower.includes('swim')) handleImplementChange("Swimming");
         else if (lower.includes('walk')) handleImplementChange("Walking");
         else if (lower.includes('hike')) handleImplementChange("Hiking");
         else if (lower.includes('bike') || lower.includes('cycle')) handleImplementChange("Biking");
@@ -171,21 +172,27 @@
       const ergPanel = document.getElementById('erg-metrics-panel');
       const swimPanel = document.getElementById('swim-metrics-panel');
       const endurancePanel = document.getElementById('endurance-metrics-panel');
+      const runningPanel = document.getElementById('running-metrics-panel');
 
-      standardPanel.classList.add('hidden');
-      ergPanel.classList.add('hidden');
-      swimPanel.classList.add('hidden');
-      endurancePanel.classList.add('hidden');
+      if (standardPanel) standardPanel.classList.add('hidden');
+      if (ergPanel) ergPanel.classList.add('hidden');
+      if (swimPanel) swimPanel.classList.add('hidden');
+      if (endurancePanel) endurancePanel.classList.add('hidden');
+      if (runningPanel) runningPanel.classList.add('hidden');
 
-      if (implementVal === "Row Erg") {
-        ergPanel.classList.remove('hidden');
+      if (implementVal === "Running") {
+        if (runningPanel) runningPanel.classList.remove('hidden');
+        if (typeof updateRunningHRMUI === 'function') updateRunningHRMUI();
+      } else if (implementVal === "Row Erg") {
+        if (ergPanel) ergPanel.classList.remove('hidden');
       } else if (implementVal === "Swimming") {
-        swimPanel.classList.remove('hidden');
+        if (swimPanel) swimPanel.classList.remove('hidden');
       } else if (["Walking", "Hiking", "Biking"].includes(implementVal)) {
-        document.getElementById('endurance-dist-label').innerText = `Distance (${implementVal} Miles)`;
-        endurancePanel.classList.remove('hidden');
+        const distLabel = document.getElementById('endurance-dist-label');
+        if (distLabel) distLabel.innerText = `Distance (${implementVal} Miles)`;
+        if (endurancePanel) endurancePanel.classList.remove('hidden');
       } else {
-        standardPanel.classList.remove('hidden');
+        if (standardPanel) standardPanel.classList.remove('hidden');
       }
 
       const impSelect = document.getElementById('implement-select');
@@ -305,6 +312,106 @@
       const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
       const secs = String(totalSec % 60).padStart(2, '0');
       input.value = `${hrs}:${mins}:${secs}`;
+    }
+
+    function adjustRunningDistance(delta) {
+      const input = document.getElementById('input-running-distance');
+      if (!input) return;
+      let val = parseFloat(input.value) || 0;
+      val = Math.max(0.1, Math.round((val + delta) * 100) / 100);
+      input.value = val.toFixed(2).replace(/\.00$/, '.0').replace(/(\.[1-9])0$/, '$1');
+    }
+
+    function adjustRunningTime(deltaSec) {
+      const input = document.getElementById('input-running-time');
+      if (!input) return;
+      const parts = (input.value || "00:25:00").split(':');
+      let totalSec = 0;
+      if (parts.length === 3) {
+        totalSec = (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+      } else if (parts.length === 2) {
+        totalSec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+      }
+      totalSec = Math.max(30, totalSec + deltaSec);
+      const hrs = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+      const secs = String(totalSec % 60).padStart(2, '0');
+      input.value = `${hrs}:${mins}:${secs}`;
+    }
+
+    function adjustRunningAvgHR(delta) {
+      const input = document.getElementById('input-running-avg-hr');
+      if (!input) return;
+      let val = parseInt(input.value) || (typeof currentHR === 'number' && currentHR > 0 ? currentHR : 145);
+      val = Math.max(40, Math.min(240, val + delta));
+      input.value = val;
+      input.dataset.autoCaptured = 'false';
+      const avgSource = document.getElementById('running-avg-hr-source');
+      if (avgSource) avgSource.innerText = "Manual";
+    }
+
+    function adjustRunningMaxHR(delta) {
+      const input = document.getElementById('input-running-max-hr');
+      if (!input) return;
+      let val = parseInt(input.value) || (typeof currentHR === 'number' && currentHR > 0 ? currentHR : 165);
+      val = Math.max(40, Math.min(240, val + delta));
+      input.value = val;
+      input.dataset.autoCaptured = 'false';
+      const maxSource = document.getElementById('running-max-hr-source');
+      if (maxSource) maxSource.innerText = "Manual";
+    }
+
+    function updateRunningHRMUI() {
+      const statusInfo = document.getElementById('running-hrm-status-info');
+      const connectBtn = document.getElementById('running-hrm-connect-btn');
+      const avgSource = document.getElementById('running-avg-hr-source');
+      const maxSource = document.getElementById('running-max-hr-source');
+      const avgInput = document.getElementById('input-running-avg-hr');
+      const maxInput = document.getElementById('input-running-max-hr');
+
+      const isConnected = typeof isHRMConnected === 'function' ? isHRMConnected() : false;
+      if (isConnected) {
+        const liveBpm = typeof currentHR === 'number' && currentHR > 0 ? currentHR : 145;
+        const samples = (window.runningHRSamples && window.runningHRSamples.length > 0) ? window.runningHRSamples : [liveBpm];
+        const avgBpm = Math.round(samples.reduce((a, b) => a + b, 0) / samples.length);
+        const maxBpm = Math.max(...samples);
+
+        if (avgInput) {
+          avgInput.value = avgBpm;
+        }
+        if (maxInput) {
+          maxInput.value = maxBpm;
+        }
+
+        if (avgSource) avgSource.innerHTML = `<span class="text-emerald-400 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>HRM</span>`;
+        if (maxSource) maxSource.innerHTML = `<span class="text-emerald-400 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>HRM</span>`;
+
+        if (statusInfo) {
+          statusInfo.innerHTML = `
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block"></span>
+            <i class="fa-solid fa-heart-pulse text-rose-500 animate-pulse"></i>
+            <span class="text-emerald-400 font-semibold">HRM Connected</span>
+            <span class="text-slate-400 font-mono">(${liveBpm} BPM | Avg ${avgBpm} | Max ${maxBpm})</span>
+          `;
+        }
+        if (connectBtn) {
+          connectBtn.innerText = "HRM Settings";
+          connectBtn.className = "text-emerald-400 hover:text-emerald-300 font-bold underline text-[10px]";
+        }
+      } else {
+        if (avgSource) avgSource.innerText = "Manual";
+        if (maxSource) maxSource.innerText = "Manual";
+        if (statusInfo) {
+          statusInfo.innerHTML = `
+            <i class="fa-solid fa-bluetooth text-slate-500"></i>
+            <span>No HRM Connected (Manual HR inputs active)</span>
+          `;
+        }
+        if (connectBtn) {
+          connectBtn.innerText = "Connect HRM";
+          connectBtn.className = "text-rose-400 hover:text-rose-300 font-bold underline text-[10px]";
+        }
+      }
     }
 
     // ================= TIMER ENGINE: WORKOUT, SET & REST TIMERS =================
@@ -579,8 +686,16 @@
       let weight = 0, reps = 1, ergDistance = 0, ergTime = "";
       let swimDistance = 0, swimTime = "";
       let enduranceDistance = 0, enduranceTime = "";
+      let runningDistance = 0, runningTime = "", runningAvgHR = null, runningMaxHR = null;
 
-      if (implement === "Row Erg") {
+      if (implement === "Running") {
+        runningDistance = parseFloat(document.getElementById('input-running-distance')?.value) || 1.0;
+        runningTime = document.getElementById('input-running-time')?.value || "00:25:00";
+        const parsedAvg = parseInt(document.getElementById('input-running-avg-hr')?.value);
+        const parsedMax = parseInt(document.getElementById('input-running-max-hr')?.value);
+        runningAvgHR = !isNaN(parsedAvg) ? parsedAvg : (typeof currentHR === 'number' && currentHR > 0 ? currentHR : null);
+        runningMaxHR = !isNaN(parsedMax) ? parsedMax : (typeof currentHR === 'number' && currentHR > 0 ? currentHR : null);
+      } else if (implement === "Row Erg") {
         ergDistance = parseInt(document.getElementById('input-erg-distance')?.value) || 500;
         ergTime = document.getElementById('input-erg-time')?.value || "02:00";
       } else if (implement === "Swimming") {
@@ -628,6 +743,10 @@
         rpe,
         weight,
         reps,
+        runningDistance,
+        runningTime,
+        runningAvgHR,
+        runningMaxHR,
         ergDistance,
         ergTime,
         swimDistance,
@@ -696,7 +815,8 @@
               <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
               <div class="text-xs text-slate-400 gap-2 flex items-center flex-wrap mt-0.5">
                 <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded-lg font-semibold">${s.implement}</span>
-                ${s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
+                ${s.implement === "Running" ? `<span>${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
+                  s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
                   s.implement === "Swimming" ? `<span>${s.swimDistance} yds | ${s.swimTime}</span>` :
                   ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
                   `<span>${s.weight} lbs × ${s.reps} reps</span>`}
@@ -743,7 +863,15 @@
       let totalDurationMin = 0;
 
       currentSessionSets.forEach(s => {
-        if (s.implement === "Row Erg") {
+        if (s.implement === "Running") {
+          totalVolume += ((s.runningDistance || 0) * 1000); // Scale miles to volume units
+          const parts = (s.runningTime || "00:25:00").split(':');
+          if (parts.length === 3) {
+            totalDurationMin += (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0) + (parseInt(parts[2]) || 0) / 60;
+          } else if (parts.length === 2) {
+            totalDurationMin += (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0) / 60;
+          }
+        } else if (s.implement === "Row Erg") {
           totalVolume += s.ergDistance;
           const parts = (s.ergTime || "02:00").split(':');
           totalDurationMin += (parseInt(parts[0]) || 0) + (parseInt(parts[1]) || 0) / 60;
@@ -766,7 +894,8 @@
       const totalSets = currentSessionSets.length;
       const avgRPE = currentSessionSets.reduce((acc, s) => acc + s.rpe, 0) / totalSets;
 
-      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (avgRPE > 7 ? 0.8 : 0.4)).toFixed(1);
+      const hasRunning = currentSessionSets.some(s => s.implement === "Running");
+      const aerobicTE = Math.min(5.0, (totalSets * 0.25) + (hasRunning ? 1.5 : (avgRPE > 7 ? 0.8 : 0.4))).toFixed(1);
       const anaerobicTE = Math.min(5.0, (currentSessionSets.filter(s => s.rpe >= 9).length * 0.7) + (totalVolume > 2000 ? 1.2 : 0.5)).toFixed(1);
 
       // Calorie Calculation Formula: METs x 3.5 x Body Weight (kg) / 200 x Minutes
@@ -774,7 +903,8 @@
       const estimatedMinutes = Math.max(15, Math.round(totalDurationMin));
 
       let metFactor = 5.0; // Standard moderate MET
-      if (currentSessionSets.some(s => s.implement === "Swimming")) metFactor = 8.0;
+      if (currentSessionSets.some(s => s.implement === "Running")) metFactor = 10.0;
+      else if (currentSessionSets.some(s => s.implement === "Swimming")) metFactor = 8.0;
       else if (currentSessionSets.some(s => s.implement === "Biking")) metFactor = 7.5;
       else if (currentSessionSets.some(s => s.implement === "Hiking")) metFactor = 6.5;
       else if (currentSessionSets.some(s => s.implement === "Walking")) metFactor = 3.8;
@@ -791,11 +921,107 @@
 
       document.getElementById('calories-burned-score').innerText = caloriesBurned;
 
+      // Ascertain relevant Running metrics when Running was performed
+      const runningSets = currentSessionSets.filter(s => s.implement === "Running");
+      let runningMetrics = null;
+      const runningCardEl = document.getElementById('summary-running-metrics-card');
+
+      if (runningSets.length > 0) {
+        let totalRunningMiles = 0;
+        let totalRunningSeconds = 0;
+        let weightedAvgHRSum = 0;
+        let hrDurationSum = 0;
+        let maxHRVal = 0;
+
+        runningSets.forEach(s => {
+          const miles = Number(s.runningDistance) || 0;
+          totalRunningMiles += miles;
+
+          let sec = 0;
+          const parts = (s.runningTime || "00:25:00").split(':');
+          if (parts.length === 3) {
+            sec = (parseInt(parts[0]) || 0) * 3600 + (parseInt(parts[1]) || 0) * 60 + (parseInt(parts[2]) || 0);
+          } else if (parts.length === 2) {
+            sec = (parseInt(parts[0]) || 0) * 60 + (parseInt(parts[1]) || 0);
+          }
+          totalRunningSeconds += sec;
+
+          if (s.runningAvgHR) {
+            weightedAvgHRSum += (s.runningAvgHR * sec);
+            hrDurationSum += sec;
+          }
+          if (s.runningMaxHR && s.runningMaxHR > maxHRVal) {
+            maxHRVal = s.runningMaxHR;
+          }
+        });
+
+        const overallAvgHR = hrDurationSum > 0 ? Math.round(weightedAvgHRSum / hrDurationSum) : (runningSets.find(s => s.runningAvgHR)?.runningAvgHR || null);
+        if (!maxHRVal && overallAvgHR) maxHRVal = overallAvgHR;
+
+        let paceStr = "-- /mi";
+        let speedStr = "-- mph";
+        if (totalRunningMiles > 0 && totalRunningSeconds > 0) {
+          const totalRunMins = totalRunningSeconds / 60;
+          const paceTotalMins = totalRunMins / totalRunningMiles;
+          const paceM = Math.floor(paceTotalMins);
+          const paceS = Math.round((paceTotalMins - paceM) * 60);
+          paceStr = `${paceM}:${String(paceS).padStart(2, '0')} /mi`;
+
+          const hours = totalRunningSeconds / 3600;
+          const mph = (totalRunningMiles / hours).toFixed(1);
+          speedStr = `${mph} mph`;
+        }
+
+        const runMins = Math.max(1, Math.round(totalRunningSeconds / 60));
+        const runSpeedNum = parseFloat(speedStr) || 6.0;
+        let runMet = 9.8;
+        if (runSpeedNum >= 8.0) runMet = 11.8;
+        else if (runSpeedNum >= 7.0) runMet = 11.0;
+        else if (runSpeedNum >= 6.0) runMet = 9.8;
+        else if (runSpeedNum >= 5.0) runMet = 8.5;
+        const runCalories = Math.round((runMet * 3.5 * weightKg / 200) * runMins);
+
+        runningMetrics = {
+          totalDistance: totalRunningMiles,
+          totalDistanceFormatted: `${totalRunningMiles.toFixed(2)} mi`,
+          totalDurationSeconds: totalRunningSeconds,
+          totalDurationFormatted: formatTimerHMS(totalRunningSeconds),
+          avgPace: paceStr,
+          avgSpeed: speedStr,
+          avgHR: overallAvgHR,
+          maxHR: maxHRVal || overallAvgHR,
+          calories: runCalories
+        };
+
+        if (runningCardEl) {
+          runningCardEl.classList.remove('hidden');
+          const distEl = document.getElementById('summary-running-distance');
+          const paceEl = document.getElementById('summary-running-pace');
+          const speedEl = document.getElementById('summary-running-speed');
+          const hrEl = document.getElementById('summary-running-hr');
+          const badgeEl = document.getElementById('summary-running-badge');
+
+          if (distEl) distEl.innerText = `${totalRunningMiles.toFixed(2)} mi`;
+          if (paceEl) paceEl.innerText = paceStr;
+          if (speedEl) speedEl.innerText = speedStr;
+          if (hrEl) {
+            hrEl.innerText = overallAvgHR ? `${overallAvgHR} / ${maxHRVal || overallAvgHR} bpm` : `-- / --`;
+          }
+          if (badgeEl) {
+            badgeEl.innerText = overallAvgHR && overallAvgHR >= 165 ? "Peak Cardiovascular" :
+              overallAvgHR && overallAvgHR >= 145 ? "High Aerobic" : "Aerobic Conditioning";
+          }
+        }
+      } else {
+        if (runningCardEl) runningCardEl.classList.add('hidden');
+      }
+
       const muscleMap = {};
       const secondaryMuscleSet = new Set();
 
       currentSessionSets.forEach(s => {
-        const vol = s.implement === "Row Erg" ? s.ergDistance :
+        const vol = s.implement === "Running" ? Math.round((s.runningDistance || 0) * 100) :
+                    s.implement === "Row Erg" ? s.ergDistance :
                     s.implement === "Swimming" ? s.swimDistance :
                     ["Walking", "Hiking", "Biking"].includes(s.implement) ? Math.round(s.enduranceDistance * 100) :
                     (s.weight * s.reps);
@@ -890,6 +1116,7 @@
         aerobicTE,
         anaerobicTE,
         caloriesBurned,
+        runningMetrics,
         totalWorkoutSeconds,
         totalWorkoutTimeFormatted: formatTimerHMS(totalWorkoutSeconds),
         totalRestSeconds,
@@ -1051,7 +1278,8 @@
       }
       let html = '';
       sets.forEach((s, idx) => {
-        const metricDisplay = s.implement === "Row Erg" ? `${s.ergDistance || 0}m | ${s.ergTime || '00:00'}` :
+        const metricDisplay = s.implement === "Running" ? `${s.runningDistance || 0} mi | ${s.runningTime || '00:00'}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}` :
+          s.implement === "Row Erg" ? `${s.ergDistance || 0}m | ${s.ergTime || '00:00'}` :
           s.implement === "Swimming" ? `${s.swimDistance || 0} yds | ${s.swimTime || '00:00'}` :
           ["Walking", "Hiking", "Biking"].includes(s.implement) ? `${s.enduranceDistance || 0} mi | ${s.enduranceTime || '00:00'}` :
           `${s.weight || 0} lbs × ${s.reps || 0} reps`;
@@ -1108,6 +1336,10 @@
                  `📊 *Total Sets:* ${setsCount} | *Volume:* ${vol}\n` +
                  (w.totalWorkoutSeconds ? `⏱️ *Time:* ${w.totalWorkoutTimeFormatted || formatDurationSecs(w.totalWorkoutSeconds)} (Active: ${w.totalActiveTimeFormatted || formatDurationSecs(w.totalActiveSeconds)} | Rest: ${w.totalRestTimeFormatted || formatDurationSecs(w.totalRestSeconds)})\n` : ``) +
                  `${cals}`;
+
+      if (w.runningMetrics && w.runningMetrics.totalDistance > 0) {
+        text += `🏃 *Running:* ${w.runningMetrics.totalDistanceFormatted} in ${w.runningMetrics.totalDurationFormatted} (Pace: ${w.runningMetrics.avgPace} | Speed: ${w.runningMetrics.avgSpeed}${w.runningMetrics.avgHR ? ` | HR: ${w.runningMetrics.avgHR} avg` : ''})\n`;
+      }
 
       if (w.aerobicTE && w.anaerobicTE) {
         text += `🫁 *Aerobic Load:* ${w.aerobicTE} / 5.0\n` +

@@ -1109,6 +1109,113 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(todayCard.innerHTML === '', "Today status card has no lingering DOM markup when no workout done today");
 });
 
+runSuite("15. Running Exercise, HRM Capture & Evaluated Running Metrics Engine", () => {
+  // 1. Catalog & Detection
+  const runCatalog = defaultCatalog.find(c => c.name === "Running");
+  assert(runCatalog !== undefined, "Running exists in defaultCatalog");
+  assert(runCatalog.implement === "Running", "Running catalog implement is 'Running'");
+  assert(runCatalog.muscle === "Quads", "Running primary muscle is Quads");
+
+  // Exercise input detection
+  handleExerciseInput("Running");
+  assert(getOrCreateElement('implement-select').value === "Running", "handleExerciseInput sets implement to Running");
+  assert(!getOrCreateElement('running-metrics-panel').classList.contains('hidden'), "running-metrics-panel is visible when Running is active");
+  assert(getOrCreateElement('standard-metrics-panel').classList.contains('hidden'), "standard-metrics-panel is hidden when Running is active");
+
+  handleExerciseInput("Morning Run 5K");
+  assert(getOrCreateElement('implement-select').value === "Running", "fuzzy match 'Run' selects Running");
+
+  handleExerciseInput("Interval Sprint Session");
+  assert(getOrCreateElement('implement-select').value === "Running", "fuzzy match 'Sprint' selects Running");
+
+  // 2. Quick Stepper / Adjuster functions
+  const distInput = getOrCreateElement('input-running-distance');
+  distInput.value = "3.1";
+  adjustRunningDistance(1.0);
+  assert(parseFloat(distInput.value) === 4.1, "adjustRunningDistance adds distance: " + distInput.value);
+  adjustRunningDistance(-0.25);
+  assert(parseFloat(distInput.value) === 3.85, "adjustRunningDistance subtracts distance: " + distInput.value);
+
+  const timeInput = getOrCreateElement('input-running-time');
+  timeInput.value = "00:25:00";
+  adjustRunningTime(60);
+  assert(timeInput.value === "00:26:00", "adjustRunningTime adds 1 minute: " + timeInput.value);
+  adjustRunningTime(-300);
+  assert(timeInput.value === "00:21:00", "adjustRunningTime subtracts 5 minutes: " + timeInput.value);
+
+  const avgHrInput = getOrCreateElement('input-running-avg-hr');
+  const maxHrInput = getOrCreateElement('input-running-max-hr');
+  avgHrInput.value = "140";
+  maxHrInput.value = "160";
+  adjustRunningAvgHR(5);
+  assert(parseInt(avgHrInput.value) === 145, "adjustRunningAvgHR adds 5 bpm: " + avgHrInput.value);
+  adjustRunningMaxHR(5);
+  assert(parseInt(maxHrInput.value) === 165, "adjustRunningMaxHR adds 5 bpm: " + maxHrInput.value);
+
+  // 3. External Heart Rate Monitor (HRM) Capture
+  disconnectHRM();
+  updateRunningHRMUI();
+  assert(isHRMConnected() === false, "HRM is disconnected initially");
+  assert(getOrCreateElement('running-avg-hr-source').innerText === "Manual", "Avg HR source marked Manual when HRM disconnected");
+
+  // Connect HRM via simulator
+  toggleHRSimulator();
+  assert(isHRMConnected() === true, "HRM connected via simulator");
+  window.runningHRSamples = [150, 155, 160, 165, 170];
+  updateHRTelemetry(160);
+  assert(parseInt(avgHrInput.value) === 160, "Avg HR auto-captured from HRM: " + avgHrInput.value);
+  assert(parseInt(maxHrInput.value) === 170, "Max HR auto-captured from HRM: " + maxHrInput.value);
+  assert(getOrCreateElement('running-avg-hr-source').innerHTML.includes("HRM"), "Avg HR source marked HRM when connected");
+
+  // 4. Log Running Set
+  currentSessionSets = [];
+  distInput.value = "3.1";
+  timeInput.value = "00:24:48"; // 24m 48s = 8:00 /mi
+  avgHrInput.value = "158";
+  maxHrInput.value = "172";
+  getOrCreateElement('exercise-name-input').value = "Tempo Run";
+
+  logSet();
+  assert(currentSessionSets.length === 1, "Running set successfully logged");
+  const loggedRun = currentSessionSets[0];
+  assert(loggedRun.implement === "Running", "Logged set implement is Running");
+  assert(loggedRun.runningDistance === 3.1, "Logged set distance is 3.1 miles");
+  assert(loggedRun.runningTime === "00:24:48", "Logged set time is 00:24:48");
+  assert(loggedRun.runningAvgHR === 158, "Logged set avg HR is 158 bpm");
+  assert(loggedRun.runningMaxHR === 172, "Logged set max HR is 172 bpm");
+
+  renderLoggedSets();
+  const loggedSetsList = getOrCreateElement('logged-sets-list');
+  assert(loggedSetsList.innerHTML.includes('3.1 mi'), "renderLoggedSets renders 3.1 mi");
+  assert(loggedSetsList.innerHTML.includes('158 avg'), "renderLoggedSets renders 158 avg HR");
+
+  // 5. Ascertain Running Metrics on Finish and Evaluate Workout
+  getOrCreateElement('workout-title-input').value = "Morning 5K Run";
+  evaluateAndFinishWorkout();
+
+  const finishedRunWorkout = completedWorkoutsHistory[completedWorkoutsHistory.length - 1];
+  assert(finishedRunWorkout !== undefined, "Workout finished and saved");
+  assert(finishedRunWorkout.runningMetrics !== null, "runningMetrics ascertained and saved on workoutObj");
+  assert(finishedRunWorkout.runningMetrics.totalDistance === 3.1, "Ascertained totalDistance is 3.1: " + finishedRunWorkout.runningMetrics.totalDistance);
+  assert(finishedRunWorkout.runningMetrics.avgPace === "8:00 /mi", "Ascertained avgPace is 8:00 /mi: " + finishedRunWorkout.runningMetrics.avgPace);
+  assert(finishedRunWorkout.runningMetrics.avgSpeed === "7.5 mph", "Ascertained avgSpeed is 7.5 mph: " + finishedRunWorkout.runningMetrics.avgSpeed);
+  assert(finishedRunWorkout.runningMetrics.avgHR === 158, "Ascertained avgHR is 158: " + finishedRunWorkout.runningMetrics.avgHR);
+  assert(finishedRunWorkout.runningMetrics.maxHR === 172, "Ascertained maxHR is 172: " + finishedRunWorkout.runningMetrics.maxHR);
+  assert(finishedRunWorkout.runningMetrics.calories > 0, "Ascertained running calories burned > 0: " + finishedRunWorkout.runningMetrics.calories);
+
+  // Summary UI card DOM assertions
+  const runSummaryCard = getOrCreateElement('summary-running-metrics-card');
+  assert(!runSummaryCard.classList.contains('hidden'), "summary-running-metrics-card is visible in DOM");
+  assert(getOrCreateElement('summary-running-distance').innerText === "3.10 mi", "summary-running-distance rendered in DOM");
+  assert(getOrCreateElement('summary-running-pace').innerText === "8:00 /mi", "summary-running-pace rendered in DOM");
+  assert(getOrCreateElement('summary-running-speed').innerText === "7.5 mph", "summary-running-speed rendered in DOM");
+  assert(getOrCreateElement('summary-running-hr').innerText.includes("158"), "summary-running-hr rendered in DOM");
+
+  // Clean up HRM
+  disconnectHRM();
+  assert(isHRMConnected() === false, "HRM cleanly disconnected after test");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

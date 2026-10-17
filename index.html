@@ -1636,6 +1636,7 @@
 
           <!-- QUICK EXERCISE SHORTCUT CHIPS -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
+            <button type="button" onclick="selectQuickExercise('Running')" class="quick-exercise-chip">Running</button>
             <button type="button" onclick="selectQuickExercise('Pushups')" class="quick-exercise-chip">Pushups</button>
             <button type="button" onclick="selectQuickExercise('Pullups')" class="quick-exercise-chip">Pullups</button>
             <button type="button" onclick="selectQuickExercise('Squats')" class="quick-exercise-chip">Squats</button>
@@ -1772,6 +1773,82 @@
           </div>
         </div>
 
+        <!-- 5. RUNNING METRICS PANEL (MILES, TIME, AVG HR & MAX HR) -->
+        <div id="running-metrics-panel" class="hidden space-y-3 bg-slate-950/80 p-4 rounded-2xl border border-rose-500/20">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <!-- MILES -->
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">Distance (Miles)</label>
+              <div class="flex items-center justify-center">
+                <input type="number" id="input-running-distance" value="3.1" min="0.1" step="0.1" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-xl font-black text-rose-400 font-mono focus:outline-none focus:border-rose-500 shadow-inner">
+              </div>
+              <div class="grid grid-cols-4 gap-1 pt-0.5">
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningDistance(-1.0)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1.0</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningDistance(-0.25)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-0.25</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningDistance(0.25)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+0.25</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningDistance(1.0)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1.0</button>
+              </div>
+            </div>
+
+            <!-- TIME -->
+            <div class="space-y-1.5">
+              <label class="block text-[11px] font-bold text-slate-400 text-center uppercase tracking-wider">Time (hh:mm:ss)</label>
+              <div class="flex items-center justify-center">
+                <input type="text" id="input-running-time" value="00:25:00" placeholder="00:25:00" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-xl font-black text-rose-400 font-mono focus:outline-none focus:border-rose-500 shadow-inner">
+              </div>
+              <div class="grid grid-cols-4 gap-1 pt-0.5">
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningTime(-300)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5m</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningTime(-60)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1m</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningTime(60)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1m</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningTime(300)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5m</button>
+              </div>
+            </div>
+
+            <!-- AVG HR -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between px-1">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg HR (bpm)</label>
+                <span id="running-avg-hr-source" class="text-[9px] font-semibold text-slate-500 font-mono">Manual</span>
+              </div>
+              <div class="flex items-center justify-center">
+                <input type="number" id="input-running-avg-hr" placeholder="--" min="40" max="240" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-xl font-black text-rose-400 font-mono focus:outline-none focus:border-rose-500 shadow-inner">
+              </div>
+              <div class="grid grid-cols-4 gap-1 pt-0.5">
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningAvgHR(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningAvgHR(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningAvgHR(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningAvgHR(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
+              </div>
+            </div>
+
+            <!-- MAX HR -->
+            <div class="space-y-1.5">
+              <div class="flex items-center justify-between px-1">
+                <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider">Max HR (bpm)</label>
+                <span id="running-max-hr-source" class="text-[9px] font-semibold text-slate-500 font-mono">Manual</span>
+              </div>
+              <div class="flex items-center justify-center">
+                <input type="number" id="input-running-max-hr" placeholder="--" min="40" max="240" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl py-2 text-center text-xl font-black text-rose-400 font-mono focus:outline-none focus:border-rose-500 shadow-inner">
+              </div>
+              <div class="grid grid-cols-4 gap-1 pt-0.5">
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningMaxHR(-5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-5</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningMaxHR(-1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">-1</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningMaxHR(1)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+1</button>
+                <button type="button" onclick="triggerHaptic('light'); adjustRunningMaxHR(5)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[10px] py-1.5 rounded-lg border border-slate-700 active:scale-95 transition">+5</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DYNAMIC HRM CAPTURE STATUS STRIP -->
+          <div id="running-hrm-status-strip" class="flex items-center justify-between px-3 py-1.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px]">
+            <div id="running-hrm-status-info" class="flex items-center gap-1.5 text-slate-400">
+              <i class="fa-solid fa-bluetooth text-slate-500"></i>
+              <span>No HRM Connected (Manual HR inputs active)</span>
+            </div>
+            <button id="running-hrm-connect-btn" type="button" onclick="triggerHaptic('light'); handleHRMPillClick()" class="text-rose-400 hover:text-rose-300 font-bold underline text-[10px]">Connect HRM</button>
+          </div>
+        </div>
+
         <!-- PROGRESSIVE DISCLOSURE: SESSION DETAILS & EXERCISE OPTIONS DRAWER -->
         <div class="pt-1">
           <button id="btn-toggle-extra-options" type="button" onclick="triggerHaptic('light'); toggleWorkoutExtraOptions()" class="w-full flex items-center justify-between py-2.5 px-3.5 rounded-2xl bg-slate-950/70 hover:bg-slate-900/90 border border-slate-800/80 text-xs text-slate-300 transition active:scale-[0.99]" title="Toggle Session Details, Implement, Muscle Group & RPE">
@@ -1807,6 +1884,7 @@
                 <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Category</label>
                 <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
                   <option value="Bodyweight" selected>Bodyweight</option>
+                  <option value="Running">Running</option>
                   <option value="Row Erg">Row Erg</option>
                   <option value="Swimming">Swimming</option>
                   <option value="Walking">Walking</option>
@@ -2048,6 +2126,45 @@
               </div>
               <div id="calories-burned-score" class="text-xl sm:text-2xl font-black text-rose-400">0</div>
               <div class="text-[10px] font-semibold text-slate-400">Est. kcal</div>
+            </div>
+          </div>
+
+          <!-- RUNNING PERFORMANCE METRICS (ASCERTAINED ON WORKOUT EVALUATION) -->
+          <div id="summary-running-metrics-card" class="hidden bg-slate-950 p-4 rounded-2xl border border-rose-500/30 space-y-3 shadow-lg shadow-rose-950/20">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center text-xs">
+                  <i class="fa-solid fa-person-running"></i>
+                </div>
+                <div>
+                  <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Running Performance Evaluation</h3>
+                  <p class="text-[10px] text-slate-500 font-mono">Pace • Speed • Distance • Heart Rate Dynamics</p>
+                </div>
+              </div>
+              <span id="summary-running-badge" class="px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-[10px] font-bold">Aerobic Impact</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                <div class="text-[10px] font-bold text-slate-400 uppercase">Distance</div>
+                <div id="summary-running-distance" class="text-lg sm:text-xl font-black text-rose-400 font-mono">0.00 mi</div>
+                <div class="text-[10px] text-slate-500">Total Miles</div>
+              </div>
+              <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Pace</div>
+                <div id="summary-running-pace" class="text-lg sm:text-xl font-black text-amber-400 font-mono">-- /mi</div>
+                <div class="text-[10px] text-slate-500">Min per Mile</div>
+              </div>
+              <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                <div class="text-[10px] font-bold text-slate-400 uppercase">Avg Speed</div>
+                <div id="summary-running-speed" class="text-lg sm:text-xl font-black text-cyan-400 font-mono">-- mph</div>
+                <div class="text-[10px] text-slate-500">Miles / Hour</div>
+              </div>
+              <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-0.5">
+                <div class="text-[10px] font-bold text-slate-400 uppercase">Heart Rate</div>
+                <div id="summary-running-hr" class="text-lg sm:text-xl font-black text-emerald-400 font-mono">-- / --</div>
+                <div class="text-[10px] text-slate-500">Avg / Max BPM</div>
+              </div>
             </div>
           </div>
         </div>
