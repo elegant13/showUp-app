@@ -3,6 +3,9 @@
    ========================================================================== */
 
     window.addEventListener('DOMContentLoaded', () => {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.applyPendingMigrations === 'function') {
+        AppStorage.applyPendingMigrations();
+      }
       initCatalog();
       initDatePickerConstraints();
       loadPhysicalProfile();

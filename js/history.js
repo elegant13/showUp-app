@@ -235,14 +235,17 @@
     function deleteHistoricalWorkout(dateStr) {
       if (!confirm(`Are you sure you want to delete the workout entry for ${dateStr}?`)) return;
 
-      completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
-      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-        AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.deleteWorkout === 'function') {
+        AppStorage.deleteWorkout(dateStr);
       } else {
+        completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
         localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
       }
       renderCalendar();
       renderMonthlyHistory();
+      if (typeof renderHomeTab === 'function') {
+        renderHomeTab();
+      }
 
       if (googleAccessToken) {
         syncToGoogleDrive();

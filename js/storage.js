@@ -26,6 +26,7 @@ const STORAGE_KEYS = {
   ACTIVE_SETS: 'showUp_active_workout_sets',
   SYNCED_WORKOUTS: 'showUp_synced_workouts',
   WEIGHT_HISTORY: 'showUp_weight_history',
+  DELETED_WORKOUTS: 'showUp_deleted_workouts',
 
   // Squads & Social
   SQUADS: 'showUp_squads',
@@ -102,12 +103,51 @@ const AppStorage = {
   },
 
   /**
+   * Mark a workout date as explicitly deleted so cloud restores/merges do not resurrect it
+   */
+  deleteWorkout(dateStr) {
+    if (!dateStr) return;
+    try {
+      let deleted = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
+      if (!Array.isArray(deleted)) deleted = [];
+      if (!deleted.includes(dateStr)) {
+        deleted.push(dateStr);
+        localStorage.setItem(STORAGE_KEYS.DELETED_WORKOUTS, JSON.stringify(deleted));
+      }
+    } catch (e) {}
+
+    let current = this.getAthleteWorkouts();
+    current = current.filter(item => (typeof item === 'string' ? item : item.date) !== dateStr);
+    this.saveAthleteWorkouts(current);
+  },
+
+  /**
+   * Unmark a deleted workout date when a new workout is logged on that date
+   */
+  unmarkDeletedWorkout(dateStr) {
+    if (!dateStr) return;
+    try {
+      let deleted = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
+      if (Array.isArray(deleted) && deleted.includes(dateStr)) {
+        deleted = deleted.filter(d => d !== dateStr);
+        localStorage.setItem(STORAGE_KEYS.DELETED_WORKOUTS, JSON.stringify(deleted));
+      }
+    } catch (e) {}
+  },
+
+  /**
    * Intelligently union/merge workout lists by date so that no historical
    * or newly logged workout is ever accidentally dropped or overwritten.
    */
   mergeWorkouts(localWorkouts, incomingWorkouts) {
     if (!Array.isArray(localWorkouts)) localWorkouts = [];
     if (!Array.isArray(incomingWorkouts)) incomingWorkouts = [];
+
+    let deletedDates = [];
+    try {
+      deletedDates = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
+      if (!Array.isArray(deletedDates)) deletedDates = [];
+    } catch (e) {}
 
     const map = new Map();
 
@@ -131,12 +171,12 @@ const AppStorage = {
 
     localWorkouts.forEach(w => {
       const k = getDateKey(w);
-      if (k) map.set(k, w);
+      if (k && !deletedDates.includes(k)) map.set(k, w);
     });
 
     incomingWorkouts.forEach(w => {
       const k = getDateKey(w);
-      if (!k) return;
+      if (!k || deletedDates.includes(k)) return;
       if (!map.has(k)) {
         map.set(k, w);
       } else {
@@ -155,10 +195,327 @@ const AppStorage = {
   },
 
   /**
+   * One-time data migrations and workout corrections
+   */
+  applyPendingMigrations() {
+    const MIGRATION_KEY = 'showUp_migration_20261016_oct16_workout_patch_v1';
+    if (localStorage.getItem(MIGRATION_KEY) === 'completed') return;
+
+    try {
+      // 1. Mark 2026-10-17 as tombstoned so older cloud backups cannot restore it, and unmark 2026-10-16
+      let deleted = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
+      if (!Array.isArray(deleted)) deleted = [];
+      if (!deleted.includes('2026-10-17')) deleted.push('2026-10-17');
+      deleted = deleted.filter(d => d !== '2026-10-16');
+      localStorage.setItem(STORAGE_KEYS.DELETED_WORKOUTS, JSON.stringify(deleted));
+
+      // 2. Fetch existing workouts and delete 2026-10-16 & 2026-10-17
+      let current = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.SYNCED_WORKOUTS);
+        current = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(current)) current = [];
+      } catch (e) {
+        current = [];
+      }
+
+      current = current.filter(w => {
+        const d = typeof w === 'string' ? w : w.date;
+        return d !== '2026-10-16' && d !== '2026-10-17';
+      });
+
+      // 3. Construct new 2026-10-16 workout with the exact 12 sets requested
+      const oct16Workout = {
+        date: "2026-10-16",
+        workoutName: "Conditioning & Squats",
+        notes: "Jump rope, barbell back squats, kettlebell single leg RDLs, and ring face pulls.",
+        totalSets: 12,
+        totalVolume: 6155,
+        aerobicTE: "3.8",
+        anaerobicTE: "2.8",
+        caloriesBurned: 395,
+        totalWorkoutSeconds: 1980,
+        totalWorkoutTimeFormatted: "00:33:00",
+        totalRestSeconds: 960,
+        totalRestTimeFormatted: "16m 00s",
+        totalActiveSeconds: 1020,
+        totalActiveTimeFormatted: "17m 00s",
+        workoutDuration: 1980,
+        workoutDurationFormatted: "00:33:00",
+        sets: [
+          {
+            id: 1729119901001,
+            exerciseName: "Jump Rope",
+            implement: "Bodyweight",
+            muscle: "Full Body",
+            secondaryMuscles: ["Quads", "Core/Abs"],
+            rpe: 8,
+            weight: 0,
+            reps: 1000,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 480,
+            restPeriod: 60
+          },
+          {
+            id: 1729119901002,
+            exerciseName: "Barbell Back Squat",
+            implement: "Barbell",
+            muscle: "Quads",
+            secondaryMuscles: ["Hamstrings/Glutes", "Core/Abs"],
+            rpe: 8,
+            weight: 65,
+            reps: 15,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 45,
+            restPeriod: 90
+          },
+          {
+            id: 1729119901003,
+            exerciseName: "Barbell Back Squat",
+            implement: "Barbell",
+            muscle: "Quads",
+            secondaryMuscles: ["Hamstrings/Glutes", "Core/Abs"],
+            rpe: 8,
+            weight: 65,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 35,
+            restPeriod: 90
+          },
+          {
+            id: 1729119901004,
+            exerciseName: "Barbell Back Squat",
+            implement: "Barbell",
+            muscle: "Quads",
+            secondaryMuscles: ["Hamstrings/Glutes", "Core/Abs"],
+            rpe: 8,
+            weight: 85,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 35,
+            restPeriod: 90
+          },
+          {
+            id: 1729119901005,
+            exerciseName: "Barbell Back Squat",
+            implement: "Barbell",
+            muscle: "Quads",
+            secondaryMuscles: ["Hamstrings/Glutes", "Core/Abs"],
+            rpe: 8,
+            weight: 95,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 35,
+            restPeriod: 120
+          },
+          {
+            id: 1729119901006,
+            exerciseName: "Barbell Back Squat",
+            implement: "Barbell",
+            muscle: "Quads",
+            secondaryMuscles: ["Hamstrings/Glutes", "Core/Abs"],
+            rpe: 8,
+            weight: 115,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 40,
+            restPeriod: 120
+          },
+          {
+            id: 1729119901007,
+            exerciseName: "Single Leg RDL",
+            implement: "Kettlebell",
+            muscle: "Hamstrings/Glutes",
+            secondaryMuscles: ["Core/Abs"],
+            rpe: 8,
+            weight: 35,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 40,
+            restPeriod: 60
+          },
+          {
+            id: 1729119901008,
+            exerciseName: "Single Leg RDL",
+            implement: "Kettlebell",
+            muscle: "Hamstrings/Glutes",
+            secondaryMuscles: ["Core/Abs"],
+            rpe: 8,
+            weight: 35,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 40,
+            restPeriod: 60
+          },
+          {
+            id: 1729119901009,
+            exerciseName: "Single Leg RDL",
+            implement: "Kettlebell",
+            muscle: "Hamstrings/Glutes",
+            secondaryMuscles: ["Core/Abs"],
+            rpe: 8,
+            weight: 44,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 40,
+            restPeriod: 60
+          },
+          {
+            id: 1729119901010,
+            exerciseName: "Single Leg RDL",
+            implement: "Kettlebell",
+            muscle: "Hamstrings/Glutes",
+            secondaryMuscles: ["Core/Abs"],
+            rpe: 8,
+            weight: 44,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 40,
+            restPeriod: 90
+          },
+          {
+            id: 1729119901011,
+            exerciseName: "Face Pull",
+            implement: "Gymnastics Rings",
+            muscle: "Shoulders",
+            secondaryMuscles: ["Back"],
+            rpe: 8,
+            weight: 0,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 30,
+            restPeriod: 60
+          },
+          {
+            id: 1729119901012,
+            exerciseName: "Face Pull",
+            implement: "Gymnastics Rings",
+            muscle: "Shoulders",
+            secondaryMuscles: ["Back"],
+            rpe: 8,
+            weight: 0,
+            reps: 10,
+            ergDistance: 0,
+            ergTime: "00:00",
+            swimDistance: 0,
+            swimTime: "00:00",
+            enduranceDistance: 0,
+            enduranceTime: "00:00:00",
+            hr: 0,
+            setDuration: 30,
+            restPeriod: 60
+          }
+        ]
+      };
+
+      current.unshift(oct16Workout);
+      this.saveAthleteWorkouts(current);
+
+      // 4. Update squads telemetry so member completedToday reflects 2026-10-16
+      try {
+        const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
+        if (Array.isArray(squads)) {
+          let updatedSquads = false;
+          squads.forEach(sq => {
+            if (Array.isArray(sq.members)) {
+              sq.members.forEach(m => {
+                if (m && (m.id === 'local_user' || m.completedDate === '2026-10-17' || m.completedDate === '2026-10-16')) {
+                  m.completedToday = true;
+                  m.completedDate = '2026-10-16';
+                  m.lastCompletedWorkout = "Conditioning & Squats";
+                  updatedSquads = true;
+                }
+              });
+            }
+          });
+          if (updatedSquads) {
+            localStorage.setItem(STORAGE_KEYS.SQUADS, JSON.stringify(squads));
+          }
+        }
+      } catch (sqErr) {}
+
+      localStorage.setItem(MIGRATION_KEY, 'completed');
+
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken && typeof syncToGoogleDrive === 'function') {
+        syncToGoogleDrive(true);
+      }
+    } catch (e) {
+      console.warn("[AppStorage] Migration error:", e);
+    }
+  },
+
+  /**
    * Load athlete workouts with defensive recovery across user-specific and synced stores
    */
   getAthleteWorkouts() {
     try {
+      this.applyPendingMigrations();
       const profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || 'null');
       const userEmail = (profile?.email || '').toLowerCase().trim();
       let workouts = [];
@@ -225,6 +582,10 @@ const AppStorage = {
     if (typeof completedWorkoutsHistory !== 'undefined') {
       completedWorkoutsHistory = workouts;
     }
+    workouts.forEach(w => {
+      const d = typeof w === 'string' ? w : w.date;
+      if (d) this.unmarkDeletedWorkout(d);
+    });
     try {
       localStorage.setItem(STORAGE_KEYS.SYNCED_WORKOUTS, JSON.stringify(workouts));
       const profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || 'null');

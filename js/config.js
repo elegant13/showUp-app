@@ -54,7 +54,10 @@
       { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] }
+      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
+      { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
+      { name: "Single Leg RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
+      { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] }
     ];
 
 
