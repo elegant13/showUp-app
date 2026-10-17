@@ -497,7 +497,7 @@ runSuite("4. Workout Tracking & Logging Engine", () => {
 });
 
 runSuite("5. History, Calendar & 'Showed Up' Logic (TC-4.1)", () => {
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
   const workedOutToday = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === todayKey);
   assert(workedOutToday === true, "Today correctly recorded as 'Showed Up' with workout");
   renderCalendar();

@@ -5,6 +5,48 @@
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
+    /**
+     * Resolves the user's active local time zone, storing it in localStorage for continuous tracking
+     */
+    function getUserTimeZone() {
+      try {
+        let detected = null;
+        if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+          detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        if (detected) {
+          try { localStorage.setItem('showUp_user_timezone', detected); } catch (e) {}
+          return detected;
+        }
+        return localStorage.getItem('showUp_user_timezone') || 'America/New_York';
+      } catch (e) {
+        return 'America/New_York';
+      }
+    }
+
+    /**
+     * Formats a given date (or current instant) into YYYY-MM-DD per the user's local time zone
+     */
+    function getLocalDateKey(date = new Date()) {
+      const tz = getUserTimeZone();
+      try {
+        const d = (date instanceof Date) ? date : new Date(date);
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: tz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(d);
+      } catch (e) {
+        const d = (date instanceof Date) ? date : new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    }
+
+    let userTimeZone = getUserTimeZone();
     let currentSessionSets = JSON.parse(localStorage.getItem('showUp_active_workout_sets') || '[]');
     let completedWorkoutsHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
     let weightHistory = JSON.parse(localStorage.getItem('showUp_weight_history') || '[]');
@@ -21,7 +63,7 @@
     let bleHRCharacteristic = null;
     let calendarDate = new Date();
     let googleAccessToken = localStorage.getItem('showUp_google_token') || null;
-    let selectedWorkoutDate = new Date().toISOString().slice(0, 10);
+    let selectedWorkoutDate = getLocalDateKey();
 
     // --- WORKOUT SESSION TIMER STATE ---
     let workoutTimerSeconds = 0;

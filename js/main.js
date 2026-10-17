@@ -8,6 +8,9 @@
       }
       initCatalog();
       initDatePickerConstraints();
+      if (typeof updateTimezoneDisplay === 'function') {
+        updateTimezoneDisplay();
+      }
       loadPhysicalProfile();
       renderLoggedSets();
       restoreWorkoutTimerState();

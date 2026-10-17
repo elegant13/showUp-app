@@ -126,7 +126,7 @@
       localStorage.setItem('showUp_user_weight', userWeight);
 
       const latestEntry = weightHistory[0];
-      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayISO = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
 
       if (!latestEntry || latestEntry.weight !== userWeight || latestEntry.date !== todayISO) {
         weightHistory.unshift({ date: todayISO, weight: userWeight });
@@ -880,7 +880,7 @@
 
       pauseWorkoutTimer();
 
-      const targetDate = selectedWorkoutDate || new Date().toISOString().slice(0, 10);
+      const targetDate = selectedWorkoutDate || (typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10));
       const workoutObj = {
         date: targetDate,
         workoutName,

@@ -3,18 +3,22 @@
    ========================================================================== */
 
     function initDatePickerConstraints() {
-      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayISO = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
       const dateInput = document.getElementById('workout-date-picker');
-      dateInput.max = todayISO;
-      dateInput.value = todayISO;
+      if (dateInput) {
+        dateInput.max = todayISO;
+        dateInput.value = todayISO;
+      }
       selectedWorkoutDate = todayISO;
+      updateTimezoneDisplay();
     }
 
     function handleDateChange(val) {
-      const todayISO = new Date().toISOString().slice(0, 10);
+      const todayISO = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
       if (val > todayISO) {
         alert("Future dates beyond current day are not allowed.");
-        document.getElementById('workout-date-picker').value = todayISO;
+        const dateInput = document.getElementById('workout-date-picker');
+        if (dateInput) dateInput.value = todayISO;
         selectedWorkoutDate = todayISO;
         document.getElementById('historical-mode-banner').classList.add('hidden');
         return;
@@ -30,10 +34,36 @@
     }
 
     function resetToTodayDate() {
-      const todayISO = new Date().toISOString().slice(0, 10);
-      document.getElementById('workout-date-picker').value = todayISO;
+      const todayISO = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
+      const dateInput = document.getElementById('workout-date-picker');
+      if (dateInput) dateInput.value = todayISO;
       selectedWorkoutDate = todayISO;
       document.getElementById('historical-mode-banner').classList.add('hidden');
+    }
+
+    function updateTimezoneDisplay() {
+      const tzName = typeof getUserTimeZone === 'function' ? getUserTimeZone() : '';
+      const tzEl = document.getElementById('user-timezone-display');
+      const settingsTzEl = document.getElementById('settings-timezone-label');
+      if (tzName) {
+        let shortCode = '';
+        try {
+          shortCode = new Intl.DateTimeFormat('en-US', {
+            timeZone: tzName,
+            timeZoneName: 'short'
+          }).formatToParts(new Date()).find(p => p.type === 'timeZoneName')?.value || '';
+        } catch (e) {}
+
+        const label = shortCode ? `${shortCode} (${tzName})` : tzName;
+        if (tzEl) {
+          tzEl.innerText = shortCode || tzName;
+          tzEl.title = `Local Time Zone: ${tzName}`;
+        }
+        if (settingsTzEl) {
+          settingsTzEl.innerText = label;
+          settingsTzEl.title = `Active Time Zone: ${tzName}`;
+        }
+      }
     }
 
 
@@ -307,22 +337,21 @@
       const dates = Array.from(new Set(completedWorkoutsHistory.map(w => typeof w === 'string' ? w : w.date).filter(Boolean))).sort().reverse();
       if (dates.length === 0) return 0;
 
-      const todayET = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
-      const todayLocal = new Date().toISOString().slice(0, 10);
+      const todayLocal = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
 
       const yest = new Date();
       yest.setDate(yest.getDate() - 1);
-      const yestISO = yest.toISOString().slice(0, 10);
+      const yestLocal = typeof getLocalDateKey === 'function' ? getLocalDateKey(yest) : yest.toISOString().slice(0, 10);
 
       const mostRecent = dates[0];
-      if (mostRecent !== todayET && mostRecent !== todayLocal && mostRecent !== yestISO) {
+      if (mostRecent !== todayLocal && mostRecent !== yestLocal) {
         return 0;
       }
 
       let streak = 0;
-      let checkDate = new Date(mostRecent);
+      let checkDate = new Date(mostRecent + 'T12:00:00');
       for (let i = 0; i < dates.length; i++) {
-        const expected = checkDate.toISOString().slice(0, 10);
+        const expected = typeof getLocalDateKey === 'function' ? getLocalDateKey(checkDate) : checkDate.toISOString().slice(0, 10);
         if (dates.includes(expected)) {
           streak++;
           checkDate.setDate(checkDate.getDate() - 1);
@@ -335,8 +364,8 @@
 
     function getWeekWorkoutStats(refDate = new Date()) {
       const bounds = getWeekWorkoutBounds(refDate);
-      const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
-      const todayLocal = new Date().toISOString().slice(0, 10);
+      const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey(refDate) : new Date().toISOString().slice(0, 10);
+      const todayLocal = todayKey;
 
       const weekDateKeys = new Set(bounds.days.map(d => d.dateKey));
       const weekWorkouts = completedWorkoutsHistory.filter(w => {
@@ -425,8 +454,8 @@
     }
 
     function getDailyWorkoutCongratulation() {
-      const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
-      const todayLocal = new Date().toISOString().slice(0, 10);
+      const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
+      const todayLocal = todayKey;
 
       const todayWorkout = completedWorkoutsHistory.find(w => {
         const d = typeof w === 'string' ? w : w.date;
@@ -666,7 +695,7 @@
             </div>
           `;
         } else {
-          const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
+          const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
           let teammatesCompletedToday = 0;
           let teammatesLiftingNow = 0;
           squads.forEach(sq => {

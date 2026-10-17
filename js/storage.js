@@ -21,6 +21,7 @@ const STORAGE_KEYS = {
   USER_IP_CITY: 'showUp_user_ip_city',
   USER_IP_LAT: 'showUp_user_ip_lat',
   USER_IP_LNG: 'showUp_user_ip_lng',
+  USER_TIMEZONE: 'showUp_user_timezone',
 
   // Workout Data & Analytics
   ACTIVE_SETS: 'showUp_active_workout_sets',
@@ -534,7 +535,7 @@ const AppStorage = {
 
       // Defensive Auto-Recovery: If today's workout is missing from the list but exists in Squads telemetry
       try {
-        const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);
+        const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
         const hasTodayWorkout = workouts.some(w => (typeof w === 'string' ? w : w.date) === todayKey);
         if (!hasTodayWorkout) {
           const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');

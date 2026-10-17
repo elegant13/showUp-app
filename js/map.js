@@ -250,16 +250,23 @@
 
 
     function getETDateKey(date = new Date()) {
+      if (typeof getLocalDateKey === 'function') {
+        return getLocalDateKey(date);
+      }
       try {
+        const tz = typeof getUserTimeZone === 'function' ? getUserTimeZone() : 'America/New_York';
         return new Intl.DateTimeFormat('en-CA', {
-          timeZone: 'America/New_York',
+          timeZone: tz,
           year: 'numeric',
           month: '2-digit',
           day: '2-digit'
         }).format(date);
       } catch (e) {
-        const offsetMs = 4 * 60 * 60 * 1000;
-        return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
+        const d = (date instanceof Date) ? date : new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
       }
     }
 
