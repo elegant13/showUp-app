@@ -203,14 +203,13 @@ const AppStorage = {
     if (localStorage.getItem(MIGRATION_KEY) === 'completed') return;
 
     try {
-      // 1. Mark 2026-10-17 as tombstoned so older cloud backups cannot restore it, and unmark 2026-10-16
+      // 1. Unmark historical workout dates so no valid workout is blocked or tombstoned
       let deleted = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
       if (!Array.isArray(deleted)) deleted = [];
-      if (!deleted.includes('2026-10-17')) deleted.push('2026-10-17');
-      deleted = deleted.filter(d => d !== '2026-10-16');
+      deleted = deleted.filter(d => d !== '2026-10-16' && d !== '2026-10-17');
       localStorage.setItem(STORAGE_KEYS.DELETED_WORKOUTS, JSON.stringify(deleted));
 
-      // 2. Fetch existing workouts and delete 2026-10-16 & 2026-10-17
+      // 2. Fetch existing workouts and delete only obsolete 2026-10-16 draft
       let current = [];
       try {
         const raw = localStorage.getItem(STORAGE_KEYS.SYNCED_WORKOUTS);
@@ -222,7 +221,7 @@ const AppStorage = {
 
       current = current.filter(w => {
         const d = typeof w === 'string' ? w : w.date;
-        return d !== '2026-10-16' && d !== '2026-10-17';
+        return d !== '2026-10-16';
       });
 
       // 3. Construct new 2026-10-16 workout with the exact 12 sets requested
@@ -533,33 +532,56 @@ const AppStorage = {
         workouts = this.mergeWorkouts(workouts, synced);
       }
 
-      // Defensive Auto-Recovery: If today's workout is missing from the list but exists in Squads telemetry
+      this.unmarkDeletedWorkout('2026-10-17');
+
+      // Defensive Auto-Recovery: If today's or yesterday's workout is missing from the list but exists in Squads telemetry
       try {
         const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
-        const hasTodayWorkout = workouts.some(w => (typeof w === 'string' ? w : w.date) === todayKey);
-        if (!hasTodayWorkout) {
-          const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
-          if (Array.isArray(squads)) {
-            for (const sq of squads) {
-              if (Array.isArray(sq.members)) {
-                const member = sq.members.find(m => m && (
-                  (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) ||
-                  m.id === 'local_user' ||
-                  (profile && m.id === profile.id)
-                ));
-                if (member && member.completedToday && member.completedDate === todayKey) {
-                  const recoveredWorkout = {
-                    date: todayKey,
-                    workoutName: member.lastCompletedWorkout || "Workout Session",
-                    totalVolume: 0,
-                    totalSets: 1,
-                    recoveredFromSquad: true,
-                    sets: []
-                  };
-                  workouts.unshift(recoveredWorkout);
-                  this.saveAthleteWorkouts(workouts);
-                  break;
-                }
+        const datesToCheck = [todayKey];
+        try {
+          const d = new Date();
+          d.setDate(d.getDate() - 1);
+          const yKey = typeof getETDateKey === 'function' ? getETDateKey(d) : (typeof getLocalDateKey === 'function' ? getLocalDateKey(d) : d.toISOString().slice(0, 10));
+          if (yKey && !datesToCheck.includes(yKey)) datesToCheck.push(yKey);
+        } catch (e) {}
+
+        const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
+        if (Array.isArray(squads)) {
+          for (const sq of squads) {
+            if (Array.isArray(sq.members)) {
+              const member = sq.members.find(m => m && (
+                (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) ||
+                m.id === 'local_user' ||
+                (profile && m.id === profile.id)
+              ));
+              if (member) {
+                datesToCheck.forEach(targetDateKey => {
+                  const hasDateWorkout = workouts.some(w => {
+                    const wd = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+                    return String(wd).slice(0, 10) === targetDateKey;
+                  });
+                  if (!hasDateWorkout) {
+                    const memberMatch = (member.completedDate === targetDateKey) || 
+                      (member.workoutDetails && String(member.workoutDetails.date || '').slice(0, 10) === targetDateKey) ||
+                      (targetDateKey === todayKey && member.completedToday === true);
+
+                    if (memberMatch) {
+                      const recoveredWorkout = member.workoutDetails && String(member.workoutDetails.date || '').slice(0, 10) === targetDateKey
+                        ? { ...member.workoutDetails, date: targetDateKey, completed: true }
+                        : {
+                            date: targetDateKey,
+                            workoutName: member.lastCompletedWorkout || "Workout Session",
+                            totalVolume: 0,
+                            totalSets: 1,
+                            completed: true,
+                            recoveredFromSquad: true,
+                            sets: []
+                          };
+                      workouts.unshift(recoveredWorkout);
+                      this.saveAthleteWorkouts(workouts);
+                    }
+                  }
+                });
               }
             }
           }

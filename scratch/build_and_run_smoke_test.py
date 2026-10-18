@@ -1412,6 +1412,29 @@ runSuite("16. Squads Teammate Workout Details, Double High Five Emoting & Clean 
   const todayNodes = getActiveAndCompletedZipNodes(todayKey);
   assert(todayNodes.length > 0, "Today's workouts retrieved accurately");
   assert(todayNodes[0].completedToday === 1, "Today's workout scored in map");
+
+  // Snap to Yesterday via setMapDateToYesterday
+  assert(typeof setMapDateToYesterday === 'function', "setMapDateToYesterday is a defined function");
+  setMapDateToYesterday();
+  const yesterdayKey = getYesterdayETDateKey();
+  assert(getSelectedMapDate() === yesterdayKey, "setMapDateToYesterday() snaps directly to yesterday's date");
+  assert(getOrCreateElement('map-date-badge').innerText.includes("Yesterday"), "Map date badge reflects Yesterday");
+  const yNodes = getActiveAndCompletedZipNodes(yesterdayKey);
+  assert(yNodes.length > 0, "Yesterday's workouts retrieved accurately on map");
+  assert(yNodes[0].completedToday === 1, "Yesterday's workout scored in map");
+
+  // Empty state for today prompting yesterday's scored activity
+  setSelectedMapDate(todayKey);
+  updateZipDetailCard([]);
+  const detailDesc = getOrCreateElement('zip-detail-desc').innerHTML;
+  assert(detailDesc.includes("scored yesterday") || detailDesc.includes("Yesterday"), "Empty card prompts yesterday's scored activity when today is empty");
+
+  // Tombstone & migration protection: 2026-10-17 is NOT deleted or tombstoned
+  AppStorage.applyPendingMigrations();
+  let deletedWorkouts = JSON.parse(localStorage.getItem('showUp_deleted_workouts') || '[]');
+  assert(!deletedWorkouts.includes('2026-10-17'), "2026-10-17 is NOT tombstoned in deleted workouts");
+  const allRecovered = getAllAthleteWorkouts();
+  assert(allRecovered.some(w => (typeof w === 'string' ? w : w.date) === '2026-10-17'), "2026-10-17 workout is preserved and never dropped");
 });
 
 print("\\n============================================================");

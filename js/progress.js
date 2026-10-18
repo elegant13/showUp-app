@@ -738,10 +738,21 @@
           const activeDate = (typeof getSelectedMapDate === 'function') ? getSelectedMapDate() : getETDateKey();
           const isToday = (activeDate === getETDateKey());
           const dateDisp = (typeof formatMapDateDisplay === 'function') ? formatMapDateDisplay(activeDate) : activeDate;
+          let emptyNotice = `No workouts recorded for ${dateDisp}.`;
+          if (isToday) {
+            const yesterdayKey = typeof getYesterdayETDateKey === 'function' ? getYesterdayETDateKey() : '';
+            const yesterdayNodes = (yesterdayKey && typeof getActiveAndCompletedZipNodes === 'function') ? getActiveAndCompletedZipNodes(yesterdayKey) : [];
+            const yTotal = yesterdayNodes.reduce((acc, n) => acc + (n.completedToday || 0), 0);
+            if (yTotal > 0) {
+              emptyNotice = `No workouts recorded today yet. <span class="text-amber-300 font-semibold">${yTotal} workout${yTotal === 1 ? '' : 's'} scored yesterday.</span> <button type="button" onclick="triggerHaptic('light'); setMapDateToYesterday()" class="text-amber-400 hover:text-amber-300 underline font-bold ml-1 cursor-pointer">View Yesterday (${yTotal} Scored)</button>`;
+            } else {
+              emptyNotice = 'No workouts recorded today yet. Log your first workout to put your area on the map!';
+            }
+          }
           tickerContainer.innerHTML = `
-            <div class="text-[11px] text-slate-500 italic py-1 px-1 flex items-center gap-1.5">
+            <div class="text-[11px] text-slate-500 italic py-1 px-1 flex items-center gap-1.5 flex-wrap">
               <i class="fa-solid fa-circle-info text-slate-600"></i>
-              <span>${isToday ? 'No workouts recorded today yet. Log your first workout to put your area on the map!' : `No workouts recorded for ${dateDisp}.`}</span>
+              <span>${emptyNotice}</span>
             </div>
           `;
         } else {

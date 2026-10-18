@@ -2645,6 +2645,7 @@
           userMember.isWorkingOut = false;
           userMember.completedToday = true;
           userMember.completedDate = currentETDate;
+          userMember.completedDates = Array.from(new Set([...(userMember.completedDates || []), currentETDate]));
           if (workoutName) {
             userMember.lastCompletedWorkout = workoutName;
             userMember.lastActive = 'Completed ' + workoutName;
@@ -2807,14 +2808,21 @@
       if (isMe) {
         const currentETDate = getETDateKey();
         let userHistory = [];
-        if (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory)) {
+        if (typeof getAllAthleteWorkouts === 'function') {
+          userHistory = getAllAthleteWorkouts();
+        } else if (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory)) {
           userHistory = completedWorkoutsHistory;
         } else {
           try {
             userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
           } catch (e) {}
         }
-        const todayWorkout = userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+
+        // 1. If user completed today, return today's workout
+        const todayWorkout = userHistory.find(w => {
+          const d = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+          return String(d).slice(0, 10) === currentETDate;
+        });
         if (todayWorkout && typeof todayWorkout === 'object') {
           return {
             ...todayWorkout,
@@ -2822,13 +2830,38 @@
             doubleHighFives: member.doubleHighFives || []
           };
         }
+
+        // 2. If member has an explicit completedDate, check for workout on that date
+        if (member.completedDate) {
+          const compDateKey = String(member.completedDate).slice(0, 10);
+          const dateWorkout = userHistory.find(w => {
+            const d = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+            return String(d).slice(0, 10) === compDateKey;
+          });
+          if (dateWorkout && typeof dateWorkout === 'object') {
+            return {
+              ...dateWorkout,
+              workoutName: dateWorkout.workoutName || member.lastCompletedWorkout || 'Workout Session',
+              doubleHighFives: member.doubleHighFives || []
+            };
+          }
+        }
+
+        // 3. If member has stored workoutDetails
         if (member.workoutDetails) {
           return {
             ...member.workoutDetails,
             doubleHighFives: member.doubleHighFives || []
           };
         }
-        const latest = userHistory[userHistory.length - 1];
+
+        // 4. Fall back to latest workout in athlete's history
+        const sortedHistory = [...userHistory].sort((a, b) => {
+          const da = typeof a === 'string' ? a : (a.date || a.completedDate || '');
+          const db = typeof b === 'string' ? b : (b.date || b.completedDate || '');
+          return String(db).localeCompare(String(da));
+        });
+        const latest = sortedHistory[0];
         if (latest && typeof latest === 'object') {
           return {
             ...latest,

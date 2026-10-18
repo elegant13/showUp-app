@@ -270,21 +270,111 @@
       }
     }
 
+    function getYesterdayETDateKey(refDate = new Date()) {
+      try {
+        const d = (refDate instanceof Date) ? new Date(refDate.getTime()) : new Date(refDate);
+        d.setDate(d.getDate() - 1);
+        return getETDateKey(d);
+      } catch (e) {
+        return getETDateKey();
+      }
+    }
+
+    /**
+     * Unified Athlete Workout Resolver:
+     * Cross-queries in-memory logs, AppStorage, synced storage, user-isolated caches,
+     * and squad telemetry so no scored workout is ever missed or dropped.
+     */
+    function getAllAthleteWorkouts() {
+      const workoutMap = new Map();
+
+      const addWorkout = (w) => {
+        if (!w) return;
+        const dateStr = typeof w === 'string'
+          ? w
+          : (w.date || w.completedDate || (w.timestamp ? String(w.timestamp).slice(0, 10) : ''));
+        if (!dateStr || typeof dateStr !== 'string') return;
+        const cleanDate = dateStr.slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) return;
+
+        if (!workoutMap.has(cleanDate)) {
+          workoutMap.set(cleanDate, typeof w === 'string' ? { date: cleanDate, completed: true } : { ...w, date: cleanDate, completed: true });
+        } else {
+          const existing = workoutMap.get(cleanDate);
+          if (typeof w === 'object') {
+            workoutMap.set(cleanDate, { ...existing, ...w, date: cleanDate, completed: true });
+          }
+        }
+      };
+
+      // 1. In-memory completedWorkoutsHistory
+      if (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory)) {
+        completedWorkoutsHistory.forEach(addWorkout);
+      }
+
+      // 2. AppStorage athlete workouts
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+        try {
+          const stored = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(stored)) stored.forEach(addWorkout);
+        } catch (e) {}
+      }
+
+      // 3. Raw Synced Workouts
+      try {
+        const rawSynced = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+        if (Array.isArray(rawSynced)) rawSynced.forEach(addWorkout);
+      } catch (e) {}
+
+      // 4. User-isolated store showUp_user_workouts_<email>
+      try {
+        const profile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const email = (profile?.email || '').toLowerCase().trim();
+        if (email && email !== 'you@showup.app' && email !== 'user@showup.app') {
+          const userWorkouts = JSON.parse(localStorage.getItem('showUp_user_workouts_' + email) || '[]');
+          if (Array.isArray(userWorkouts)) userWorkouts.forEach(addWorkout);
+        }
+      } catch (e) {}
+
+      // 5. Squad member telemetry
+      try {
+        const squads = typeof getSquads === 'function' ? getSquads() : JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+        const user = typeof getAppUser === 'function' ? getAppUser() : {};
+        if (Array.isArray(squads)) {
+          squads.forEach(sq => {
+            if (!sq || !Array.isArray(sq.members)) return;
+            const uMember = sq.members.find(m => m && (m.id === user.id || m.email === user.email || m.id === 'local_user'));
+            if (uMember) {
+              if (uMember.completedDate) {
+                addWorkout({
+                  date: String(uMember.completedDate).slice(0, 10),
+                  workoutName: uMember.lastCompletedWorkout || "Workout Session",
+                  completed: true,
+                  ...(uMember.workoutDetails || {})
+                });
+              }
+              if (uMember.workoutDetails && uMember.workoutDetails.date) {
+                addWorkout(uMember.workoutDetails);
+              }
+            }
+          });
+        }
+      } catch (e) {}
+
+      return Array.from(workoutMap.values());
+    }
+
     function checkAndResetDailyETCounter() {
       const currentETDate = getETDateKey();
-      const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+      const allWorkouts = getAllAthleteWorkouts();
       const user = getAppUser();
       const showedUpAthletes = new Set();
 
       // Check if current athlete showed up / completed a workout today
-      const userCompletedToday = rawHistory.some(w => {
+      const userCompletedToday = allWorkouts.some(w => {
         if (!w) return false;
-        const wDate = typeof w === 'string' ? w : w.date;
-        if (wDate !== currentETDate) return false;
-        if (typeof w === 'object') {
-          return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
-        }
-        return true;
+        const wDate = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+        return String(wDate).slice(0, 10) === currentETDate;
       });
 
       if (userCompletedToday) {
@@ -298,7 +388,8 @@
         sq.members.forEach(m => {
           if (!m) return;
           const isMe = (m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()));
-          if (m.completedDate === currentETDate && m.completedToday === true) {
+          const mDate = m.completedDate ? String(m.completedDate).slice(0, 10) : '';
+          if (mDate === currentETDate && m.completedToday === true) {
             if (isMe) {
               showedUpAthletes.add(user.id || user.email || '__CURRENT_USER__');
             } else {
@@ -395,30 +486,30 @@
     function formatMapDateDisplay(dateStr) {
       if (!dateStr) return 'Today';
       const today = getETDateKey();
+      const yesterday = getYesterdayETDateKey();
       try {
         const parts = String(dateStr).split('-').map(Number);
         if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
           const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
           if (dateStr === today) {
             return `Today (${formatted})`;
           }
-          const yDate = new Date();
-          yDate.setDate(yDate.getDate() - 1);
-          const yStr = getETDateKey(yDate);
-          if (dateStr === yStr) {
+          if (dateStr === yesterday) {
             return `Yesterday (${formatted})`;
           }
           return formatted;
         }
       } catch (e) {}
-      return dateStr === today ? `Today (${dateStr})` : dateStr;
+      return dateStr === today ? `Today (${dateStr})` : (dateStr === yesterday ? `Yesterday (${dateStr})` : dateStr);
     }
 
     function updateMapDateSelectorUI() {
       const activeDate = getSelectedMapDate();
       const today = getETDateKey();
+      const yesterday = getYesterdayETDateKey();
       const isToday = (activeDate === today);
+      const isYesterday = (activeDate === yesterday);
 
       const picker = document.getElementById('map-date-picker');
       if (picker) {
@@ -431,8 +522,10 @@
         badge.innerText = formatMapDateDisplay(activeDate);
         if (isToday) {
           badge.className = "text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-xl";
-        } else {
+        } else if (isYesterday) {
           badge.className = "text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-xl";
+        } else {
+          badge.className = "text-[11px] font-mono text-sky-300 bg-sky-500/10 border border-sky-500/30 px-2.5 py-1 rounded-xl";
         }
       }
 
@@ -442,6 +535,15 @@
           todayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition active:scale-95";
         } else {
           todayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-900 text-slate-400 border border-slate-700/80 hover:text-slate-200 hover:bg-slate-800 transition active:scale-95";
+        }
+      }
+
+      const yesterdayBtn = document.getElementById('map-date-yesterday-btn');
+      if (yesterdayBtn) {
+        if (isYesterday) {
+          yesterdayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition active:scale-95";
+        } else {
+          yesterdayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-900 text-slate-400 border border-slate-700/80 hover:text-slate-200 hover:bg-slate-800 transition active:scale-95";
         }
       }
 
@@ -468,7 +570,7 @@
       if (!newDate || typeof newDate !== 'string') {
         newDate = getETDateKey();
       }
-      selectedMapDate = newDate;
+      selectedMapDate = String(newDate).slice(0, 10);
       updateMapDateSelectorUI();
       if (typeof renderHeatMap === 'function') {
         renderHeatMap();
@@ -479,12 +581,9 @@
       const curr = getSelectedMapDate();
       try {
         const parts = curr.split('-').map(Number);
-        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        const d = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
         d.setDate(d.getDate() + Number(days));
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const nextDate = `${year}-${month}-${day}`;
+        const nextDate = getETDateKey(d);
         setSelectedMapDate(nextDate);
       } catch (e) {
         setSelectedMapDate(getETDateKey());
@@ -493,6 +592,10 @@
 
     function setMapDateToToday() {
       setSelectedMapDate(getETDateKey());
+    }
+
+    function setMapDateToYesterday() {
+      setSelectedMapDate(getYesterdayETDateKey());
     }
 
     function handleMapDateChange(val) {
@@ -504,6 +607,9 @@
     window.setSelectedMapDate = setSelectedMapDate;
     window.shiftMapDate = shiftMapDate;
     window.setMapDateToToday = setMapDateToToday;
+    window.setMapDateToYesterday = setMapDateToYesterday;
+    window.getYesterdayETDateKey = getYesterdayETDateKey;
+    window.getAllAthleteWorkouts = getAllAthleteWorkouts;
     window.handleMapDateChange = handleMapDateChange;
     window.updateMapDateSelectorUI = updateMapDateSelectorUI;
     window.formatMapDateDisplay = formatMapDateDisplay;
@@ -514,7 +620,7 @@
     // Only workouts completed by verified, logged-in athletes with authentic zip codes are mapped.
 
     function getActiveAndCompletedZipNodes(targetDate) {
-      const activeDate = targetDate || getSelectedMapDate();
+      const activeDate = String(targetDate || getSelectedMapDate()).slice(0, 10);
       const currentETDate = getETDateKey();
       const isToday = (activeDate === currentETDate);
       const userZip = getUserZip();
@@ -527,18 +633,14 @@
         currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
       );
 
-      // 2. Vetted User Completed Workouts for activeDate (from authentic synced workout history)
-      const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      const userVettedCompletedOnDate = rawHistory.filter(w => {
+      // 2. Vetted User Completed Workouts for activeDate (from authentic unified athlete workout history)
+      const allWorkouts = getAllAthleteWorkouts();
+      const userWorkoutsOnDate = allWorkouts.filter(w => {
         if (!w) return false;
-        const wDate = typeof w === 'string' ? w : w.date;
-        if (wDate !== activeDate) return false;
-        // Verify object integrity: must be valid date string or verified workout object with completed flag or sets
-        if (typeof w === 'object') {
-          return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
-        }
-        return true;
-      }).length;
+        const wDate = typeof w === 'string' ? w : (w.date || w.completedDate || (w.timestamp ? String(w.timestamp).slice(0, 10) : ''));
+        return String(wDate).slice(0, 10) === activeDate;
+      });
+      const userVettedCompletedOnDate = userWorkoutsOnDate.length;
 
       const nodesMap = new Map();
       const isValidZip = (z) => typeof z === 'string' && /^\d{5}$/.test(z.trim());
@@ -564,7 +666,7 @@
         if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
           if (!m) return;
-          const isMe = (m.id === user.id || m.email === user.email || m.id === 'local_user');
+          const isMe = (m.id === user.id || (user.email && m.email && m.email.toLowerCase().trim() === user.email.toLowerCase().trim()) || m.id === 'local_user');
           if (isMe) return;
 
           // Member must have a verified 5-digit zip code (no arbitrary fallback default zips!)
@@ -574,15 +676,22 @@
           const isMemberActive = isToday && (m.isWorkingOut === true && (m.currentWorkout || m.workoutStartedAt));
           
           let memberCompletedCount = 0;
-          if (m.completedDate === activeDate && (isToday ? m.completedToday === true : true)) {
+          const mCompDate = m.completedDate ? String(m.completedDate).slice(0, 10) : '';
+          const mDetailsDate = (m.workoutDetails && m.workoutDetails.date) ? String(m.workoutDetails.date).slice(0, 10) : '';
+
+          if (mCompDate === activeDate) {
             memberCompletedCount += 1;
-          } else if (m.workoutDetails && m.workoutDetails.date === activeDate) {
+          } else if (mDetailsDate === activeDate) {
             memberCompletedCount += 1;
           } else if (Array.isArray(m.workouts)) {
-            const countOnDate = m.workouts.filter(w => (typeof w === 'string' ? w : w.date) === activeDate).length;
+            const countOnDate = m.workouts.filter(w => {
+              const wd = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+              return String(wd).slice(0, 10) === activeDate;
+            }).length;
             if (countOnDate > 0) memberCompletedCount += countOnDate;
-          } else if (Array.isArray(m.completedDates) && m.completedDates.includes(activeDate)) {
-            memberCompletedCount += 1;
+          } else if (Array.isArray(m.completedDates)) {
+            const countOnDate = m.completedDates.filter(cd => String(cd).slice(0, 10) === activeDate).length;
+            if (countOnDate > 0) memberCompletedCount += countOnDate;
           }
 
           if (isMemberActive || memberCompletedCount > 0) {
@@ -1033,9 +1142,20 @@
 
       if (activeZipNodes.length === 0) {
         if (titleEl) titleEl.innerText = isToday ? "No workouts recorded today" : `No workouts recorded for ${dateDisplay}`;
-        if (descEl) descEl.innerText = isToday 
-          ? `Only workouts logged by you or your squad today are displayed. Your zip code (${userZip}) will activate when you complete a set.`
-          : `No workouts were scored by you or your squad on ${dateDisplay}. Select another date to view activity.`;
+        if (descEl) {
+          if (isToday) {
+            const yesterdayKey = getYesterdayETDateKey();
+            const yesterdayNodes = getActiveAndCompletedZipNodes(yesterdayKey);
+            const yTotal = yesterdayNodes.reduce((acc, n) => acc + (n.completedToday || 0), 0);
+            if (yTotal > 0) {
+              descEl.innerHTML = `No workouts recorded today yet. <span class="text-amber-300 font-semibold">${yTotal} workout${yTotal === 1 ? '' : 's'} scored yesterday</span> (${formatMapDateDisplay(yesterdayKey)}). <button type="button" onclick="triggerHaptic('light'); setMapDateToYesterday()" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400 hover:text-amber-300 underline ml-1 cursor-pointer"><i class="fa-solid fa-clock-rotate-left text-[9px]"></i> View Yesterday's Activity (${yTotal} Scored)</button>`;
+            } else {
+              descEl.innerText = `Only workouts logged by you or your squad today are displayed. Your zip code (${userZip}) will activate when you complete a set.`;
+            }
+          } else {
+            descEl.innerText = `No workouts were scored by you or your squad on ${dateDisplay}. Select another date to view activity.`;
+          }
+        }
         if (indEl) {
           indEl.className = "w-2.5 h-2.5 rounded-full bg-slate-700 flex-shrink-0";
           indEl.innerHTML = "";
