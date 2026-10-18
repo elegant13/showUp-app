@@ -310,7 +310,7 @@
       const btn = document.getElementById('btn-google-login');
       if (btn) {
         btn.disabled = false;
-        btn.innerHTML = `<i class="fa-brands fa-google text-red-500"></i><span>Sign in</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-right-to-bracket text-xs"></i><span>Sign in</span>`;
       }
     }
 

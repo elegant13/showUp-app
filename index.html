@@ -41,7 +41,7 @@
   <link rel="apple-touch-icon" href="showup_emblem.png">
 
   <!-- Application Stylesheet -->
-  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/app.css?v=20261018c">
 </head>
 <body id="app-body" class="font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
   <script>
@@ -141,6 +141,13 @@
               </a>
             </div>
 
+            <div class="py-1 border-t border-slate-800/80">
+              <button onclick="triggerHaptic('medium'); openAuthLoginModal('signin')" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800/80 hover:text-emerald-400 transition flex items-center gap-2">
+                <i class="fa-solid fa-user-lock text-xs text-emerald-400"></i>
+                <span>Athlete Account</span>
+              </button>
+            </div>
+
             <div class="py-1">
               <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
                 <i class="fa-solid fa-right-from-bracket text-xs"></i>
@@ -150,8 +157,8 @@
           </div>
         </div>
 
-        <button id="btn-google-login" onclick="triggerHaptic('medium'); handleGoogleSignIn()" class="flex items-center gap-1.5 sm:gap-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-semibold px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow transition-all shrink-0">
-          <i class="fa-brands fa-google text-red-500"></i>
+        <button id="btn-google-login" onclick="triggerHaptic('medium'); openAuthLoginModal('signin')" class="flex items-center gap-1.5 sm:gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-black px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl shadow-lg shadow-emerald-500/20 transition-all shrink-0 active:scale-95" title="Sign in or set up an account">
+          <i class="fa-solid fa-right-to-bracket text-xs"></i>
           <span>Sign in</span>
         </button>
       </div>
@@ -413,6 +420,20 @@
           <span>Material 3 • Privacy-First Telemetry</span>
           <i class="fa-solid fa-expand text-[9px] opacity-70"></i>
         </span>
+      </div>
+
+      <!-- ATHLETE ACCOUNT & SIGN IN SHORTCUT -->
+      <div class="space-y-2 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-user-lock text-emerald-400"></i>
+            Athlete Account & Sign In
+          </label>
+          <button type="button" onclick="triggerHaptic('light'); toggleSettingsModal(); openAuthLoginModal('signin')" class="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition active:scale-95 shadow-md shadow-emerald-500/20">
+            Sign In / Set Up
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400">Sign in with your chosen email address and password, set up a new account, or reset your password.</p>
       </div>
 
       <!-- V3 UI/UX DESIGN PARADIGM SWITCHER -->
@@ -2894,18 +2915,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js"></script>
-  <script defer src="js/storage.js"></script>
-  <script defer src="js/utils.js"></script>
-  <script defer src="js/theme.js"></script>
-  <script defer src="js/auth.js"></script>
-  <script defer src="js/workout.js"></script>
-  <script defer src="js/history.js"></script>
-  <script defer src="js/progress.js"></script>
-  <script defer src="js/squads.js"></script>
-  <script defer src="js/map.js"></script>
-  <script defer src="js/visitors.js"></script>
-  <script defer src="js/backup.js"></script>
-  <script defer src="js/main.js"></script>
+  <script defer src="js/config.js?v=20261018c"></script>
+  <script defer src="js/storage.js?v=20261018c"></script>
+  <script defer src="js/utils.js?v=20261018c"></script>
+  <script defer src="js/theme.js?v=20261018c"></script>
+  <script defer src="js/auth.js?v=20261018c"></script>
+  <script defer src="js/workout.js?v=20261018c"></script>
+  <script defer src="js/history.js?v=20261018c"></script>
+  <script defer src="js/progress.js?v=20261018c"></script>
+  <script defer src="js/squads.js?v=20261018c"></script>
+  <script defer src="js/map.js?v=20261018c"></script>
+  <script defer src="js/visitors.js?v=20261018c"></script>
+  <script defer src="js/backup.js?v=20261018c"></script>
+  <script defer src="js/main.js?v=20261018c"></script>
 </body>
 </html>

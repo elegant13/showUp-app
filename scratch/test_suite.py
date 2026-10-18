@@ -62,8 +62,9 @@ def test_codebase():
     # Also include external js/*.js scripts referenced in index.html
     import os
     for script_src in re.findall(r'<script\s+[^>]*src=["\']([^"\']+)["\']', html_content):
-        if script_src.startswith('js/') and os.path.exists(script_src):
-            with open(script_src, 'r', encoding='utf-8') as sf:
+        clean_src = script_src.split('?')[0]
+        if clean_src.startswith('js/') and os.path.exists(clean_src):
+            with open(clean_src, 'r', encoding='utf-8') as sf:
                 parser.scripts.append(sf.read())
 
     all_scripts = "\n".join(parser.scripts)
