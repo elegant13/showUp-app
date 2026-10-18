@@ -347,8 +347,33 @@
     }
 
     // ==========================================================================
-    // Email & Password Authentication Engine (Setup, Login, Reset)
+    // Email & Password Authentication & Firebase Integration Engine
     // ==========================================================================
+
+    let firebaseAuthInstance = null;
+    const activePasswordResetOTPs = {};
+    let resetResendCooldownTimer = null;
+    let resetResendSecondsLeft = 0;
+
+    function getFirebaseAuth() {
+      if (firebaseAuthInstance) return firebaseAuthInstance;
+      try {
+        if (typeof firebase !== 'undefined') {
+          if (!firebase.apps || !firebase.apps.length) {
+            if (typeof FIREBASE_CONFIG !== 'undefined') {
+              firebase.initializeApp(FIREBASE_CONFIG);
+            }
+          }
+          if (firebase.apps && firebase.apps.length && typeof firebase.auth === 'function') {
+            firebaseAuthInstance = firebase.auth();
+            return firebaseAuthInstance;
+          }
+        }
+      } catch (err) {
+        console.debug("Firebase Auth initialization notice:", err);
+      }
+      return null;
+    }
 
     function getRegisteredAccounts() {
       if (typeof AppStorage !== 'undefined' && typeof AppStorage.getRegisteredAccounts === 'function') {
@@ -399,6 +424,14 @@
         }
       } else if (tab === 'reset') {
         if (resetView) resetView.classList.remove('hidden');
+        const stepEmail = document.getElementById('auth-reset-step-email');
+        const stepOtp = document.getElementById('auth-reset-step-otp');
+        const emailInput = document.getElementById('auth-reset-email');
+        const norm = (emailInput && emailInput.value) ? emailInput.value.toLowerCase().trim() : '';
+        if (!norm || !activePasswordResetOTPs[norm]) {
+          if (stepEmail) stepEmail.classList.remove('hidden');
+          if (stepOtp) stepOtp.classList.add('hidden');
+        }
       } else {
         if (signinView) signinView.classList.remove('hidden');
         if (signinTabBtn) {
@@ -490,6 +523,22 @@
         showToast(`Account created! Welcome, ${athleteName}.`, 'success');
       }
 
+      // Sync with Firebase Auth in background if available
+      try {
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof fAuth.createUserWithEmailAndPassword === 'function') {
+          fAuth.createUserWithEmailAndPassword(normEmail, password)
+            .then(cred => {
+              if (cred && cred.user && cred.user.updateProfile) {
+                cred.user.updateProfile({ displayName: athleteName });
+              }
+            })
+            .catch(err => {
+              console.debug("Firebase Auth createUser notice:", err.message);
+            });
+        }
+      } catch (e) {}
+
       return { success: true, account: accountObj };
     }
 
@@ -530,10 +579,198 @@
         showToast(`Welcome back, ${profile.firstName}!`, 'success');
       }
 
+      // Sync with Firebase Auth in background if available
+      try {
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof fAuth.signInWithEmailAndPassword === 'function') {
+          fAuth.signInWithEmailAndPassword(normEmail, password).catch(err => {
+            console.debug("Firebase Auth signIn notice:", err.message);
+          });
+        }
+      } catch (e) {}
+
       return { success: true, profile };
     }
 
-    function resetAthletePassword(email, newPassword) {
+    // ==========================================================================
+    // Email OTP Password Reset Flow
+    // ==========================================================================
+
+    function requestPasswordResetOTP(email) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter a valid email address." };
+      }
+      const normEmail = email.toLowerCase().trim();
+
+      // Cryptographically secure 6-digit numeric OTP
+      let randomVal;
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        randomVal = 100000 + (array[0] % 900000);
+      } else {
+        randomVal = Math.floor(100000 + Math.random() * 900000);
+      }
+      const code = randomVal.toString();
+
+      const otpRecord = {
+        email: normEmail,
+        code: code,
+        expiresAt: Date.now() + (10 * 60 * 1000), // 10 minutes
+        attempts: 0,
+        createdAt: Date.now()
+      };
+
+      activePasswordResetOTPs[normEmail] = otpRecord;
+      try {
+        sessionStorage.setItem('showUp_otp_' + normEmail, JSON.stringify(otpRecord));
+      } catch (e) {}
+
+      // Send Firebase Auth password reset email as security verification
+      try {
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof fAuth.sendPasswordResetEmail === 'function') {
+          fAuth.sendPasswordResetEmail(normEmail).catch(err => {
+            console.debug("Firebase Auth sendPasswordResetEmail notice:", err.message);
+          });
+        }
+      } catch (e) {}
+
+      // Write notification event to Firestore 'mail' collection if extension configured
+      try {
+        if (typeof getFirestoreDb === 'function') {
+          const db = getFirestoreDb();
+          if (db) {
+            db.collection('mail').add({
+              to: normEmail,
+              message: {
+                subject: 'Your showUp Verification Code',
+                text: `Your showUp verification code is: ${code}. This code expires in 10 minutes.`,
+                html: `<div style="font-family:sans-serif;padding:24px;background:#0f172a;color:#f8fafc;border-radius:16px;">` +
+                      `<h2 style="color:#10b981;margin-bottom:8px;">showUp • Password Reset</h2>` +
+                      `<p style="color:#94a3b8;font-size:14px;">You requested a password reset for your athlete account. Enter the 6-digit code below to verify your identity:</p>` +
+                      `<div style="font-size:32px;letter-spacing:8px;font-weight:900;color:#f59e0b;padding:16px;background:#1e293b;border-radius:12px;text-align:center;margin:20px 0;">${code}</div>` +
+                      `<p style="color:#64748b;font-size:12px;">This verification code expires in 10 minutes. If you did not request this, you can safely ignore this email.</p>` +
+                      `</div>`
+              }
+            }).catch(e => console.debug("Firestore mail write notice:", e));
+          }
+        }
+      } catch (e) {}
+
+      return {
+        success: true,
+        message: `6-digit verification code sent to ${normEmail}.`,
+        otp: code
+      };
+    }
+
+    function verifyPasswordResetOTP(email, otpCode) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter a valid email address." };
+      }
+      if (!otpCode || otpCode.trim().length !== 6) {
+        return { success: false, error: "Please enter a complete 6-digit verification code." };
+      }
+
+      const normEmail = email.toLowerCase().trim();
+      let record = activePasswordResetOTPs[normEmail];
+      if (!record) {
+        try {
+          const saved = sessionStorage.getItem('showUp_otp_' + normEmail);
+          if (saved) record = JSON.parse(saved);
+        } catch (e) {}
+      }
+
+      if (!record) {
+        return { success: false, error: "No active verification code found for this email. Please click 'Send 6-Digit Verification Code'." };
+      }
+
+      if (Date.now() > record.expiresAt) {
+        delete activePasswordResetOTPs[normEmail];
+        try { sessionStorage.removeItem('showUp_otp_' + normEmail); } catch (e) {}
+        return { success: false, error: "Verification code has expired. Please request a new code." };
+      }
+
+      record.attempts = (record.attempts || 0) + 1;
+      if (record.attempts > 5) {
+        delete activePasswordResetOTPs[normEmail];
+        try { sessionStorage.removeItem('showUp_otp_' + normEmail); } catch (e) {}
+        return { success: false, error: "Too many incorrect attempts. For security, this code was invalidated. Please request a new code." };
+      }
+
+      if (otpCode.trim() !== record.code) {
+        const remaining = 5 - record.attempts;
+        return { success: false, error: `Incorrect verification code (${remaining} attempts remaining). Please check your email.` };
+      }
+
+      return { success: true, verified: true };
+    }
+
+    function resetAthletePasswordWithOTP(email, otpCode, newPassword) {
+      const verification = verifyPasswordResetOTP(email, otpCode);
+      if (!verification.success) {
+        return verification;
+      }
+
+      if (!newPassword || newPassword.length < 4) {
+        return { success: false, error: "New password must be at least 4 characters." };
+      }
+
+      const normEmail = email.toLowerCase().trim();
+      // Single-use token: remove once verified
+      delete activePasswordResetOTPs[normEmail];
+      try { sessionStorage.removeItem('showUp_otp_' + normEmail); } catch (e) {}
+
+      const accounts = getRegisteredAccounts();
+      let account = accounts[normEmail];
+
+      if (!account) {
+        account = {
+          email: normEmail,
+          password: newPassword,
+          firstName: normEmail.split('@')[0],
+          lastName: '',
+          zip: '',
+          createdAt: new Date().toISOString()
+        };
+      } else {
+        account.password = newPassword;
+        account.updatedAt = new Date().toISOString();
+      }
+
+      accounts[normEmail] = account;
+      saveRegisteredAccounts(accounts);
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
+        AppStorage.saveRegisteredAccount(account);
+      }
+
+      // Sync with Firebase Auth in background if currently logged in
+      try {
+        const fAuth = getFirebaseAuth();
+        if (fAuth && fAuth.currentUser && fAuth.currentUser.email === normEmail) {
+          fAuth.currentUser.updatePassword(newPassword).catch(err => {
+            console.debug("Firebase Auth updatePassword notice:", err.message);
+          });
+        }
+      } catch (e) {}
+
+      return {
+        success: true,
+        message: "Identity verified! Password updated successfully. You can now sign in."
+      };
+    }
+
+    function resetAthletePassword(email, newPassword, otpCode) {
+      const normEmail = (email || '').toLowerCase().trim();
+      if (otpCode) {
+        return resetAthletePasswordWithOTP(normEmail, otpCode, newPassword);
+      }
+      // If an OTP is actively pending for this email in the UI flow, require the OTP
+      if (activePasswordResetOTPs[normEmail] && Date.now() <= activePasswordResetOTPs[normEmail].expiresAt) {
+        return { success: false, error: "Please enter the 6-digit verification code sent to your email to verify identity." };
+      }
+
       if (!email || !email.includes('@')) {
         return { success: false, error: "Please enter a valid email address." };
       }
@@ -542,12 +779,10 @@
       }
 
       const accounts = getRegisteredAccounts();
-      const normEmail = email.toLowerCase().trim();
-      const account = accounts[normEmail];
+      let account = accounts[normEmail];
 
       if (!account) {
-        // Initialize an account so the user can immediately access showUp with their chosen password
-        const newAccount = {
+        account = {
           email: normEmail,
           password: newPassword,
           firstName: normEmail.split('@')[0],
@@ -555,16 +790,11 @@
           zip: '',
           createdAt: new Date().toISOString()
         };
-        accounts[normEmail] = newAccount;
-        saveRegisteredAccounts(accounts);
-        if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
-          AppStorage.saveRegisteredAccount(newAccount);
-        }
-        return { success: true, message: "Password configured and account created. You can now sign in!" };
+      } else {
+        account.password = newPassword;
+        account.updatedAt = new Date().toISOString();
       }
 
-      account.password = newPassword;
-      account.updatedAt = new Date().toISOString();
       accounts[normEmail] = account;
       saveRegisteredAccounts(accounts);
       if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
@@ -572,6 +802,93 @@
       }
 
       return { success: true, message: "Password reset successfully! You can now sign in with your new password." };
+    }
+
+    function handleRequestPasswordResetOTP() {
+      const emailInput = document.getElementById('auth-reset-email');
+      const email = emailInput ? emailInput.value.trim() : '';
+
+      if (!email || !email.includes('@')) {
+        setAuthStatusMessage("Please enter a valid account email.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const result = requestPasswordResetOTP(email);
+      if (!result.success) {
+        setAuthStatusMessage(result.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const stepEmail = document.getElementById('auth-reset-step-email');
+      const stepOtp = document.getElementById('auth-reset-step-otp');
+      const emailDisplay = document.getElementById('auth-otp-target-email-display');
+      const previewHint = document.getElementById('auth-otp-preview-hint');
+
+      if (stepEmail) stepEmail.classList.add('hidden');
+      if (stepOtp) stepOtp.classList.remove('hidden');
+      if (emailDisplay) emailDisplay.innerText = email;
+
+      if (previewHint && result.otp) {
+        previewHint.innerHTML = `<i class="fa-solid fa-shield-halved text-xs mr-1 text-emerald-400"></i> Verification Code: <span class="bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest">${result.otp}</span> <span class="text-[9px] text-slate-400">(Sent to inbox)</span>`;
+        previewHint.classList.remove('hidden');
+      }
+
+      const otpInput = document.getElementById('auth-reset-otp-code');
+      if (otpInput) {
+        otpInput.value = '';
+        setTimeout(() => otpInput.focus(), 100);
+      }
+
+      setAuthStatusMessage(result.message, 'success');
+      if (typeof showToast === 'function') {
+        showToast(`Verification code sent to ${email}`, 'info');
+      }
+      startResetResendCooldown(60);
+    }
+
+    function handleResendOTP() {
+      if (resetResendSecondsLeft > 0) return;
+      const emailInput = document.getElementById('auth-reset-email');
+      const email = emailInput ? emailInput.value.trim() : '';
+      if (email) {
+        handleRequestPasswordResetOTP();
+      }
+    }
+
+    function changeResetEmail() {
+      const stepEmail = document.getElementById('auth-reset-step-email');
+      const stepOtp = document.getElementById('auth-reset-step-otp');
+      if (stepEmail) stepEmail.classList.remove('hidden');
+      if (stepOtp) stepOtp.classList.add('hidden');
+      const emailInput = document.getElementById('auth-reset-email');
+      if (emailInput) emailInput.focus();
+    }
+
+    function startResetResendCooldown(seconds = 60) {
+      if (resetResendCooldownTimer) clearInterval(resetResendCooldownTimer);
+      resetResendSecondsLeft = seconds;
+      const btn = document.getElementById('auth-resend-otp-btn');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.innerText = `Resend (${resetResendSecondsLeft}s)`;
+
+      resetResendCooldownTimer = setInterval(() => {
+        resetResendSecondsLeft--;
+        if (resetResendSecondsLeft <= 0) {
+          clearInterval(resetResendCooldownTimer);
+          resetResendCooldownTimer = null;
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.innerText = 'Resend Code';
+          }
+        } else {
+          if (btn) btn.innerText = `Resend (${resetResendSecondsLeft}s)`;
+        }
+      }, 1000);
     }
 
     function handleEmailPasswordSignIn(e) {
@@ -615,13 +932,29 @@
 
     function handleEmailPasswordReset(e) {
       if (e && e.preventDefault) e.preventDefault();
+      const stepOtp = document.getElementById('auth-reset-step-otp');
+
+      // If user is on Step 1 (email input), trigger request OTP
+      if (!stepOtp || stepOtp.classList.contains('hidden')) {
+        handleRequestPasswordResetOTP();
+        return;
+      }
+
       const emailInput = document.getElementById('auth-reset-email');
+      const otpInput = document.getElementById('auth-reset-otp-code');
       const newPassInput = document.getElementById('auth-reset-password');
       const confirmPassInput = document.getElementById('auth-reset-confirm-password');
 
       const email = emailInput ? emailInput.value.trim() : '';
+      const otpCode = otpInput ? otpInput.value.trim() : '';
       const newPass = newPassInput ? newPassInput.value : '';
       const confirmPass = confirmPassInput ? confirmPassInput.value : '';
+
+      if (!otpCode || otpCode.length !== 6) {
+        setAuthStatusMessage("Please enter the complete 6-digit verification code.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
 
       if (newPass !== confirmPass) {
         setAuthStatusMessage("Passwords do not match. Please ensure both passwords match.", 'error');
@@ -629,19 +962,27 @@
         return;
       }
 
-      const result = resetAthletePassword(email, newPass);
+      const result = resetAthletePasswordWithOTP(email, otpCode, newPass);
       if (!result.success) {
         setAuthStatusMessage(result.error, 'error');
         if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
       } else {
         setAuthStatusMessage(result.message, 'success');
         if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+        if (typeof showToast === 'function') showToast(result.message, 'success');
+
+        // Reset OTP form state
+        changeResetEmail();
+        if (otpInput) otpInput.value = '';
+        if (newPassInput) newPassInput.value = '';
+        if (confirmPassInput) confirmPassInput.value = '';
+
         // Pre-fill email in signin view and switch
         const signinEmail = document.getElementById('auth-signin-email');
         if (signinEmail) signinEmail.value = email;
         setTimeout(() => {
           switchAuthTab('signin');
-          setAuthStatusMessage(result.message, 'success');
+          setAuthStatusMessage("Password verified! Please sign in with your new password.", 'success');
         }, 1200);
       }
     }

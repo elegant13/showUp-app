@@ -1549,6 +1549,33 @@ runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password
   const newLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'newSecret2026');
   assert(newLogin.success === true, "Login with new reset password succeeds");
 
+  // Email OTP Forgot Password Workflow
+  assert(typeof requestPasswordResetOTP === 'function', "requestPasswordResetOTP is a defined function");
+  assert(typeof verifyPasswordResetOTP === 'function', "verifyPasswordResetOTP is a defined function");
+  assert(typeof resetAthletePasswordWithOTP === 'function', "resetAthletePasswordWithOTP is a defined function");
+
+  // Step 1: Request OTP
+  const otpReq = requestPasswordResetOTP('runner@showup.fit');
+  assert(otpReq.success === true, "requestPasswordResetOTP succeeds");
+  assert(typeof otpReq.otp === 'string' && otpReq.otp.length === 6, "OTP code is exactly 6 digits: " + otpReq.otp);
+
+  // Step 2: Attempt with wrong OTP fails
+  const badOtpVerify = verifyPasswordResetOTP('runner@showup.fit', '000000');
+  assert(badOtpVerify.success === false, "Wrong OTP code is rejected");
+
+  // Step 3: Reset password with valid OTP
+  const validOtpReset = resetAthletePasswordWithOTP('runner@showup.fit', otpReq.otp, 'ultraPower2027');
+  assert(validOtpReset.success === true, "Password reset with valid OTP succeeds");
+
+  // Step 4: OTP is single-use (cannot be reused)
+  const reuseOtp = resetAthletePasswordWithOTP('runner@showup.fit', otpReq.otp, 'hackerAttempt');
+  assert(reuseOtp.success === false, "Used OTP cannot be reused (single-use token protection)");
+
+  // Step 5: Verify new password login
+  handleLogout(true);
+  const updatedLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'ultraPower2027');
+  assert(updatedLogin.success === true, "Login with OTP-verified password succeeds");
+
   // Auth UI Tabs
   switchAuthTab('signin');
   assert(!getOrCreateElement('auth-signin-view').classList.contains('hidden'), "Sign in view visible on signin tab");

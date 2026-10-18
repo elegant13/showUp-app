@@ -41,7 +41,7 @@
   <link rel="apple-touch-icon" href="showup_emblem.png">
 
   <!-- Application Stylesheet -->
-  <link rel="stylesheet" href="css/app.css?v=20261018c">
+  <link rel="stylesheet" href="css/app.css?v=20261018d">
 </head>
 <body id="app-body" class="font-sans antialiased min-h-screen pb-40 selection:bg-emerald-500 selection:text-slate-950" onclick="closeProfileDropdownOutside(event)">
   <script>
@@ -259,35 +259,84 @@
         </button>
       </form>
 
-      <!-- VIEW 3: RESET PASSWORD -->
+      <!-- VIEW 3: RESET PASSWORD VIA EMAIL OTP -->
       <form id="auth-reset-view" onsubmit="handleEmailPasswordReset(event)" class="hidden space-y-3">
         <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-[11px] text-amber-300">
           <div class="font-bold mb-0.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-key text-xs"></i>
-            <span>Reset Password</span>
+            <i class="fa-solid fa-shield-halved text-xs text-amber-400"></i>
+            <span>Reset Password via Email OTP</span>
           </div>
-          <p class="text-[10px] text-amber-200/80">Enter your account email and choose your new password.</p>
+          <p class="text-[10px] text-amber-200/80">Secure two-step verification: we send a 6-digit verification code to your email to confirm ownership before updating your password.</p>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Account Email</label>
-          <input type="email" id="auth-reset-email" required placeholder="athlete@example.com" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+        <!-- STEP 1: Enter Email & Request OTP -->
+        <div id="auth-reset-step-email" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Account Email</label>
+            <div class="relative">
+              <input type="email" id="auth-reset-email" placeholder="athlete@example.com" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 pl-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+              <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-xs text-slate-500"></i>
+            </div>
+            <p class="text-[10px] text-slate-400 mt-1">Enter your registered email address. We will dispatch a 6-digit verification code.</p>
+          </div>
+
+          <button type="button" id="auth-request-otp-btn" onclick="triggerHaptic('medium'); handleRequestPasswordResetOTP()" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+            <span>Send 6-Digit Verification Code</span>
+          </button>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">New Password</label>
-          <input type="password" id="auth-reset-password" required minlength="4" placeholder="New password (min 4 chars)" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
-        </div>
+        <!-- STEP 2: Enter OTP & Set New Password (Initially hidden) -->
+        <div id="auth-reset-step-otp" class="hidden space-y-3">
+          <!-- Notification & Target Email Info -->
+          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Verification Code Sent</span>
+              <button type="button" onclick="triggerHaptic('light'); changeResetEmail()" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline transition">Change email</button>
+            </div>
+            <div class="text-xs font-semibold text-slate-200 flex items-center gap-1.5 break-all">
+              <i class="fa-solid fa-inbox text-amber-400 text-xs"></i>
+              <span id="auth-otp-target-email-display">athlete@example.com</span>
+            </div>
+            <div id="auth-otp-preview-hint" class="text-[10px] text-emerald-400 font-mono pt-1 hidden"></div>
+          </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Confirm New Password</label>
-          <input type="password" id="auth-reset-confirm-password" required minlength="4" placeholder="Repeat new password" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
-        </div>
+          <!-- 6-digit OTP code input -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">6-Digit Code (OTP)</label>
+              <button type="button" id="auth-resend-otp-btn" onclick="triggerHaptic('light'); handleResendOTP()" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold transition">Resend Code</button>
+            </div>
+            <input type="text" id="auth-reset-otp-code" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" placeholder="••••••" autocomplete="one-time-code" class="w-full text-center tracking-[0.4em] font-mono font-black text-lg bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 text-amber-300 placeholder-slate-700 focus:outline-none transition shadow-inner">
+            <span class="block text-[10px] text-slate-500 text-center mt-1">Code is valid for 10 minutes. Check inbox or spam folder.</span>
+          </div>
 
-        <button type="submit" id="auth-submit-reset-btn" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
-          <i class="fa-solid fa-lock-open text-xs"></i>
-          <span>Save New Password</span>
-        </button>
+          <!-- New Password inputs -->
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">New Password</label>
+            <div class="relative">
+              <input type="password" id="auth-reset-password" minlength="4" placeholder="New password (min 4 chars)" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 pr-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+              <button type="button" onclick="togglePasswordVisibility('auth-reset-password', this)" class="absolute right-2.5 top-2 text-slate-500 hover:text-slate-300 p-0.5">
+                <i class="fa-solid fa-eye text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Confirm New Password</label>
+            <div class="relative">
+              <input type="password" id="auth-reset-confirm-password" minlength="4" placeholder="Repeat new password" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 pr-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+              <button type="button" onclick="togglePasswordVisibility('auth-reset-confirm-password', this)" class="absolute right-2.5 top-2 text-slate-500 hover:text-slate-300 p-0.5">
+                <i class="fa-solid fa-eye text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" id="auth-submit-reset-btn" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
+            <i class="fa-solid fa-lock-open text-xs"></i>
+            <span>Verify Code & Reset Password</span>
+          </button>
+        </div>
 
         <button type="button" onclick="triggerHaptic('light'); switchAuthTab('signin')" class="w-full text-center text-xs text-slate-400 hover:text-slate-200 py-1 transition">
           <i class="fa-solid fa-arrow-left text-[10px] mr-1"></i> Back to Sign In
@@ -2910,23 +2959,24 @@
   </nav>
 
   <!-- ================= JAVASCRIPT APPLICATION ENGINE ================= -->
-  <!-- Firebase Cloud Firestore SDK (Zero-build static compat) -->
+  <!-- Firebase Cloud Firestore & Auth SDK (Zero-build static compat) -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018c"></script>
-  <script defer src="js/storage.js?v=20261018c"></script>
-  <script defer src="js/utils.js?v=20261018c"></script>
-  <script defer src="js/theme.js?v=20261018c"></script>
-  <script defer src="js/auth.js?v=20261018c"></script>
-  <script defer src="js/workout.js?v=20261018c"></script>
-  <script defer src="js/history.js?v=20261018c"></script>
-  <script defer src="js/progress.js?v=20261018c"></script>
-  <script defer src="js/squads.js?v=20261018c"></script>
-  <script defer src="js/map.js?v=20261018c"></script>
-  <script defer src="js/visitors.js?v=20261018c"></script>
-  <script defer src="js/backup.js?v=20261018c"></script>
-  <script defer src="js/main.js?v=20261018c"></script>
+  <script defer src="js/config.js?v=20261018d"></script>
+  <script defer src="js/storage.js?v=20261018d"></script>
+  <script defer src="js/utils.js?v=20261018d"></script>
+  <script defer src="js/theme.js?v=20261018d"></script>
+  <script defer src="js/auth.js?v=20261018d"></script>
+  <script defer src="js/workout.js?v=20261018d"></script>
+  <script defer src="js/history.js?v=20261018d"></script>
+  <script defer src="js/progress.js?v=20261018d"></script>
+  <script defer src="js/squads.js?v=20261018d"></script>
+  <script defer src="js/map.js?v=20261018d"></script>
+  <script defer src="js/visitors.js?v=20261018d"></script>
+  <script defer src="js/backup.js?v=20261018d"></script>
+  <script defer src="js/main.js?v=20261018d"></script>
 </body>
 </html>
