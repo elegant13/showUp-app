@@ -742,3 +742,29 @@ nav {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Double High Five Floating Emote Animation */
+@keyframes floatUpFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.85) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1.25) rotate(8deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-90px) scale(1) rotate(-8deg);
+  }
+}
+
+.high-five-floating {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  font-size: 2.25rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  animation: floatUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+

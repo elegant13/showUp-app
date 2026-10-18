@@ -385,30 +385,154 @@
       updateGlobalStatsUI();
     }, 30000);
 
+    // ================= ACTIVITY WORKOUT MAP DATE SELECTOR STATE =================
+    let selectedMapDate = getETDateKey();
+
+    function getSelectedMapDate() {
+      return selectedMapDate || getETDateKey();
+    }
+
+    function formatMapDateDisplay(dateStr) {
+      if (!dateStr) return 'Today';
+      const today = getETDateKey();
+      try {
+        const parts = String(dateStr).split('-').map(Number);
+        if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+          const d = new Date(parts[0], parts[1] - 1, parts[2]);
+          const formatted = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          if (dateStr === today) {
+            return `Today (${formatted})`;
+          }
+          const yDate = new Date();
+          yDate.setDate(yDate.getDate() - 1);
+          const yStr = getETDateKey(yDate);
+          if (dateStr === yStr) {
+            return `Yesterday (${formatted})`;
+          }
+          return formatted;
+        }
+      } catch (e) {}
+      return dateStr === today ? `Today (${dateStr})` : dateStr;
+    }
+
+    function updateMapDateSelectorUI() {
+      const activeDate = getSelectedMapDate();
+      const today = getETDateKey();
+      const isToday = (activeDate === today);
+
+      const picker = document.getElementById('map-date-picker');
+      if (picker) {
+        picker.value = activeDate;
+        picker.max = today;
+      }
+
+      const badge = document.getElementById('map-date-badge');
+      if (badge) {
+        badge.innerText = formatMapDateDisplay(activeDate);
+        if (isToday) {
+          badge.className = "text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-xl";
+        } else {
+          badge.className = "text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-xl";
+        }
+      }
+
+      const todayBtn = document.getElementById('map-date-today-btn');
+      if (todayBtn) {
+        if (isToday) {
+          todayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition active:scale-95";
+        } else {
+          todayBtn.className = "text-xs font-bold px-3 py-1 rounded-xl bg-slate-900 text-slate-400 border border-slate-700/80 hover:text-slate-200 hover:bg-slate-800 transition active:scale-95";
+        }
+      }
+
+      const subtitle = document.getElementById('map-date-subtitle');
+      if (subtitle) {
+        if (isToday) {
+          subtitle.innerText = "Real-time zip codes where athletes are actively lifting or completed workouts today";
+        } else {
+          subtitle.innerText = `Showing verified zip codes where athletes scored workouts on ${formatMapDateDisplay(activeDate)}`;
+        }
+      }
+
+      const activeZipTitle = document.getElementById('map-active-zip-title');
+      if (activeZipTitle) {
+        if (isToday) {
+          activeZipTitle.innerText = "Today's Active Zip Codes:";
+        } else {
+          activeZipTitle.innerText = `Active Zip Codes for ${formatMapDateDisplay(activeDate)}:`;
+        }
+      }
+    }
+
+    function setSelectedMapDate(newDate) {
+      if (!newDate || typeof newDate !== 'string') {
+        newDate = getETDateKey();
+      }
+      selectedMapDate = newDate;
+      updateMapDateSelectorUI();
+      if (typeof renderHeatMap === 'function') {
+        renderHeatMap();
+      }
+    }
+
+    function shiftMapDate(days) {
+      const curr = getSelectedMapDate();
+      try {
+        const parts = curr.split('-').map(Number);
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        d.setDate(d.getDate() + Number(days));
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const nextDate = `${year}-${month}-${day}`;
+        setSelectedMapDate(nextDate);
+      } catch (e) {
+        setSelectedMapDate(getETDateKey());
+      }
+    }
+
+    function setMapDateToToday() {
+      setSelectedMapDate(getETDateKey());
+    }
+
+    function handleMapDateChange(val) {
+      if (!val) return;
+      setSelectedMapDate(val);
+    }
+
+    window.getSelectedMapDate = getSelectedMapDate;
+    window.setSelectedMapDate = setSelectedMapDate;
+    window.shiftMapDate = shiftMapDate;
+    window.setMapDateToToday = setMapDateToToday;
+    window.handleMapDateChange = handleMapDateChange;
+    window.updateMapDateSelectorUI = updateMapDateSelectorUI;
+    window.formatMapDateDisplay = formatMapDateDisplay;
+
     // ================= REAL-TIME VETTED ZIP CODES (STRICTLY AUTHENTICATED & VETTED LOGS) =================
     // CRITICAL USER REQUIREMENT:
     // Ensure arbitrary and unvetted workouts are NOT presented in the Active Workout Map.
     // Only workouts completed by verified, logged-in athletes with authentic zip codes are mapped.
 
-
-    function getActiveAndCompletedZipNodes() {
+    function getActiveAndCompletedZipNodes(targetDate) {
+      const activeDate = targetDate || getSelectedMapDate();
       const currentETDate = getETDateKey();
+      const isToday = (activeDate === currentETDate);
       const userZip = getUserZip();
       const user = getAppUser();
 
-      // 1. Vetted User Active Lifting Status (must have genuine active workout sets logged in current session)
-      const isUserLifting = (
+      // 1. Vetted User Active Lifting Status (only relevant when viewing today's session)
+      const isUserLifting = isToday && (
         Array.isArray(currentSessionSets) && 
         currentSessionSets.length > 0 && 
         currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
       );
 
-      // 2. Vetted User Completed Workouts Today (from authentic synced workout history)
+      // 2. Vetted User Completed Workouts for activeDate (from authentic synced workout history)
       const rawHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
-      const userVettedCompletedToday = rawHistory.filter(w => {
+      const userVettedCompletedOnDate = rawHistory.filter(w => {
         if (!w) return false;
         const wDate = typeof w === 'string' ? w : w.date;
-        if (wDate !== currentETDate) return false;
+        if (wDate !== activeDate) return false;
         // Verify object integrity: must be valid date string or verified workout object with completed flag or sets
         if (typeof w === 'object') {
           return (Array.isArray(w.sets) && w.sets.length > 0) || w.completed === true || w.totalVolume > 0 || w.calories > 0;
@@ -419,8 +543,8 @@
       const nodesMap = new Map();
       const isValidZip = (z) => typeof z === 'string' && /^\d{5}$/.test(z.trim());
 
-      // 1. Add logged-in user's zip ONLY if verified active or completed today
-      if (isValidZip(userZip) && (isUserLifting || userVettedCompletedToday > 0)) {
+      // 1. Add logged-in user's zip ONLY if verified active or completed on target date
+      if (isValidZip(userZip) && (isUserLifting || userVettedCompletedOnDate > 0)) {
         const userCoords = getZipCoordinates(userZip);
         nodesMap.set(userZip, {
           zip: userZip,
@@ -428,13 +552,13 @@
           lat: userCoords.lat,
           lng: userCoords.lng,
           activeCount: isUserLifting ? 1 : 0,
-          completedToday: userVettedCompletedToday,
+          completedToday: userVettedCompletedOnDate,
           isUserZip: true,
           lifters: isUserLifting ? [user.rawName || 'You'] : []
         });
       }
 
-      // 2. Add squad members ONLY if they have vetted completed workouts or active sessions with valid zip codes
+      // 2. Add squad members ONLY if they have vetted completed workouts on target date or active sessions with valid zip codes
       const squads = getSquads();
       squads.forEach(sq => {
         if (!sq || !Array.isArray(sq.members)) return;
@@ -447,10 +571,21 @@
           const mZip = m.zip && isValidZip(m.zip) ? m.zip.trim() : null;
           if (!mZip) return; // Discard unvetted locations without a valid postal zip
 
-          const isMemberActive = (m.isWorkingOut === true && (m.currentWorkout || m.workoutStartedAt));
-          const isMemberCompletedToday = (m.completedToday === true && m.completedDate === currentETDate);
+          const isMemberActive = isToday && (m.isWorkingOut === true && (m.currentWorkout || m.workoutStartedAt));
+          
+          let memberCompletedCount = 0;
+          if (m.completedDate === activeDate && (isToday ? m.completedToday === true : true)) {
+            memberCompletedCount += 1;
+          } else if (m.workoutDetails && m.workoutDetails.date === activeDate) {
+            memberCompletedCount += 1;
+          } else if (Array.isArray(m.workouts)) {
+            const countOnDate = m.workouts.filter(w => (typeof w === 'string' ? w : w.date) === activeDate).length;
+            if (countOnDate > 0) memberCompletedCount += countOnDate;
+          } else if (Array.isArray(m.completedDates) && m.completedDates.includes(activeDate)) {
+            memberCompletedCount += 1;
+          }
 
-          if (isMemberActive || isMemberCompletedToday) {
+          if (isMemberActive || memberCompletedCount > 0) {
             const mCoords = getZipCoordinates(mZip);
             const mCity = m.city || mCoords.city || `Zip ${mZip}`;
             const mLat = m.lat || mCoords.lat;
@@ -475,8 +610,8 @@
               const name = m.rawName || m.name || 'Teammate';
               if (!existing.lifters.includes(name)) existing.lifters.push(name);
             }
-            if (isMemberCompletedToday) {
-              existing.completedToday += 1;
+            if (memberCompletedCount > 0) {
+              existing.completedToday += memberCompletedCount;
             }
           }
         });
@@ -735,66 +870,24 @@
       const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
 
       aggNodes.forEach(node => {
-        const isSelected = (node.id === selectedHeatMapZip || (node.originalNodes && node.originalNodes.some(on => on.zip === selectedHeatMapZip)));
         const completedCount = node.completedToday || 0;
 
-        // 1. Draw Adaptive Boundary Polygon based on Zoom Hierarchy
-        let deltaLat = 0.016;
-        let deltaLng = 0.022;
-        if (node.type === 'state') {
-          deltaLat = 1.2;
-          deltaLng = 1.8;
-        } else if (node.type === 'country') {
-          deltaLat = 4.5;
-          deltaLng = 7.0;
-        }
-
-        const boundaryPaths = [
-          { lat: node.lat + deltaLat, lng: node.lng - deltaLng },
-          { lat: node.lat + deltaLat, lng: node.lng + deltaLng },
-          { lat: node.lat - deltaLat, lng: node.lng + deltaLng },
-          { lat: node.lat - deltaLat, lng: node.lng - deltaLng }
-        ];
-
-        const polygon = new google.maps.Polygon({
-          paths: boundaryPaths,
-          strokeColor: pal.fill,
-          strokeOpacity: isSelected ? 1.0 : 0.75,
-          strokeWeight: isSelected ? (node.type === 'zip' ? 3.5 : 4) : 2,
-          fillColor: pal.fill,
-          fillOpacity: isSelected ? 0.22 : 0.1,
-          map: googleMapInstance
-        });
-
-        polygon.addListener('click', () => {
-          triggerHaptic('light');
-          selectZipNode(node.id);
-        });
-        googleMapPolygons.push(polygon);
-
-        // 2. Custom SVG Marker displaying the exact workouts completed
-        const tagLabel = node.type === 'zip' ? node.id : (node.shortTitle || node.id);
+        // Cleaner Map View: Circular marker displaying strictly the number of workouts scored
         const svgIcon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60">
-              <!-- Boundary box outline -->
-              <rect x="2" y="2" width="56" height="56" rx="14" fill="${pal.fill}" fill-opacity="${isSelected ? '0.28' : '0.12'}" stroke="${pal.fill}" stroke-width="${isSelected ? '2.5' : '1.5'}" stroke-dasharray="${node.type === 'zip' ? '4 2' : '6 3'}"/>
-              <!-- Completed Workout Number Badge -->
-              <rect x="14" y="10" width="32" height="28" rx="8" fill="${pal.fill}" stroke="${pal.stroke}" stroke-width="1.5"/>
-              <text x="30" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="14" font-weight="900" text-anchor="middle">${completedCount}</text>
-              <!-- Region / Zip Code Label -->
-              <rect x="6" y="42" width="48" height="13" rx="3.5" fill="#0b0f19" fill-opacity="0.92"/>
-              <text x="30" y="52" fill="#cbd5e1" font-family="monospace, sans-serif" font-size="8.5" font-weight="700" text-anchor="middle">${tagLabel}</text>
+            <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+              <circle cx="23" cy="23" r="19" fill="${pal.fill}" stroke="#0b0f19" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))"/>
+              <text x="23" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="16" font-weight="900" text-anchor="middle">${completedCount}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(60, 60),
-          anchor: new google.maps.Point(30, 30)
+          scaledSize: new google.maps.Size(46, 46),
+          anchor: new google.maps.Point(23, 23)
         };
 
         const marker = new google.maps.Marker({
           position: { lat: node.lat, lng: node.lng },
           map: googleMapInstance,
-          title: `${node.label}: ${completedCount} Completed Workouts by Logged-in Athletes`,
+          title: `${completedCount} Workouts Scored`,
           icon: svgIcon
         });
 
@@ -812,93 +905,44 @@
       const centerHud = document.getElementById('map-boundary-center-hud');
       if (!topHud || !centerHud) return;
 
+      if (!Array.isArray(activeNodes)) {
+        if (typeof getActiveAndCompletedZipNodes === 'function') {
+          activeNodes = getActiveAndCompletedZipNodes();
+        } else {
+          activeNodes = [];
+        }
+      }
+
       const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
 
       if (!aggNodes || aggNodes.length === 0) {
         topHud.innerHTML = '';
         centerHud.innerHTML = `
-          <div class="pointer-events-auto text-center p-3 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-slate-800 text-slate-400 max-w-xs shadow-xl">
-            <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 mx-auto mb-2 flex items-center justify-center text-slate-400 text-xs">
-              <i class="fa-solid fa-map-location-dot"></i>
+          <div class="pointer-events-auto flex items-center justify-center">
+            <div class="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 font-mono font-bold text-lg flex items-center justify-center shadow-lg" title="0 Workouts Scored">
+              0
             </div>
-            <p class="text-xs font-bold text-slate-200">No active workouts logged today</p>
-            <p class="text-[10px] text-slate-400 mt-0.5">Finish a workout to put your area on the live map!</p>
           </div>
         `;
         return;
       }
 
-      // Top HUD: Interactive chips reflecting the current zoom level (Zip -> State -> Country)
-      topHud.innerHTML = `
-        <div class="flex items-center gap-1.5 flex-wrap pointer-events-auto">
-          ${aggNodes.map(node => {
-            const isSelected = (node.id === selectedHeatMapZip || (node.originalNodes && node.originalNodes.some(on => on.zip === selectedHeatMapZip)));
-            return `
-              <button onclick="triggerHaptic('light'); selectZipNode('${node.id}')" class="px-2.5 py-1 rounded-xl bg-slate-950/90 backdrop-blur-md border ${
-                isSelected 
-                  ? 'border-[var(--m3-primary)] shadow-md shadow-[var(--m3-primary)]/20 text-white font-bold' 
-                  : 'border-slate-800 text-slate-300 hover:border-slate-700 font-medium'
-              } text-xs flex items-center gap-1.5 transition active:scale-95">
-                <span class="w-5 h-5 rounded-lg bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-[10px] flex items-center justify-center shadow-sm">
-                  ${node.completedToday || 0}
-                </span>
-                <span class="font-mono text-[11px]">${node.type === 'zip' ? `Zip ${node.id}` : node.label}</span>
-              </button>
-            `;
-          }).join('')}
-        </div>
-      `;
+      // Cleaner Map View: Keep top HUD clean and uncluttered
+      topHud.innerHTML = '';
 
-      // Center HUD: Adaptive Boundary Perimeter Frame identifying the selected Region/Zip
+      // Center HUD: Display strictly the number of workouts scored at this zoomed level
       const selectedNode = aggNodes.find(z => z.id === selectedHeatMapZip || (z.originalNodes && z.originalNodes.some(on => on.zip === selectedHeatMapZip))) || aggNodes[0];
       if (!selectedNode) {
         centerHud.innerHTML = '';
         return;
       }
 
-      let borderBadgeText = `Zip ${selectedNode.id}`;
-      let borderSubtext = selectedNode.subLabel;
-      let levelLabel = 'Workouts Completed Today';
-      if (selectedNode.type === 'state') {
-        borderBadgeText = `State Area: ${selectedNode.label}`;
-        levelLabel = `State Workouts Completed`;
-      } else if (selectedNode.type === 'country') {
-        borderBadgeText = `Country: ${selectedNode.label}`;
-        levelLabel = `National Workouts Completed`;
-      }
+      const completedCount = selectedNode.completedToday || 0;
 
       centerHud.innerHTML = `
-        <div class="pointer-events-auto cursor-pointer group transition duration-300" onclick="triggerHaptic('light'); zoomToSelectedZip()">
-          <!-- Geometric Boundary Perimeter Box -->
-          <div class="w-52 sm:w-64 h-36 sm:h-40 rounded-3xl border-2 border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 backdrop-blur-[3px] shadow-2xl shadow-[var(--m3-primary)]/20 relative flex flex-col items-center justify-between p-3 transition group-hover:scale-105 group-hover:border-[var(--m3-primary)]">
-            <!-- 4 Corner Boundary Tick Marks -->
-            <div class="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-[var(--m3-primary)]"></div>
-            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-[var(--m3-primary)]"></div>
-            <div class="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-[var(--m3-primary)]"></div>
-            <div class="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-[var(--m3-primary)]"></div>
-
-            <!-- Header Badge: Region & Level Label -->
-            <div class="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-950/90 border border-[var(--m3-primary)]/40 text-[10px] font-mono text-slate-200 shadow-sm max-w-[90%] truncate">
-              <i class="fa-solid fa-draw-polygon text-[var(--m3-primary)] text-[9px] flex-shrink-0"></i>
-              <span class="font-bold truncate">${borderBadgeText}</span>
-            </div>
-
-            <!-- Number of Completed Workouts by Logged-in Athletes -->
-            <div class="flex flex-col items-center justify-center gap-0.5 my-auto">
-              <div class="w-12 h-12 rounded-2xl bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl flex items-center justify-center shadow-lg shadow-[var(--m3-primary)]/40">
-                ${selectedNode.completedToday || 0}
-              </div>
-              <span class="text-[10px] font-bold text-slate-100 uppercase tracking-wider text-center mt-1 truncate max-w-[180px]">
-                ${levelLabel}
-              </span>
-            </div>
-
-            <!-- Sub Status -->
-            <div class="flex items-center gap-2 text-[9px]">
-              ${selectedNode.activeCount > 0 
-                ? `<span class="text-emerald-300 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>${selectedNode.activeCount} Active Now</span>` 
-                : `<span class="text-slate-300 font-medium flex items-center gap-1"><i class="fa-solid fa-circle-check text-[var(--m3-primary)]"></i> Verified Athlete Log</span>`}
-            </div>
+        <div class="pointer-events-auto cursor-pointer transition transform hover:scale-105 active:scale-95 flex items-center justify-center" onclick="triggerHaptic('light'); zoomToSelectedZip()">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl sm:text-3xl flex items-center justify-center shadow-2xl shadow-[var(--m3-primary)]/40 ring-4 ring-slate-950/90" title="${completedCount} Workouts Scored">
+            ${completedCount}
           </div>
         </div>
       `;
@@ -977,6 +1021,9 @@
     function updateZipDetailCard(activeZipNodes) {
       if (!activeZipNodes) activeZipNodes = getActiveAndCompletedZipNodes();
       const userZip = getUserZip();
+      const activeDate = getSelectedMapDate();
+      const isToday = (activeDate === getETDateKey());
+      const dateDisplay = formatMapDateDisplay(activeDate);
 
       const titleEl = document.getElementById('zip-detail-title');
       const descEl = document.getElementById('zip-detail-desc');
@@ -985,8 +1032,10 @@
       const borderTag = document.getElementById('zip-detail-border-tag');
 
       if (activeZipNodes.length === 0) {
-        if (titleEl) titleEl.innerText = "No workouts recorded today";
-        if (descEl) descEl.innerText = `Only workouts logged by you or your squad today are displayed. Your zip code (${userZip}) will activate when you complete a set.`;
+        if (titleEl) titleEl.innerText = isToday ? "No workouts recorded today" : `No workouts recorded for ${dateDisplay}`;
+        if (descEl) descEl.innerText = isToday 
+          ? `Only workouts logged by you or your squad today are displayed. Your zip code (${userZip}) will activate when you complete a set.`
+          : `No workouts were scored by you or your squad on ${dateDisplay}. Select another date to view activity.`;
         if (indEl) {
           indEl.className = "w-2.5 h-2.5 rounded-full bg-slate-700 flex-shrink-0";
           indEl.innerHTML = "";
@@ -1031,7 +1080,9 @@
       }
       if (descEl) {
         const liftersStr = node.lifters && node.lifters.length > 0 ? ` (${node.lifters.join(', ')})` : '';
-        descEl.innerText = `${node.completedToday || 0} Workouts Completed Today by Logged-in Athletes • ${node.activeCount || 0} Lifters Active Right Now${liftersStr}`;
+        const dateContext = isToday ? 'Today' : `on ${dateDisplay}`;
+        const activeContext = isToday ? ` • ${node.activeCount || 0} Lifters Active Right Now${liftersStr}` : '';
+        descEl.innerText = `${node.completedToday || 0} Workouts Completed ${dateContext} by Logged-in Athletes${activeContext}`;
       }
       if (indEl) {
         if (hasActive) {

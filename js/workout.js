@@ -1166,7 +1166,7 @@
       saveWorkoutTimerState();
       updateWorkoutTimerUI();
       updateSetControlsUI();
-      broadcastUserWorkoutEnded(workoutName);
+      broadcastUserWorkoutEnded(workoutName, workoutObj);
       incrementGlobalWorkoutCounter();
 
       renderLoggedSets();

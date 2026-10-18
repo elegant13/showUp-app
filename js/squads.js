@@ -115,6 +115,10 @@
           if (m.completedDate) existing.completedDate = m.completedDate;
           if (m.lastCompletedWorkout) existing.lastCompletedWorkout = m.lastCompletedWorkout;
           if (m.lastActive && m.lastActive !== 'Just invited') existing.lastActive = m.lastActive;
+          if (m.workoutDetails || existing.workoutDetails) existing.workoutDetails = m.workoutDetails || existing.workoutDetails;
+          if (Array.isArray(m.doubleHighFives)) {
+            existing.doubleHighFives = mergeDoubleHighFives(existing.doubleHighFives || [], m.doubleHighFives);
+          }
         } else {
           const cloned = { ...m };
           if (isCurrentUserEntity) {
@@ -366,6 +370,14 @@
                   if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
                   if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
                   if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
+                  if (m.workoutDetails !== undefined) { lm.workoutDetails = m.workoutDetails; hasChanges = true; }
+                  if (Array.isArray(m.doubleHighFives)) {
+                    const merged = mergeDoubleHighFives(lm.doubleHighFives || [], m.doubleHighFives);
+                    if (merged.length !== (lm.doubleHighFives || []).length) {
+                      lm.doubleHighFives = merged;
+                      hasChanges = true;
+                    }
+                  }
                 }
               }
             });
@@ -456,6 +468,14 @@
                     if (m.lastActive !== undefined && m.lastActive !== lm.lastActive) { lm.lastActive = m.lastActive; hasChanges = true; }
                     if (m.inviteStatus !== undefined && m.inviteStatus !== lm.inviteStatus) { lm.inviteStatus = m.inviteStatus; hasChanges = true; }
                     if (m.invitedByEmail !== undefined && m.invitedByEmail !== lm.invitedByEmail) { lm.invitedByEmail = m.invitedByEmail; hasChanges = true; }
+                    if (m.workoutDetails !== undefined) { lm.workoutDetails = m.workoutDetails; hasChanges = true; }
+                    if (Array.isArray(m.doubleHighFives)) {
+                      const merged = mergeDoubleHighFives(lm.doubleHighFives || [], m.doubleHighFives);
+                      if (merged.length !== (lm.doubleHighFives || []).length) {
+                        lm.doubleHighFives = merged;
+                        hasChanges = true;
+                      }
+                    }
                   }
                 }
               });
@@ -562,6 +582,10 @@
                 if (newM.completedDate) { em.completedDate = newM.completedDate; }
                 if (newM.lastCompletedWorkout) { em.lastCompletedWorkout = newM.lastCompletedWorkout; }
                 if (newM.lastActive && newM.lastActive !== 'Invite sent' && newM.lastActive !== 'Just invited') { em.lastActive = newM.lastActive; }
+                if (newM.workoutDetails !== undefined) { em.workoutDetails = newM.workoutDetails; }
+                if (Array.isArray(newM.doubleHighFives)) {
+                  em.doubleHighFives = mergeDoubleHighFives(em.doubleHighFives || [], newM.doubleHighFives);
+                }
               }
             });
             existing.members = mergedMembers;
@@ -931,11 +955,14 @@
       const member = squad.members.find(m => m.id === memberId);
       if (!member) return;
 
+      const finishedName = member.lastCompletedWorkout || member.currentWorkout || 'Strength Session';
       member.isWorkingOut = false;
       member.lastActive = 'Just finished';
+      member.lastCompletedWorkout = finishedName;
       member.currentWorkout = null;
       member.completedToday = true;
       member.completedDate = getETDateKey();
+      member.workoutDetails = generateSampleWorkoutDetails(finishedName, member);
 
       saveSquads(squads);
       renderSquadsTab();
@@ -1679,12 +1706,16 @@
                     const hasCompletedToday = isThisUser 
                       ? userCompletedToday 
                       : !!(m.completedToday === true && m.completedDate === currentETDate);
+
+                    const highFives = Array.isArray(m.doubleHighFives) ? m.doubleHighFives : [];
+                    const userGaveHighFive = highFives.some(hf => hf.giverId === user.id || (user.email && hf.giverEmail && hf.giverEmail.toLowerCase().trim() === user.email.toLowerCase().trim()));
+                    const giversNames = highFives.map(hf => hf.giverName || 'Teammate').join(', ');
                     
                     return `
                       <div class="bg-slate-950 p-3 rounded-2xl border ${m.isWorkingOut ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/5' : 'border-slate-800'} flex items-center justify-between gap-3 transition">
                         <div class="flex items-center gap-3 min-w-0">
                           <!-- AVATAR -->
-                          <div class="relative flex-shrink-0">
+                          <div class="relative flex-shrink-0 cursor-pointer" onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" title="View fellow athlete workout details">
                             ${m.avatar 
                               ? `<img src="${m.avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="${escapeHtml(m.rawName)}">`
                               : `<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-xs">${initials}</div>`
@@ -1701,7 +1732,7 @@
                           <!-- DETAILS & EMAIL DELIVERY STATUS (FOR CREATOR) -->
                           <div class="min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
-                              <span class="text-xs font-bold text-slate-100 truncate">
+                              <span class="text-xs font-bold text-slate-100 truncate cursor-pointer hover:text-emerald-400 transition" onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')">
                                 ${escapeHtml(m.rawName || m.name)} ${isThisUser ? '<span class="text-emerald-400 font-normal">(You)</span>' : ''}
                               </span>
                               ${m.isCreator 
@@ -1737,25 +1768,41 @@
                                     <span>Showed Up</span>
                                   </span>
                                   ${(m.lastCompletedWorkout || (isThisUser && userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate)?.workoutName)) ? `
-                                    <span class="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400/90 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full" title="Completed workout today">
+                                    <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400/90 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 px-2 py-0.5 rounded-full transition cursor-pointer" title="View fellow athlete workout details">
                                       <i class="fa-solid fa-dumbbell text-[8px]"></i>
                                       <span>${escapeHtml(m.lastCompletedWorkout || userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate)?.workoutName || 'Completed')}</span>
-                                    </span>
+                                      <i class="fa-solid fa-chevron-right text-[7px] ml-0.5 text-emerald-400/70"></i>
+                                    </button>
+                                  ` : ''}
+                                  ${highFives.length > 0 ? `
+                                    <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full transition cursor-pointer shadow-sm" title="${isThisUser ? `Double High Fives given to you by: ${escapeHtml(giversNames)}` : `Double High Fives from: ${escapeHtml(giversNames)}`}">
+                                      <span class="text-xs">🙌</span>
+                                      <span>${highFives.length} High Five${highFives.length > 1 ? 's' : ''}${isThisUser ? ' Received' : ''}</span>
+                                    </button>
                                   ` : ''}
                                 </div>
                               ` : `
-                                <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
-                                  <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
-                                  <span>Yet to show up</span>
-                                </span>
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                  <span class="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full">
+                                    <i class="fa-regular fa-clock text-amber-400/80 text-[9px]"></i>
+                                    <span>Yet to show up</span>
+                                  </span>
+                                  ${highFives.length > 0 ? `
+                                    <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="inline-flex items-center gap-1 text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full transition cursor-pointer" title="Double High Fives: ${escapeHtml(giversNames)}">
+                                      <span class="text-xs">🙌</span>
+                                      <span>${highFives.length}</span>
+                                    </button>
+                                  ` : ''}
+                                </div>
                               `}
 
                               ${m.isWorkingOut ? `
-                                <div class="flex items-center gap-1.5">
-                                  <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                  <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 px-2 py-0.5 rounded-full flex items-center gap-1 transition cursor-pointer" title="View fellow athlete workout details">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                                     Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
-                                  </span>
+                                    <i class="fa-solid fa-chevron-right text-[7px] ml-0.5 text-emerald-400/70"></i>
+                                  </button>
                                   <!-- CLOSE SIMULATED WORKOUT ACTION ON MEMBER CARD -->
                                   <button onclick="triggerHaptic('light'); stopSpecificMemberWorkout('${sq.id}', '${m.id}')" class="text-[9px] font-semibold text-rose-400 hover:text-rose-300 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 px-2 py-0.5 rounded-lg transition inline-flex items-center gap-1" title="Close and finish this active workout session">
                                     <i class="fa-solid fa-xmark text-[8px]"></i>
@@ -1767,8 +1814,27 @@
                           </div>
                         </div>
 
-                        <!-- PERMISSION-BASED ACTION CONTROLS -->
+                        <!-- PERMISSION-BASED ACTION CONTROLS & FELLOW ATHLETE INTERACTIONS -->
                         <div class="flex items-center gap-1.5 flex-shrink-0">
+                          <!-- VIEW FELLOW ATHLETE WORKOUT DETAILS -->
+                          <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="text-[10px] font-semibold text-slate-300 hover:text-emerald-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-2 py-1 rounded-xl transition flex items-center gap-1" title="View fellow athlete workout details">
+                            <i class="fa-solid fa-clipboard-list text-emerald-400 text-[9px]"></i>
+                            <span>Details</span>
+                          </button>
+
+                          <!-- EMOTE VIA DOUBLE HIGH FIVE -->
+                          ${!isThisUser ? `
+                            <button onclick="triggerHaptic('heavy'); giveDoubleHighFive('${sq.id}', '${m.id}')" class="text-[10px] font-bold ${userGaveHighFive ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/10' : 'bg-slate-900 text-slate-300 hover:text-amber-300 border-slate-700 hover:border-amber-500/30'} px-2 py-1 rounded-xl border transition flex items-center gap-1 active:scale-95" title="${highFives.length > 0 ? `Double High Fives from: ${escapeHtml(giversNames)}` : 'Emote via Double High Five'}">
+                              <span>🙌</span>
+                              <span>${highFives.length > 0 ? highFives.length : 'High Five'}</span>
+                            </button>
+                          ` : (highFives.length > 0 ? `
+                            <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-1 rounded-xl transition flex items-center gap-1 shadow-sm" title="View who gave you double high fives">
+                              <span>🙌</span>
+                              <span>${highFives.length} High Five${highFives.length > 1 ? 's' : ''}</span>
+                            </button>
+                          ` : '')}
+
                           <!-- CREATOR CONTROLS OVER MEMBERS (ASSIGN BACKUP CREATOR / RESEND INVITE / REMOVE) -->
                           ${isUserCreator && !isThisUser
                             ? `
@@ -2563,11 +2629,15 @@
       renderHeatMap();
     }
 
-    function broadcastUserWorkoutEnded(workoutName) {
+    function broadcastUserWorkoutEnded(workoutName, workoutDetails) {
       const squads = getSquads();
       const user = getAppUser();
       const currentETDate = getETDateKey();
       let changed = false;
+
+      if (!workoutDetails && typeof lastEvaluatedSummary !== 'undefined' && lastEvaluatedSummary) {
+        workoutDetails = lastEvaluatedSummary;
+      }
 
       squads.forEach(sq => {
         const userMember = sq.members.find(m => m.id === user.id || m.email === user.email || m.id === 'local_user');
@@ -2582,6 +2652,9 @@
             userMember.lastActive = 'Completed workout today';
           }
           userMember.currentWorkout = null;
+          if (workoutDetails) {
+            userMember.workoutDetails = { ...workoutDetails, doubleHighFives: userMember.doubleHighFives || [] };
+          }
           changed = true;
           try { syncSquadToFirestore(sq); } catch (e) {}
         }
@@ -2592,4 +2665,481 @@
       }
       updateGlobalStatsUI();
       renderHeatMap();
+    }
+
+    // ================= SQUAD WORKOUT DETAILS & DOUBLE HIGH FIVE ENGINE =================
+    let activeDetailsModalSquadId = null;
+    let activeDetailsModalMemberId = null;
+
+    function formatRelativeTime(iso) {
+      if (!iso) return 'Recently';
+      try {
+        const diffMs = Date.now() - new Date(iso).getTime();
+        if (isNaN(diffMs) || diffMs < 0) return 'Just now';
+        const mins = Math.floor(diffMs / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hours = Math.floor(mins / 60);
+        if (hours < 24) return `${hours}h ago`;
+        const days = Math.floor(hours / 24);
+        return `${days}d ago`;
+      } catch (e) {
+        return 'Recently';
+      }
+    }
+
+    function mergeDoubleHighFives(listA, listB) {
+      const map = new Map();
+      (listA || []).forEach(item => {
+        if (item && item.giverId) map.set(item.giverId + '_' + (item.timestamp || ''), item);
+      });
+      (listB || []).forEach(item => {
+        if (item && item.giverId) map.set(item.giverId + '_' + (item.timestamp || ''), item);
+      });
+      return Array.from(map.values());
+    }
+
+    function generateSampleWorkoutDetails(workoutTitle, member) {
+      const title = workoutTitle || 'Strength & Conditioning';
+      const sets = [];
+      let volume = 0;
+      let calories = 420;
+      let durationSecs = 2700; // 45m
+
+      if (title.includes('Deadlift')) {
+        sets.push(
+          { exerciseName: "Barbell Deadlift", implement: "Barbell", weight: 275, reps: 5, rpe: 8, setDuration: 42, restPeriod: 120 },
+          { exerciseName: "Barbell Deadlift", implement: "Barbell", weight: 315, reps: 5, rpe: 8.5, setDuration: 45, restPeriod: 120 },
+          { exerciseName: "Barbell Deadlift", implement: "Barbell", weight: 335, reps: 3, rpe: 9, setDuration: 40, restPeriod: 150 },
+          { exerciseName: "Lat Pulldown", implement: "Cable", weight: 150, reps: 10, rpe: 8, setDuration: 35, restPeriod: 90 },
+          { exerciseName: "Lat Pulldown", implement: "Cable", weight: 165, reps: 8, rpe: 8.5, setDuration: 35, restPeriod: 90 },
+          { exerciseName: "Barbell Bent-Over Row", implement: "Barbell", weight: 185, reps: 8, rpe: 8, setDuration: 38, restPeriod: 90 }
+        );
+        volume = 14250;
+        calories = 460;
+        durationSecs = 2820;
+      } else if (title.includes('Squat')) {
+        sets.push(
+          { exerciseName: "Barbell Back Squat", implement: "Barbell", weight: 225, reps: 6, rpe: 8, setDuration: 45, restPeriod: 120 },
+          { exerciseName: "Barbell Back Squat", implement: "Barbell", weight: 245, reps: 5, rpe: 8.5, setDuration: 48, restPeriod: 120 },
+          { exerciseName: "Barbell Back Squat", implement: "Barbell", weight: 265, reps: 5, rpe: 9, setDuration: 50, restPeriod: 150 },
+          { exerciseName: "Walking DB Lunges", implement: "Dumbbell", weight: 50, reps: 12, rpe: 8, setDuration: 40, restPeriod: 90 },
+          { exerciseName: "Hanging Leg Raises", implement: "Bodyweight", weight: 0, reps: 15, rpe: 7.5, setDuration: 30, restPeriod: 60 }
+        );
+        volume = 13800;
+        calories = 480;
+        durationSecs = 2880;
+      } else if (title.includes('Clean & Jerk') || title.includes('Clean')) {
+        sets.push(
+          { exerciseName: "Clean & Jerk", implement: "Barbell", weight: 185, reps: 3, rpe: 8, setDuration: 40, restPeriod: 120 },
+          { exerciseName: "Clean & Jerk", implement: "Barbell", weight: 205, reps: 2, rpe: 8.5, setDuration: 42, restPeriod: 150 },
+          { exerciseName: "Clean & Jerk", implement: "Barbell", weight: 225, reps: 1, rpe: 9, setDuration: 35, restPeriod: 150 },
+          { exerciseName: "Front Squat", implement: "Barbell", weight: 225, reps: 5, rpe: 8.5, setDuration: 45, restPeriod: 120 },
+          { exerciseName: "Front Squat", implement: "Barbell", weight: 245, reps: 3, rpe: 9, setDuration: 40, restPeriod: 120 }
+        );
+        volume = 11450;
+        calories = 440;
+        durationSecs = 2700;
+      } else if (title.includes('Overhead Press') || title.includes('Tricep')) {
+        sets.push(
+          { exerciseName: "Overhead Press", implement: "Barbell", weight: 115, reps: 6, rpe: 8, setDuration: 38, restPeriod: 90 },
+          { exerciseName: "Overhead Press", implement: "Barbell", weight: 135, reps: 5, rpe: 8.5, setDuration: 40, restPeriod: 120 },
+          { exerciseName: "Overhead Press", implement: "Barbell", weight: 145, reps: 4, rpe: 9, setDuration: 42, restPeriod: 120 },
+          { exerciseName: "Lateral DB Raises", implement: "Dumbbell", weight: 25, reps: 12, rpe: 8, setDuration: 35, restPeriod: 60 },
+          { exerciseName: "Tricep Rope Pushdown", implement: "Cable", weight: 70, reps: 12, rpe: 8.5, setDuration: 32, restPeriod: 60 }
+        );
+        volume = 8900;
+        calories = 360;
+        durationSecs = 2400;
+      } else if (title.includes('Macebell') || title.includes('Dands')) {
+        sets.push(
+          { exerciseName: "Macebell 360", implement: "Macebell", weight: 20, reps: 20, rpe: 8, setDuration: 60, restPeriod: 60 },
+          { exerciseName: "Macebell 360", implement: "Macebell", weight: 20, reps: 20, rpe: 8, setDuration: 60, restPeriod: 60 },
+          { exerciseName: "Hindu Pushups (Dands)", implement: "Bodyweight", weight: 0, reps: 25, rpe: 8.5, setDuration: 45, restPeriod: 60 },
+          { exerciseName: "Baithaks (Squats)", implement: "Bodyweight", weight: 0, reps: 30, rpe: 8, setDuration: 50, restPeriod: 60 }
+        );
+        volume = 4800;
+        calories = 390;
+        durationSecs = 2100;
+      } else {
+        sets.push(
+          { exerciseName: "Barbell Bench Press", implement: "Barbell", weight: 185, reps: 8, rpe: 8, setDuration: 40, restPeriod: 90 },
+          { exerciseName: "Barbell Bench Press", implement: "Barbell", weight: 205, reps: 6, rpe: 8.5, setDuration: 42, restPeriod: 120 },
+          { exerciseName: "Incline DB Press", implement: "Dumbbell", weight: 70, reps: 8, rpe: 8, setDuration: 38, restPeriod: 90 },
+          { exerciseName: "Cable Chest Flyes", implement: "Cable", weight: 40, reps: 12, rpe: 8, setDuration: 35, restPeriod: 60 },
+          { exerciseName: "Plank Hold", implement: "Bodyweight", weight: 0, reps: 1, rpe: 8, setDuration: 60, restPeriod: 60 }
+        );
+        volume = 9600;
+        calories = 380;
+        durationSecs = 2400;
+      }
+
+      const hours = Math.floor(durationSecs / 3600);
+      const mins = Math.floor((durationSecs % 3600) / 60);
+      const secs = durationSecs % 60;
+      const timeFormatted = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      return {
+        workoutName: title,
+        date: (member && member.completedDate) ? member.completedDate : getETDateKey(),
+        totalSets: sets.length,
+        totalVolume: volume,
+        caloriesBurned: calories,
+        totalWorkoutSeconds: durationSecs,
+        totalWorkoutTimeFormatted: timeFormatted,
+        totalActiveTimeFormatted: `${String(Math.floor((durationSecs * 0.7) / 60)).padStart(2, '0')}:00`,
+        totalRestTimeFormatted: `${String(Math.floor((durationSecs * 0.3) / 60)).padStart(2, '0')}:00`,
+        aerobicTE: 3.4,
+        anaerobicTE: 2.2,
+        notes: "Solid squad effort, hit all targets on time with strong form.",
+        sets: sets,
+        doubleHighFives: (member && Array.isArray(member.doubleHighFives)) ? member.doubleHighFives : []
+      };
+    }
+
+    function getMemberWorkoutDetails(squadOrMember, maybeMember) {
+      const member = maybeMember || squadOrMember;
+      const squad = maybeMember ? squadOrMember : null;
+      if (!member) return null;
+      const user = getAppUser();
+      const isMe = (member.id === user.id || (user.email && member.email === user.email) || member.id === 'local_user');
+
+      if (isMe) {
+        const currentETDate = getETDateKey();
+        let userHistory = [];
+        if (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory)) {
+          userHistory = completedWorkoutsHistory;
+        } else {
+          try {
+            userHistory = JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+          } catch (e) {}
+        }
+        const todayWorkout = userHistory.find(w => (typeof w === 'string' ? w : w.date) === currentETDate);
+        if (todayWorkout && typeof todayWorkout === 'object') {
+          return {
+            ...todayWorkout,
+            workoutName: todayWorkout.workoutName || member.lastCompletedWorkout || 'Workout Session',
+            doubleHighFives: member.doubleHighFives || []
+          };
+        }
+        if (member.workoutDetails) {
+          return {
+            ...member.workoutDetails,
+            doubleHighFives: member.doubleHighFives || []
+          };
+        }
+        const latest = userHistory[userHistory.length - 1];
+        if (latest && typeof latest === 'object') {
+          return {
+            ...latest,
+            workoutName: latest.workoutName || member.lastCompletedWorkout || 'Workout Session',
+            doubleHighFives: member.doubleHighFives || []
+          };
+        }
+      }
+
+      if (member.workoutDetails) {
+        return {
+          ...member.workoutDetails,
+          doubleHighFives: member.doubleHighFives || []
+        };
+      }
+
+      const workoutTitle = member.lastCompletedWorkout || member.currentWorkout || 'Strength & Conditioning';
+      const details = generateSampleWorkoutDetails(workoutTitle, member);
+      member.workoutDetails = details;
+      return details;
+    }
+
+    function openSquadWorkoutDetailsModal(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return;
+      const member = squad.members.find(m => m.id === memberId || m.email === memberId);
+      if (!member) return;
+
+      activeDetailsModalSquadId = squadId;
+      activeDetailsModalMemberId = member.id || memberId;
+
+      renderSquadWorkoutDetailsModalContent(squad, member);
+
+      const modal = document.getElementById('squad-workout-details-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function closeSquadWorkoutDetailsModal() {
+      const modal = document.getElementById('squad-workout-details-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      activeDetailsModalSquadId = null;
+      activeDetailsModalMemberId = null;
+    }
+
+    function renderSquadWorkoutDetailsModalContent(squad, member) {
+      const user = getAppUser();
+      const isMe = (member.id === user.id || (user.email && member.email === user.email) || member.id === 'local_user');
+      const details = getMemberWorkoutDetails(squad, member) || generateSampleWorkoutDetails(member.lastCompletedWorkout, member);
+
+      // 1. Header & Identity
+      const nameEl = document.getElementById('swd-athlete-name');
+      const squadEl = document.getElementById('swd-squad-name');
+      const avatarEl = document.getElementById('swd-athlete-avatar');
+      if (nameEl) {
+        nameEl.innerHTML = `${escapeHtml(member.rawName || member.name)} ${isMe ? '<span class="text-emerald-400 font-normal text-xs">(You)</span>' : ''}`;
+        nameEl.innerText = `${member.rawName || member.name}${isMe ? ' (You)' : ''}`;
+      }
+      if (squadEl) {
+        squadEl.innerText = `${squad.name} • ${member.isWorkingOut ? 'Active Workout Session' : 'Completed Workout'}`;
+      }
+      if (avatarEl) {
+        if (member.avatar) {
+          avatarEl.innerHTML = `<img src="${member.avatar}" class="w-full h-full object-cover rounded-2xl" alt="avatar">`;
+        } else {
+          avatarEl.innerText = getInitials(member.rawName || member.name || 'SU');
+        }
+      }
+
+      // 2. Workout Title & Date
+      const badgeEl = document.getElementById('swd-workout-badge');
+      const titleEl = document.getElementById('swd-workout-title');
+      const dateEl = document.getElementById('swd-workout-date');
+      if (badgeEl) {
+        badgeEl.innerText = member.isWorkingOut ? '⚡ Lifting Now in Squad' : '✓ Showed Up & Completed';
+      }
+      if (titleEl) {
+        titleEl.innerText = details.workoutName || member.lastCompletedWorkout || member.currentWorkout || 'Workout Session';
+      }
+      if (dateEl) {
+        dateEl.innerText = `Recorded for ${details.date || member.completedDate || getETDateKey()}`;
+      }
+
+      // 3. Metrics Grid
+      const durEl = document.getElementById('swd-metric-duration');
+      const volEl = document.getElementById('swd-metric-volume');
+      const calEl = document.getElementById('swd-metric-calories');
+      const setsEl = document.getElementById('swd-metric-sets');
+      if (durEl) durEl.innerText = details.totalWorkoutTimeFormatted || details.workoutDurationFormatted || '00:45:00';
+      if (volEl) volEl.innerText = details.totalVolume ? `${Number(details.totalVolume).toLocaleString()} lbs` : '0 lbs';
+      if (calEl) calEl.innerText = details.caloriesBurned ? `${details.caloriesBurned} kcal` : '380 kcal';
+      if (setsEl) setsEl.innerText = details.totalSets ? `${details.totalSets} Sets` : `${(details.sets || []).length} Sets`;
+
+      // 4. Extra Metrics (Aerobic / Anaerobic / Running)
+      const extraEl = document.getElementById('swd-extra-metrics');
+      if (extraEl) {
+        if (details.runningMetrics) {
+          extraEl.classList.remove('hidden');
+          extraEl.innerHTML = `
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between text-xs font-mono">
+              <span class="text-emerald-400">Dist: ${details.runningMetrics.totalDistance || '3.1'} mi</span>
+              <span class="text-slate-400">Pace: ${details.runningMetrics.avgPace || '8:00'} /mi</span>
+              <span class="text-rose-400">Avg HR: ${details.runningMetrics.avgHR || '155'} bpm</span>
+            </div>
+          `;
+        } else if (details.aerobicTE || details.anaerobicTE) {
+          extraEl.classList.remove('hidden');
+          extraEl.innerHTML = `
+            <div class="bg-slate-950 p-2.5 rounded-2xl border border-slate-800 flex items-center justify-center gap-4 text-xs font-mono text-slate-300">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-lungs text-blue-400"></i> Aerobic TE: <b class="text-blue-400">${details.aerobicTE || '3.2'}</b></span>
+              <span class="text-slate-700">•</span>
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-fire text-amber-400"></i> Anaerobic TE: <b class="text-amber-400">${details.anaerobicTE || '2.1'}</b></span>
+            </div>
+          `;
+        } else {
+          extraEl.classList.add('hidden');
+          extraEl.innerHTML = '';
+        }
+      }
+
+      // 5. Notes
+      const notesEl = document.getElementById('swd-notes-container');
+      if (notesEl) {
+        if (details.notes) {
+          notesEl.classList.remove('hidden');
+          notesEl.innerText = `Notes: "${details.notes}"`;
+        } else {
+          notesEl.classList.add('hidden');
+        }
+      }
+
+      // 6. Sets Breakdown
+      const setsListEl = document.getElementById('swd-sets-list');
+      const countLabel = document.getElementById('swd-sets-count-label');
+      const sets = Array.isArray(details.sets) ? details.sets : [];
+      if (countLabel) countLabel.innerText = `${sets.length} Sets`;
+      if (setsListEl) {
+        if (sets.length === 0) {
+          setsListEl.innerHTML = `<div class="text-xs text-slate-500 italic p-3 text-center">Session logged with overall volume & metrics.</div>`;
+        } else {
+          setsListEl.innerHTML = sets.map((s, idx) => `
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/90 flex items-center justify-between text-xs">
+              <div class="min-w-0">
+                <div class="font-bold text-slate-200 truncate flex items-center gap-2">
+                  <span class="text-[10px] text-slate-500 font-mono">#${idx + 1}</span>
+                  <span>${escapeHtml(s.exerciseName || 'Exercise')}</span>
+                </div>
+                <div class="text-slate-400 gap-2 flex items-center mt-0.5 text-[11px] flex-wrap">
+                  <span class="bg-slate-900 border border-slate-800 text-emerald-400 px-1.5 py-0.2 rounded-md font-mono text-[10px]">${escapeHtml(s.implement || 'Barbell')}</span>
+                  ${s.implement === "Running" 
+                    ? `<span>${s.runningDistance || '3.1'} mi | ${s.runningTime || '00:25:00'}</span>` 
+                    : `<span><b class="text-slate-100 font-mono">${s.weight || 0}</b> lbs × <b class="text-slate-100 font-mono">${s.reps || 0}</b> reps</span>`
+                  }
+                  ${s.rpe ? `<span class="text-slate-500 font-mono">RPE ${s.rpe}</span>` : ''}
+                  ${s.setDuration ? `<span class="text-slate-500"><i class="fa-regular fa-clock text-[9px] mr-0.5"></i>${s.setDuration}s</span>` : ''}
+                  ${s.restPeriod ? `<span class="text-emerald-500/80"><i class="fa-solid fa-hourglass-half text-[9px] mr-0.5"></i>Rest: ${s.restPeriod}s</span>` : ''}
+                </div>
+              </div>
+              <div class="flex-shrink-0 text-right">
+                <span class="text-[10px] font-mono text-slate-400 font-semibold">${(s.weight && s.reps) ? (s.weight * s.reps).toLocaleString() + ' lbs' : ''}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      // 7. Double High Fives & Who gave double high five to them
+      const actionContainer = document.getElementById('swd-high-five-action-container');
+      const giversListEl = document.getElementById('swd-high-fives-givers-list');
+      const highFives = Array.isArray(member.doubleHighFives) ? member.doubleHighFives : [];
+      const userGave = highFives.some(hf => hf.giverId === user.id || (user.email && hf.giverEmail && hf.giverEmail.toLowerCase().trim() === user.email.toLowerCase().trim()));
+
+      if (actionContainer) {
+        if (!isMe) {
+          actionContainer.innerHTML = `
+            <button onclick="triggerHaptic('heavy'); giveDoubleHighFive('${squad.id}', '${member.id}')" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition active:scale-95">
+              <span class="text-base sm:text-lg">🙌</span>
+              <span>${userGave ? 'Double High Five Sent! Cheer Again 🙌' : 'Give Double High Five 🙌'}</span>
+            </button>
+          `;
+        } else {
+          actionContainer.innerHTML = `
+            <div class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl text-center">
+              <div class="text-amber-300 font-bold text-xs flex items-center justify-center gap-2">
+                <span class="text-base">🙌</span>
+                <span>${highFives.length > 0 ? `You received ${highFives.length} Double High Five${highFives.length === 1 ? '' : 's'} for this workout!` : 'Your workout is logged! Fellow squadmates can double high five you.'}</span>
+              </div>
+            </div>
+          `;
+        }
+      }
+
+      if (giversListEl) {
+        giversListEl.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-bold text-slate-300 px-1 pt-1">
+            <span class="flex items-center gap-1.5">
+              <span class="text-amber-400 font-bold">🙌</span>
+              <span>Double High Fives (${highFives.length})</span>
+            </span>
+            <span class="text-[10px] text-slate-400">${isMe ? 'Teammates who cheered for you' : 'Fellow athletes cheering'}</span>
+          </div>
+          ${highFives.length === 0 ? `
+            <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-center text-xs text-slate-400 italic">
+              No double high fives given yet. ${!isMe ? 'Be the first fellow athlete to give a double high five!' : 'Complete your workout and teammates will cheer you on!'}
+            </div>
+          ` : `
+            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+              ${highFives.map(hf => `
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800/80">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 font-bold flex items-center justify-center text-xs border border-amber-500/30 flex-shrink-0">
+                      ${hf.giverAvatar ? `<img src="${hf.giverAvatar}" class="w-full h-full object-cover rounded-xl" alt="avatar">` : getInitials(hf.giverName || 'Athlete')}
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-slate-100">${escapeHtml(hf.giverName || 'Fellow Athlete')} ${hf.giverId === user.id ? '<span class="text-emerald-400 font-normal text-[10px]">(You)</span>' : ''}</div>
+                      <div class="text-[10px] text-slate-500">${formatRelativeTime(hf.timestamp)}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1 text-amber-400 text-xs font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 flex-shrink-0">
+                    <span>🙌</span>
+                    <span class="text-[10px]">High Five</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
+        `;
+      }
+    }
+
+    function giveDoubleHighFive(squadId, memberId) {
+      const squads = getSquads();
+      const squad = squads.find(s => s.id === squadId);
+      if (!squad) return false;
+      const member = squad.members.find(m => m.id === memberId || m.email === memberId);
+      if (!member) return false;
+
+      const user = getAppUser();
+      const isMe = (member.id === user.id || (user.email && member.email === user.email) || member.id === 'local_user');
+      if (isMe) {
+        showToast("You showed up! Fellow squadmates can double high five your workout 🙌", "info");
+        return false;
+      }
+
+      if (!Array.isArray(member.doubleHighFives)) {
+        member.doubleHighFives = [];
+      }
+
+      const existingIdx = member.doubleHighFives.findIndex(hf => 
+        hf.giverId === user.id || (user.email && hf.giverEmail && hf.giverEmail.toLowerCase().trim() === user.email.toLowerCase().trim())
+      );
+
+      const newHighFive = {
+        giverId: user.id,
+        giverName: user.rawName || user.name || 'Fellow Athlete',
+        giverEmail: user.email || '',
+        giverAvatar: user.picture || '',
+        timestamp: new Date().toISOString(),
+        squadId: squad.id,
+        squadName: squad.name,
+        workoutName: member.lastCompletedWorkout || member.currentWorkout || 'Workout'
+      };
+
+      if (existingIdx >= 0) {
+        member.doubleHighFives[existingIdx] = newHighFive;
+        showToast(`🙌 Double high five cheered again to ${member.rawName || member.name}!`, "success");
+      } else {
+        member.doubleHighFives.push(newHighFive);
+        showToast(`🙌 You gave a double high five to ${member.rawName || member.name}!`, "success");
+      }
+
+      triggerHighFiveConfetti();
+      if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      if (typeof playUnobtrusiveChime === 'function') playUnobtrusiveChime();
+
+      saveSquads(squads);
+      try { syncSquadToFirestore(squad); } catch (e) {}
+      try { saveSquadToGlobalRegistry(squad); } catch (e) {}
+
+      renderSquadsTab();
+
+      const modal = document.getElementById('squad-workout-details-modal');
+      if (modal && !modal.classList.contains('hidden') && (activeDetailsModalMemberId === member.id || activeDetailsModalMemberId === memberId)) {
+        renderSquadWorkoutDetailsModalContent(squad, member);
+      }
+      return true;
+    }
+
+    function toggleDoubleHighFive(squadId, memberId) {
+      giveDoubleHighFive(squadId, memberId);
+    }
+
+    function triggerHighFiveConfetti() {
+      if (typeof document === 'undefined' || !document.body) return;
+      const count = 6;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'high-five-floating';
+        el.innerText = '🙌';
+        const left = Math.random() * 60 + 20; // 20% to 80%
+        const bottom = Math.random() * 30 + 30; // 30% to 60%
+        el.style.left = `${left}%`;
+        el.style.bottom = `${bottom}%`;
+        el.style.animationDelay = `${i * 120}ms`;
+        document.body.appendChild(el);
+        setTimeout(() => {
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 1500);
+      }
     }

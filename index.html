@@ -1063,6 +1063,95 @@
     </div>
   </div>
 
+  <!-- ================= SQUAD WORKOUT DETAILS & DOUBLE HIGH FIVE MODAL ================= -->
+  <div id="squad-workout-details-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="m3-card rounded-3xl border border-slate-800 p-6 w-full max-w-lg shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
+      
+      <!-- MODAL HEADER -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div id="swd-athlete-avatar" class="w-11 h-11 rounded-2xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-sm flex-shrink-0">
+            SU
+          </div>
+          <div class="min-w-0">
+            <h2 id="swd-athlete-name" class="text-base font-bold text-slate-100 truncate flex items-center gap-2">
+              Athlete Name
+            </h2>
+            <p id="swd-squad-name" class="text-xs text-slate-400 truncate">Squad Name • Workout Session</p>
+          </div>
+        </div>
+        <button onclick="closeSquadWorkoutDetailsModal()" class="text-slate-500 hover:text-slate-300 p-1.5 rounded-xl hover:bg-slate-800 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- WORKOUT TITLE & DATE BANNER -->
+      <div class="bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-950 p-4 rounded-2xl border border-emerald-500/30 flex items-center justify-between gap-3">
+        <div>
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-400" id="swd-workout-badge">Completed Session</div>
+          <h3 id="swd-workout-title" class="text-sm sm:text-base font-black text-slate-100 mt-0.5">Heavy Deadlift Session</h3>
+          <p id="swd-workout-date" class="text-xs text-slate-400 mt-0.5">Recorded for 2026-10-18</p>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-base flex-shrink-0">
+          <i class="fa-solid fa-dumbbell"></i>
+        </div>
+      </div>
+
+      <!-- METRICS GRID -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center">
+          <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Duration</span>
+          <span id="swd-metric-duration" class="text-sm font-mono font-bold text-slate-100 mt-0.5 block">00:45:00</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center">
+          <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Volume</span>
+          <span id="swd-metric-volume" class="text-sm font-mono font-bold text-emerald-400 mt-0.5 block">14,200 lbs</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center">
+          <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Calories</span>
+          <span id="swd-metric-calories" class="text-sm font-mono font-bold text-rose-400 mt-0.5 block">450 kcal</span>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 text-center">
+          <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block">Total Sets</span>
+          <span id="swd-metric-sets" class="text-sm font-mono font-bold text-cyan-400 mt-0.5 block">5 Sets</span>
+        </div>
+      </div>
+
+      <!-- TRAINING EFFECT / RUNNING METRICS (IF ANY) -->
+      <div id="swd-extra-metrics" class="hidden"></div>
+
+      <!-- NOTES (IF ANY) -->
+      <div id="swd-notes-container" class="hidden text-xs text-slate-300 italic bg-slate-950 p-3 rounded-xl border border-slate-800"></div>
+
+      <!-- EXERCISE SETS BREAKDOWN -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-400 font-semibold uppercase tracking-wider px-1">
+          <span>Exercise Sets Logged</span>
+          <span id="swd-sets-count-label" class="text-[10px] text-slate-500 font-mono">5 Sets</span>
+        </div>
+        <div id="swd-sets-list" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- DOUBLE HIGH FIVE INTERACTIVE ACTION & WHO GAVE HIGH FIVES -->
+      <div id="swd-double-high-fives-section" class="pt-2 border-t border-slate-800/80 space-y-3">
+        <!-- Action Button & Received summary -->
+        <div id="swd-high-five-action-container"></div>
+        <!-- Who gave double high five list -->
+        <div id="swd-high-fives-givers-list" class="space-y-2"></div>
+      </div>
+
+      <!-- CLOSE BUTTON -->
+      <div class="pt-1">
+        <button type="button" onclick="closeSquadWorkoutDetailsModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 rounded-2xl text-xs border border-slate-700 transition">
+          Done
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- ================= ADD MEMBER / INVITE MODAL ================= -->
   <div id="add-member-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
     <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-5 relative max-h-[90vh] overflow-y-auto">
@@ -2377,7 +2466,7 @@
               <i class="fa-solid fa-map-location-dot m3-accent-text text-sm"></i>
               <h3 class="text-sm font-bold text-slate-100 tracking-tight">Active Workout Map</h3>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Real-time zip codes where athletes are actively lifting or completed workouts today</p>
+            <p id="map-date-subtitle" class="text-[11px] text-slate-400 mt-0.5">Real-time zip codes where athletes are actively lifting or completed workouts today</p>
           </div>
 
           <!-- TELEMETRY BADGES: IP-BASED LOCATION & UNIQUE VISITORS -->
@@ -2398,6 +2487,33 @@
               <span class="text-slate-500">Your Zip:</span>
               <span id="display-user-zip" class="font-mono font-bold text-emerald-400">Detecting...</span>
             </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY WORKOUT MAP DATE SELECTOR TOOLBAR -->
+        <div id="map-date-selector-bar" class="flex flex-wrap items-center justify-between gap-2.5 bg-slate-950/90 border border-slate-800 p-2.5 rounded-2xl">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 pl-1">
+              <i class="fa-regular fa-calendar-days text-[var(--m3-primary)]"></i>
+              <span>Activity Date:</span>
+            </span>
+            <div class="flex items-center gap-1 bg-slate-900 border border-slate-700/80 rounded-xl px-1.5 py-1">
+              <button type="button" id="map-date-prev-btn" onclick="triggerHaptic('light'); shiftMapDate(-1)" class="w-6 h-6 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center text-xs transition active:scale-95" title="Previous Day">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <input type="date" id="map-date-picker" onchange="handleMapDateChange(this.value)" class="bg-transparent text-slate-100 font-mono text-xs font-bold px-1.5 focus:outline-none cursor-pointer">
+              <button type="button" id="map-date-next-btn" onclick="triggerHaptic('light'); shiftMapDate(1)" class="w-6 h-6 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center text-xs transition active:scale-95" title="Next Day">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+            <button type="button" id="map-date-today-btn" onclick="triggerHaptic('light'); setMapDateToToday()" class="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition active:scale-95">
+              Today
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="map-date-badge" class="text-[11px] font-mono text-slate-400 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-xl">
+              Today (Oct 18, 2026)
+            </span>
           </div>
         </div>
 
@@ -2433,27 +2549,20 @@
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span id="map-zoom-status">Zoom: 14x (Zip Code Level)</span>
             <span class="text-slate-600">•</span>
-            <span class="text-slate-400 font-semibold">Border Identified</span>
+            <span class="text-slate-400 font-semibold">Workouts Scored</span>
           </div>
         </div>
 
         <!-- ACTIVE ZIP CODES OF TODAY'S WORKOUTS (NO ARBITRARY REGIONAL ZIPS) -->
         <div class="space-y-1.5">
           <div class="flex items-center justify-between text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-            <span>Today's Active Zip Codes:</span>
+            <span id="map-active-zip-title">Today's Active Zip Codes:</span>
             <span id="heatmap-legend" class="text-[10px] text-slate-400 font-medium inline-flex items-center gap-2 flex-wrap justify-end">
-              <span class="inline-flex items-center gap-1 text-slate-300 font-medium">
-                <span class="w-3.5 h-3.5 rounded border border-dashed border-[var(--m3-primary)] bg-[var(--m3-primary)]/10 flex items-center justify-center text-[8px] text-[var(--m3-primary)] font-black">
-                  <i class="fa-solid fa-vector-square"></i>
-                </span>
-                Zip Border
-              </span>
-              <span class="text-slate-600">•</span>
               <span class="inline-flex items-center gap-1 font-bold text-slate-200">
-                <span class="px-1.5 py-0.2 rounded bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[9px] font-mono font-black shadow-sm">
+                <span class="w-4 h-4 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] flex items-center justify-center text-[9px] font-mono font-black shadow-sm">
                   #
                 </span>
-                Completed Workouts
+                Workouts Scored
               </span>
               <span class="text-slate-600">•</span>
               <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Active</span>

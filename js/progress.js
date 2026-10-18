@@ -711,6 +711,10 @@
 
 
     function renderHeatMap() {
+      if (typeof updateMapDateSelectorUI === 'function') {
+        updateMapDateSelectorUI();
+      }
+
       const tickerContainer = document.getElementById('zip-ticker-container');
       const displayUserZip = document.getElementById('display-user-zip');
       const userZip = getUserZip();
@@ -720,7 +724,7 @@
         displayUserZip.innerText = userCity ? `${userZip} (${userCity.split(',')[0]})` : userZip;
       }
 
-      // ONLY get zip codes where logged-in athletes are working out or completed today
+      // ONLY get zip codes where logged-in athletes are working out or completed on selected date
       const activeZipNodes = getActiveAndCompletedZipNodes();
       const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeZipNodes);
 
@@ -731,10 +735,13 @@
       // 1. Render Ticker Pills (Zoom-adaptive: Zip Codes, States, or Country)
       if (tickerContainer) {
         if (aggNodes.length === 0) {
+          const activeDate = (typeof getSelectedMapDate === 'function') ? getSelectedMapDate() : getETDateKey();
+          const isToday = (activeDate === getETDateKey());
+          const dateDisp = (typeof formatMapDateDisplay === 'function') ? formatMapDateDisplay(activeDate) : activeDate;
           tickerContainer.innerHTML = `
             <div class="text-[11px] text-slate-500 italic py-1 px-1 flex items-center gap-1.5">
               <i class="fa-solid fa-circle-info text-slate-600"></i>
-              <span>No workouts recorded today yet. Log your first workout to put your area on the map!</span>
+              <span>${isToday ? 'No workouts recorded today yet. Log your first workout to put your area on the map!' : `No workouts recorded for ${dateDisp}.`}</span>
             </div>
           `;
         } else {

@@ -1216,6 +1216,204 @@ runSuite("15. Running Exercise, HRM Capture & Evaluated Running Metrics Engine",
   assert(isHRMConnected() === false, "HRM cleanly disconnected after test");
 });
 
+runSuite("16. Squads Teammate Workout Details, Double High Five Emoting & Clean Map Scored View", () => {
+  // 1. Verify existence of functions
+  assert(typeof openSquadWorkoutDetailsModal === 'function', "openSquadWorkoutDetailsModal is a defined function");
+  assert(typeof closeSquadWorkoutDetailsModal === 'function', "closeSquadWorkoutDetailsModal is a defined function");
+  assert(typeof giveDoubleHighFive === 'function', "giveDoubleHighFive is a defined function");
+  assert(typeof toggleDoubleHighFive === 'function', "toggleDoubleHighFive is a defined function");
+  assert(typeof getMemberWorkoutDetails === 'function', "getMemberWorkoutDetails is a defined function");
+
+  // 2. Setup athlete & squad with fellow athlete
+  applyUserProfile({ firstName: "Jordan", lastName: "Peak", email: "jordan@showup.fit" });
+  const activeUserJordan = getAppUser();
+
+  const testSquad = {
+    id: "sq_details_test_101",
+    name: "Barbell Brigade",
+    creatorId: activeUserJordan.email,
+    members: [
+      {
+        id: activeUserJordan.id || "athlete_user_1",
+        name: "Jordan Peak",
+        email: "jordan@showup.fit",
+        isCreator: true,
+        role: "creator",
+        status: "active",
+        isWorkingOut: false,
+        completedToday: true,
+        lastCompletedWorkout: "Deadlift Overdrive",
+        workoutDetails: {
+          workoutTitle: "Deadlift Overdrive",
+          workoutName: "Deadlift Overdrive",
+          durationFormatted: "52m",
+          volume: 12400,
+          totalVolume: 12400,
+          totalSets: 5,
+          setsCount: 5,
+          exercisesCount: 1,
+          sets: [
+            { exerciseName: "Deadlift", weight: 315, reps: 5, setNumber: 1 },
+            { exerciseName: "Deadlift", weight: 365, reps: 3, setNumber: 2 },
+            { exerciseName: "Deadlift", weight: 405, reps: 2, setNumber: 3 },
+            { exerciseName: "Deadlift", weight: 405, reps: 2, setNumber: 4 },
+            { exerciseName: "Deadlift", weight: 315, reps: 8, setNumber: 5 }
+          ]
+        },
+        doubleHighFives: []
+      },
+      {
+        id: "athlete_user_2",
+        name: "Morgan Stone",
+        email: "morgan@showup.fit",
+        role: "member",
+        status: "active",
+        isWorkingOut: false,
+        completedToday: true,
+        lastCompletedWorkout: "Leg Day Heavy",
+        workoutDetails: {
+          workoutTitle: "Leg Day Heavy",
+          workoutName: "Leg Day Heavy",
+          durationFormatted: "48m",
+          volume: 18200,
+          totalVolume: 18200,
+          totalSets: 4,
+          setsCount: 4,
+          exercisesCount: 1,
+          sets: [
+            { exerciseName: "Back Squat", weight: 225, reps: 8, setNumber: 1 },
+            { exerciseName: "Back Squat", weight: 275, reps: 6, setNumber: 2 },
+            { exerciseName: "Back Squat", weight: 315, reps: 4, setNumber: 3 },
+            { exerciseName: "Back Squat", weight: 225, reps: 10, setNumber: 4 }
+          ]
+        },
+        doubleHighFives: []
+      }
+    ]
+  };
+
+  saveSquads([testSquad]);
+
+  // 3. View fellow athlete's workout details
+  const morganDetails = getMemberWorkoutDetails(testSquad.members[1]);
+  assert(morganDetails !== null, "Fellow athlete workout details retrieved");
+  assert(morganDetails.workoutTitle === "Leg Day Heavy" || morganDetails.workoutName === "Leg Day Heavy", "Fellow athlete workout title is Leg Day Heavy");
+  assert(morganDetails.totalVolume === 18200 || morganDetails.volume === 18200, "Fellow athlete volume is 18200 lbs");
+  assert(morganDetails.sets.length === 4, "Fellow athlete logged 4 sets");
+
+  // Open modal for fellow athlete
+  openSquadWorkoutDetailsModal("sq_details_test_101", "athlete_user_2");
+  const modal = getOrCreateElement('squad-workout-details-modal');
+  assert(!modal.classList.contains('hidden'), "Squad workout details modal is visible");
+  assert(getOrCreateElement('swd-athlete-name').innerText.includes("Morgan Stone"), "Modal shows fellow athlete name");
+  assert(getOrCreateElement('swd-workout-title').innerText === "Leg Day Heavy", "Modal shows fellow athlete workout title");
+  assert(getOrCreateElement('swd-sets-list').innerHTML.includes("Back Squat"), "Modal displays fellow athlete's exercise sets");
+
+  // 4. Emote via Double High Five
+  // Logged-in user Jordan gives double high five to Morgan
+  const giveResult = giveDoubleHighFive("sq_details_test_101", "athlete_user_2");
+  assert(giveResult === true, "giveDoubleHighFive succeeded");
+
+  const refreshedSquads = getSquads();
+  const refreshedMorgan = refreshedSquads[0].members.find(m => m.id === "athlete_user_2");
+  assert(refreshedMorgan.doubleHighFives.length === 1, "Morgan received 1 double high five");
+  assert(refreshedMorgan.doubleHighFives[0].giverName.includes("Jordan"), "High five giver name recorded as Jordan");
+  assert(refreshedMorgan.doubleHighFives[0].giverEmail === "jordan@showup.fit", "High five giver email recorded as jordan@showup.fit");
+
+  // 5. Athlete who received double high five views who gave it to them
+  // Switch active user to Morgan
+  applyUserProfile({ firstName: "Morgan", lastName: "Stone", email: "morgan@showup.fit" });
+
+  // Morgan opens their own workout details modal
+  openSquadWorkoutDetailsModal("sq_details_test_101", "morgan@showup.fit");
+  const giversList = getOrCreateElement('swd-high-fives-givers-list');
+  assert(giversList.innerHTML.includes("Jordan"), "Recipient can see Jordan gave them double high five in modal");
+  assert(giversList.innerHTML.includes("Double High Fives (1)"), "High five count shows 1 in modal");
+  assert(getOrCreateElement('swd-high-five-action-container').innerHTML.includes("1 Double High Five"), "Recipient sees celebration banner that they received 1 Double High Five");
+
+  // Render squads tab and verify giver visibility in card/pill
+  renderSquadsTab();
+  const squadsContainer = getOrCreateElement('squads-list-container');
+  assert(squadsContainer.innerHTML.includes("Jordan") || squadsContainer.innerHTML.includes("🙌"), "Squad view shows high five indicator and giver details");
+
+  // Close modal
+  closeSquadWorkoutDetailsModal();
+  assert(modal.classList.contains('hidden'), "Squad workout details modal closes cleanly");
+
+  // 6. Active Workout Map cleaner view (cleaner scored workouts count badge)
+  const centerHud = getOrCreateElement('map-boundary-center-hud');
+  const topHud = getOrCreateElement('map-boundary-top-hud');
+  const testActiveNodes = [
+    { zip: "20105", city: "Ashburn", lat: 39.0438, lng: -77.4874, activeCount: 5, completedToday: 42, lifters: [] }
+  ];
+  selectedHeatMapZip = "20105";
+  currentMapZoom = 14;
+  renderMapZipBoundariesOverlay(testActiveNodes);
+
+  assert(topHud.innerHTML === "", "Top HUD is kept cleanly empty to avoid visual clutter");
+  assert(centerHud.innerHTML.includes("42"), "Center HUD renders only the number of workouts scored: 42");
+  assert(centerHud.innerHTML.includes("Workouts Scored"), "Center HUD indicates workouts scored cleanly");
+  assert(!centerHud.innerHTML.includes("polygon"), "Heavy polygons eliminated from cleaner HUD view");
+
+  // 7. Activity Workout Map Date Selector Engine
+  assert(typeof getSelectedMapDate === 'function', "getSelectedMapDate is a defined function");
+  assert(typeof setSelectedMapDate === 'function', "setSelectedMapDate is a defined function");
+  assert(typeof shiftMapDate === 'function', "shiftMapDate is a defined function");
+  assert(typeof setMapDateToToday === 'function', "setMapDateToToday is a defined function");
+  assert(typeof handleMapDateChange === 'function', "handleMapDateChange is a defined function");
+
+  // Initial date is today's ET date
+  const todayKey = getETDateKey();
+  assert(getSelectedMapDate() === todayKey, "Initial selected map date is today's ET date");
+
+  // Save historical workouts on different dates: Oct 16 and Oct 17
+  const multiDateWorkouts = [
+    { date: "2026-10-16", workoutName: "Friday Bench Blast", sets: [{ weight: 225, reps: 5 }] },
+    { date: "2026-10-17", workoutName: "Saturday Squat Session", sets: [{ weight: 315, reps: 5 }] },
+    { date: todayKey, workoutName: "Sunday Deadlift Day", sets: [{ weight: 405, reps: 3 }] }
+  ];
+  localStorage.setItem('showUp_synced_workouts', JSON.stringify(multiDateWorkouts));
+  setUserZip("20105", "Ashburn, VA", 39.0438, -77.4874);
+
+  // Switch to past date: 2026-10-16
+  setSelectedMapDate("2026-10-16");
+  assert(getSelectedMapDate() === "2026-10-16", "Selected map date switched to 2026-10-16");
+  const pickerInput = getOrCreateElement('map-date-picker');
+  assert(pickerInput.value === "2026-10-16", "Date picker input value updated to 2026-10-16");
+  const dateBadge = getOrCreateElement('map-date-badge');
+  assert(dateBadge.innerText.includes("Oct 16, 2026"), "Map date badge displays Oct 16, 2026");
+
+  // Query nodes for Oct 16
+  const oct16Nodes = getActiveAndCompletedZipNodes("2026-10-16");
+  assert(oct16Nodes.length > 0, "Activity map retrieves workouts for Oct 16");
+  assert(oct16Nodes[0].completedToday === 1, "1 workout scored on Oct 16 in user's zip");
+
+  // Shift date forward by +1 day (to 2026-10-17)
+  shiftMapDate(1);
+  assert(getSelectedMapDate() === "2026-10-17", "shiftMapDate(+1) shifted date forward to 2026-10-17");
+  const oct17Nodes = getActiveAndCompletedZipNodes("2026-10-17");
+  assert(oct17Nodes.length > 0, "Activity map retrieves workouts for Oct 17");
+  assert(oct17Nodes[0].completedToday === 1, "1 workout scored on Oct 17 in user's zip");
+
+  // Shift date backward by -2 days (to 2026-10-15)
+  shiftMapDate(-2);
+  assert(getSelectedMapDate() === "2026-10-15", "shiftMapDate(-2) shifted date back to 2026-10-15");
+  const oct15Nodes = getActiveAndCompletedZipNodes("2026-10-15");
+  assert(oct15Nodes.length === 0, "No workouts scored on Oct 15 returns 0 nodes");
+
+  // Detail card reflects empty state for selected date
+  updateZipDetailCard(oct15Nodes);
+  assert(getOrCreateElement('zip-detail-title').innerText.includes("No workouts recorded"), "Detail card informs no workouts recorded on selected date");
+
+  // Reset date back to today
+  setMapDateToToday();
+  assert(getSelectedMapDate() === todayKey, "setMapDateToToday() snaps back to today's date");
+  assert(getOrCreateElement('map-date-badge').innerText.includes("Today"), "Map date badge reflects Today");
+  const todayNodes = getActiveAndCompletedZipNodes(todayKey);
+  assert(todayNodes.length > 0, "Today's workouts retrieved accurately");
+  assert(todayNodes[0].completedToday === 1, "Today's workout scored in map");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");
