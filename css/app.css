@@ -650,6 +650,7 @@ nav {
 #global-visitors-modal,
 #settings-modal,
 #auth-login-modal,
+#edit-historical-workout-modal,
 #log-weight-modal,
 #large-logo-modal {
   display: flex;
@@ -660,9 +661,24 @@ nav {
 #global-visitors-modal.hidden,
 #settings-modal.hidden,
 #auth-login-modal.hidden,
+#edit-historical-workout-modal.hidden,
 #log-weight-modal.hidden,
 #large-logo-modal.hidden {
   display: none !important;
+}
+
+/* Hovering Country Workout Badge Animation */
+@keyframes hoverFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.hover-float-badge {
+  animation: hoverFloat 2.8s ease-in-out infinite;
 }
 
 /* ==========================================================================

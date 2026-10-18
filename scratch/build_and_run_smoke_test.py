@@ -1437,6 +1437,127 @@ runSuite("16. Squads Teammate Workout Details, Double High Five Emoting & Clean 
   assert(allRecovered.some(w => (typeof w === 'string' ? w : w.date) === '2026-10-17'), "2026-10-17 workout is preserved and never dropped");
 });
 
+runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password Authentication Engine", () => {
+  // 1. Historical Workout Updates & Pencil Icon
+  assert(typeof openEditHistoricalWorkoutModal === 'function', "openEditHistoricalWorkoutModal is a defined function");
+  assert(typeof closeEditHistoricalWorkoutModal === 'function', "closeEditHistoricalWorkoutModal is a defined function");
+  assert(typeof saveHistoricalWorkoutChanges === 'function', "saveHistoricalWorkoutChanges is a defined function");
+  assert(typeof addSetToEditHistoricalWorkout === 'function', "addSetToEditHistoricalWorkout is a defined function");
+
+  // Monthly history rendering contains pencil icon for workout updates
+  renderMonthlyHistory();
+  const monthlyHtml = getOrCreateElement('monthly-history-list').innerHTML;
+  assert(monthlyHtml.includes('fa-pencil'), "Monthly history list renders pencil icon for editing workouts");
+  assert(monthlyHtml.includes('openEditHistoricalWorkoutModal'), "Monthly history list includes openEditHistoricalWorkoutModal trigger");
+
+  // Open Edit Modal for Oct 17
+  openEditHistoricalWorkoutModal('2026-10-17');
+  const editModal = getOrCreateElement('edit-historical-workout-modal');
+  assert(!editModal.classList.contains('hidden'), "Edit historical workout modal opens and is visible");
+  assert(getOrCreateElement('edit-workout-date').value === '2026-10-17', "Edit modal correctly populates workout date");
+
+  // Modify workout title, calories, and duration
+  getOrCreateElement('edit-workout-name').value = "Updated Power Lift";
+  getOrCreateElement('edit-workout-calories').value = "520";
+  getOrCreateElement('edit-workout-duration').value = "55";
+  getOrCreateElement('edit-workout-notes').value = "Felt great, new PR hit!";
+
+  // Save changes
+  saveHistoricalWorkoutChanges();
+  assert(editModal.classList.contains('hidden'), "Edit historical workout modal closes after saving changes");
+
+  // Verify updated workout in history
+  const updatedWorkout = completedWorkoutsHistory.find(w => (typeof w === 'string' ? w : w.date) === '2026-10-17');
+  assert(updatedWorkout !== undefined, "Updated workout exists in completedWorkoutsHistory");
+  assert(updatedWorkout.workoutName === "Updated Power Lift", "Workout title successfully updated to Updated Power Lift");
+  assert(updatedWorkout.caloriesBurned === 520, "Calories burned successfully updated to 520");
+  assert(updatedWorkout.notes === "Felt great, new PR hit!", "Notes successfully updated");
+
+  // AppStorage updateWorkout verification
+  const testWObj = {
+    date: '2026-10-10',
+    workoutName: 'Historical Back & Core',
+    totalVolume: 8000,
+    caloriesBurned: 400,
+    sets: [{ exerciseName: 'Deadlift', weight: 315, reps: 5, rpe: 8 }]
+  };
+  AppStorage.updateWorkout('2026-10-10', testWObj);
+  const storedW = AppStorage.getAthleteWorkouts().find(w => (typeof w === 'string' ? w : w.date) === '2026-10-10');
+  assert(storedW && storedW.workoutName === 'Historical Back & Core', "AppStorage.updateWorkout successfully updates workout in persistent storage");
+
+  // 2. Country-Level Hovering & Edge Sticking Map Engine
+  assert(typeof updateCountryHoverEdgeTracker === 'function', "updateCountryHoverEdgeTracker is a defined function");
+  assert(typeof panMapToCountry === 'function', "panMapToCountry is a defined function");
+
+  // Test at Country Level (zoom = 3)
+  currentMapZoom = 3;
+  renderMapZipBoundariesOverlay([{ zip: '10001', city: 'New York', lat: 40.75, lng: -73.99, completedToday: 5 }]);
+  const countryBadge = getOrCreateElement('map-country-edge-hover-badge');
+  assert(countryBadge !== null, "Country badge element created in overlay");
+  assert(countryBadge.style.display !== 'none', "Country badge is displayed at country zoom level");
+  assert(countryBadge.innerHTML.includes('5'), "Country badge reflects workouts scored count: 5");
+
+  // Verify transition when zoomed into zip level (zoom = 14)
+  currentMapZoom = 14;
+  renderMapZipBoundariesOverlay([{ zip: '10001', city: 'New York', lat: 40.75, lng: -73.99, completedToday: 5 }]);
+  assert(countryBadge.style.display === 'none', "Country badge is cleanly hidden when zoomed in to zip level");
+
+  // 3. Email & Password Authentication Engine (Setup, Login, Reset)
+  assert(typeof registerAthleteAccount === 'function', "registerAthleteAccount is a defined function");
+  assert(typeof loginAthleteWithEmailPassword === 'function', "loginAthleteWithEmailPassword is a defined function");
+  assert(typeof resetAthletePassword === 'function', "resetAthletePassword is a defined function");
+  assert(typeof getRegisteredAccounts === 'function', "getRegisteredAccounts is a defined function");
+
+  // Account Setup / Registration
+  const regResult = registerAthleteAccount('runner@showup.fit', 'ironStrong99', 'Alex', 'Smith', '90210');
+  assert(regResult.success === true, "Account registration succeeds with chosen email and password");
+  const accounts = getRegisteredAccounts();
+  assert(accounts['runner@showup.fit'] !== undefined, "Registered account is stored in registered accounts");
+  assert(accounts['runner@showup.fit'].firstName === 'Alex', "Account stores athlete name");
+
+  // Verify logged-in state
+  const currentUser = getAppUser();
+  assert(currentUser.email === 'runner@showup.fit', "User profile is active with registered email");
+  assert(currentUser.rawName === 'Alex', "User profile is active with registered name");
+
+  // Re-registering same email returns helpful error
+  const dupResult = registerAthleteAccount('runner@showup.fit', 'otherPass', 'Alex');
+  assert(dupResult.success === false, "Duplicate registration is rejected with appropriate error");
+
+  // Logout clears session but preserves account
+  handleLogout(true);
+  assert(getAppUser().email !== 'runner@showup.fit', "Logout clears current session");
+  assert(getRegisteredAccounts()['runner@showup.fit'] !== undefined, "Registered accounts persist across session logouts");
+
+  // Login with incorrect password fails
+  const badLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'wrongPassword');
+  assert(badLogin.success === false, "Login with wrong password fails");
+
+  // Login with correct email and password succeeds
+  const goodLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'ironStrong99');
+  assert(goodLogin.success === true, "Login with chosen email and password succeeds");
+  assert(getAppUser().email === 'runner@showup.fit', "Athlete profile active after email/password login");
+
+  // Reset Password Engine
+  const resetRes = resetAthletePassword('runner@showup.fit', 'newSecret2026');
+  assert(resetRes.success === true, "Password reset succeeds");
+
+  // Verify old password fails and new password succeeds
+  handleLogout(true);
+  const oldLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'ironStrong99');
+  assert(oldLogin.success === false, "Old password no longer valid after reset");
+  const newLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'newSecret2026');
+  assert(newLogin.success === true, "Login with new reset password succeeds");
+
+  // Auth UI Tabs
+  switchAuthTab('signin');
+  assert(!getOrCreateElement('auth-signin-view').classList.contains('hidden'), "Sign in view visible on signin tab");
+  switchAuthTab('register');
+  assert(!getOrCreateElement('auth-register-view').classList.contains('hidden'), "Register view visible on register tab");
+  switchAuthTab('reset');
+  assert(!getOrCreateElement('auth-reset-view').classList.contains('hidden'), "Reset view visible on reset tab");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

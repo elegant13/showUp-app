@@ -51,6 +51,9 @@ const STORAGE_KEYS = {
   VISITOR_FIRST_SEEN: 'showUp_visitor_first_seen',
   VISITOR_COUNTED: 'showUp_unique_counted_v4',
 
+  // Registered Accounts & Auth
+  REGISTERED_ACCOUNTS: 'showUp_registered_accounts',
+
   // Map API
   GMAPS_API_KEY: 'showUp_gmaps_api_key'
 };
@@ -134,6 +137,74 @@ const AppStorage = {
         localStorage.setItem(STORAGE_KEYS.DELETED_WORKOUTS, JSON.stringify(deleted));
       }
     } catch (e) {}
+  },
+
+  /**
+   * Update an existing historical workout with any modified details, preserving data integrity
+   */
+  updateWorkout(origDateStr, updatedWorkoutObj) {
+    if (!updatedWorkoutObj) return this.getAthleteWorkouts();
+    const newDate = updatedWorkoutObj.date || origDateStr;
+    let current = this.getAthleteWorkouts();
+    
+    // If the date was adjusted, remove from old date slot and unmark new date
+    if (origDateStr && origDateStr !== newDate) {
+      current = current.filter(item => (typeof item === 'string' ? item : item.date) !== origDateStr);
+    }
+    this.unmarkDeletedWorkout(newDate);
+
+    const existingIdx = current.findIndex(item => (typeof item === 'string' ? item : item.date) === newDate);
+    if (existingIdx !== -1) {
+      current[existingIdx] = updatedWorkoutObj;
+    } else {
+      current.push(updatedWorkoutObj);
+    }
+
+    // Sort descending by date
+    current.sort((a, b) => {
+      const da = String(typeof a === 'string' ? a : a.date || '').slice(0, 10);
+      const db = String(typeof b === 'string' ? b : b.date || '').slice(0, 10);
+      return db.localeCompare(da);
+    });
+
+    this.saveAthleteWorkouts(current);
+    return current;
+  },
+
+  /**
+   * Retrieve all registered athlete accounts from persistent storage
+   */
+  getRegisteredAccounts() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.REGISTERED_ACCOUNTS);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return (typeof parsed === 'object' && parsed !== null) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  },
+
+  /**
+   * Save or update an athlete account in persistent storage
+   */
+  saveRegisteredAccount(account) {
+    if (!account || !account.email) return false;
+    try {
+      const accounts = this.getRegisteredAccounts();
+      const normEmail = account.email.toLowerCase().trim();
+      accounts[normEmail] = {
+        ...accounts[normEmail],
+        ...account,
+        email: normEmail,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_KEYS.REGISTERED_ACCOUNTS, JSON.stringify(accounts));
+      return true;
+    } catch (e) {
+      console.warn("[AppStorage] Error saving account:", e);
+      return false;
+    }
   },
 
   /**

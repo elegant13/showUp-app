@@ -102,7 +102,9 @@
         const isWorkedOut = completedWorkoutsHistory.some(item => (typeof item === 'string' ? item : item.date) === dateKey);
 
         grid.innerHTML += `
-          <div class="aspect-square flex items-center justify-center rounded-xl text-xs font-semibold ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}">
+          <div onclick="${isWorkedOut ? `triggerHaptic('light'); openEditHistoricalWorkoutModal('${dateKey}')` : ''}"
+               class="aspect-square flex items-center justify-center rounded-xl text-xs font-semibold cursor-pointer transition transform ${isWorkedOut ? 'bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95' : 'bg-slate-950 text-slate-600 border border-slate-800/80'}"
+               title="${isWorkedOut ? `Completed workout on ${dateKey} (Click to Edit)` : dateKey}">
             ${day}
           </div>
         `;
@@ -146,6 +148,10 @@
                     <i class="fa-solid fa-calendar-check text-emerald-400"></i>
                     <span>${nameStr}</span>
                     <span class="text-xs font-normal text-slate-400">(${dateStr})</span>
+                    <!-- Pencil Icon: Quick Edit trigger beside workout title -->
+                    <button onclick="event.stopPropagation(); triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dateStr}')" class="text-slate-500 hover:text-amber-400 p-1 rounded-lg transition" title="Edit Workout (${dateStr})">
+                      <i class="fa-solid fa-pencil text-[11px]"></i>
+                    </button>
                   </div>
                   <div class="text-xs text-slate-400 mt-0.5 flex items-center gap-3">
                     <span>${setsCount} Sets</span>
@@ -157,6 +163,10 @@
               </div>
 
               <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+                <!-- Pencil Icon Action Button: Update historical workout with any details -->
+                <button onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dateStr}')" class="text-slate-500 hover:text-amber-400 p-2 transition rounded-xl hover:bg-slate-850" title="Edit Workout">
+                  <i class="fa-solid fa-pencil text-xs"></i>
+                </button>
                 <button onclick="triggerHaptic('medium'); shareWorkoutToWhatsApp('${dateStr}')" class="text-slate-500 hover:text-emerald-400 p-2 transition" title="Share via WhatsApp">
                   <i class="fa-brands fa-whatsapp text-sm"></i>
                 </button>
@@ -167,6 +177,13 @@
             </div>
 
             <div id="details-${dateStr}" class="hidden border-t border-slate-800/80 bg-slate-900/40 p-3 space-y-2">
+              <div class="flex items-center justify-between pb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Workout Details</span>
+                <button onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dateStr}')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition active:scale-95">
+                  <i class="fa-solid fa-pencil text-[10px]"></i>
+                  <span>Edit All Details</span>
+                </button>
+              </div>
               ${notesStr ? `<div class="text-xs text-slate-300 italic bg-slate-950/80 p-2 rounded-lg border border-slate-800 mb-2">Notes: "${notesStr}"</div>` : ''}
               ${typeof w === 'object' && w.totalWorkoutSeconds ? `
                 <div class="flex items-center gap-2 flex-wrap text-[11px] font-mono bg-slate-950 p-2 rounded-xl border border-slate-800 text-slate-400">
@@ -197,8 +214,8 @@
                     </div>
                   </div>
 
-                  <button onclick="triggerHaptic('medium'); editHistoricalSet('${dateStr}', ${s.id})" class="text-slate-500 hover:text-amber-400 p-1.5 rounded-lg transition" title="Edit Set">
-                    <i class="fa-solid fa-pen text-xs"></i>
+                  <button onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dateStr}')" class="text-slate-500 hover:text-amber-400 p-1.5 rounded-lg transition" title="Edit Workout / Set">
+                    <i class="fa-solid fa-pencil text-xs"></i>
                   </button>
                 </div>
               `).join('')}
@@ -221,56 +238,371 @@
       }
     }
 
-    function editHistoricalSet(dateStr, setId) {
-      const workoutIdx = completedWorkoutsHistory.findIndex(w => (typeof w === 'object' && w.date === dateStr));
-      if (workoutIdx === -1) return;
+    // ==========================================================================
+    // Historical Workout Editor Engine (Pencil Icon & Comprehensive Updating)
+    // ==========================================================================
 
-      const workout = completedWorkoutsHistory[workoutIdx];
-      const setObj = workout.sets.find(s => s.id === setId);
-      if (!setObj) return;
+    let currentEditingWorkoutOriginalDate = null;
 
-      if (setObj.implement === "Running") {
-        const newDist = prompt(`Edit Distance (miles) for ${setObj.exerciseName}:`, setObj.runningDistance);
-        if (newDist === null) return;
-        const newTime = prompt(`Edit Time (hh:mm:ss) for ${setObj.exerciseName}:`, setObj.runningTime || "00:25:00");
-        if (newTime === null) return;
-        const newAvg = prompt(`Edit Avg HR (bpm) for ${setObj.exerciseName}:`, setObj.runningAvgHR || "");
-        const newMax = prompt(`Edit Max HR (bpm) for ${setObj.exerciseName}:`, setObj.runningMaxHR || "");
-        setObj.runningDistance = parseFloat(newDist) || 1.0;
-        setObj.runningTime = newTime.trim() || "00:25:00";
-        setObj.runningAvgHR = newAvg ? parseInt(newAvg) : null;
-        setObj.runningMaxHR = newMax ? parseInt(newMax) : null;
-      } else if (setObj.implement === "Row Erg") {
-        const newDist = prompt(`Edit Distance (meters) for ${setObj.exerciseName}:`, setObj.ergDistance);
-        if (newDist === null) return;
-        setObj.ergDistance = parseInt(newDist) || 500;
-      } else if (setObj.implement === "Swimming") {
-        const newDist = prompt(`Edit Distance (yards) for ${setObj.exerciseName}:`, setObj.swimDistance);
-        if (newDist === null) return;
-        setObj.swimDistance = parseInt(newDist) || 500;
-      } else if (["Walking", "Hiking", "Biking"].includes(setObj.implement)) {
-        const newDist = prompt(`Edit Distance (miles) for ${setObj.exerciseName}:`, setObj.enduranceDistance);
-        if (newDist === null) return;
-        setObj.enduranceDistance = parseFloat(newDist) || 1.0;
-      } else {
-        const newWeight = prompt(`Edit Weight (lbs) for ${setObj.exerciseName}:`, setObj.weight);
-        if (newWeight === null) return;
-        const newReps = prompt(`Edit Reps for ${setObj.exerciseName}:`, setObj.reps);
-        if (newReps === null) return;
+    function openEditHistoricalWorkoutModal(dateStr) {
+      if (!dateStr) return;
+      currentEditingWorkoutOriginalDate = dateStr;
 
-        setObj.weight = parseFloat(newWeight) || 0;
-        setObj.reps = parseInt(newReps) || 1;
+      const modal = document.getElementById('edit-historical-workout-modal');
+      if (!modal) return;
+
+      const rawWorkout = completedWorkoutsHistory.find(item => {
+        const d = typeof item === 'string' ? item : item.date;
+        return d === dateStr;
+      });
+
+      const workout = (typeof rawWorkout === 'object' && rawWorkout !== null)
+        ? JSON.parse(JSON.stringify(rawWorkout))
+        : {
+            date: dateStr,
+            workoutName: 'Workout Session',
+            notes: '',
+            caloriesBurned: 350,
+            totalWorkoutSeconds: 2400,
+            totalActiveSeconds: 1500,
+            totalRestSeconds: 900,
+            sets: []
+          };
+
+      // Populate core fields
+      const dateInput = document.getElementById('edit-workout-date');
+      const nameInput = document.getElementById('edit-workout-name');
+      const notesInput = document.getElementById('edit-workout-notes');
+      const calsInput = document.getElementById('edit-workout-calories');
+      const durationInput = document.getElementById('edit-workout-duration');
+      const activeInput = document.getElementById('edit-workout-active-time');
+      const restInput = document.getElementById('edit-workout-rest-time');
+
+      if (dateInput) dateInput.value = workout.date || dateStr;
+      if (nameInput) nameInput.value = workout.workoutName || 'Workout Session';
+      if (notesInput) notesInput.value = workout.notes || '';
+      if (calsInput) calsInput.value = workout.caloriesBurned || workout.calories || 0;
+      if (durationInput) durationInput.value = Math.round((workout.totalWorkoutSeconds || 1800) / 60);
+      if (activeInput) activeInput.value = Math.round((workout.totalActiveSeconds || 1200) / 60);
+      if (restInput) restInput.value = Math.round((workout.totalRestSeconds || 600) / 60);
+
+      // Render editable sets
+      renderEditWorkoutSets(workout.sets || []);
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeEditHistoricalWorkoutModal() {
+      const modal = document.getElementById('edit-historical-workout-modal');
+      if (modal) modal.classList.add('hidden');
+      currentEditingWorkoutOriginalDate = null;
+    }
+
+    function renderEditWorkoutSets(sets) {
+      const container = document.getElementById('edit-workout-sets-container');
+      if (!container) return;
+
+      if (!Array.isArray(sets) || sets.length === 0) {
+        container.innerHTML = `
+          <div id="edit-no-sets-prompt" class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-center text-slate-500 text-xs italic">
+            No detailed sets logged yet. Click "+ Add Set" below to add exercise sets with full metrics.
+          </div>
+        `;
+        return;
       }
 
-      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-        AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+      container.innerHTML = sets.map((s, idx) => createEditSetRowMarkup(s, idx)).join('');
+    }
+
+    function createEditSetRowMarkup(s, idx) {
+      const implement = s.implement || 'Barbell';
+      const isRunning = implement === 'Running';
+      const isCardio = ['Row Erg', 'Swimming', 'Walking', 'Hiking', 'Biking'].includes(implement);
+
+      return `
+        <div class="edit-set-row bg-slate-950 p-3 rounded-2xl border border-slate-800/90 space-y-2.5 relative" data-set-index="${idx}">
+          <div class="flex items-center justify-between border-b border-slate-800/60 pb-1.5">
+            <span class="text-[11px] font-mono font-bold text-emerald-400">Set #${idx + 1}</span>
+            <button type="button" onclick="triggerHaptic('light'); removeEditSetRow(${idx})" class="text-slate-500 hover:text-rose-400 p-1 text-xs transition" title="Remove Set">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Exercise</label>
+              <input type="text" class="edit-set-exercise w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 font-semibold focus:outline-none focus:border-emerald-500" value="${(typeof escapeHtml === 'function') ? escapeHtml(s.exerciseName || '') : (s.exerciseName || 'Exercise')}">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Implement / Type</label>
+              <select class="edit-set-implement w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 font-semibold focus:outline-none focus:border-emerald-500" onchange="handleEditImplementChange(this)">
+                <option value="Barbell" ${implement === 'Barbell' ? 'selected' : ''}>Barbell</option>
+                <option value="Dumbbell" ${implement === 'Dumbbell' ? 'selected' : ''}>Dumbbell</option>
+                <option value="Kettlebell" ${implement === 'Kettlebell' ? 'selected' : ''}>Kettlebell</option>
+                <option value="Machine" ${implement === 'Machine' ? 'selected' : ''}>Machine</option>
+                <option value="Cable" ${implement === 'Cable' ? 'selected' : ''}>Cable</option>
+                <option value="Bodyweight" ${implement === 'Bodyweight' ? 'selected' : ''}>Bodyweight</option>
+                <option value="Running" ${implement === 'Running' ? 'selected' : ''}>Running</option>
+                <option value="Row Erg" ${implement === 'Row Erg' ? 'selected' : ''}>Row Erg</option>
+                <option value="Swimming" ${implement === 'Swimming' ? 'selected' : ''}>Swimming</option>
+                <option value="Walking" ${implement === 'Walking' ? 'selected' : ''}>Walking</option>
+                <option value="Biking" ${implement === 'Biking' ? 'selected' : ''}>Biking</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Dynamic Metrics Grid -->
+          <div class="edit-set-metrics-resistance grid grid-cols-3 gap-2 ${isRunning || isCardio ? 'hidden' : ''}">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Weight (lbs)</label>
+              <input type="number" step="0.5" class="edit-set-weight w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.weight || 0}">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Reps</label>
+              <input type="number" step="1" class="edit-set-reps w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.reps || 10}">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">RPE (1-10)</label>
+              <input type="number" step="0.5" min="1" max="10" class="edit-set-rpe w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.rpe || 8}">
+            </div>
+          </div>
+
+          <div class="edit-set-metrics-endurance grid grid-cols-2 sm:grid-cols-4 gap-2 ${isRunning || isCardio ? '' : 'hidden'}">
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Distance</label>
+              <input type="number" step="0.01" class="edit-set-distance w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.runningDistance || s.enduranceDistance || s.ergDistance || s.swimDistance || 1.0}">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Time (hh:mm:ss)</label>
+              <input type="text" class="edit-set-time w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.runningTime || s.enduranceTime || s.ergTime || s.swimTime || '00:20:00'}">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Avg HR (bpm)</label>
+              <input type="number" class="edit-set-avg-hr w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.runningAvgHR || s.avgHR || ''}">
+            </div>
+            <div>
+              <label class="block text-[10px] text-slate-400 mb-0.5">Max HR (bpm)</label>
+              <input type="number" class="edit-set-max-hr w-full bg-slate-900 border border-slate-800 rounded-xl px-2 py-1 text-xs text-slate-100 font-mono font-bold" value="${s.runningMaxHR || s.maxHR || ''}">
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleEditImplementChange(selectEl) {
+      const row = selectEl.closest('.edit-set-row');
+      if (!row) return;
+      const implement = selectEl.value;
+      const isCardio = ['Running', 'Row Erg', 'Swimming', 'Walking', 'Hiking', 'Biking'].includes(implement);
+      const resPanel = row.querySelector('.edit-set-metrics-resistance');
+      const endPanel = row.querySelector('.edit-set-metrics-endurance');
+
+      if (isCardio) {
+        if (resPanel) resPanel.classList.add('hidden');
+        if (endPanel) endPanel.classList.remove('hidden');
       } else {
+        if (resPanel) resPanel.classList.remove('hidden');
+        if (endPanel) endPanel.classList.add('hidden');
+      }
+    }
+
+    function addSetToEditHistoricalWorkout() {
+      const container = document.getElementById('edit-workout-sets-container');
+      if (!container) return;
+      const noSetsPrompt = document.getElementById('edit-no-sets-prompt');
+      if (noSetsPrompt) noSetsPrompt.remove();
+
+      const currentCount = container.querySelectorAll('.edit-set-row').length;
+      const newSetObj = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        exerciseName: 'Exercise',
+        implement: 'Barbell',
+        weight: 135,
+        reps: 10,
+        rpe: 8,
+        setDuration: 45,
+        restPeriod: 90
+      };
+
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = createEditSetRowMarkup(newSetObj, currentCount);
+      container.appendChild(wrapper.firstElementChild);
+    }
+
+    function removeEditSetRow(idx) {
+      const container = document.getElementById('edit-workout-sets-container');
+      if (!container) return;
+      const rows = container.querySelectorAll('.edit-set-row');
+      if (rows[idx]) {
+        rows[idx].remove();
+      }
+      // Re-index remaining rows
+      const remaining = container.querySelectorAll('.edit-set-row');
+      remaining.forEach((r, i) => {
+        r.dataset.setIndex = i;
+        const badge = r.querySelector('.text-emerald-400');
+        if (badge) badge.innerText = `Set #${i + 1}`;
+      });
+      if (remaining.length === 0) {
+        container.innerHTML = `
+          <div id="edit-no-sets-prompt" class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-center text-slate-500 text-xs italic">
+            No detailed sets logged yet. Click "+ Add Set" below to add exercise sets with full metrics.
+          </div>
+        `;
+      }
+    }
+
+    function saveHistoricalWorkoutChanges() {
+      if (!currentEditingWorkoutOriginalDate) return;
+      const origDate = currentEditingWorkoutOriginalDate;
+
+      const dateInput = document.getElementById('edit-workout-date');
+      const nameInput = document.getElementById('edit-workout-name');
+      const notesInput = document.getElementById('edit-workout-notes');
+      const calsInput = document.getElementById('edit-workout-calories');
+      const durationInput = document.getElementById('edit-workout-duration');
+      const activeInput = document.getElementById('edit-workout-active-time');
+      const restInput = document.getElementById('edit-workout-rest-time');
+
+      const targetDate = (dateInput && dateInput.value.trim()) ? dateInput.value.trim() : origDate;
+      const workoutName = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'Workout Session';
+      const notes = notesInput ? notesInput.value.trim() : '';
+      const caloriesBurned = calsInput ? (parseFloat(calsInput.value) || 0) : 0;
+      const totalMinutes = durationInput ? (parseFloat(durationInput.value) || 30) : 30;
+      const activeMinutes = activeInput ? (parseFloat(activeInput.value) || 20) : 20;
+      const restMinutes = restInput ? (parseFloat(restInput.value) || 10) : 10;
+
+      const totalWorkoutSeconds = Math.round(totalMinutes * 60);
+      const totalActiveSeconds = Math.round(activeMinutes * 60);
+      const totalRestSeconds = Math.round(restMinutes * 60);
+
+      // Collect sets from DOM
+      const rows = document.querySelectorAll('#edit-workout-sets-container .edit-set-row');
+      const updatedSets = [];
+      let totalVolume = 0;
+      let totalDistance = 0;
+      let runningSeconds = 0;
+      let maxHR = 0;
+      let avgHRSum = 0;
+      let hrCount = 0;
+
+      rows.forEach((r, idx) => {
+        const exName = r.querySelector('.edit-set-exercise')?.value.trim() || `Set ${idx + 1}`;
+        const implement = r.querySelector('.edit-set-implement')?.value || 'Barbell';
+        const isCardio = ['Running', 'Row Erg', 'Swimming', 'Walking', 'Hiking', 'Biking'].includes(implement);
+
+        const setObj = {
+          id: Date.now() + idx,
+          exerciseName: exName,
+          implement: implement
+        };
+
+        if (isCardio) {
+          const dist = parseFloat(r.querySelector('.edit-set-distance')?.value) || 1.0;
+          const timeStr = r.querySelector('.edit-set-time')?.value.trim() || '00:20:00';
+          const avgHR = parseInt(r.querySelector('.edit-set-avg-hr')?.value) || null;
+          const mHR = parseInt(r.querySelector('.edit-set-max-hr')?.value) || null;
+
+          if (implement === 'Running') {
+            setObj.runningDistance = dist;
+            setObj.runningTime = timeStr;
+            setObj.runningAvgHR = avgHR;
+            setObj.runningMaxHR = mHR;
+            totalDistance += dist;
+            if (avgHR) { avgHRSum += avgHR; hrCount++; }
+            if (mHR && mHR > maxHR) maxHR = mHR;
+          } else if (implement === 'Row Erg') {
+            setObj.ergDistance = dist;
+            setObj.ergTime = timeStr;
+          } else if (implement === 'Swimming') {
+            setObj.swimDistance = dist;
+            setObj.swimTime = timeStr;
+          } else {
+            setObj.enduranceDistance = dist;
+            setObj.enduranceTime = timeStr;
+          }
+        } else {
+          const w = parseFloat(r.querySelector('.edit-set-weight')?.value) || 0;
+          const reps = parseInt(r.querySelector('.edit-set-reps')?.value) || 0;
+          const rpe = parseFloat(r.querySelector('.edit-set-rpe')?.value) || 8;
+          setObj.weight = w;
+          setObj.reps = reps;
+          setObj.rpe = rpe;
+          totalVolume += (w * reps);
+        }
+
+        updatedSets.push(setObj);
+      });
+
+      // Find original workout to preserve auxiliary metadata (e.g. photos, squad sync)
+      const existingIdx = completedWorkoutsHistory.findIndex(item => {
+        const d = typeof item === 'string' ? item : item.date;
+        return d === origDate;
+      });
+      const originalObj = existingIdx !== -1 && typeof completedWorkoutsHistory[existingIdx] === 'object'
+        ? completedWorkoutsHistory[existingIdx]
+        : {};
+
+      const updatedWorkout = {
+        ...originalObj,
+        id: originalObj.id || ('workout_' + Date.now()),
+        date: targetDate,
+        completedDate: targetDate,
+        completed: true,
+        workoutName: workoutName,
+        notes: notes,
+        caloriesBurned: caloriesBurned,
+        calories: caloriesBurned,
+        totalWorkoutSeconds: totalWorkoutSeconds,
+        totalWorkoutTimeFormatted: typeof formatDurationSecs === 'function' ? formatDurationSecs(totalWorkoutSeconds) : `${totalMinutes}m`,
+        totalActiveSeconds: totalActiveSeconds,
+        totalActiveTimeFormatted: typeof formatDurationSecs === 'function' ? formatDurationSecs(totalActiveSeconds) : `${activeMinutes}m`,
+        totalRestSeconds: totalRestSeconds,
+        totalRestTimeFormatted: typeof formatDurationSecs === 'function' ? formatDurationSecs(totalRestSeconds) : `${restMinutes}m`,
+        totalVolume: totalVolume,
+        sets: updatedSets,
+        lastModified: new Date().toISOString()
+      };
+
+      if (totalDistance > 0) {
+        updatedWorkout.runningMetrics = {
+          totalDistance: totalDistance,
+          avgHR: hrCount > 0 ? Math.round(avgHRSum / hrCount) : null,
+          maxHR: maxHR > 0 ? maxHR : null
+        };
+      }
+
+      // Persist across AppStorage and in-memory caches
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.updateWorkout === 'function') {
+        AppStorage.updateWorkout(origDate, updatedWorkout);
+      } else {
+        if (origDate !== targetDate) {
+          completedWorkoutsHistory = completedWorkoutsHistory.filter(item => (typeof item === 'string' ? item : item.date) !== origDate);
+        }
+        const matchIdx = completedWorkoutsHistory.findIndex(item => (typeof item === 'string' ? item : item.date) === targetDate);
+        if (matchIdx !== -1) {
+          completedWorkoutsHistory[matchIdx] = updatedWorkout;
+        } else {
+          completedWorkoutsHistory.push(updatedWorkout);
+        }
         localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
       }
-      renderMonthlyHistory();
 
-      if (googleAccessToken) {
+      // Sync views
+      renderCalendar();
+      renderMonthlyHistory();
+      if (typeof renderHomeTab === 'function') renderHomeTab();
+      if (typeof renderHeatMap === 'function') renderHeatMap();
+      if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI();
+
+      if (googleAccessToken && typeof syncToGoogleDrive === 'function') {
         syncToGoogleDrive();
+      }
+
+      closeEditHistoricalWorkoutModal();
+
+      if (typeof showToast === 'function') {
+        showToast(`Workout for ${targetDate} updated successfully!`, 'success');
       }
     }
 
@@ -581,7 +913,12 @@
               <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm">
                 <i class="fa-solid fa-trophy text-emerald-400"></i> ${safeKicker}
               </span>
-              <span class="text-xs font-bold text-emerald-400 font-mono">${safeWorkoutName}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-bold text-emerald-400 font-mono">${safeWorkoutName}</span>
+                <button type="button" onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dailyStatus.completedDate || (typeof getEasternTimeDateKey === 'function' ? getEasternTimeDateKey() : new Date().toISOString().slice(0, 10))}')" class="text-slate-400 hover:text-amber-400 p-1 rounded-lg transition" title="Edit Today's Workout">
+                  <i class="fa-solid fa-pencil text-xs"></i>
+                </button>
+              </div>
             </div>
             <h3 class="text-sm font-black text-slate-100">
               ${safeHeadline}

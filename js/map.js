@@ -898,6 +898,17 @@
               currentMapZoom = googleMapInstance.getZoom();
               updateMapZoomStatusUI(currentMapZoom);
               renderHeatMap();
+              if (currentMapZoom < 5) updateCountryHoverEdgeTracker();
+            });
+
+            googleMapInstance.addListener('bounds_changed', () => {
+              if (currentMapZoom < 5) updateCountryHoverEdgeTracker();
+            });
+            googleMapInstance.addListener('center_changed', () => {
+              if (currentMapZoom < 5) updateCountryHoverEdgeTracker();
+            });
+            googleMapInstance.addListener('drag', () => {
+              if (currentMapZoom < 5) updateCountryHoverEdgeTracker();
             });
           } else {
             googleMapInstance.panTo({ lat: coords.lat, lng: coords.lng });
@@ -1039,6 +1050,17 @@
       // Cleaner Map View: Keep top HUD clean and uncluttered
       topHud.innerHTML = '';
 
+      // Tier 3 Country Zoom Level (< 5): Number of workouts hovers over country and sticks to screen edge in direction of country
+      if (currentMapZoom < 5) {
+        centerHud.innerHTML = '';
+        updateCountryHoverEdgeTracker(activeNodes);
+        return;
+      }
+
+      // Hide country edge tracker at state and zip levels (zoom >= 5)
+      const countryBadge = document.getElementById('map-country-edge-hover-badge');
+      if (countryBadge) countryBadge.style.display = 'none';
+
       // Center HUD: Display strictly the number of workouts scored at this zoomed level
       const selectedNode = aggNodes.find(z => z.id === selectedHeatMapZip || (z.originalNodes && z.originalNodes.some(on => on.zip === selectedHeatMapZip))) || aggNodes[0];
       if (!selectedNode) {
@@ -1055,6 +1077,145 @@
           </div>
         </div>
       `;
+    }
+
+    /**
+     * Country-Level Hovering & Edge-Sticking Indicator:
+     * When zoomed at country level (zoom < 5), the number of workouts hovers over the country centroid.
+     * When panned away or near boundary, it sticks to the edge of the map container in the direction of the country.
+     */
+    function updateCountryHoverEdgeTracker(activeNodes) {
+      const overlay = document.getElementById('map-zip-boundaries-overlay');
+      const canvas = document.getElementById('google-maps-canvas');
+      if (!overlay || !canvas) return;
+
+      let badgeEl = document.getElementById('map-country-edge-hover-badge');
+
+      if (currentMapZoom >= 5) {
+        if (badgeEl) badgeEl.style.display = 'none';
+        return;
+      }
+
+      if (!badgeEl) {
+        badgeEl = document.createElement('div');
+        badgeEl.id = 'map-country-edge-hover-badge';
+        badgeEl.className = 'absolute pointer-events-auto transition-all duration-150 ease-out z-30 select-none';
+        overlay.appendChild(badgeEl);
+      }
+      badgeEl.style.display = 'block';
+
+      if (!Array.isArray(activeNodes)) {
+        activeNodes = (typeof getActiveAndCompletedZipNodes === 'function') ? getActiveAndCompletedZipNodes() : [];
+      }
+
+      const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
+      const countryNode = (aggNodes && aggNodes.length > 0)
+        ? (aggNodes.find(n => n.type === 'country') || aggNodes[0])
+        : { lat: 39.8283, lng: -98.5795, completedToday: 0, label: 'United States', shortTitle: 'USA' };
+
+      const completedCount = countryNode.completedToday || 0;
+      const countryLat = countryNode.lat || 39.8283;
+      const countryLng = countryNode.lng || -98.5795;
+
+      const width = canvas.clientWidth || 320;
+      const height = canvas.clientHeight || 280;
+
+      let screenX = width / 2;
+      let screenY = height / 2;
+
+      if (googleMapInstance && !isMapEmbedMode) {
+        const bounds = googleMapInstance.getBounds();
+        if (bounds) {
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          let dLng = ne.lng() - sw.lng();
+          if (dLng <= 0) dLng += 360;
+          let relLng = countryLng - sw.lng();
+          if (relLng < 0) relLng += 360;
+          screenX = (relLng / dLng) * width;
+
+          const latToY = (lat) => {
+            const sin = Math.sin(lat * Math.PI / 180);
+            return Math.log((1 + sin) / Math.max(1e-5, (1 - sin))) / 2;
+          };
+          const topY = latToY(ne.lat());
+          const botY = latToY(sw.lat());
+          const cY = latToY(countryLat);
+          screenY = ((topY - cY) / Math.max(1e-5, (topY - botY))) * height;
+        } else {
+          const center = googleMapInstance.getCenter();
+          const cLat = center ? (typeof center.lat === 'function' ? center.lat() : center.lat) : 39.8283;
+          const cLng = center ? (typeof center.lng === 'function' ? center.lng() : center.lng) : -98.5795;
+          const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
+          const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
+          screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
+          screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
+        }
+      } else {
+        const cLat = 39.8283;
+        const cLng = -98.5795;
+        const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
+        const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
+        screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
+        screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
+      }
+
+      // Edge boundaries margins
+      const marginX = 42;
+      const marginY = 42;
+      const minX = marginX;
+      const maxX = width - marginX;
+      const minY = marginY;
+      const maxY = height - marginY;
+      const cx = width / 2;
+      const cy = height / 2;
+
+      const isInside = screenX >= minX && screenX <= maxX && screenY >= minY && screenY <= maxY;
+      let badgeX = screenX;
+      let badgeY = screenY;
+      let isStickingToEdge = false;
+      let arrowHtml = '';
+
+      if (!isInside) {
+        isStickingToEdge = true;
+        const dx = screenX - cx;
+        const dy = screenY - cy;
+        const scaleX = dx > 0 ? (maxX - cx) / dx : (dx < 0 ? (minX - cx) / dx : Infinity);
+        const scaleY = dy > 0 ? (maxY - cy) / dy : (dy < 0 ? (minY - cy) / dy : Infinity);
+        const scale = Math.min(scaleX, scaleY);
+        badgeX = cx + dx * scale;
+        badgeY = cy + dy * scale;
+
+        const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+        arrowHtml = `<i class="fa-solid fa-location-arrow text-[10px] text-emerald-200" style="transform: rotate(${angleDeg - 45}deg)"></i>`;
+      }
+
+      badgeEl.style.left = `${Math.round(badgeX)}px`;
+      badgeEl.style.top = `${Math.round(badgeY)}px`;
+      badgeEl.style.transform = 'translate(-50%, -50%)';
+
+      const titleText = isStickingToEdge
+        ? `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Click to Center)`
+        : `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Hovering over Country)`;
+
+      badgeEl.innerHTML = `
+        <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
+             class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black shadow-2xl shadow-[var(--m3-primary)]/50 ring-4 ring-slate-950/90 ${isStickingToEdge ? 'border-2 border-emerald-300 ring-emerald-500/30' : 'hover-float-badge'}"
+             title="${titleText}">
+          ${arrowHtml}
+          <span class="text-xl sm:text-2xl">${completedCount}</span>
+          <span class="text-[9px] uppercase tracking-wider font-sans font-extrabold opacity-95">${isStickingToEdge ? 'Scored' : (countryNode.shortTitle || 'USA')}</span>
+        </div>
+      `;
+    }
+
+    function panMapToCountry(lat = 39.8283, lng = -98.5795) {
+      if (googleMapInstance && !isMapEmbedMode) {
+        googleMapInstance.panTo({ lat, lng });
+      } else {
+        renderGoogleMapsEmbed(lat, lng, currentMapZoom, '', 'United States');
+      }
+      setTimeout(() => { updateCountryHoverEdgeTracker(); }, 100);
     }
 
     function zoomGoogleMap(delta) {

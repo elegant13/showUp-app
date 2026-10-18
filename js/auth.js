@@ -326,19 +326,324 @@
       }
     }
 
-    function openAuthLoginModal() {
+    function openAuthLoginModal(defaultTab = 'signin') {
       const modal = document.getElementById('auth-login-modal');
-      if (modal) modal.classList.remove('hidden');
+      if (modal) {
+        modal.classList.remove('hidden');
+        switchAuthTab(defaultTab);
+        setAuthStatusMessage('', 'info');
+      }
     }
 
     function closeAuthLoginModal() {
       const modal = document.getElementById('auth-login-modal');
       if (modal) modal.classList.add('hidden');
+      setAuthStatusMessage('', 'info');
     }
 
     function triggerGoogleOAuthFromModal() {
       closeAuthLoginModal();
       handleGoogleSignIn();
+    }
+
+    // ==========================================================================
+    // Email & Password Authentication Engine (Setup, Login, Reset)
+    // ==========================================================================
+
+    function getRegisteredAccounts() {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getRegisteredAccounts === 'function') {
+        return AppStorage.getRegisteredAccounts();
+      }
+      try {
+        const raw = localStorage.getItem('showUp_registered_accounts');
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function saveRegisteredAccounts(accounts) {
+      if (!accounts || typeof accounts !== 'object') return;
+      try {
+        localStorage.setItem('showUp_registered_accounts', JSON.stringify(accounts));
+      } catch (e) {
+        console.warn("Error saving accounts:", e);
+      }
+    }
+
+    function switchAuthTab(tab) {
+      const signinView = document.getElementById('auth-signin-view');
+      const registerView = document.getElementById('auth-register-view');
+      const resetView = document.getElementById('auth-reset-view');
+
+      const signinTabBtn = document.getElementById('auth-tab-signin');
+      const registerTabBtn = document.getElementById('auth-tab-register');
+
+      if (signinView) signinView.classList.add('hidden');
+      if (registerView) registerView.classList.add('hidden');
+      if (resetView) resetView.classList.add('hidden');
+
+      if (signinTabBtn) {
+        signinTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200";
+      }
+      if (registerTabBtn) {
+        registerTabBtn.className = "flex-1 py-2 text-xs font-bold rounded-xl transition text-slate-400 hover:text-slate-200";
+      }
+
+      setAuthStatusMessage('', 'info');
+
+      if (tab === 'register') {
+        if (registerView) registerView.classList.remove('hidden');
+        if (registerTabBtn) {
+          registerTabBtn.className = "flex-1 py-2 text-xs font-black rounded-xl transition bg-emerald-500 text-slate-950 shadow-md";
+        }
+      } else if (tab === 'reset') {
+        if (resetView) resetView.classList.remove('hidden');
+      } else {
+        if (signinView) signinView.classList.remove('hidden');
+        if (signinTabBtn) {
+          signinTabBtn.className = "flex-1 py-2 text-xs font-black rounded-xl transition bg-emerald-500 text-slate-950 shadow-md";
+        }
+      }
+    }
+
+    function setAuthStatusMessage(msg, type = 'error') {
+      const banner = document.getElementById('auth-status-message');
+      if (!banner) return;
+      if (!msg) {
+        banner.classList.add('hidden');
+        banner.innerText = '';
+        return;
+      }
+      banner.classList.remove('hidden');
+      if (type === 'success') {
+        banner.className = "p-2.5 rounded-xl text-xs font-semibold bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 flex items-center gap-2";
+        banner.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i><span>${msg}</span>`;
+      } else if (type === 'info') {
+        banner.className = "p-2.5 rounded-xl text-xs font-semibold bg-blue-500/15 border border-blue-500/40 text-blue-300 flex items-center gap-2";
+        banner.innerHTML = `<i class="fa-solid fa-circle-info text-blue-400"></i><span>${msg}</span>`;
+      } else {
+        banner.className = "p-2.5 rounded-xl text-xs font-semibold bg-rose-500/15 border border-rose-500/40 text-rose-300 flex items-center gap-2";
+        banner.innerHTML = `<i class="fa-solid fa-circle-exclamation text-rose-400"></i><span>${msg}</span>`;
+      }
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (icon) icon.className = "fa-solid fa-eye-slash text-slate-400";
+      } else {
+        input.type = 'password';
+        if (icon) icon.className = "fa-solid fa-eye text-slate-400";
+      }
+    }
+
+    function registerAthleteAccount(email, password, firstName, lastName = '', zip = '') {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please provide a valid email address." };
+      }
+      if (!password || password.length < 4) {
+        return { success: false, error: "Password must be at least 4 characters." };
+      }
+
+      const accounts = getRegisteredAccounts();
+      const normEmail = email.toLowerCase().trim();
+
+      if (accounts[normEmail]) {
+        return { success: false, error: "An account with this email already exists. Please sign in or reset your password." };
+      }
+
+      const athleteName = (firstName && firstName.trim()) ? firstName.trim() : normEmail.split('@')[0];
+      const accountObj = {
+        email: normEmail,
+        password: password,
+        firstName: athleteName,
+        lastName: (lastName || '').trim(),
+        zip: (zip || '').trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      accounts[normEmail] = accountObj;
+      saveRegisteredAccounts(accounts);
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
+        AppStorage.saveRegisteredAccount(accountObj);
+      }
+
+      // Automatically sign in the newly registered athlete
+      const profile = {
+        firstName: athleteName,
+        lastName: accountObj.lastName,
+        email: normEmail,
+        picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        authProvider: 'email_password'
+      };
+      applyUserProfile(profile);
+
+      if (accountObj.zip && typeof saveUserZip === 'function') {
+        saveUserZip(accountObj.zip);
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`Account created! Welcome, ${athleteName}.`, 'success');
+      }
+
+      return { success: true, account: accountObj };
+    }
+
+    function loginAthleteWithEmailPassword(email, password) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter your email address." };
+      }
+      if (!password) {
+        return { success: false, error: "Please enter your password." };
+      }
+
+      const accounts = getRegisteredAccounts();
+      const normEmail = email.toLowerCase().trim();
+      const account = accounts[normEmail];
+
+      if (!account) {
+        return { success: false, error: "No account found with this email. Please click 'Set Up Account' to create one." };
+      }
+
+      if (account.password !== password) {
+        return { success: false, error: "Incorrect password. Please verify or use 'Forgot password?' to reset." };
+      }
+
+      const profile = {
+        firstName: account.firstName || normEmail.split('@')[0],
+        lastName: account.lastName || '',
+        email: normEmail,
+        picture: account.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+        authProvider: 'email_password'
+      };
+      applyUserProfile(profile);
+
+      if (account.zip && typeof saveUserZip === 'function') {
+        saveUserZip(account.zip);
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`Welcome back, ${profile.firstName}!`, 'success');
+      }
+
+      return { success: true, profile };
+    }
+
+    function resetAthletePassword(email, newPassword) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter a valid email address." };
+      }
+      if (!newPassword || newPassword.length < 4) {
+        return { success: false, error: "New password must be at least 4 characters." };
+      }
+
+      const accounts = getRegisteredAccounts();
+      const normEmail = email.toLowerCase().trim();
+      const account = accounts[normEmail];
+
+      if (!account) {
+        // Initialize an account so the user can immediately access showUp with their chosen password
+        const newAccount = {
+          email: normEmail,
+          password: newPassword,
+          firstName: normEmail.split('@')[0],
+          lastName: '',
+          zip: '',
+          createdAt: new Date().toISOString()
+        };
+        accounts[normEmail] = newAccount;
+        saveRegisteredAccounts(accounts);
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
+          AppStorage.saveRegisteredAccount(newAccount);
+        }
+        return { success: true, message: "Password configured and account created. You can now sign in!" };
+      }
+
+      account.password = newPassword;
+      account.updatedAt = new Date().toISOString();
+      accounts[normEmail] = account;
+      saveRegisteredAccounts(accounts);
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveRegisteredAccount === 'function') {
+        AppStorage.saveRegisteredAccount(account);
+      }
+
+      return { success: true, message: "Password reset successfully! You can now sign in with your new password." };
+    }
+
+    function handleEmailPasswordSignIn(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const emailInput = document.getElementById('auth-signin-email');
+      const passInput = document.getElementById('auth-signin-password');
+      if (!emailInput || !passInput) return;
+
+      const email = emailInput.value.trim();
+      const pass = passInput.value;
+
+      const result = loginAthleteWithEmailPassword(email, pass);
+      if (!result.success) {
+        setAuthStatusMessage(result.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      } else {
+        closeAuthLoginModal();
+      }
+    }
+
+    function handleEmailPasswordRegister(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const nameInput = document.getElementById('auth-register-name');
+      const emailInput = document.getElementById('auth-register-email');
+      const passInput = document.getElementById('auth-register-password');
+      const zipInput = document.getElementById('auth-register-zip');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+      const pass = passInput ? passInput.value : '';
+      const zip = zipInput ? zipInput.value.trim() : '';
+
+      const result = registerAthleteAccount(email, pass, name, '', zip);
+      if (!result.success) {
+        setAuthStatusMessage(result.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      } else {
+        closeAuthLoginModal();
+      }
+    }
+
+    function handleEmailPasswordReset(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const emailInput = document.getElementById('auth-reset-email');
+      const newPassInput = document.getElementById('auth-reset-password');
+      const confirmPassInput = document.getElementById('auth-reset-confirm-password');
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const newPass = newPassInput ? newPassInput.value : '';
+      const confirmPass = confirmPassInput ? confirmPassInput.value : '';
+
+      if (newPass !== confirmPass) {
+        setAuthStatusMessage("Passwords do not match. Please ensure both passwords match.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const result = resetAthletePassword(email, newPass);
+      if (!result.success) {
+        setAuthStatusMessage(result.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      } else {
+        setAuthStatusMessage(result.message, 'success');
+        if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+        // Pre-fill email in signin view and switch
+        const signinEmail = document.getElementById('auth-signin-email');
+        if (signinEmail) signinEmail.value = email;
+        setTimeout(() => {
+          switchAuthTab('signin');
+          setAuthStatusMessage(result.message, 'success');
+        }, 1200);
+      }
     }
 
     function applyUserProfile(profileObj) {
