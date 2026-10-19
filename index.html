@@ -142,6 +142,10 @@
             </div>
 
             <div class="py-1 border-t border-slate-800/80">
+              <button onclick="triggerHaptic('medium'); openSettingsModalToBackup()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800/80 hover:text-amber-400 transition flex items-center gap-2">
+                <i class="fa-solid fa-fire-flame-curved text-xs text-amber-400"></i>
+                <span>Firestore Cloud Backup</span>
+              </button>
               <button onclick="triggerHaptic('medium'); openAuthLoginModal('signin')" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-800/80 hover:text-emerald-400 transition flex items-center gap-2">
                 <i class="fa-solid fa-user-lock text-xs text-emerald-400"></i>
                 <span>Athlete Account</span>
@@ -737,7 +741,7 @@
                 </div>
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold text-slate-100">Firebase Cloud</span>
+                    <span class="text-xs font-bold text-slate-100">Firestore Cloud Backup</span>
                     <span id="settings-firestore-status-pill" class="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Cloud Sync</span>
                   </div>
                   <span id="settings-firestore-timestamp" class="text-[10px] text-slate-400 block mt-0.5 truncate">
@@ -750,11 +754,11 @@
             <div class="grid grid-cols-2 gap-2 pt-0.5">
               <button type="button" onclick="triggerHaptic('medium'); syncToFirestore()" id="btn-settings-firestore-backup" class="m3-btn-primary text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/15 active:scale-[0.98]">
                 <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
-                <span>Backup</span>
+                <span id="settings-firestore-btn-backup-text">Sync to Firestore</span>
               </button>
               <button type="button" onclick="triggerHaptic('medium'); restoreFromFirestore()" id="btn-settings-firestore-restore" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]">
                 <i class="fa-solid fa-cloud-arrow-down text-xs text-amber-400"></i>
-                <span>Restore</span>
+                <span id="settings-firestore-btn-restore-text">Restore from Firestore</span>
               </button>
             </div>
           </div>
@@ -1816,6 +1820,10 @@
 
         <!-- Bottom Tier: Material 3 Action Grouping & Touch Targets -->
         <div class="pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-2.5">
+          <button id="backup-banner-firestore-btn" onclick="triggerHaptic('medium'); syncToFirestore()" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]" title="Sync workouts to Firestore Cloud">
+            <i class="fa-solid fa-fire-flame-curved text-xs text-amber-400"></i>
+            <span>Sync to Firestore</span>
+          </button>
           <button id="backup-banner-google-btn" onclick="triggerHaptic('medium'); handleGoogleLogin()" class="m3-btn-primary text-xs font-bold px-4 py-2 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-transform">
             <i class="fa-brands fa-google text-xs"></i>
             <span>Sign In for Auto-Backup</span>
@@ -3053,18 +3061,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018R"></script>
-  <script defer src="js/storage.js?v=20261018R"></script>
-  <script defer src="js/utils.js?v=20261018R"></script>
-  <script defer src="js/theme.js?v=20261018R"></script>
-  <script defer src="js/auth.js?v=20261018R"></script>
-  <script defer src="js/workout.js?v=20261018R"></script>
-  <script defer src="js/history.js?v=20261018R"></script>
-  <script defer src="js/progress.js?v=20261018R"></script>
-  <script defer src="js/squads.js?v=20261018R"></script>
-  <script defer src="js/map.js?v=20261018R"></script>
-  <script defer src="js/visitors.js?v=20261018R"></script>
-  <script defer src="js/backup.js?v=20261018R"></script>
-  <script defer src="js/main.js?v=20261018R"></script>
+  <script defer src="js/config.js?v=20261018S"></script>
+  <script defer src="js/storage.js?v=20261018S"></script>
+  <script defer src="js/utils.js?v=20261018S"></script>
+  <script defer src="js/theme.js?v=20261018S"></script>
+  <script defer src="js/auth.js?v=20261018S"></script>
+  <script defer src="js/workout.js?v=20261018S"></script>
+  <script defer src="js/history.js?v=20261018S"></script>
+  <script defer src="js/progress.js?v=20261018S"></script>
+  <script defer src="js/squads.js?v=20261018S"></script>
+  <script defer src="js/map.js?v=20261018S"></script>
+  <script defer src="js/visitors.js?v=20261018S"></script>
+  <script defer src="js/backup.js?v=20261018S"></script>
+  <script defer src="js/main.js?v=20261018S"></script>
 </body>
 </html>

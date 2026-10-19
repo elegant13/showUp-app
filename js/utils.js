@@ -95,6 +95,27 @@
       }
     }
 
+    function closeProfileDropdown() {
+      const dropdown = document.getElementById('profile-dropdown-menu');
+      if (dropdown) dropdown.classList.add('hidden');
+    }
+
+    function openSettingsModalToBackup() {
+      closeProfileDropdown();
+      const modal = document.getElementById('settings-modal');
+      if (modal && modal.classList.contains('hidden')) {
+        toggleSettingsModal();
+      }
+      setTimeout(() => {
+        const card = document.getElementById('settings-firestore-card');
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('ring-2', 'ring-amber-400');
+          setTimeout(() => card.classList.remove('ring-2', 'ring-amber-400'), 2500);
+        }
+      }, 150);
+    }
+
 
 
     function formatBytes(bytes) {
