@@ -872,11 +872,31 @@
         setTimeout(() => otpInput.focus(), 100);
       }
 
-      setAuthStatusMessage("Verification code requested. Check inbox, or click 'Reset directly on this device' below.", 'info');
-      if (typeof showToast === 'function') {
-        showToast(`Verification code requested for ${email}`, 'info');
-      }
+      setAuthStatusMessage("Dispatching verification email via Firebase...", 'info');
       startResetResendCooldown(60);
+
+      // Asynchronously trigger Firebase email dispatch and provide exact live status
+      const normEmail = email.toLowerCase().trim();
+      const fAuth = getFirebaseAuth();
+      if (fAuth && typeof fAuth.sendPasswordResetEmail === 'function') {
+        fAuth.sendPasswordResetEmail(normEmail)
+          .then(() => {
+            setAuthStatusMessage("Firebase email sent! Check your inbox for the reset link, or click 'Reset directly on this device' below.", 'success');
+            if (typeof showToast === 'function') {
+              showToast(`Firebase email sent to ${normEmail}`, 'success');
+            }
+          })
+          .catch(err => {
+            console.warn("Firebase Auth sendPasswordResetEmail notice:", err.message);
+            if (err.code === 'auth/user-not-found') {
+              setAuthStatusMessage("Account is active on this device. Click 'Didn't receive passcode? Reset directly on this device' below.", 'info');
+            } else {
+              setAuthStatusMessage("Email dispatch requested. If you don't receive it, click 'Reset directly on this device' below.", 'info');
+            }
+          });
+      } else {
+        setAuthStatusMessage("Verification code requested. Check inbox or click 'Reset directly on this device' below.", 'info');
+      }
     }
 
     function openDirectResetOnDevice() {
@@ -986,6 +1006,38 @@
 
       const result = loginAthleteWithEmailPassword(email, pass);
       if (!result.success) {
+        // Try Firebase Auth verification in case user reset password via Firebase email link
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof fAuth.signInWithEmailAndPassword === 'function') {
+          fAuth.signInWithEmailAndPassword(email.toLowerCase().trim(), pass)
+            .then(cred => {
+              const accounts = getRegisteredAccounts();
+              const normEmail = email.toLowerCase().trim();
+              let acc = accounts[normEmail] || {
+                email: normEmail,
+                firstName: cred.user?.displayName || normEmail.split('@')[0],
+                createdAt: new Date().toISOString()
+              };
+              acc.password = pass;
+              acc.updatedAt = new Date().toISOString();
+              accounts[normEmail] = acc;
+              saveRegisteredAccounts(accounts);
+              const profile = {
+                firstName: acc.firstName,
+                email: normEmail,
+                picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
+                authProvider: 'firebase_email'
+              };
+              applyUserProfile(profile);
+              if (typeof showToast === 'function') showToast(`Welcome back, ${profile.firstName}!`, 'success');
+              closeAuthLoginModal();
+            })
+            .catch(() => {
+              setAuthStatusMessage(result.error, 'error');
+              if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+            });
+          return;
+        }
         setAuthStatusMessage(result.error, 'error');
         if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
       } else {
