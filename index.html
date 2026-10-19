@@ -728,6 +728,37 @@
             </div>
           </div>
 
+          <!-- 1.1 FIREBASE CLOUD: BACKUP | RESTORE (WITH BACKUP TIMESTAMP) -->
+          <div id="settings-firestore-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-sm border border-amber-500/20 shrink-0">
+                  <i class="fa-solid fa-fire-flame-curved"></i>
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-slate-100">Firebase Cloud</span>
+                    <span id="settings-firestore-status-pill" class="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Cloud Sync</span>
+                  </div>
+                  <span id="settings-firestore-timestamp" class="text-[10px] text-slate-400 block mt-0.5 truncate">
+                    <i class="fa-regular fa-clock text-[9px] mr-1 text-slate-500"></i>Last backup: <span id="settings-firestore-time-val" class="text-slate-300 font-mono font-medium">Not synced yet</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-0.5">
+              <button type="button" onclick="triggerHaptic('medium'); syncToFirestore()" id="btn-settings-firestore-backup" class="m3-btn-primary text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/15 active:scale-[0.98]">
+                <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
+                <span>Backup</span>
+              </button>
+              <button type="button" onclick="triggerHaptic('medium'); restoreFromFirestore()" id="btn-settings-firestore-restore" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98]">
+                <i class="fa-solid fa-cloud-arrow-down text-xs text-amber-400"></i>
+                <span>Restore</span>
+              </button>
+            </div>
+          </div>
+
           <!-- 2. DEVICE: BACKUP | RESTORE (FILE PICKER SELECTION) -->
           <div id="settings-device-card" class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-sm">
             <div class="flex items-center justify-between">
@@ -3022,18 +3053,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018Q"></script>
-  <script defer src="js/storage.js?v=20261018Q"></script>
-  <script defer src="js/utils.js?v=20261018Q"></script>
-  <script defer src="js/theme.js?v=20261018Q"></script>
-  <script defer src="js/auth.js?v=20261018Q"></script>
-  <script defer src="js/workout.js?v=20261018Q"></script>
-  <script defer src="js/history.js?v=20261018Q"></script>
-  <script defer src="js/progress.js?v=20261018Q"></script>
-  <script defer src="js/squads.js?v=20261018Q"></script>
-  <script defer src="js/map.js?v=20261018Q"></script>
-  <script defer src="js/visitors.js?v=20261018Q"></script>
-  <script defer src="js/backup.js?v=20261018Q"></script>
-  <script defer src="js/main.js?v=20261018Q"></script>
+  <script defer src="js/config.js?v=20261018R"></script>
+  <script defer src="js/storage.js?v=20261018R"></script>
+  <script defer src="js/utils.js?v=20261018R"></script>
+  <script defer src="js/theme.js?v=20261018R"></script>
+  <script defer src="js/auth.js?v=20261018R"></script>
+  <script defer src="js/workout.js?v=20261018R"></script>
+  <script defer src="js/history.js?v=20261018R"></script>
+  <script defer src="js/progress.js?v=20261018R"></script>
+  <script defer src="js/squads.js?v=20261018R"></script>
+  <script defer src="js/map.js?v=20261018R"></script>
+  <script defer src="js/visitors.js?v=20261018R"></script>
+  <script defer src="js/backup.js?v=20261018R"></script>
+  <script defer src="js/main.js?v=20261018R"></script>
 </body>
 </html>

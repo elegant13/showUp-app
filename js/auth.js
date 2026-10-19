@@ -58,6 +58,14 @@
       localStorage.removeItem('showUp_google_token');
       localStorage.removeItem('showUp_user_profile');
       localStorage.removeItem('showUp_session_expiry');
+      localStorage.removeItem('showUp_last_firestore_sync');
+
+      try {
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof fAuth.signOut === 'function') {
+          fAuth.signOut().catch(() => {});
+        }
+      } catch (e) {}
 
       // 2. Wipe personal physical measurements & geo telemetry (including IP location cache)
       localStorage.removeItem('showUp_user_height');
@@ -1584,6 +1592,21 @@
             console.debug("Silent auto-restore on login profile notice:", e);
           }
         }, 150);
+      }
+
+      // Automatically retrieve or sync cloud workouts with Firebase Firestore
+      if (typeof syncOrRestoreFirestoreBackup === 'function') {
+        setTimeout(async () => {
+          try {
+            await syncOrRestoreFirestoreBackup(true);
+            updateGlobalStatsUI();
+            renderHeatMap();
+            renderCalendar();
+            renderMonthlyHistory();
+          } catch (e) {
+            console.debug("Silent auto-sync/restore on login Firestore notice:", e);
+          }
+        }, 300);
       }
     }
 

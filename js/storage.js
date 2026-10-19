@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   SESSION_EXPIRY: 'showUp_session_expiry',
   GOOGLE_TOKEN: 'showUp_google_token',
   LAST_DRIVE_SYNC: 'showUp_last_drive_sync',
+  LAST_FIRESTORE_SYNC: 'showUp_last_firestore_sync',
 
   // Physical Profile & Personal Telemetry
   USER_HEIGHT: 'showUp_user_height',
@@ -690,6 +691,9 @@ const AppStorage = {
     } catch (e) {
       console.warn("[AppStorage] Error saving workouts:", e);
     }
+    if (typeof queueFirestoreAutoSync === 'function') {
+      try { queueFirestoreAutoSync(); } catch (e) {}
+    }
   },
 
   /**
@@ -703,6 +707,7 @@ const AppStorage = {
       STORAGE_KEYS.SESSION_EXPIRY,
       STORAGE_KEYS.GOOGLE_TOKEN,
       STORAGE_KEYS.LAST_DRIVE_SYNC,
+      STORAGE_KEYS.LAST_FIRESTORE_SYNC,
       STORAGE_KEYS.USER_HEIGHT,
       STORAGE_KEYS.USER_WEIGHT,
       STORAGE_KEYS.USER_ZIP,

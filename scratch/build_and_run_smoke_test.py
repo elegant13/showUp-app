@@ -1675,6 +1675,75 @@ runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password
   assert(authModal.classList.contains('hidden'), "Clicking outside modal during sign in closes modal");
 });
 
+runSuite("18. Firebase Firestore Cloud Backup & Cross-Device Sync Engine", () => {
+  assert(typeof syncToFirestore === 'function', "syncToFirestore is a defined function");
+  assert(typeof restoreFromFirestore === 'function', "restoreFromFirestore is a defined function");
+  assert(typeof syncOrRestoreFirestoreBackup === 'function', "syncOrRestoreFirestoreBackup is a defined function");
+  assert(typeof queueFirestoreAutoSync === 'function', "queueFirestoreAutoSync is a defined function");
+
+  assert(typeof STORAGE_KEYS !== 'undefined' && STORAGE_KEYS.LAST_FIRESTORE_SYNC === 'showUp_last_firestore_sync', "STORAGE_KEYS.LAST_FIRESTORE_SYNC is defined");
+
+  // DOM elements in Settings
+  assert(getOrCreateElement('settings-firestore-card') !== null, "settings-firestore-card exists in Settings DOM");
+  assert(getOrCreateElement('btn-settings-firestore-backup') !== null, "btn-settings-firestore-backup exists in Settings DOM");
+  assert(getOrCreateElement('btn-settings-firestore-restore') !== null, "btn-settings-firestore-restore exists in Settings DOM");
+  assert(getOrCreateElement('settings-firestore-status-pill') !== null, "settings-firestore-status-pill exists in Settings DOM");
+  assert(getOrCreateElement('settings-firestore-time-val') !== null, "settings-firestore-time-val exists in Settings DOM");
+
+  // Mock Firestore test environment
+  const mockStorage = new Map();
+  const mockDb = {
+    collection: function(colName) {
+      return {
+        doc: function(docId) {
+          const key = colName + '/' + docId;
+          return {
+            get: async function() {
+              return {
+                exists: mockStorage.has(key),
+                data: function() { return mockStorage.get(key); }
+              };
+            },
+            set: async function(data, options) {
+              if (options && options.merge && mockStorage.has(key)) {
+                const prev = mockStorage.get(key) || {};
+                mockStorage.set(key, Object.assign({}, prev, data));
+              } else {
+                mockStorage.set(key, data);
+              }
+              return Promise.resolve();
+            }
+          };
+        }
+      };
+    }
+  };
+
+  window.getFirestoreDb = function() { return mockDb; };
+
+  // Setup athlete logged in with email
+  const athleteProfile = {
+    firstName: "Alex",
+    email: "alex@showup.fit",
+    authProvider: "email_password"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(athleteProfile));
+
+  // Populate local workouts
+  const localWorkouts = [
+    { date: "2026-10-18T10:00:00Z", workoutName: "Push Day", sets: [{ exercise: "Bench Press", weight: 225, reps: 5 }] },
+    { date: "2026-10-17T10:00:00Z", workoutName: "Pull Day", sets: [{ exercise: "Deadlift", weight: 405, reps: 3 }] }
+  ];
+  AppStorage.saveAthleteWorkouts(localWorkouts);
+
+  // Update UI and verify connected pill
+  updateCloudBackupUI();
+  const pill = getOrCreateElement('settings-firestore-status-pill');
+  assert(pill.innerText === "Connected", "Firestore pill reflects Connected state for logged in athlete");
+  const badge = getOrCreateElement('settings-backup-status-badge');
+  assert(badge.innerText === "Cloud Synced", "Settings badge reflects Cloud Synced");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

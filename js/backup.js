@@ -144,6 +144,8 @@
       const settingsBadge = document.getElementById('settings-backup-status-badge');
       const gdrivePill = document.getElementById('settings-gdrive-status-pill');
       const timeValEl = document.getElementById('settings-gdrive-time-val');
+      const firestorePill = document.getElementById('settings-firestore-status-pill');
+      const firestoreTimeValEl = document.getElementById('settings-firestore-time-val');
 
       const lastSyncIso = localStorage.getItem('showUp_last_drive_sync');
       if (timeValEl) {
@@ -161,6 +163,31 @@
         }
       }
 
+      const lastFirestoreSyncIso = localStorage.getItem('showUp_last_firestore_sync');
+      const isAthleteLoggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : !!googleAccessToken;
+
+      if (firestoreTimeValEl) {
+        if (lastFirestoreSyncIso) {
+          try {
+            const d = new Date(lastFirestoreSyncIso);
+            const datePart = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const timePart = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+            firestoreTimeValEl.innerText = `${datePart}, ${timePart}`;
+          } catch (e) {
+            firestoreTimeValEl.innerText = lastFirestoreSyncIso;
+          }
+        } else {
+          firestoreTimeValEl.innerText = isAthleteLoggedIn ? "Ready to sync" : "Not backed up yet";
+        }
+      }
+
+      if (firestorePill) {
+        firestorePill.className = isAthleteLoggedIn
+          ? "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+          : "text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+        firestorePill.innerText = isAthleteLoggedIn ? "Connected" : "Offline";
+      }
+
       const isDismissed = (function() {
         try {
           return localStorage.getItem('showUp_backup_banner_dismissed') === 'true';
@@ -169,16 +196,16 @@
         }
       })();
 
-      if (googleAccessToken || isDismissed) {
-        // Once athlete is signed in with Google or manually dismissed, hide reminder banner
+      if (googleAccessToken || isAthleteLoggedIn || isDismissed) {
+        // Once athlete is signed in (Google, Email/Password) or manually dismissed, hide reminder banner
         if (banner) {
           banner.classList.add('hidden');
         }
         if (settingsBadge) {
-          settingsBadge.className = googleAccessToken 
+          settingsBadge.className = (googleAccessToken || isAthleteLoggedIn)
             ? "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
             : "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-900 text-slate-400 border border-slate-700";
-          settingsBadge.innerText = googleAccessToken ? "Cloud Synced" : "Offline Device";
+          settingsBadge.innerText = (googleAccessToken || isAthleteLoggedIn) ? "Cloud Synced" : "Offline Device";
         }
         if (gdrivePill) {
           gdrivePill.className = googleAccessToken
@@ -195,7 +222,7 @@
           bannerBadge.innerText = "Sign-in Recommended";
         }
         if (bannerTitle) bannerTitle.innerText = "Protect Your Workout & Squad Data";
-        if (bannerDesc) bannerDesc.innerText = "Sign in with Google to auto-sync your workouts, weight logs, and squads to Google Drive, or back up manually to your device and restore anytime.";
+        if (bannerDesc) bannerDesc.innerText = "Sign in to auto-sync your workouts, weight logs, and squads to Cloud storage, or back up manually to your device and restore anytime.";
         if (bannerGoogleBtn) {
           bannerGoogleBtn.innerHTML = `<i class="fa-brands fa-google text-xs"></i><span>Sign In for Auto-Backup</span>`;
           bannerGoogleBtn.onclick = () => { triggerHaptic('medium'); handleGoogleLogin(); };
@@ -816,6 +843,9 @@
           if (googleAccessToken) {
             syncToGoogleDrive(true);
           }
+          if (typeof queueFirestoreAutoSync === 'function') {
+            queueFirestoreAutoSync();
+          }
         } catch (err) {
           console.error("JSON Import error:", err);
           showToast("Failed to parse JSON. Please check file format.", "error");
@@ -823,4 +853,237 @@
       };
       reader.readAsText(file);
       event.target.value = '';
+    }
+
+    // ==========================================================================
+    // showUp Firebase Firestore Cloud Backup & Multi-Device Sync Engine
+    // ==========================================================================
+
+    let firestoreAutoSyncTimer = null;
+
+    function queueFirestoreAutoSync() {
+      if (typeof isCustomerLoggedIn === 'function' && !isCustomerLoggedIn()) return;
+      if (firestoreAutoSyncTimer) clearTimeout(firestoreAutoSyncTimer);
+      firestoreAutoSyncTimer = setTimeout(() => {
+        if (typeof syncToFirestore === 'function') {
+          syncToFirestore(true).catch(e => console.debug("Auto Firestore sync notice:", e));
+        }
+      }, 1500);
+    }
+
+    async function syncToFirestore(isSilent = false) {
+      if (typeof getFirestoreDb !== 'function') {
+        if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
+        return { success: false, error: "Firestore not loaded" };
+      }
+
+      const db = getFirestoreDb();
+      if (!db) {
+        if (!isSilent) showToast("Could not connect to Firebase database.", "error");
+        return { success: false, error: "Database unavailable" };
+      }
+
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
+        if (!isSilent) showToast("Please log in with email/password or Google to sync with Firebase Cloud.", "info");
+        return { success: false, error: "User not logged in" };
+      }
+
+      const normEmail = rawEmail;
+      let workoutsToSync = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
+        ? AppStorage.getAthleteWorkouts()
+        : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
+
+      const payload = {
+        app: "showUp",
+        version: "2.0",
+        email: normEmail,
+        lastSyncedAt: new Date().toISOString(),
+        profile: {
+          height: typeof userHeight !== 'undefined' ? userHeight : null,
+          weight: typeof userWeight !== 'undefined' ? userWeight : null,
+          firstName: user?.rawName || user?.name || 'Athlete'
+        },
+        workouts: workoutsToSync,
+        weightHistory: typeof weightHistory !== 'undefined' && Array.isArray(weightHistory) ? weightHistory : [],
+        squads: typeof getSquads === 'function' ? getSquads() : [],
+        activeSession: typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets) ? currentSessionSets : []
+      };
+
+      try {
+        const docRef = db.collection('user_backups').doc(normEmail);
+
+        // 1. Read existing remote backup to merge non-destructively
+        try {
+          const snap = await docRef.get();
+          if (snap.exists) {
+            const remoteData = snap.data();
+            if (remoteData && Array.isArray(remoteData.workouts) && remoteData.workouts.length > 0) {
+              const merged = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+                ? AppStorage.mergeWorkouts(workoutsToSync, remoteData.workouts)
+                : workoutsToSync;
+              workoutsToSync = merged;
+              completedWorkoutsHistory = merged;
+              if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+                AppStorage.saveAthleteWorkouts(merged);
+              }
+              payload.workouts = merged;
+            }
+
+            // Merge weight history
+            if (remoteData && Array.isArray(remoteData.weightHistory) && remoteData.weightHistory.length > 0) {
+              const localWeights = Array.isArray(weightHistory) ? weightHistory : [];
+              const weightMap = new Map();
+              localWeights.forEach(item => { if (item && item.date) weightMap.set(item.date, item); });
+              remoteData.weightHistory.forEach(item => {
+                if (item && item.date && !weightMap.has(item.date)) {
+                  weightMap.set(item.date, item);
+                }
+              });
+              const mergedWeights = Array.from(weightMap.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+              weightHistory = mergedWeights;
+              localStorage.setItem('showUp_weight_history', JSON.stringify(mergedWeights));
+              payload.weightHistory = mergedWeights;
+            }
+          }
+        } catch (e) {
+          console.debug("Remote backup pre-check notice:", e);
+        }
+
+        // 2. Commit payload to Firestore
+        await docRef.set(payload, { merge: true });
+        localStorage.setItem('showUp_last_firestore_sync', payload.lastSyncedAt);
+
+        updateCloudBackupUI();
+        if (!isSilent) {
+          showToast(`Backed up ${payload.workouts.length} workouts to Firebase Cloud!`, "success");
+        }
+        return { success: true, count: payload.workouts.length };
+      } catch (err) {
+        console.error("Firebase sync error:", err);
+        if (!isSilent) {
+          showToast(`Firebase Cloud backup error: ${err.message || 'Check network connection'}`, "error");
+        }
+        return { success: false, error: err.message };
+      }
+    }
+
+    async function restoreFromFirestore(isSilent = false) {
+      if (typeof getFirestoreDb !== 'function') {
+        if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
+        return { success: false, error: "Firestore not loaded" };
+      }
+
+      const db = getFirestoreDb();
+      if (!db) {
+        if (!isSilent) showToast("Could not connect to Firebase database.", "error");
+        return { success: false, error: "Database unavailable" };
+      }
+
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
+        if (!isSilent) showToast("Please log in to restore from Firebase Cloud.", "info");
+        return { success: false, error: "User not logged in" };
+      }
+
+      const normEmail = rawEmail;
+
+      try {
+        const docRef = db.collection('user_backups').doc(normEmail);
+        const snap = await docRef.get();
+
+        if (!snap.exists) {
+          if (!isSilent) {
+            showToast("No Firebase cloud backup found for this account.", "warning");
+          }
+          return { success: false, error: "No backup found" };
+        }
+
+        const data = snap.data();
+        let restoredCount = 0;
+
+        if (data.workouts && Array.isArray(data.workouts)) {
+          const currentLocal = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
+            ? AppStorage.getAthleteWorkouts()
+            : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
+          const merged = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+            ? AppStorage.mergeWorkouts(currentLocal, data.workouts)
+            : data.workouts;
+
+          completedWorkoutsHistory = merged;
+          if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
+            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+          } else {
+            localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
+            localStorage.setItem('showUp_user_workouts_' + normEmail, JSON.stringify(completedWorkoutsHistory));
+          }
+          restoredCount = merged.length;
+        }
+
+        if (data.weightHistory && Array.isArray(data.weightHistory)) {
+          const localWeights = Array.isArray(weightHistory) ? weightHistory : [];
+          const weightMap = new Map();
+          localWeights.forEach(item => { if (item && item.date) weightMap.set(item.date, item); });
+          data.weightHistory.forEach(item => {
+            if (item && item.date && !weightMap.has(item.date)) {
+              weightMap.set(item.date, item);
+            }
+          });
+          const mergedWeights = Array.from(weightMap.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+          weightHistory = mergedWeights;
+          localStorage.setItem('showUp_weight_history', JSON.stringify(mergedWeights));
+        }
+
+        if (data.profile) {
+          if (data.profile.height && (!userHeight || userHeight === 70)) {
+            userHeight = data.profile.height;
+            localStorage.setItem('showUp_user_height', String(userHeight));
+          }
+          if (data.profile.weight && (!userWeight || userWeight === 170)) {
+            userWeight = data.profile.weight;
+            localStorage.setItem('showUp_user_weight', String(userWeight));
+          }
+        }
+
+        if (data.lastSyncedAt) {
+          localStorage.setItem('showUp_last_firestore_sync', data.lastSyncedAt);
+        }
+
+        if (typeof renderHomeTab === 'function') {
+          try { renderHomeTab(); } catch (e) {}
+        }
+        renderCalendar();
+        renderMonthlyHistory();
+        renderWeightHistory();
+        renderSquadsTab();
+        updateSquadBeacon();
+        updateGlobalStatsUI();
+        renderHeatMap();
+        updateCloudBackupUI();
+
+        if (!isSilent) {
+          showToast(`Restored ${restoredCount} workouts from Firebase Cloud!`, "success");
+        }
+        return { success: true, count: restoredCount };
+      } catch (err) {
+        console.error("Firebase restore error:", err);
+        if (!isSilent) {
+          showToast(`Firebase restore error: ${err.message || 'Check network connection'}`, "error");
+        }
+        return { success: false, error: err.message };
+      }
+    }
+
+    async function syncOrRestoreFirestoreBackup(isSilent = true) {
+      const currentLocal = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
+        ? AppStorage.getAthleteWorkouts()
+        : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
+
+      if (currentLocal.length === 0) {
+        return await restoreFromFirestore(isSilent);
+      } else {
+        return await syncToFirestore(isSilent);
+      }
     }
