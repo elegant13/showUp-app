@@ -429,11 +429,13 @@
         }
         const stepDetails = document.getElementById('auth-register-step-details');
         const stepOtp = document.getElementById('auth-register-step-otp');
+        const stepPassword = document.getElementById('auth-register-step-password');
         const emailInput = document.getElementById('auth-register-email');
         const norm = (emailInput && emailInput.value) ? emailInput.value.toLowerCase().trim() : '';
         if (!norm || !activeRegistrationOTPs[norm]) {
           if (stepDetails) stepDetails.classList.remove('hidden');
           if (stepOtp) stepOtp.classList.add('hidden');
+          if (stepPassword) stepPassword.classList.add('hidden');
         }
       } else if (tab === 'reset') {
         if (resetView) resetView.classList.remove('hidden');
@@ -1148,22 +1150,22 @@
       return { success: true, verified: true, details: record.details };
     }
 
-    function verifyAndFinalizeRegistration(email, otpCode) {
+    function verifyAndFinalizeRegistration(email, otpCode, password, confirmPassword) {
       const verification = verifyRegistrationOTP(email, otpCode);
       if (!verification.success) {
         return verification;
       }
 
       const normEmail = email.toLowerCase().trim();
+      const details = verification.details || {};
+      const athleteName = details.name || normEmail.split('@')[0];
+      const pwd = password || details.password || 'athlete123';
+      const zip = details.zip || '';
+
       delete activeRegistrationOTPs[normEmail];
       try { sessionStorage.removeItem('showUp_reg_otp_' + normEmail); } catch (e) {}
 
-      const details = verification.details || {};
-      const athleteName = details.name || normEmail.split('@')[0];
-      const password = details.password;
-      const zip = details.zip || '';
-
-      const regResult = registerAthleteAccount(normEmail, password, athleteName, '', zip);
+      const regResult = registerAthleteAccount(normEmail, pwd, athleteName, '', zip);
       if (!regResult.success) {
         return regResult;
       }
@@ -1182,13 +1184,9 @@
     function handleRequestRegistrationOTP() {
       const nameInput = document.getElementById('auth-register-name');
       const emailInput = document.getElementById('auth-register-email');
-      const passInput = document.getElementById('auth-register-password');
-      const zipInput = document.getElementById('auth-register-zip');
 
       const name = nameInput ? nameInput.value.trim() : '';
       const email = emailInput ? emailInput.value.trim() : '';
-      const pass = passInput ? passInput.value : '';
-      const zip = zipInput ? zipInput.value.trim() : '';
 
       if (!name) {
         setAuthStatusMessage("Please enter your athlete name.", 'error');
@@ -1202,12 +1200,6 @@
         if (emailInput) emailInput.focus();
         return;
       }
-      if (!pass || pass.length < 4) {
-        setAuthStatusMessage("Password must be at least 4 characters.", 'error');
-        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
-        if (passInput) passInput.focus();
-        return;
-      }
 
       // Check if account already exists
       const accounts = getRegisteredAccounts();
@@ -1218,7 +1210,7 @@
         return;
       }
 
-      const result = requestRegistrationOTP(normEmail, { name, email: normEmail, password: pass, zip });
+      const result = requestRegistrationOTP(normEmail, { name, email: normEmail });
       if (!result.success) {
         setAuthStatusMessage(result.error, 'error');
         if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
@@ -1227,10 +1219,12 @@
 
       const stepDetails = document.getElementById('auth-register-step-details');
       const stepOtp = document.getElementById('auth-register-step-otp');
+      const stepPass = document.getElementById('auth-register-step-password');
       const emailDisplay = document.getElementById('auth-register-otp-target-email-display');
 
       if (stepDetails) stepDetails.classList.add('hidden');
       if (stepOtp) stepOtp.classList.remove('hidden');
+      if (stepPass) stepPass.classList.add('hidden');
       if (emailDisplay) emailDisplay.innerText = email;
 
       const otpInput = document.getElementById('auth-register-otp-code');
@@ -1251,11 +1245,96 @@
       handleRequestRegistrationOTP();
     }
 
+    function handleVerifyRegistrationOTP() {
+      const emailInput = document.getElementById('auth-register-email');
+      const otpInput = document.getElementById('auth-register-otp-code');
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const otpCode = otpInput ? otpInput.value.trim() : '';
+
+      if (!otpCode || otpCode.length !== 6) {
+        setAuthStatusMessage("Please enter the complete 6-digit verification code.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (otpInput) otpInput.focus();
+        return;
+      }
+
+      const verification = verifyRegistrationOTP(email, otpCode);
+      if (!verification.success) {
+        setAuthStatusMessage(verification.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const stepDetails = document.getElementById('auth-register-step-details');
+      const stepOtp = document.getElementById('auth-register-step-otp');
+      const stepPass = document.getElementById('auth-register-step-password');
+      const verifiedDisplay = document.getElementById('auth-register-verified-email-display');
+
+      if (stepDetails) stepDetails.classList.add('hidden');
+      if (stepOtp) stepOtp.classList.add('hidden');
+      if (stepPass) stepPass.classList.remove('hidden');
+      if (verifiedDisplay) verifiedDisplay.innerText = email;
+
+      setAuthStatusMessage("Email verified! Please create and confirm your password below.", 'success');
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+
+      const passInput = document.getElementById('auth-register-password');
+      const confirmPassInput = document.getElementById('auth-register-confirm-password');
+      if (passInput) passInput.value = '';
+      if (confirmPassInput) confirmPassInput.value = '';
+      if (passInput) setTimeout(() => passInput.focus(), 150);
+    }
+
+    function handleFinalizeRegistration() {
+      const nameInput = document.getElementById('auth-register-name');
+      const emailInput = document.getElementById('auth-register-email');
+      const passInput = document.getElementById('auth-register-password');
+      const confirmPassInput = document.getElementById('auth-register-confirm-password');
+      const zipInput = document.getElementById('auth-register-zip');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+      const pass = passInput ? passInput.value : '';
+      const confirmPass = confirmPassInput ? confirmPassInput.value : '';
+      const zip = zipInput ? zipInput.value.trim() : '';
+
+      if (!pass || pass.length < 4) {
+        setAuthStatusMessage("Password must be at least 4 characters.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (passInput) passInput.focus();
+        return;
+      }
+
+      if (pass !== confirmPass) {
+        setAuthStatusMessage("Passwords do not match. Please ensure both passwords match.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (confirmPassInput) confirmPassInput.focus();
+        return;
+      }
+
+      const normEmail = email.toLowerCase().trim();
+      delete activeRegistrationOTPs[normEmail];
+      try { sessionStorage.removeItem('showUp_reg_otp_' + normEmail); } catch (e) {}
+
+      const regResult = registerAthleteAccount(normEmail, pass, name || normEmail.split('@')[0], '', zip);
+      if (!regResult.success) {
+        setAuthStatusMessage(regResult.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      changeRegisterDetails();
+      closeAuthLoginModal();
+    }
+
     function changeRegisterDetails() {
       const stepDetails = document.getElementById('auth-register-step-details');
       const stepOtp = document.getElementById('auth-register-step-otp');
+      const stepPass = document.getElementById('auth-register-step-password');
       if (stepDetails) stepDetails.classList.remove('hidden');
       if (stepOtp) stepOtp.classList.add('hidden');
+      if (stepPass) stepPass.classList.add('hidden');
       const nameInput = document.getElementById('auth-register-name');
       if (nameInput) nameInput.focus();
     }
@@ -1287,33 +1366,23 @@
 
     function handleEmailPasswordRegister(e) {
       if (e && e.preventDefault) e.preventDefault();
+      const stepPass = document.getElementById('auth-register-step-password');
       const stepOtp = document.getElementById('auth-register-step-otp');
 
-      // If user is on Step 1 (details input), trigger request OTP
-      if (!stepOtp || stepOtp.classList.contains('hidden')) {
-        handleRequestRegistrationOTP();
+      // If user is on Step 3 (password input), trigger finalize registration
+      if (stepPass && !stepPass.classList.contains('hidden')) {
+        handleFinalizeRegistration();
         return;
       }
 
-      const emailInput = document.getElementById('auth-register-email');
-      const otpInput = document.getElementById('auth-register-otp-code');
-
-      const email = emailInput ? emailInput.value.trim() : '';
-      const otpCode = otpInput ? otpInput.value.trim() : '';
-
-      if (!otpCode || otpCode.length !== 6) {
-        setAuthStatusMessage("Please enter the complete 6-digit verification code.", 'error');
-        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      // If user is on Step 2 (OTP code input), trigger verify OTP
+      if (stepOtp && !stepOtp.classList.contains('hidden')) {
+        handleVerifyRegistrationOTP();
         return;
       }
 
-      const result = verifyAndFinalizeRegistration(email, otpCode);
-      if (!result.success) {
-        setAuthStatusMessage(result.error, 'error');
-        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
-      } else {
-        closeAuthLoginModal();
-      }
+      // Otherwise on Step 1 (details input), trigger request OTP
+      handleRequestRegistrationOTP();
     }
 
     function handleEmailPasswordReset(e) {

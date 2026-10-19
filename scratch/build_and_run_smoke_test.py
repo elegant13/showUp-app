@@ -1607,6 +1607,46 @@ runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password
   assert(!getOrCreateElement('auth-register-step-details').classList.contains('hidden'), "Register step 1 details visible initially");
   switchAuthTab('reset');
   assert(!getOrCreateElement('auth-reset-view').classList.contains('hidden'), "Reset view visible on reset tab");
+
+  // 3-Step Progressive Registration Wizard:
+  switchAuthTab('register');
+  const regStep1 = getOrCreateElement('auth-register-step-details');
+  const regStep2 = getOrCreateElement('auth-register-step-otp');
+  const regStep3 = getOrCreateElement('auth-register-step-password');
+  assert(!regStep1.classList.contains('hidden'), "Step 1 is visible initially");
+  assert(regStep2.classList.contains('hidden'), "Step 2 is hidden initially");
+  assert(regStep3.classList.contains('hidden'), "Step 3 is hidden initially");
+
+  // Step 1: Input Name & Email, request OTP
+  getOrCreateElement('auth-register-name').value = "Triathlete Taylor";
+  getOrCreateElement('auth-register-email').value = "taylor@showup.fit";
+  handleRequestRegistrationOTP();
+
+  assert(regStep1.classList.contains('hidden'), "Step 1 is hidden after requesting OTP");
+  assert(!regStep2.classList.contains('hidden'), "Step 2 is visible after requesting OTP");
+  assert(regStep3.classList.contains('hidden'), "Step 3 remains hidden");
+  assert(getOrCreateElement('auth-register-otp-target-email-display').innerText === "taylor@showup.fit", "Target email displayed on Step 2");
+
+  // Step 2: Input OTP code, verify OTP
+  const generatedOtp = activeRegistrationOTPs['taylor@showup.fit']?.code;
+  assert(typeof generatedOtp === 'string' && generatedOtp.length === 6, "OTP generated in active registration OTPs");
+  getOrCreateElement('auth-register-otp-code').value = generatedOtp;
+  handleVerifyRegistrationOTP();
+
+  assert(regStep1.classList.contains('hidden'), "Step 1 remains hidden");
+  assert(regStep2.classList.contains('hidden'), "Step 2 is hidden after OTP verification");
+  assert(!regStep3.classList.contains('hidden'), "Step 3 is visible after OTP verification");
+  assert(getOrCreateElement('auth-register-verified-email-display').innerText === "taylor@showup.fit", "Verified email displayed on Step 3");
+
+  // Step 3: Input Password twice, finalize registration
+  getOrCreateElement('auth-register-password').value = "triathlonPower2026";
+  getOrCreateElement('auth-register-confirm-password').value = "triathlonPower2026";
+  getOrCreateElement('auth-register-zip').value = "94107";
+  handleFinalizeRegistration();
+
+  const registeredAccs = getRegisteredAccounts();
+  assert(registeredAccs['taylor@showup.fit'] !== undefined, "Account created in registered accounts after Step 3");
+  assert(regStep1.classList.contains('hidden') === false, "Register wizard reset back to Step 1 for next usage");
 });
 
 print("\\n============================================================");
