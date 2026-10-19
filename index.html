@@ -229,16 +229,16 @@
       <!-- VIEW 2: SET UP NEW ACCOUNT (SIMPLE 3-STEP VERIFIED REGISTRATION) -->
       <!-- VIEW 2: SET UP NEW ACCOUNT (GENERIC VERIFIED REGISTRATION) -->
       <form id="auth-register-view" onsubmit="handleEmailPasswordRegister(event)" class="hidden space-y-3">
-        <div class="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-xl text-[11px] text-emerald-300">
-          <div class="font-bold mb-0.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-shield-halved text-xs text-emerald-400"></i>
-            <span>Athlete Registration</span>
-          </div>
-          <p class="text-[10px] text-emerald-200/80">1. Enter name & email → 2. Verify link sent to your email → 3. Set your password.</p>
-        </div>
-
         <!-- STEP 1: Enter Name & Email Address -->
         <div id="auth-register-step-details" class="space-y-3">
+          <div class="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-xl text-[11px] text-emerald-300">
+            <div class="font-bold mb-0.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-user-plus text-xs text-emerald-400"></i>
+              <span>Athlete Registration</span>
+            </div>
+            <p class="text-[10px] text-emerald-200/80">1. Enter details → 2. Verify link sent to email → 3. Set password.</p>
+          </div>
+
           <div>
             <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Athlete Name</label>
             <div class="relative">
@@ -264,24 +264,25 @@
 
         <!-- STEP 2: Verify Link / Passcode -->
         <div id="auth-register-step-otp" class="hidden space-y-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Verification Link Sent</span>
-              <button type="button" onclick="triggerHaptic('light'); changeRegisterDetails()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline transition">Change email</button>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-center">
+            <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <i class="fa-solid fa-envelope-circle-check text-base"></i>
             </div>
-            <div class="text-xs font-semibold text-slate-200 flex items-center gap-1.5 break-all">
-              <i class="fa-solid fa-inbox text-emerald-400 text-xs"></i>
-              <span id="auth-register-otp-target-email-display">athlete@example.com</span>
+            <div>
+              <h3 class="text-xs font-bold text-slate-100">Check Your Inbox</h3>
+              <div class="text-xs font-semibold text-emerald-400 mt-1 break-all flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-envelope text-[11px]"></i>
+                <span id="auth-register-otp-target-email-display">athlete@example.com</span>
+              </div>
+              <p class="text-[11px] text-slate-300 mt-1.5 leading-relaxed">
+                We sent a verification link to your email address. Open your inbox or spam folder and tap the link, then continue below.
+              </p>
             </div>
-          </div>
-
-          <div class="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl text-slate-300 text-xs space-y-1.5">
-            <p class="font-bold text-emerald-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-envelope-circle-check"></i> Check Your Inbox
-            </p>
-            <p class="text-[11px] text-slate-300 leading-relaxed">
-              We sent a verification link to your email address. Open your inbox or spam folder and tap the link. Once clicked, tap the button below.
-            </p>
+            <div class="pt-0.5">
+              <button type="button" onclick="triggerHaptic('light'); changeRegisterDetails()" class="text-[10px] text-slate-400 hover:text-emerald-300 font-bold underline transition">
+                Wrong email? Change address
+              </button>
+            </div>
           </div>
 
           <button type="button" id="auth-verify-register-otp-btn" onclick="triggerHaptic('medium'); handleVerifyRegistrationOTP()" class="w-full py-2.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
@@ -289,9 +290,9 @@
             <span>I've Verified My Email — Continue</span>
           </button>
 
-          <div class="flex items-center justify-between pt-1">
-            <span class="text-[10px] text-slate-500">Didn't receive the email?</span>
-            <button type="button" id="auth-register-resend-otp-btn" onclick="triggerHaptic('light'); handleResendRegistrationOTP()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold transition">Resend Link</button>
+          <div class="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-slate-500">
+            <span>Didn't receive the email?</span>
+            <button type="button" id="auth-register-resend-otp-btn" onclick="triggerHaptic('light'); handleResendRegistrationOTP()" class="text-emerald-400 hover:text-emerald-300 font-bold transition">Resend Link</button>
           </div>
 
           <!-- Code input for programmatic tests or direct passcode overrides -->
@@ -344,61 +345,65 @@
 
       <!-- VIEW 3: RESET PASSWORD VIA EMAIL LINK -->
       <form id="auth-reset-view" onsubmit="handleEmailPasswordReset(event)" class="hidden space-y-3">
-        <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-[11px] text-amber-300">
-          <div class="font-bold mb-0.5 flex items-center gap-1.5">
-            <i class="fa-solid fa-shield-halved text-xs text-amber-400"></i>
-            <span>Reset Password</span>
-          </div>
-          <p class="text-[10px] text-amber-200/80">Enter your email address and we will send a password reset link directly to your inbox.</p>
-        </div>
-
         <!-- STEP 1: Enter Email & Request Link -->
         <div id="auth-reset-step-email" class="space-y-3">
+          <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-[11px] text-amber-300">
+            <div class="font-bold mb-0.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-key text-xs text-amber-400"></i>
+              <span>Reset Password</span>
+            </div>
+            <p class="text-[10px] text-amber-200/80">Enter your email address to receive a secure password reset link.</p>
+          </div>
+
           <div>
             <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Account Email</label>
             <div class="relative">
               <input type="email" id="auth-reset-email" placeholder="athlete@example.com" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 pl-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
               <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-xs text-slate-500"></i>
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">Enter your registered email address. We will send a password reset link.</p>
           </div>
 
           <button type="button" id="auth-request-otp-btn" onclick="triggerHaptic('medium'); handleRequestPasswordResetOTP()" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
             <i class="fa-solid fa-paper-plane text-xs"></i>
             <span>Send Password Reset Link</span>
           </button>
+
+          <button type="button" onclick="triggerHaptic('light'); switchAuthTab('signin')" class="w-full text-center text-xs text-slate-400 hover:text-slate-200 py-1 transition">
+            <i class="fa-solid fa-arrow-left text-[10px] mr-1"></i> Back to Sign In
+          </button>
         </div>
 
         <!-- STEP 2: Link Sent Confirmation & Return to Sign In -->
         <div id="auth-reset-step-otp" class="hidden space-y-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Reset Email Sent</span>
-              <button type="button" onclick="triggerHaptic('light'); changeResetEmail()" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold underline transition">Change email</button>
+          <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 text-center">
+            <div class="w-10 h-10 mx-auto rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <i class="fa-solid fa-envelope-open-text text-base"></i>
             </div>
-            <div class="text-xs font-semibold text-slate-200 flex items-center gap-1.5 break-all">
-              <i class="fa-solid fa-inbox text-amber-400 text-xs"></i>
-              <span id="auth-otp-target-email-display">athlete@example.com</span>
+            <div>
+              <h3 class="text-xs font-bold text-slate-100">Check Your Inbox</h3>
+              <div class="text-xs font-semibold text-amber-400 mt-1 break-all flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-envelope text-[11px]"></i>
+                <span id="auth-otp-target-email-display">athlete@example.com</span>
+              </div>
+              <p class="text-[11px] text-slate-300 mt-1.5 leading-relaxed">
+                We sent a password reset link to your email address. Click the link in the email to set a new password, then return here to sign in.
+              </p>
             </div>
-          </div>
-
-          <div class="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl text-slate-300 text-xs space-y-1.5">
-            <p class="font-bold text-amber-400 flex items-center gap-1.5">
-              <i class="fa-solid fa-envelope-open-text"></i> Check Your Inbox
-            </p>
-            <p class="text-[11px] text-slate-300 leading-relaxed">
-              We sent a password reset link to your email address. Click the link in the email to choose your new password, then return here to sign in.
-            </p>
+            <div class="pt-0.5">
+              <button type="button" onclick="triggerHaptic('light'); changeResetEmail()" class="text-[10px] text-slate-400 hover:text-amber-300 font-bold underline transition">
+                Wrong email? Change address
+              </button>
+            </div>
           </div>
 
           <button type="button" onclick="triggerHaptic('medium'); switchAuthTab('signin')" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
-            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+            <i class="fa-solid fa-right-to-bracket text-xs"></i>
             <span>Return to Sign In</span>
           </button>
 
-          <div class="flex items-center justify-between pt-1">
-            <span class="text-[10px] text-slate-500">Didn't receive the email?</span>
-            <button type="button" id="auth-resend-otp-btn" onclick="triggerHaptic('light'); handleResendOTP()" class="text-[10px] text-amber-400 hover:text-amber-300 font-bold transition">Resend Link</button>
+          <div class="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-slate-500">
+            <span>Didn't receive the email?</span>
+            <button type="button" id="auth-resend-otp-btn" onclick="triggerHaptic('light'); handleResendOTP()" class="text-amber-400 hover:text-amber-300 font-bold transition">Resend Link</button>
           </div>
 
           <!-- Hidden legacy inputs to satisfy DOM audit and programmatic tests -->
@@ -409,10 +414,6 @@
             <button type="submit" id="auth-submit-reset-btn"></button>
           </div>
         </div>
-
-        <button type="button" onclick="triggerHaptic('light'); switchAuthTab('signin')" class="w-full text-center text-xs text-slate-400 hover:text-slate-200 py-1 transition">
-          <i class="fa-solid fa-arrow-left text-[10px] mr-1"></i> Back to Sign In
-        </button>
       </form>
 
       <!-- Divider -->
@@ -3037,18 +3038,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018N"></script>
-  <script defer src="js/storage.js?v=20261018N"></script>
-  <script defer src="js/utils.js?v=20261018N"></script>
-  <script defer src="js/theme.js?v=20261018N"></script>
-  <script defer src="js/auth.js?v=20261018N"></script>
-  <script defer src="js/workout.js?v=20261018N"></script>
-  <script defer src="js/history.js?v=20261018N"></script>
-  <script defer src="js/progress.js?v=20261018N"></script>
-  <script defer src="js/squads.js?v=20261018N"></script>
-  <script defer src="js/map.js?v=20261018N"></script>
-  <script defer src="js/visitors.js?v=20261018N"></script>
-  <script defer src="js/backup.js?v=20261018N"></script>
-  <script defer src="js/main.js?v=20261018N"></script>
+  <script defer src="js/config.js?v=20261018P"></script>
+  <script defer src="js/storage.js?v=20261018P"></script>
+  <script defer src="js/utils.js?v=20261018P"></script>
+  <script defer src="js/theme.js?v=20261018P"></script>
+  <script defer src="js/auth.js?v=20261018P"></script>
+  <script defer src="js/workout.js?v=20261018P"></script>
+  <script defer src="js/history.js?v=20261018P"></script>
+  <script defer src="js/progress.js?v=20261018P"></script>
+  <script defer src="js/squads.js?v=20261018P"></script>
+  <script defer src="js/map.js?v=20261018P"></script>
+  <script defer src="js/visitors.js?v=20261018P"></script>
+  <script defer src="js/backup.js?v=20261018P"></script>
+  <script defer src="js/main.js?v=20261018P"></script>
 </body>
 </html>

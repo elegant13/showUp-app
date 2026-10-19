@@ -902,16 +902,15 @@
         setTimeout(() => otpInput.focus(), 100);
       }
 
-      setAuthStatusMessage("Sending password reset link...", 'info');
+      setAuthStatusMessage('', 'info'); // Keep UI clean: on-screen card is the dedicated confirmation
       startResetResendCooldown(60);
 
-      // Asynchronously trigger password reset email dispatch and provide live status
+      // Asynchronously trigger password reset email dispatch
       const normEmail = email.toLowerCase().trim();
       const fAuth = getFirebaseAuth();
       if (fAuth && typeof fAuth.sendPasswordResetEmail === 'function') {
         fAuth.sendPasswordResetEmail(normEmail)
           .then(() => {
-            setAuthStatusMessage("We sent a password reset link to your email address. Please check your inbox or spam folder.", 'success');
             if (typeof showToast === 'function') {
               showToast(`Password reset link sent to ${normEmail}`, 'success');
             }
@@ -920,12 +919,8 @@
             console.warn("Firebase Auth sendPasswordResetEmail notice:", err.message);
             if (err.code === 'auth/user-not-found') {
               setAuthStatusMessage("No account found with this email. Please check your address or create an account.", 'error');
-            } else {
-              setAuthStatusMessage("Email dispatch requested. Please check your inbox or spam folder.", 'info');
             }
           });
-      } else {
-        setAuthStatusMessage("Verification link requested. Please check your inbox.", 'info');
       }
     }
 
@@ -1263,7 +1258,6 @@
           .then((cred) => {
             if (cred && cred.user) {
               cred.user.sendEmailVerification().then(() => {
-                setAuthStatusMessage("We sent a verification link to your email address. Please check your inbox or spam folder.", 'success');
                 if (typeof showToast === 'function') showToast(`Verification link sent to ${normEmail}`, 'success');
               }).catch(e => console.warn("Firebase sendEmailVerification error:", e));
             }
@@ -1273,12 +1267,8 @@
             if (err.code === 'auth/email-already-in-use') {
               fAuth.sendPasswordResetEmail(normEmail).catch(() => {});
               setAuthStatusMessage("An account with this email already exists. We've sent a password reset link to your email address.", 'info');
-            } else {
-              setAuthStatusMessage("Verification link requested. Please check your inbox or spam folder.", 'info');
             }
           });
-      } else {
-        setAuthStatusMessage("Verification link requested. Please check your inbox or spam folder.", 'info');
       }
 
       const stepDetails = document.getElementById('auth-register-step-details');
@@ -1290,6 +1280,7 @@
       if (stepOtp) stepOtp.classList.remove('hidden');
       if (stepPass) stepPass.classList.add('hidden');
       if (emailDisplay) emailDisplay.innerText = email;
+      setAuthStatusMessage('', 'info');
 
       const otpInput = document.getElementById('auth-register-otp-code');
       if (otpInput) {
