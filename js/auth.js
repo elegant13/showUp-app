@@ -132,6 +132,7 @@
 
       // 8. Re-render all UI views in pristine logged-out state
       updateCloudBackupUI();
+      if (typeof updateSettingsModalAuthVisibility === 'function') updateSettingsModalAuthVisibility();
       initSquads();
       renderSquadsTab();
       updateSquadBeacon();
@@ -1567,6 +1568,7 @@
       document.getElementById('btn-google-login').classList.add('hidden');
       document.getElementById('google-user-profile').classList.remove('hidden');
       updateCloudBackupUI();
+      if (typeof updateSettingsModalAuthVisibility === 'function') updateSettingsModalAuthVisibility();
       initSquads();
       if (typeof fetchAthleteSquadsFromFirestore === 'function') {
         try { fetchAthleteSquadsFromFirestore(profileObj); } catch (e) {}

@@ -4,7 +4,20 @@
 
     function toggleSettingsModal() {
       const modal = document.getElementById('settings-modal');
-      modal.classList.toggle('hidden');
+      if (modal) {
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+          updateSettingsModalAuthVisibility();
+        }
+      }
+    }
+
+    function updateSettingsModalAuthVisibility() {
+      const card = document.getElementById('settings-athlete-account-card');
+      if (card) {
+        const loggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : false;
+        card.classList.toggle('hidden', loggedIn);
+      }
     }
 
     function openLargeLogoModal() {

@@ -1370,6 +1370,7 @@ runSuite("16. Squads Teammate Workout Details, Double High Five Emoting & Clean 
   const multiDateWorkouts = [
     { date: "2026-10-16", workoutName: "Friday Bench Blast", sets: [{ weight: 225, reps: 5 }] },
     { date: "2026-10-17", workoutName: "Saturday Squat Session", sets: [{ weight: 315, reps: 5 }] },
+    { date: getYesterdayETDateKey(), workoutName: "Yesterday Workout", sets: [{ weight: 315, reps: 5 }] },
     { date: todayKey, workoutName: "Sunday Deadlift Day", sets: [{ weight: 405, reps: 3 }] }
   ];
   localStorage.setItem('showUp_synced_workouts', JSON.stringify(multiDateWorkouts));
