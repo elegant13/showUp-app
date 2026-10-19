@@ -636,6 +636,43 @@
         }
       } catch (e) {}
 
+      // Transactional Email Dispatch (EmailJS or Resend if configured in EMAIL_CONFIG)
+      try {
+        if (typeof EMAIL_CONFIG !== 'undefined') {
+          if (EMAIL_CONFIG.emailjsServiceId && EMAIL_CONFIG.emailjsPublicKey) {
+            fetch('https://api.emailjs.com/api/v1.0/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                service_id: EMAIL_CONFIG.emailjsServiceId,
+                template_id: EMAIL_CONFIG.emailjsTemplateId,
+                user_id: EMAIL_CONFIG.emailjsPublicKey,
+                template_params: {
+                  to_email: normEmail,
+                  passcode: code,
+                  code: code,
+                  app_name: 'showUp'
+                }
+              })
+            }).catch(err => console.debug("EmailJS dispatch notice:", err));
+          } else if (EMAIL_CONFIG.resendApiKey) {
+            fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + EMAIL_CONFIG.resendApiKey,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'showUp <onboarding@resend.dev>',
+                to: [normEmail],
+                subject: 'Your showUp Verification Code',
+                html: `<div style="font-family:sans-serif;padding:24px;background:#0f172a;color:#f8fafc;border-radius:16px;"><h2 style="color:#10b981;">showUp Verification Code</h2><p>Your 6-digit verification code is:</p><div style="font-size:32px;letter-spacing:8px;font-weight:900;color:#f59e0b;padding:16px;background:#1e293b;border-radius:12px;text-align:center;">${code}</div><p style="color:#64748b;font-size:12px;">Expires in 10 minutes.</p></div>`
+              })
+            }).catch(err => console.debug("Resend dispatch notice:", err));
+          }
+        }
+      } catch (e) {}
+
       // Write notification event to Firestore 'mail' collection if extension configured
       try {
         if (typeof getFirestoreDb === 'function') {
@@ -824,16 +861,10 @@
       const stepEmail = document.getElementById('auth-reset-step-email');
       const stepOtp = document.getElementById('auth-reset-step-otp');
       const emailDisplay = document.getElementById('auth-otp-target-email-display');
-      const previewHint = document.getElementById('auth-otp-preview-hint');
 
       if (stepEmail) stepEmail.classList.add('hidden');
       if (stepOtp) stepOtp.classList.remove('hidden');
       if (emailDisplay) emailDisplay.innerText = email;
-
-      if (previewHint && result.otp) {
-        previewHint.innerHTML = `<i class="fa-solid fa-shield-halved text-xs mr-1 text-emerald-400"></i> Verification Code: <span class="bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded font-mono font-bold tracking-widest">${result.otp}</span> <span class="text-[9px] text-slate-400">(Sent to inbox)</span>`;
-        previewHint.classList.remove('hidden');
-      }
 
       const otpInput = document.getElementById('auth-reset-otp-code');
       if (otpInput) {

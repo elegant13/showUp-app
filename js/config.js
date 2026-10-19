@@ -236,3 +236,11 @@
       appId: "1:489093591529:web:058f0ef15e744128ecdb78",
       measurementId: "G-JK14YSDNP3"
     };
+
+    const EMAIL_CONFIG = {
+      provider: "firebase", // 'firebase', 'emailjs', or 'resend'
+      emailjsServiceId: "",
+      emailjsTemplateId: "",
+      emailjsPublicKey: "",
+      resendApiKey: ""
+    };
