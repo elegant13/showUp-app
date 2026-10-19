@@ -343,6 +343,21 @@
       changeResetEmail();
     }
 
+    function handleAuthModalBackdropClick(event) {
+      if (event && event.target !== event.currentTarget) return;
+      const registerView = document.getElementById('auth-register-view');
+      const resetView = document.getElementById('auth-reset-view');
+      const isRegistering = registerView && !registerView.classList.contains('hidden');
+      const isResetting = resetView && !resetView.classList.contains('hidden');
+
+      // During registration and forgot password flows, the click of x at the top right corner
+      // alone will navigate the athlete away. Do not allow clicking outside of the modal to close it.
+      if (isRegistering || isResetting) {
+        return;
+      }
+      closeAuthLoginModal();
+    }
+
     function triggerGoogleOAuthFromModal() {
       closeAuthLoginModal();
       handleGoogleSignIn();

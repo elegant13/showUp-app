@@ -1647,6 +1647,32 @@ runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password
   const registeredAccs = getRegisteredAccounts();
   assert(registeredAccs['taylor@showup.fit'] !== undefined, "Account created in registered accounts after Step 3");
   assert(regStep1.classList.contains('hidden') === false, "Register wizard reset back to Step 1 for next usage");
+
+  // Modal Backdrop Protection Test:
+  assert(typeof handleAuthModalBackdropClick === 'function', "handleAuthModalBackdropClick is a defined function");
+  const authModal = getOrCreateElement('auth-login-modal');
+  
+  // Test Registration Flow:
+  openAuthLoginModal('register');
+  assert(!authModal.classList.contains('hidden'), "Auth modal open for registration");
+  handleAuthModalBackdropClick({ target: authModal, currentTarget: authModal });
+  assert(!authModal.classList.contains('hidden'), "Clicking outside modal during registration does NOT close modal");
+  closeAuthLoginModal(); // Click of top-right X button alone
+  assert(authModal.classList.contains('hidden'), "Clicking top-right X button closes registration modal");
+
+  // Test Forgot Password Flow:
+  openAuthLoginModal('reset');
+  assert(!authModal.classList.contains('hidden'), "Auth modal open for password reset");
+  handleAuthModalBackdropClick({ target: authModal, currentTarget: authModal });
+  assert(!authModal.classList.contains('hidden'), "Clicking outside modal during password reset does NOT close modal");
+  closeAuthLoginModal(); // Click of top-right X button alone
+  assert(authModal.classList.contains('hidden'), "Clicking top-right X button closes password reset modal");
+
+  // Test Sign In Flow (backdrop dismiss allowed):
+  openAuthLoginModal('signin');
+  assert(!authModal.classList.contains('hidden'), "Auth modal open for sign in");
+  handleAuthModalBackdropClick({ target: authModal, currentTarget: authModal });
+  assert(authModal.classList.contains('hidden'), "Clicking outside modal during sign in closes modal");
 });
 
 print("\\n============================================================");
