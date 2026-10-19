@@ -925,7 +925,7 @@
             }
           });
       } else {
-        setAuthStatusMessage("Verification code requested. Please check your inbox.", 'info');
+        setAuthStatusMessage("Verification link requested. Please check your inbox.", 'info');
       }
     }
 
@@ -964,7 +964,7 @@
           if (btn) {
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            btn.innerText = 'Resend Code';
+            btn.innerText = 'Resend Link';
           }
         } else {
           if (btn) btn.innerText = `Resend (${resetResendSecondsLeft}s)`;
@@ -1437,7 +1437,7 @@
           if (btn) {
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            btn.innerText = 'Resend Code';
+            btn.innerText = 'Resend Link';
           }
         } else {
           if (btn) btn.innerText = `Resend (${regResendSecondsLeft}s)`;
