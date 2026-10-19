@@ -339,6 +339,8 @@
       const modal = document.getElementById('auth-login-modal');
       if (modal) modal.classList.add('hidden');
       setAuthStatusMessage('', 'info');
+      changeRegisterDetails();
+      changeResetEmail();
     }
 
     function triggerGoogleOAuthFromModal() {
@@ -354,6 +356,9 @@
     const activePasswordResetOTPs = {};
     let resetResendCooldownTimer = null;
     let resetResendSecondsLeft = 0;
+    const activeRegistrationOTPs = {};
+    let regResendCooldownTimer = null;
+    let regResendSecondsLeft = 0;
 
     function getFirebaseAuth() {
       if (firebaseAuthInstance) return firebaseAuthInstance;
@@ -421,6 +426,14 @@
         if (registerView) registerView.classList.remove('hidden');
         if (registerTabBtn) {
           registerTabBtn.className = "flex-1 py-2 text-xs font-black rounded-xl transition bg-emerald-500 text-slate-950 shadow-md";
+        }
+        const stepDetails = document.getElementById('auth-register-step-details');
+        const stepOtp = document.getElementById('auth-register-step-otp');
+        const emailInput = document.getElementById('auth-register-email');
+        const norm = (emailInput && emailInput.value) ? emailInput.value.toLowerCase().trim() : '';
+        if (!norm || !activeRegistrationOTPs[norm]) {
+          if (stepDetails) stepDetails.classList.remove('hidden');
+          if (stepOtp) stepOtp.classList.add('hidden');
         }
       } else if (tab === 'reset') {
         if (resetView) resetView.classList.remove('hidden');
@@ -992,8 +1005,181 @@
       }
     }
 
-    function handleEmailPasswordRegister(e) {
-      if (e && e.preventDefault) e.preventDefault();
+    // ==========================================================================
+    // Email OTP Registration Functions
+    // ==========================================================================
+
+    function requestRegistrationOTP(email, details) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter a valid email address." };
+      }
+      const normEmail = email.toLowerCase().trim();
+
+      // Cryptographically secure 6-digit numeric OTP
+      let randomVal;
+      if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        randomVal = 100000 + (array[0] % 900000);
+      } else {
+        randomVal = Math.floor(100000 + Math.random() * 900000);
+      }
+      const code = randomVal.toString();
+
+      const otpRecord = {
+        email: normEmail,
+        code: code,
+        expiresAt: Date.now() + (10 * 60 * 1000), // 10 minutes
+        attempts: 0,
+        createdAt: Date.now(),
+        details: details || {}
+      };
+
+      activeRegistrationOTPs[normEmail] = otpRecord;
+      try {
+        sessionStorage.setItem('showUp_reg_otp_' + normEmail, JSON.stringify(otpRecord));
+      } catch (e) {}
+
+      // Transactional Email Dispatch (EmailJS or Resend if configured in EMAIL_CONFIG)
+      try {
+        if (typeof EMAIL_CONFIG !== 'undefined') {
+          if (EMAIL_CONFIG.emailjsServiceId && EMAIL_CONFIG.emailjsPublicKey) {
+            fetch('https://api.emailjs.com/api/v1.0/email/send', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                service_id: EMAIL_CONFIG.emailjsServiceId,
+                template_id: EMAIL_CONFIG.emailjsTemplateId,
+                user_id: EMAIL_CONFIG.emailjsPublicKey,
+                template_params: {
+                  to_email: normEmail,
+                  passcode: code,
+                  code: code,
+                  app_name: 'showUp'
+                }
+              })
+            }).catch(err => console.debug("EmailJS reg dispatch notice:", err));
+          } else if (EMAIL_CONFIG.resendApiKey) {
+            fetch('https://api.resend.com/emails', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + EMAIL_CONFIG.resendApiKey,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                from: 'showUp <onboarding@resend.dev>',
+                to: [normEmail],
+                subject: 'Your showUp Registration Verification Code',
+                html: `<div style="font-family:sans-serif;padding:24px;background:#0f172a;color:#f8fafc;border-radius:16px;"><h2 style="color:#10b981;">Welcome to showUp!</h2><p>Your 6-digit registration verification code is:</p><div style="font-size:32px;letter-spacing:8px;font-weight:900;color:#10b981;padding:16px;background:#1e293b;border-radius:12px;text-align:center;">${code}</div><p style="color:#64748b;font-size:12px;">This verification code expires in 10 minutes.</p></div>`
+              })
+            }).catch(err => console.debug("Resend reg dispatch notice:", err));
+          }
+        }
+      } catch (e) {}
+
+      // Write notification event to Firestore 'mail' collection if extension configured
+      try {
+        if (typeof getFirestoreDb === 'function') {
+          const db = getFirestoreDb();
+          if (db) {
+            db.collection('mail').add({
+              to: normEmail,
+              message: {
+                subject: 'Your showUp Registration Verification Code',
+                text: `Your showUp registration verification code is: ${code}. This code expires in 10 minutes.`,
+                html: `<div style="font-family:sans-serif;padding:24px;background:#0f172a;color:#f8fafc;border-radius:16px;">` +
+                      `<h2 style="color:#10b981;margin-bottom:8px;">showUp • Account Verification</h2>` +
+                      `<p style="color:#94a3b8;font-size:14px;">Welcome to showUp! Enter the 6-digit verification code below to verify your email and activate your account:</p>` +
+                      `<div style="font-size:32px;letter-spacing:8px;font-weight:900;color:#10b981;padding:16px;background:#1e293b;border-radius:12px;text-align:center;margin:20px 0;">${code}</div>` +
+                      `<p style="color:#64748b;font-size:12px;">This code expires in 10 minutes. If you did not sign up for showUp, you can safely ignore this email.</p>` +
+                      `</div>`
+              }
+            }).catch(e => console.debug("Firestore reg mail write notice:", e));
+          }
+        }
+      } catch (e) {}
+
+      return {
+        success: true,
+        message: `6-digit verification code requested for ${normEmail}.`,
+        otp: code
+      };
+    }
+
+    function verifyRegistrationOTP(email, otpCode) {
+      if (!email || !email.includes('@')) {
+        return { success: false, error: "Please enter a valid email address." };
+      }
+      if (!otpCode || otpCode.trim().length !== 6) {
+        return { success: false, error: "Please enter a complete 6-digit verification code." };
+      }
+
+      const normEmail = email.toLowerCase().trim();
+      let record = activeRegistrationOTPs[normEmail];
+      if (!record) {
+        try {
+          const saved = sessionStorage.getItem('showUp_reg_otp_' + normEmail);
+          if (saved) record = JSON.parse(saved);
+        } catch (e) {}
+      }
+
+      if (!record) {
+        return { success: false, error: "No active verification code found for this email. Please request a new code." };
+      }
+
+      if (Date.now() > record.expiresAt) {
+        delete activeRegistrationOTPs[normEmail];
+        try { sessionStorage.removeItem('showUp_reg_otp_' + normEmail); } catch (e) {}
+        return { success: false, error: "Verification code has expired. Please request a new code." };
+      }
+
+      record.attempts = (record.attempts || 0) + 1;
+      if (record.attempts > 5) {
+        delete activeRegistrationOTPs[normEmail];
+        try { sessionStorage.removeItem('showUp_reg_otp_' + normEmail); } catch (e) {}
+        return { success: false, error: "Too many incorrect attempts. For security, this code was invalidated. Please request a new code." };
+      }
+
+      if (otpCode.trim() !== record.code) {
+        const remaining = 5 - record.attempts;
+        return { success: false, error: `Incorrect verification code (${remaining} attempts remaining). Please check your email.` };
+      }
+
+      return { success: true, verified: true, details: record.details };
+    }
+
+    function verifyAndFinalizeRegistration(email, otpCode) {
+      const verification = verifyRegistrationOTP(email, otpCode);
+      if (!verification.success) {
+        return verification;
+      }
+
+      const normEmail = email.toLowerCase().trim();
+      delete activeRegistrationOTPs[normEmail];
+      try { sessionStorage.removeItem('showUp_reg_otp_' + normEmail); } catch (e) {}
+
+      const details = verification.details || {};
+      const athleteName = details.name || normEmail.split('@')[0];
+      const password = details.password;
+      const zip = details.zip || '';
+
+      const regResult = registerAthleteAccount(normEmail, password, athleteName, '', zip);
+      if (!regResult.success) {
+        return regResult;
+      }
+
+      changeRegisterDetails();
+      const otpInput = document.getElementById('auth-register-otp-code');
+      if (otpInput) otpInput.value = '';
+
+      return {
+        success: true,
+        message: `Account verified and created! Welcome, ${athleteName}.`,
+        account: regResult.account
+      };
+    }
+
+    function handleRequestRegistrationOTP() {
       const nameInput = document.getElementById('auth-register-name');
       const emailInput = document.getElementById('auth-register-email');
       const passInput = document.getElementById('auth-register-password');
@@ -1004,7 +1190,124 @@
       const pass = passInput ? passInput.value : '';
       const zip = zipInput ? zipInput.value.trim() : '';
 
-      const result = registerAthleteAccount(email, pass, name, '', zip);
+      if (!name) {
+        setAuthStatusMessage("Please enter your athlete name.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+      if (!email || !email.includes('@')) {
+        setAuthStatusMessage("Please enter a valid email address.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (emailInput) emailInput.focus();
+        return;
+      }
+      if (!pass || pass.length < 4) {
+        setAuthStatusMessage("Password must be at least 4 characters.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        if (passInput) passInput.focus();
+        return;
+      }
+
+      // Check if account already exists
+      const accounts = getRegisteredAccounts();
+      const normEmail = email.toLowerCase().trim();
+      if (accounts[normEmail]) {
+        setAuthStatusMessage("An account with this email already exists. Please Sign In or Reset Password.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const result = requestRegistrationOTP(normEmail, { name, email: normEmail, password: pass, zip });
+      if (!result.success) {
+        setAuthStatusMessage(result.error, 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const stepDetails = document.getElementById('auth-register-step-details');
+      const stepOtp = document.getElementById('auth-register-step-otp');
+      const emailDisplay = document.getElementById('auth-register-otp-target-email-display');
+
+      if (stepDetails) stepDetails.classList.add('hidden');
+      if (stepOtp) stepOtp.classList.remove('hidden');
+      if (emailDisplay) emailDisplay.innerText = email;
+
+      const otpInput = document.getElementById('auth-register-otp-code');
+      if (otpInput) {
+        otpInput.value = '';
+        setTimeout(() => otpInput.focus(), 100);
+      }
+
+      setAuthStatusMessage("Verification code requested. Please check your inbox or spam folder.", 'info');
+      if (typeof showToast === 'function') {
+        showToast(`Verification code requested for ${email}`, 'info');
+      }
+      startRegisterResendCooldown(60);
+    }
+
+    function handleResendRegistrationOTP() {
+      if (regResendSecondsLeft > 0) return;
+      handleRequestRegistrationOTP();
+    }
+
+    function changeRegisterDetails() {
+      const stepDetails = document.getElementById('auth-register-step-details');
+      const stepOtp = document.getElementById('auth-register-step-otp');
+      if (stepDetails) stepDetails.classList.remove('hidden');
+      if (stepOtp) stepOtp.classList.add('hidden');
+      const nameInput = document.getElementById('auth-register-name');
+      if (nameInput) nameInput.focus();
+    }
+
+    function startRegisterResendCooldown(seconds = 60) {
+      if (regResendCooldownTimer) clearInterval(regResendCooldownTimer);
+      regResendSecondsLeft = seconds;
+      const btn = document.getElementById('auth-register-resend-otp-btn');
+      if (!btn) return;
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.innerText = `Resend (${regResendSecondsLeft}s)`;
+
+      regResendCooldownTimer = setInterval(() => {
+        regResendSecondsLeft--;
+        if (regResendSecondsLeft <= 0) {
+          clearInterval(regResendCooldownTimer);
+          regResendCooldownTimer = null;
+          if (btn) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.innerText = 'Resend Code';
+          }
+        } else {
+          if (btn) btn.innerText = `Resend (${regResendSecondsLeft}s)`;
+        }
+      }, 1000);
+    }
+
+    function handleEmailPasswordRegister(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const stepOtp = document.getElementById('auth-register-step-otp');
+
+      // If user is on Step 1 (details input), trigger request OTP
+      if (!stepOtp || stepOtp.classList.contains('hidden')) {
+        handleRequestRegistrationOTP();
+        return;
+      }
+
+      const emailInput = document.getElementById('auth-register-email');
+      const otpInput = document.getElementById('auth-register-otp-code');
+
+      const email = emailInput ? emailInput.value.trim() : '';
+      const otpCode = otpInput ? otpInput.value.trim() : '';
+
+      if (!otpCode || otpCode.length !== 6) {
+        setAuthStatusMessage("Please enter the complete 6-digit verification code.", 'error');
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+        return;
+      }
+
+      const result = verifyAndFinalizeRegistration(email, otpCode);
       if (!result.success) {
         setAuthStatusMessage(result.error, 'error');
         if (typeof triggerHaptic === 'function') triggerHaptic('heavy');

@@ -1576,11 +1576,35 @@ runSuite("17. Historical Workout Updates, Country Edge Sticking & Email/Password
   const updatedLogin = loginAthleteWithEmailPassword('runner@showup.fit', 'ultraPower2027');
   assert(updatedLogin.success === true, "Login with OTP-verified password succeeds");
 
+  // Email OTP Two-Step Registration Workflow
+  assert(typeof requestRegistrationOTP === 'function', "requestRegistrationOTP is a defined function");
+  assert(typeof verifyRegistrationOTP === 'function', "verifyRegistrationOTP is a defined function");
+  assert(typeof verifyAndFinalizeRegistration === 'function', "verifyAndFinalizeRegistration is a defined function");
+
+  // Step 1: Request Registration OTP
+  const regOtpReq = requestRegistrationOTP('verified@showup.fit', { name: 'Verified Athlete', password: 'securePass2026', zip: '10001' });
+  assert(regOtpReq.success === true, "requestRegistrationOTP succeeds");
+  assert(typeof regOtpReq.otp === 'string' && regOtpReq.otp.length === 6, "Registration OTP code is exactly 6 digits: " + regOtpReq.otp);
+
+  // Step 2: Bad OTP fails
+  const badRegVerify = verifyRegistrationOTP('verified@showup.fit', '111111');
+  assert(badRegVerify.success === false, "Wrong registration OTP rejected");
+
+  // Step 3: Complete registration with valid OTP
+  const validRegFinal = verifyAndFinalizeRegistration('verified@showup.fit', regOtpReq.otp);
+  assert(validRegFinal.success === true, "Registration with valid OTP succeeds");
+  assert(getRegisteredAccounts()['verified@showup.fit'] !== undefined, "Verified account exists in registered accounts");
+
+  // Step 4: OTP is single-use
+  const reuseRegOtp = verifyAndFinalizeRegistration('verified@showup.fit', regOtpReq.otp);
+  assert(reuseRegOtp.success === false, "Registration OTP cannot be reused");
+
   // Auth UI Tabs
   switchAuthTab('signin');
   assert(!getOrCreateElement('auth-signin-view').classList.contains('hidden'), "Sign in view visible on signin tab");
   switchAuthTab('register');
   assert(!getOrCreateElement('auth-register-view').classList.contains('hidden'), "Register view visible on register tab");
+  assert(!getOrCreateElement('auth-register-step-details').classList.contains('hidden'), "Register step 1 details visible initially");
   switchAuthTab('reset');
   assert(!getOrCreateElement('auth-reset-view').classList.contains('hidden'), "Reset view visible on reset tab");
 });
