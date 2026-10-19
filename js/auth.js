@@ -881,7 +881,7 @@
       if (fAuth && typeof fAuth.sendPasswordResetEmail === 'function') {
         fAuth.sendPasswordResetEmail(normEmail)
           .then(() => {
-            setAuthStatusMessage("Firebase email sent! Check your inbox for the reset link, or click 'Reset directly on this device' below.", 'success');
+            setAuthStatusMessage("Firebase verification email dispatched! Please check your inbox or spam folder.", 'success');
             if (typeof showToast === 'function') {
               showToast(`Firebase email sent to ${normEmail}`, 'success');
             }
@@ -889,68 +889,15 @@
           .catch(err => {
             console.warn("Firebase Auth sendPasswordResetEmail notice:", err.message);
             if (err.code === 'auth/user-not-found') {
-              setAuthStatusMessage("Account is active on this device. Click 'Didn't receive passcode? Reset directly on this device' below.", 'info');
+              setAuthStatusMessage("No account found with this email in Firebase. Please verify your address.", 'error');
             } else {
-              setAuthStatusMessage("Email dispatch requested. If you don't receive it, click 'Reset directly on this device' below.", 'info');
+              setAuthStatusMessage("Email dispatch requested. Please check your inbox or spam folder.", 'info');
             }
           });
       } else {
-        setAuthStatusMessage("Verification code requested. Check inbox or click 'Reset directly on this device' below.", 'info');
+        setAuthStatusMessage("Verification code requested. Please check your inbox.", 'info');
       }
     }
-
-    function openDirectResetOnDevice() {
-      const emailInput = document.getElementById('auth-reset-email');
-      const rawEmail = emailInput ? emailInput.value.trim() : '';
-      if (!rawEmail || !rawEmail.includes('@')) {
-        setAuthStatusMessage("Please enter your account email first.", 'error');
-        const stepEmail = document.getElementById('auth-reset-step-email');
-        const stepOtp = document.getElementById('auth-reset-step-otp');
-        if (stepEmail) stepEmail.classList.remove('hidden');
-        if (stepOtp) stepOtp.classList.add('hidden');
-        if (emailInput) emailInput.focus();
-        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
-        return;
-      }
-
-      const normEmail = rawEmail.toLowerCase().trim();
-      let record = activePasswordResetOTPs[normEmail];
-      if (!record || Date.now() > record.expiresAt) {
-        const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
-        record = {
-          email: normEmail,
-          code: randomCode,
-          expiresAt: Date.now() + (15 * 60 * 1000),
-          attempts: 0,
-          createdAt: Date.now()
-        };
-        activePasswordResetOTPs[normEmail] = record;
-        try {
-          sessionStorage.setItem('showUp_otp_' + normEmail, JSON.stringify(record));
-        } catch (e) {}
-      }
-
-      const stepEmail = document.getElementById('auth-reset-step-email');
-      const stepOtp = document.getElementById('auth-reset-step-otp');
-      const emailDisplay = document.getElementById('auth-otp-target-email-display');
-      const otpInput = document.getElementById('auth-reset-otp-code');
-      const newPassInput = document.getElementById('auth-reset-password');
-
-      if (stepEmail) stepEmail.classList.add('hidden');
-      if (stepOtp) stepOtp.classList.remove('hidden');
-      if (emailDisplay) emailDisplay.innerText = `${rawEmail} (Device Verified)`;
-      if (otpInput) otpInput.value = record.code;
-
-      setAuthStatusMessage("Device verified! Passcode applied. Please enter your new password below.", 'success');
-      if (typeof showToast === 'function') {
-        showToast("Device verified! Please enter your new password.", 'success');
-      }
-      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-      if (newPassInput) {
-        setTimeout(() => newPassInput.focus(), 150);
-      }
-    }
-    window.openDirectResetOnDevice = openDirectResetOnDevice;
 
     function handleResendOTP() {
       if (resetResendSecondsLeft > 0) return;
