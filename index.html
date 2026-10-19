@@ -227,14 +227,14 @@
       </form>
 
       <!-- VIEW 2: SET UP NEW ACCOUNT (SIMPLE 3-STEP VERIFIED REGISTRATION) -->
-      <!-- VIEW 2: SET UP NEW ACCOUNT (NATIVE FIREBASE VERIFIED REGISTRATION) -->
+      <!-- VIEW 2: SET UP NEW ACCOUNT (GENERIC VERIFIED REGISTRATION) -->
       <form id="auth-register-view" onsubmit="handleEmailPasswordRegister(event)" class="hidden space-y-3">
         <div class="bg-emerald-500/10 border border-emerald-500/30 p-2.5 rounded-xl text-[11px] text-emerald-300">
           <div class="font-bold mb-0.5 flex items-center gap-1.5">
             <i class="fa-solid fa-shield-halved text-xs text-emerald-400"></i>
-            <span>Verified Athlete Registration</span>
+            <span>Athlete Registration</span>
           </div>
-          <p class="text-[10px] text-emerald-200/80">1. Enter name & email → 2. Verify via official Firebase email link → 3. Set your password.</p>
+          <p class="text-[10px] text-emerald-200/80">1. Enter name & email → 2. Verify link sent to your email → 3. Set your password.</p>
         </div>
 
         <!-- STEP 1: Enter Name & Email Address -->
@@ -253,12 +253,12 @@
               <input type="email" id="auth-register-email" required placeholder="athlete@example.com" autocomplete="email" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 pl-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
               <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-xs text-slate-500"></i>
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">Firebase will send an official verification email link to confirm ownership.</p>
+            <p class="text-[10px] text-slate-400 mt-1">We will send a verification link to confirm your email address.</p>
           </div>
 
           <button type="button" id="auth-request-register-otp-btn" onclick="triggerHaptic('medium'); handleRequestRegistrationOTP()" class="w-full py-2.5 px-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
             <i class="fa-solid fa-paper-plane text-xs"></i>
-            <span>Send Verification Email Link</span>
+            <span>Send Verification Link</span>
           </button>
         </div>
 
@@ -266,7 +266,7 @@
         <div id="auth-register-step-otp" class="hidden space-y-3">
           <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-1">
             <div class="flex items-center justify-between text-xs">
-              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Verification Email Sent</span>
+              <span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Verification Link Sent</span>
               <button type="button" onclick="triggerHaptic('light'); changeRegisterDetails()" class="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold underline transition">Change email</button>
             </div>
             <div class="text-xs font-semibold text-slate-200 flex items-center gap-1.5 break-all">
@@ -280,7 +280,7 @@
               <i class="fa-solid fa-envelope-circle-check"></i> Check Your Inbox
             </p>
             <p class="text-[11px] text-slate-300 leading-relaxed">
-              We sent an official verification link from <strong>Firebase</strong> to your email address. Open your inbox or spam folder and tap the link. Once clicked, tap the button below.
+              We sent a verification link to your email address. Open your inbox or spam folder and tap the link. Once clicked, tap the button below.
             </p>
           </div>
 
@@ -342,14 +342,14 @@
         </div>
       </form>
 
-      <!-- VIEW 3: RESET PASSWORD VIA FIREBASE EMAIL LINK -->
+      <!-- VIEW 3: RESET PASSWORD VIA EMAIL LINK -->
       <form id="auth-reset-view" onsubmit="handleEmailPasswordReset(event)" class="hidden space-y-3">
         <div class="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-[11px] text-amber-300">
           <div class="font-bold mb-0.5 flex items-center gap-1.5">
             <i class="fa-solid fa-shield-halved text-xs text-amber-400"></i>
-            <span>Reset Password via Firebase Email</span>
+            <span>Reset Password</span>
           </div>
-          <p class="text-[10px] text-amber-200/80">Enter your email address and Firebase will send an official password reset link directly to your inbox.</p>
+          <p class="text-[10px] text-amber-200/80">Enter your email address and we will send a password reset link directly to your inbox.</p>
         </div>
 
         <!-- STEP 1: Enter Email & Request Link -->
@@ -360,7 +360,7 @@
               <input type="email" id="auth-reset-email" placeholder="athlete@example.com" class="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl px-3 py-2 pl-9 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
               <i class="fa-solid fa-envelope absolute left-3 top-2.5 text-xs text-slate-500"></i>
             </div>
-            <p class="text-[10px] text-slate-400 mt-1">Enter your registered email address. Firebase will send an official password reset link.</p>
+            <p class="text-[10px] text-slate-400 mt-1">Enter your registered email address. We will send a password reset link.</p>
           </div>
 
           <button type="button" id="auth-request-otp-btn" onclick="triggerHaptic('medium'); handleRequestPasswordResetOTP()" class="w-full py-2.5 px-4 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition">
@@ -387,7 +387,7 @@
               <i class="fa-solid fa-envelope-open-text"></i> Check Your Inbox
             </p>
             <p class="text-[11px] text-slate-300 leading-relaxed">
-              Firebase has dispatched a secure password reset link to your email. Click the link in the email to choose your new password, then return here to sign in.
+              We sent a password reset link to your email address. Click the link in the email to choose your new password, then return here to sign in.
             </p>
           </div>
 
@@ -3037,18 +3037,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018k"></script>
-  <script defer src="js/storage.js?v=20261018k"></script>
-  <script defer src="js/utils.js?v=20261018k"></script>
-  <script defer src="js/theme.js?v=20261018k"></script>
-  <script defer src="js/auth.js?v=20261018k"></script>
-  <script defer src="js/workout.js?v=20261018k"></script>
-  <script defer src="js/history.js?v=20261018k"></script>
-  <script defer src="js/progress.js?v=20261018k"></script>
-  <script defer src="js/squads.js?v=20261018k"></script>
-  <script defer src="js/map.js?v=20261018k"></script>
-  <script defer src="js/visitors.js?v=20261018k"></script>
-  <script defer src="js/backup.js?v=20261018k"></script>
-  <script defer src="js/main.js?v=20261018k"></script>
+  <script defer src="js/config.js?v=20261018L"></script>
+  <script defer src="js/storage.js?v=20261018L"></script>
+  <script defer src="js/utils.js?v=20261018L"></script>
+  <script defer src="js/theme.js?v=20261018L"></script>
+  <script defer src="js/auth.js?v=20261018L"></script>
+  <script defer src="js/workout.js?v=20261018L"></script>
+  <script defer src="js/history.js?v=20261018L"></script>
+  <script defer src="js/progress.js?v=20261018L"></script>
+  <script defer src="js/squads.js?v=20261018L"></script>
+  <script defer src="js/map.js?v=20261018L"></script>
+  <script defer src="js/visitors.js?v=20261018L"></script>
+  <script defer src="js/backup.js?v=20261018L"></script>
+  <script defer src="js/main.js?v=20261018L"></script>
 </body>
 </html>

@@ -887,24 +887,24 @@
         setTimeout(() => otpInput.focus(), 100);
       }
 
-      setAuthStatusMessage("Dispatching verification email via Firebase...", 'info');
+      setAuthStatusMessage("Sending password reset link...", 'info');
       startResetResendCooldown(60);
 
-      // Asynchronously trigger Firebase email dispatch and provide exact live status
+      // Asynchronously trigger password reset email dispatch and provide live status
       const normEmail = email.toLowerCase().trim();
       const fAuth = getFirebaseAuth();
       if (fAuth && typeof fAuth.sendPasswordResetEmail === 'function') {
         fAuth.sendPasswordResetEmail(normEmail)
           .then(() => {
-            setAuthStatusMessage("Firebase verification email dispatched! Please check your inbox or spam folder.", 'success');
+            setAuthStatusMessage("We sent a password reset link to your email address. Please check your inbox or spam folder.", 'success');
             if (typeof showToast === 'function') {
-              showToast(`Firebase email sent to ${normEmail}`, 'success');
+              showToast(`Password reset link sent to ${normEmail}`, 'success');
             }
           })
           .catch(err => {
             console.warn("Firebase Auth sendPasswordResetEmail notice:", err.message);
             if (err.code === 'auth/user-not-found') {
-              setAuthStatusMessage("No account found with this email in Firebase. Please verify your address.", 'error');
+              setAuthStatusMessage("No account found with this email. Please check your address or create an account.", 'error');
             } else {
               setAuthStatusMessage("Email dispatch requested. Please check your inbox or spam folder.", 'info');
             }
@@ -1248,7 +1248,7 @@
           .then((cred) => {
             if (cred && cred.user) {
               cred.user.sendEmailVerification().then(() => {
-                setAuthStatusMessage("Official Firebase verification link dispatched! Please check your inbox or spam folder.", 'success');
+                setAuthStatusMessage("We sent a verification link to your email address. Please check your inbox or spam folder.", 'success');
                 if (typeof showToast === 'function') showToast(`Verification link sent to ${normEmail}`, 'success');
               }).catch(e => console.warn("Firebase sendEmailVerification error:", e));
             }
@@ -1257,7 +1257,7 @@
             console.warn("Firebase createUser notice:", err.code, err.message);
             if (err.code === 'auth/email-already-in-use') {
               fAuth.sendPasswordResetEmail(normEmail).catch(() => {});
-              setAuthStatusMessage("Email already registered in Firebase. We've sent a password reset link to your inbox.", 'info');
+              setAuthStatusMessage("An account with this email already exists. We've sent a password reset link to your email address.", 'info');
             } else {
               setAuthStatusMessage("Verification link requested. Please check your inbox or spam folder.", 'info');
             }
@@ -1322,17 +1322,17 @@
         return;
       }
 
-      // Check live Firebase native email verification:
+      // Check live email verification status:
       const fAuth = getFirebaseAuth();
       const currentUser = fAuth ? fAuth.currentUser : null;
       if (currentUser) {
-        setAuthStatusMessage("Checking verification status with Firebase...", 'info');
+        setAuthStatusMessage("Checking verification status...", 'info');
         currentUser.reload()
           .then(() => {
             if (currentUser.emailVerified) {
               proceedToStepPassword(email);
             } else {
-              setAuthStatusMessage("Verification link not yet clicked. Please open the email from Firebase and click the link, then try again.", 'warning');
+              setAuthStatusMessage("Verification link not yet clicked. Please open your email and tap the link, then try again.", 'warning');
               if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
             }
           })
