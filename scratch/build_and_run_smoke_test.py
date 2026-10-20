@@ -1789,6 +1789,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     });
   });
 
+  // Verify defaultCatalog is organized in alphabetical order
+  const catalogNames = defaultCatalog.map(e => e.name);
+  const sortedCatalogNames = [...catalogNames].sort((a, b) => a.localeCompare(b));
+  assert(JSON.stringify(catalogNames) === JSON.stringify(sortedCatalogNames), "defaultCatalog exercises are sorted in alphabetical order");
+
   // 3. Test Auto Muscle Identification Engine & Implement Inference
   assert(typeof resolveExerciseMuscles === 'function', "resolveExerciseMuscles is a defined function");
   assert(typeof inferImplementFromExerciseName === 'function', "inferImplementFromExerciseName is a defined function");

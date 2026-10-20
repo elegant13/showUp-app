@@ -142,29 +142,29 @@
       const datalist = document.getElementById('exercise-catalog-list');
       if (!datalist) return;
       datalist.innerHTML = '';
-      const addedValues = new Set();
-
-      const addOption = (val) => {
-        if (!val || addedValues.has(val)) return;
-        const option = document.createElement('option');
-        option.value = val;
-        datalist.appendChild(option);
-        addedValues.add(val);
-      };
+      const optionValues = new Set();
 
       defaultCatalog.forEach(ex => {
-        addOption(ex.name);
+        if (ex.name) optionValues.add(ex.name);
 
         if (typeof expandExerciseAbbreviations === 'function') {
           const expanded = expandExerciseAbbreviations(ex.name);
-          addOption(expanded);
+          if (expanded) optionValues.add(expanded);
         }
 
         if (typeof abbreviateExerciseName === 'function') {
           const abbr = abbreviateExerciseName(ex.name);
-          addOption(abbr);
+          if (abbr) optionValues.add(abbr);
         }
       });
+
+      Array.from(optionValues)
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(val => {
+          const option = document.createElement('option');
+          option.value = val;
+          datalist.appendChild(option);
+        });
     }
 
     function handleExerciseInput(val) {
