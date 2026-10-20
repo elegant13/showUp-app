@@ -110,9 +110,15 @@
             existing.rawName = m.rawName || m.name;
           }
           if (m.isWorkingOut || existing.isWorkingOut) existing.isWorkingOut = true;
-          if (m.completedToday || existing.completedToday) existing.completedToday = true;
           if (m.currentWorkout) existing.currentWorkout = m.currentWorkout;
           if (m.completedDate) existing.completedDate = m.completedDate;
+          const memberCompDate = m.completedDate || existing.completedDate;
+          const currentET = typeof getETDateKey === 'function' ? getETDateKey() : '';
+          if ((m.completedToday || existing.completedToday) && (!memberCompDate || !currentET || memberCompDate === currentET)) {
+            existing.completedToday = true;
+          } else if (memberCompDate && currentET && memberCompDate !== currentET) {
+            existing.completedToday = false;
+          }
           if (m.lastCompletedWorkout) existing.lastCompletedWorkout = m.lastCompletedWorkout;
           if (m.lastActive && m.lastActive !== 'Just invited') existing.lastActive = m.lastActive;
           if (m.workoutDetails || existing.workoutDetails) existing.workoutDetails = m.workoutDetails || existing.workoutDetails;

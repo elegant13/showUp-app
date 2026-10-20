@@ -83,6 +83,15 @@
     let restTimerInterval = null;
     let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
 
+    // --- EXERCISE SHORTHAND ABBREVIATION DICTIONARY ---
+    const EXERCISE_ABBREVIATIONS = {
+      "SH": "Single Hand",
+      "SA": "Single Arm",
+      "DH": "Double Hand",
+      "KB": "Kettle Bell",
+      "DB": "Dumbell"
+    };
+
     const defaultCatalog = [
       { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
       { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders", "Back", "Core/Abs", "Quads"] },
@@ -100,8 +109,231 @@
       { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
       { name: "Single Leg RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
-      { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] }
+      { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
+      // Added Catalog Exercises with Anatomically Accurate Primary & Secondary Impact
+      { name: "SH Banded KB Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
+      { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
+      { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs", "Chest"] },
+      { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Shoulders", "Core/Abs"] },
+      { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Hamstrings/Glutes", "Back", "Triceps", "Core/Abs"] },
+      { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes", "Shoulders", "Biceps", "Core/Abs"] },
+      { name: "Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
+      { name: "Tricep Bar Dips", implement: "Bodyweight", muscle: "Triceps", secondary: ["Chest", "Shoulders", "Core/Abs"] },
+      { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
+      { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
+      { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs", "Shoulders"] },
+      { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
+      { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
     ];
+
+    // Expose globally for browser console / cross-module access
+    if (typeof window !== 'undefined') {
+      window.EXERCISE_ABBREVIATIONS = EXERCISE_ABBREVIATIONS;
+      window.defaultCatalog = defaultCatalog;
+    }
+
+    function expandExerciseAbbreviations(text) {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        .replace(/\bSH\b/gi, 'Single Hand')
+        .replace(/\bSA\b/gi, 'Single Arm')
+        .replace(/\bDH\b/gi, 'Double Hand')
+        .replace(/\bKB\b/gi, 'Kettle Bell')
+        .replace(/\bDB\b/gi, 'Dumbell')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function abbreviateExerciseName(text) {
+      if (!text || typeof text !== 'string') return '';
+      return text
+        .replace(/\bSingle[- ]Hand\b/gi, 'SH')
+        .replace(/\bSingle[- ]Arm\b/gi, 'SA')
+        .replace(/\bDouble[- ]Hand\b/gi, 'DH')
+        .replace(/\bKettle\s*Bell\b/gi, 'KB')
+        .replace(/\bKettlebell\b/gi, 'KB')
+        .replace(/\bDumb\s*bell\b/gi, 'DB')
+        .replace(/\bDumbell\b/gi, 'DB')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function normalizeExerciseLookupKey(text) {
+      if (!text || typeof text !== 'string') return '';
+      return abbreviateExerciseName(text)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    function findCatalogExercise(val) {
+      if (!val || typeof val !== 'string') return null;
+      const clean = val.trim().toLowerCase();
+      if (!clean) return null;
+
+      // 1. Direct name match (case-insensitive)
+      let match = defaultCatalog.find(c => c.name.toLowerCase() === clean);
+      if (match) return match;
+
+      // 2. Normalized abbreviation key match
+      const normKey = normalizeExerciseLookupKey(clean);
+      match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name) === normKey);
+      if (match) return match;
+
+      // 2b. Cross-map Single Arm (SA) and Single Hand (SH)
+      const saNormKey = normKey.replace(/^sa/, 'sh').replace(/sa/g, 'sh');
+      match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name).replace(/^sa/, 'sh').replace(/sa/g, 'sh') === saNormKey);
+      if (match) return match;
+
+      // 2c. RDL alias for Romanian Dead Lift
+      const rdlKey = normKey.replace(/romaniandeadlift/g, 'rdl');
+      match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name).replace(/romaniandeadlift/g, 'rdl') === rdlKey);
+      if (match) return match;
+
+      // 3. Partial or substring match if input length >= 3
+      if (clean.length >= 3) {
+        match = defaultCatalog.find(c => {
+          const cLower = c.name.toLowerCase();
+          return cLower === clean || cLower.startsWith(clean);
+        });
+        if (match) return match;
+
+        // Expanded abbreviation match
+        const expandedInput = expandExerciseAbbreviations(clean).toLowerCase();
+        match = defaultCatalog.find(c => {
+          const expName = expandExerciseAbbreviations(c.name).toLowerCase();
+          return expName === expandedInput || expName.startsWith(expandedInput) || expName.includes(expandedInput);
+        });
+        if (match) return match;
+      }
+
+      return null;
+    }
+
+    /**
+     * Infers the exercise implement automatically from the exercise name.
+     * Manual implement selection is optional.
+     */
+    function inferImplementFromExerciseName(exerciseName) {
+      if (!exerciseName || typeof exerciseName !== 'string') return null;
+      const trimmed = exerciseName.trim();
+      if (!trimmed) return null;
+
+      // 1. Direct or normalized catalog match
+      const catalogMatch = findCatalogExercise(trimmed);
+      if (catalogMatch && catalogMatch.implement) {
+        return catalogMatch.implement;
+      }
+
+      // 2. Anatomical implement keyword inference
+      const lower = expandExerciseAbbreviations(trimmed).toLowerCase();
+      if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
+        return 'Kettlebell';
+      } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
+        return 'Dumbbell';
+      } else if (lower.includes('barbell') || /\bbb\b/i.test(trimmed)) {
+        return 'Barbell';
+      } else if (lower.includes('band')) {
+        return 'Resistance Band';
+      } else if (lower.includes('mace') || lower.includes('gada')) {
+        return 'Macebell / Gada';
+      } else if (lower.includes('ring')) {
+        return 'Gymnastics Rings';
+      } else if (lower.includes('jori') || lower.includes('karlakattai')) {
+        return 'Jori Clubs / Karlakattai';
+      } else if (lower.includes('run') || lower.includes('sprint') || lower.includes('jog')) {
+        return 'Running';
+      } else if (lower.includes('swim')) {
+        return 'Swimming';
+      } else if (lower.includes('row') || lower.includes('erg')) {
+        return 'Row Erg';
+      } else if (lower.includes('walk')) {
+        return 'Walking';
+      } else if (lower.includes('hike')) {
+        return 'Hiking';
+      } else if (lower.includes('bike') || lower.includes('cycle')) {
+        return 'Biking';
+      } else if (lower.includes('pushup') || lower.includes('pullup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
+        return 'Bodyweight';
+      }
+
+      return null;
+    }
+
+    /**
+     * Physiologically accurate engine to automatically establish primary & secondary muscles
+     * for any exercise without requiring manual user input.
+     * Implement input is optional and automatically inferred from the name of the exercise.
+     */
+    function resolveExerciseMuscles(exerciseName, explicitImplement = null) {
+      const trimmed = (exerciseName || '').trim();
+      if (!trimmed) {
+        return {
+          primary: 'Full Body',
+          secondary: [],
+          implement: explicitImplement || 'Bodyweight',
+          inferred: false
+        };
+      }
+
+      // Infer implement from exercise name (optional manual input)
+      const inferredImp = inferImplementFromExerciseName(trimmed);
+      const effectiveImplement = inferredImp || explicitImplement || 'Bodyweight';
+
+      // Check catalog first for exact, abbreviated or expanded match
+      const catalogMatch = findCatalogExercise(trimmed);
+      if (catalogMatch) {
+        return {
+          primary: catalogMatch.muscle,
+          secondary: [...(catalogMatch.secondary || [])],
+          implement: catalogMatch.implement || effectiveImplement,
+          catalogMatch: catalogMatch.name,
+          inferred: Boolean(inferredImp)
+        };
+      }
+
+      // Fallback: Intelligent anatomical keyword deduction
+      const lower = expandExerciseAbbreviations(trimmed).toLowerCase();
+      let primary = 'Full Body';
+      let secondary = [];
+      let implement = effectiveImplement;
+
+      // Precise anatomical muscle mapping
+      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec')) {
+        primary = 'Chest';
+        secondary = ['Triceps', 'Shoulders', 'Core/Abs'];
+      } else if (lower.includes('tricep') || lower.includes('skull crusher') || lower.includes('kickback')) {
+        primary = 'Triceps';
+        secondary = ['Chest', 'Shoulders', 'Core/Abs'];
+      } else if (lower.includes('bicep') || lower.includes('curl') || lower.includes('chin-up') || lower.includes('chinup')) {
+        primary = 'Biceps';
+        secondary = ['Back', 'Core/Abs'];
+      } else if (lower.includes('shoulder press') || lower.includes('overhead press') || lower.includes('lateral raise') || lower.includes('military press') || lower.includes('front raise') || lower.includes('face pull')) {
+        primary = 'Shoulders';
+        secondary = ['Triceps', 'Core/Abs', 'Chest'];
+      } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
+        primary = 'Core/Abs';
+        secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
+      } else if (lower.includes('glute bridge') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl')) {
+        primary = 'Hamstrings/Glutes';
+        secondary = ['Core/Abs', 'Back', 'Quads'];
+      } else if (lower.includes('thruster')) {
+        primary = 'Full Body';
+        secondary = ['Quads', 'Shoulders', 'Hamstrings/Glutes', 'Triceps', 'Core/Abs'];
+      } else if (lower.includes('lunge') || lower.includes('squat') || lower.includes('leg press') || lower.includes('quad') || lower.includes('split squat') || lower.includes('step up') || lower.includes('bethak')) {
+        primary = 'Quads';
+        secondary = ['Hamstrings/Glutes', 'Core/Abs', 'Shoulders'];
+      } else if (lower.includes('high pull') || lower.includes('pullup') || lower.includes('pull-up') || lower.includes('lat pull') || lower.includes('row') || lower.includes('back')) {
+        primary = 'Back';
+        secondary = ['Hamstrings/Glutes', 'Shoulders', 'Biceps', 'Core/Abs'];
+      } else if (lower.includes('snatch') || lower.includes('clean') || lower.includes('farmers walk') || lower.includes('farmer walk') || lower.includes('deadlift') || lower.includes('burpee') || lower.includes('sapaate')) {
+        primary = 'Full Body';
+        secondary = ['Hamstrings/Glutes', 'Back', 'Shoulders', 'Core/Abs'];
+      }
+
+      return { primary, secondary, implement, inferred: Boolean(inferredImp) };
+    }
 
 
     let numpadTargetInputId = null;

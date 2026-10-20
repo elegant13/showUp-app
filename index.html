@@ -2118,6 +2118,22 @@
             <datalist id="exercise-catalog-list"></datalist>
           </div>
 
+          <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL -->
+          <div id="exercise-auto-muscles-pill" class="hidden text-[11px] font-medium text-slate-300 py-1.5 px-3 bg-slate-950/90 border border-slate-800 rounded-xl flex items-center justify-between shadow-sm">
+            <div class="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
+              <i class="fa-solid fa-bullseye text-emerald-400 text-xs"></i>
+              <span class="text-slate-400">Target:</span>
+              <span id="auto-muscle-primary" class="font-bold text-emerald-400"></span>
+              <span id="auto-muscle-secondary-wrapper" class="text-slate-500 text-[10px] hidden min-[400px]:inline">
+                • <span class="text-slate-400">Secondary:</span> <span id="auto-muscle-secondary" class="text-slate-300"></span>
+              </span>
+              <span id="auto-implement-wrapper" class="text-slate-500 text-[10px] hidden sm:inline">
+                • <span class="text-slate-400">Implement:</span> <span id="auto-implement-val" class="text-emerald-400 font-semibold"></span>
+              </span>
+            </div>
+            <span class="text-[9px] uppercase tracking-wider font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.5 rounded">Auto</span>
+          </div>
+
           <!-- QUICK EXERCISE SHORTCUT CHIPS -->
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs">
             <button type="button" onclick="selectQuickExercise('Running')" class="quick-exercise-chip">Running</button>
@@ -2365,7 +2381,9 @@
             <!-- IMPLEMENT / CATEGORY, MUSCLE & RPE SELECTORS -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80">
               <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Implement / Category</label>
+                <label class="block text-xs font-medium text-slate-400 mb-1">
+                  Implement / Category <span class="text-slate-500 font-normal">(Optional • Auto)</span>
+                </label>
                 <select id="implement-select" onchange="handleImplementChange(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
                   <option value="Bodyweight" selected>Bodyweight</option>
                   <option value="Running">Running</option>
@@ -2386,7 +2404,9 @@
               </div>
 
               <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Primary Muscle Target</label>
+                <label class="block text-xs font-medium text-slate-400 mb-1">
+                  Primary Muscle Target <span class="text-slate-500 font-normal">(Auto)</span>
+                </label>
                 <select id="muscle-group-select" onchange="updateWorkoutExtraOptionsPreview()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-emerald-500 transition">
                   <option value="Full Body">Full Body / Compound</option>
                   <option value="Chest">Chest</option>
@@ -3093,18 +3113,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261018S"></script>
-  <script defer src="js/storage.js?v=20261018S"></script>
-  <script defer src="js/utils.js?v=20261018S"></script>
-  <script defer src="js/theme.js?v=20261018S"></script>
-  <script defer src="js/auth.js?v=20261018S"></script>
-  <script defer src="js/workout.js?v=20261018S"></script>
-  <script defer src="js/history.js?v=20261018S"></script>
-  <script defer src="js/progress.js?v=20261018S"></script>
-  <script defer src="js/squads.js?v=20261018S"></script>
-  <script defer src="js/map.js?v=20261018S"></script>
-  <script defer src="js/visitors.js?v=20261018S"></script>
-  <script defer src="js/backup.js?v=20261018S"></script>
-  <script defer src="js/main.js?v=20261018S"></script>
+  <script defer src="js/config.js?v=20261020"></script>
+  <script defer src="js/storage.js?v=20261020"></script>
+  <script defer src="js/utils.js?v=20261020"></script>
+  <script defer src="js/theme.js?v=20261020"></script>
+  <script defer src="js/auth.js?v=20261020"></script>
+  <script defer src="js/workout.js?v=20261020"></script>
+  <script defer src="js/history.js?v=20261020"></script>
+  <script defer src="js/progress.js?v=20261020"></script>
+  <script defer src="js/squads.js?v=20261020"></script>
+  <script defer src="js/map.js?v=20261020"></script>
+  <script defer src="js/visitors.js?v=20261020"></script>
+  <script defer src="js/backup.js?v=20261020"></script>
+  <script defer src="js/main.js?v=20261020"></script>
 </body>
 </html>

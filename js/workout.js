@@ -140,31 +140,101 @@
 
     function initCatalog() {
       const datalist = document.getElementById('exercise-catalog-list');
+      if (!datalist) return;
       datalist.innerHTML = '';
-      defaultCatalog.forEach(ex => {
+      const addedValues = new Set();
+
+      const addOption = (val) => {
+        if (!val || addedValues.has(val)) return;
         const option = document.createElement('option');
-        option.value = ex.name;
+        option.value = val;
         datalist.appendChild(option);
+        addedValues.add(val);
+      };
+
+      defaultCatalog.forEach(ex => {
+        addOption(ex.name);
+
+        if (typeof expandExerciseAbbreviations === 'function') {
+          const expanded = expandExerciseAbbreviations(ex.name);
+          addOption(expanded);
+        }
+
+        if (typeof abbreviateExerciseName === 'function') {
+          const abbr = abbreviateExerciseName(ex.name);
+          addOption(abbr);
+        }
       });
     }
 
-
-
     function handleExerciseInput(val) {
-      const match = defaultCatalog.find(c => c.name.toLowerCase() === val.toLowerCase());
-      if (match) {
-        document.getElementById('implement-select').value = match.implement;
-        document.getElementById('muscle-group-select').value = match.muscle;
-        handleImplementChange(match.implement);
+      if (typeof resolveExerciseMuscles === 'function') {
+        const profile = resolveExerciseMuscles(val);
+        const impSelect = document.getElementById('implement-select');
+        const musSelect = document.getElementById('muscle-group-select');
+
+        if (profile) {
+          if (impSelect && profile.implement) {
+            impSelect.value = profile.implement;
+            handleImplementChange(profile.implement);
+          }
+          if (musSelect && profile.primary) {
+            musSelect.value = profile.primary;
+          }
+        }
+
+        updateAutoMusclesIndicator(val, profile);
+        updateWorkoutExtraOptionsPreview();
       } else {
-        const lower = val.toLowerCase();
-        if (lower.includes('run') || lower.includes('jog') || lower.includes('sprint')) handleImplementChange("Running");
-        else if (lower.includes('swim')) handleImplementChange("Swimming");
-        else if (lower.includes('walk')) handleImplementChange("Walking");
-        else if (lower.includes('hike')) handleImplementChange("Hiking");
-        else if (lower.includes('bike') || lower.includes('cycle')) handleImplementChange("Biking");
-        else if (lower.includes('row') || lower.includes('erg')) handleImplementChange("Row Erg");
+        const match = defaultCatalog.find(c => c.name.toLowerCase() === val.toLowerCase());
+        if (match) {
+          document.getElementById('implement-select').value = match.implement;
+          document.getElementById('muscle-group-select').value = match.muscle;
+          handleImplementChange(match.implement);
+        } else {
+          const lower = val.toLowerCase();
+          if (lower.includes('run') || lower.includes('jog') || lower.includes('sprint')) handleImplementChange("Running");
+          else if (lower.includes('swim')) handleImplementChange("Swimming");
+          else if (lower.includes('walk')) handleImplementChange("Walking");
+          else if (lower.includes('hike')) handleImplementChange("Hiking");
+          else if (lower.includes('bike') || lower.includes('cycle')) handleImplementChange("Biking");
+          else if (lower.includes('row') || lower.includes('erg')) handleImplementChange("Row Erg");
+        }
       }
+    }
+
+    function updateAutoMusclesIndicator(val, profile) {
+      const pill = document.getElementById('exercise-auto-muscles-pill');
+      if (!pill) return;
+      const trimmed = (val || '').trim();
+      if (!trimmed || !profile) {
+        pill.classList.add('hidden');
+        return;
+      }
+      const primaryEl = document.getElementById('auto-muscle-primary');
+      const secEl = document.getElementById('auto-muscle-secondary');
+      const secWrapper = document.getElementById('auto-muscle-secondary-wrapper');
+      const impEl = document.getElementById('auto-implement-val');
+      const impWrapper = document.getElementById('auto-implement-wrapper');
+
+      if (primaryEl) primaryEl.innerText = profile.primary || 'Full Body';
+      if (secEl && secWrapper) {
+        if (profile.secondary && profile.secondary.length > 0) {
+          secEl.innerText = profile.secondary.join(', ');
+          secWrapper.classList.remove('hidden');
+        } else {
+          secWrapper.classList.add('hidden');
+        }
+      }
+      if (impEl && impWrapper) {
+        if (profile.implement) {
+          impEl.innerText = profile.implement;
+          impWrapper.classList.remove('hidden');
+        } else {
+          impWrapper.classList.add('hidden');
+        }
+      }
+      pill.classList.remove('hidden');
     }
 
     function handleImplementChange(implementVal) {
@@ -677,9 +747,9 @@
       const exerciseInput = document.getElementById('exercise-name-input');
       const exerciseName = (exerciseInput ? exerciseInput.value.trim() : '') || "Custom Exercise";
       const implementEl = document.getElementById('implement-select');
-      const implement = implementEl ? implementEl.value : 'Bodyweight';
+      let implement = implementEl ? implementEl.value : 'Bodyweight';
       const muscleEl = document.getElementById('muscle-group-select');
-      const muscle = muscleEl ? muscleEl.value : 'Full Body';
+      let muscle = muscleEl ? muscleEl.value : 'Full Body';
       const rpeEl = document.getElementById('rpe-select');
       const rpe = rpeEl ? (parseFloat(rpeEl.value) || 8) : 8;
 
@@ -731,8 +801,26 @@
       if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
       activeSetTimerInterval = null;
 
-      const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
-      const secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
+      // Establish primary and secondary muscles and inferred implement automatically with high accuracy
+      let secondaryMuscles = [];
+      if (typeof resolveExerciseMuscles === 'function') {
+        const profile = resolveExerciseMuscles(exerciseName, implement);
+        if (profile) {
+          // Implement input is optional; automatically infer from exercise name as applicable
+          if (profile.implement && (implement === 'Bodyweight' || !implement || profile.inferred)) {
+            implement = profile.implement;
+            if (implementEl) implementEl.value = implement;
+          }
+          if (!muscle || muscle === 'Full Body' || (muscleEl && muscleEl.value === 'Full Body' && profile.primary !== 'Full Body')) {
+            muscle = profile.primary;
+          }
+          secondaryMuscles = profile.secondary || [];
+        }
+      } else {
+        const catalogMatch = defaultCatalog.find(c => c.name.toLowerCase() === exerciseName.toLowerCase());
+        secondaryMuscles = catalogMatch && catalogMatch.secondary ? catalogMatch.secondary : [];
+        if (catalogMatch && catalogMatch.implement) implement = catalogMatch.implement;
+      }
 
       const setObj = {
         id: Date.now(),

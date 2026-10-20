@@ -209,6 +209,25 @@ const AppStorage = {
   },
 
   /**
+   * Helper to identify auto-recovered phantom workouts
+   */
+  isPhantomWorkout(w) {
+    if (!w) return false;
+    if (w.recoveredFromSquad === true) return true;
+    const d = typeof w === 'string' ? w : (w.date || w.completedDate || '');
+    const dateStr = String(d).slice(0, 10);
+    if (dateStr === '2026-10-18' || dateStr === '2026-10-19' || dateStr === '2026-10-20') {
+      const hasSets = Array.isArray(w.sets) && w.sets.length > 0;
+      const hasRunning = !!w.runningMetrics;
+      const hasVolume = (w.totalVolume || 0) > 0;
+      if (!hasSets && !hasRunning && !hasVolume) {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
    * Intelligently union/merge workout lists by date so that no historical
    * or newly logged workout is ever accidentally dropped or overwritten.
    */
@@ -244,12 +263,12 @@ const AppStorage = {
 
     localWorkouts.forEach(w => {
       const k = getDateKey(w);
-      if (k && !deletedDates.includes(k)) map.set(k, w);
+      if (k && !deletedDates.includes(k) && !this.isPhantomWorkout(w)) map.set(k, w);
     });
 
     incomingWorkouts.forEach(w => {
       const k = getDateKey(w);
-      if (!k || deletedDates.includes(k)) return;
+      if (!k || deletedDates.includes(k) || this.isPhantomWorkout(w)) return;
       if (!map.has(k)) {
         map.set(k, w);
       } else {
@@ -271,6 +290,11 @@ const AppStorage = {
    * One-time data migrations and workout corrections
    */
   applyPendingMigrations() {
+    this.applyOct16PatchMigration();
+    this.applyPhantomWorkoutsCleanupMigration();
+  },
+
+  applyOct16PatchMigration() {
     const MIGRATION_KEY = 'showUp_migration_20261016_oct16_workout_patch_v1';
     if (localStorage.getItem(MIGRATION_KEY) === 'completed') return;
 
@@ -583,6 +607,113 @@ const AppStorage = {
   },
 
   /**
+   * Remove phantom auto-recovered workouts for Oct 18, Oct 19, and Oct 20
+   * caused by stale completedToday flags in squad telemetry
+   */
+  applyPhantomWorkoutsCleanupMigration() {
+    const MIGRATION_KEY = 'showUp_migration_20261020_cleanup_phantom_squad_workouts_v1';
+    if (localStorage.getItem(MIGRATION_KEY) === 'completed') return;
+
+    try {
+      const phantomDates = ['2026-10-18', '2026-10-19', '2026-10-20'];
+
+      // 1. Filter out phantom workouts from synced workouts store
+      let synced = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.SYNCED_WORKOUTS);
+        synced = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(synced)) synced = [];
+      } catch (e) {
+        synced = [];
+      }
+      synced = synced.filter(w => !this.isPhantomWorkout(w));
+      this.saveAthleteWorkouts(synced);
+
+      // 2. Filter out phantom workouts from user-specific workout stores
+      const profile = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER_PROFILE) || 'null');
+      const userEmail = (profile?.email || '').toLowerCase().trim();
+      const accounts = JSON.parse(localStorage.getItem('showUp_registered_accounts') || '[]');
+      const emailsToCheck = new Set(['abhi13@gmail.com']);
+      if (userEmail) emailsToCheck.add(userEmail);
+      if (Array.isArray(accounts)) {
+        accounts.forEach(acc => {
+          if (acc && acc.email) emailsToCheck.add(acc.email.toLowerCase().trim());
+        });
+      }
+
+      emailsToCheck.forEach(email => {
+        if (!email) return;
+        const uKey = 'showUp_user_workouts_' + email;
+        let uWorkouts = [];
+        try {
+          const raw = localStorage.getItem(uKey);
+          uWorkouts = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(uWorkouts)) uWorkouts = [];
+        } catch (e) {
+          uWorkouts = [];
+        }
+        if (uWorkouts.length > 0) {
+          uWorkouts = uWorkouts.filter(w => !this.isPhantomWorkout(w));
+          localStorage.setItem(uKey, JSON.stringify(uWorkouts));
+        }
+      });
+
+      // 3. Update in-memory completedWorkoutsHistory if defined
+      if (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory)) {
+        completedWorkoutsHistory = completedWorkoutsHistory.filter(w => !this.isPhantomWorkout(w));
+      }
+
+      // 5. Clean up squad member telemetry in showUp_squads
+      try {
+        const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
+        if (Array.isArray(squads)) {
+          let updatedSquads = false;
+          squads.forEach(sq => {
+            if (Array.isArray(sq.members)) {
+              sq.members.forEach(m => {
+                if (m && (m.id === 'local_user' || (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) || (profile && m.id === profile.id) || (m.email && m.email.toLowerCase().trim() === 'abhi13@gmail.com'))) {
+                  if (phantomDates.includes(m.completedDate)) {
+                    m.completedDate = '2026-10-16';
+                    updatedSquads = true;
+                  }
+                  m.completedToday = false;
+                  if (Array.isArray(m.completedDates)) {
+                    m.completedDates = m.completedDates.filter(d => !phantomDates.includes(d));
+                    updatedSquads = true;
+                  }
+                  if (m.workoutDetails && phantomDates.includes(String(m.workoutDetails.date || '').slice(0, 10))) {
+                    delete m.workoutDetails;
+                    updatedSquads = true;
+                  }
+                }
+              });
+            }
+          });
+          if (updatedSquads) {
+            localStorage.setItem(STORAGE_KEYS.SQUADS, JSON.stringify(squads));
+          }
+        }
+      } catch (sqErr) {}
+
+      localStorage.setItem(MIGRATION_KEY, 'completed');
+
+      // 6. Push cleaned state to Firestore cloud backup if connected
+      if (typeof syncToFirestore === 'function') {
+        syncToFirestore(true).catch(e => console.debug("[AppStorage] Phantom cleanup Firestore sync notice:", e));
+      }
+
+      // 7. Refresh UI components if rendered
+      if (typeof renderHeatMap === 'function') renderHeatMap();
+      if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI();
+      if (typeof renderSquadsTab === 'function') renderSquadsTab();
+      if (typeof renderHistoricalWorkouts === 'function') renderHistoricalWorkouts();
+      if (typeof renderMonthlyCalendar === 'function') renderMonthlyCalendar();
+    } catch (err) {
+      console.warn("[AppStorage] Phantom cleanup migration error:", err);
+    }
+  },
+
+  /**
    * Load athlete workouts with defensive recovery across user-specific and synced stores
    */
   getAthleteWorkouts() {
@@ -617,6 +748,12 @@ const AppStorage = {
           if (yKey && !datesToCheck.includes(yKey)) datesToCheck.push(yKey);
         } catch (e) {}
 
+        let deletedDates = [];
+        try {
+          deletedDates = JSON.parse(localStorage.getItem(STORAGE_KEYS.DELETED_WORKOUTS) || '[]');
+          if (!Array.isArray(deletedDates)) deletedDates = [];
+        } catch (e) {}
+
         const squads = JSON.parse(localStorage.getItem(STORAGE_KEYS.SQUADS) || '[]');
         if (Array.isArray(squads)) {
           for (const sq of squads) {
@@ -628,14 +765,14 @@ const AppStorage = {
               ));
               if (member) {
                 datesToCheck.forEach(targetDateKey => {
+                  if (deletedDates.includes(targetDateKey)) return;
                   const hasDateWorkout = workouts.some(w => {
                     const wd = typeof w === 'string' ? w : (w.date || w.completedDate || '');
                     return String(wd).slice(0, 10) === targetDateKey;
                   });
                   if (!hasDateWorkout) {
                     const memberMatch = (member.completedDate === targetDateKey) || 
-                      (member.workoutDetails && String(member.workoutDetails.date || '').slice(0, 10) === targetDateKey) ||
-                      (targetDateKey === todayKey && member.completedToday === true);
+                      (member.workoutDetails && String(member.workoutDetails.date || '').slice(0, 10) === targetDateKey);
 
                     if (memberMatch) {
                       const recoveredWorkout = member.workoutDetails && String(member.workoutDetails.date || '').slice(0, 10) === targetDateKey
@@ -660,6 +797,10 @@ const AppStorage = {
         }
       } catch (recoveryErr) {
         console.warn("[AppStorage] Auto-recovery notice:", recoveryErr);
+      }
+
+      if (Array.isArray(workouts) && workouts.length > 0 && typeof completedWorkoutsHistory !== 'undefined' && completedWorkoutsHistory.length === 0) {
+        completedWorkoutsHistory = workouts;
       }
 
       return workouts;

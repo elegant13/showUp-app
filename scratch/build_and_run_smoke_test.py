@@ -1745,6 +1745,141 @@ runSuite("18. Firebase Firestore Cloud Backup & Cross-Device Sync Engine", () =>
   assert(badge.innerText === "Cloud Synced", "Settings badge reflects Cloud Synced");
 });
 
+runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification Engine", () => {
+  // 1. Verify Abbreviation Dictionary
+  assert(typeof EXERCISE_ABBREVIATIONS === 'object' && EXERCISE_ABBREVIATIONS !== null, "EXERCISE_ABBREVIATIONS dictionary is defined");
+  assert(EXERCISE_ABBREVIATIONS["SH"] === "Single Hand", "SH maps to Single Hand");
+  assert(EXERCISE_ABBREVIATIONS["SA"] === "Single Arm", "SA maps to Single Arm");
+  assert(EXERCISE_ABBREVIATIONS["DH"] === "Double Hand", "DH maps to Double Hand");
+  assert(EXERCISE_ABBREVIATIONS["KB"] === "Kettle Bell", "KB maps to Kettle Bell");
+  assert(EXERCISE_ABBREVIATIONS["DB"] === "Dumbell", "DB maps to Dumbell");
+
+  // Helper functions
+  assert(typeof expandExerciseAbbreviations === 'function', "expandExerciseAbbreviations is a defined function");
+  assert(expandExerciseAbbreviations("SH KB Snatch") === "Single Hand Kettle Bell Snatch", "expandExerciseAbbreviations expands SH KB correctly");
+  assert(expandExerciseAbbreviations("SA DB Press") === "Single Arm Dumbell Press", "expandExerciseAbbreviations expands SA DB correctly");
+  assert(expandExerciseAbbreviations("DH Carry") === "Double Hand Carry", "expandExerciseAbbreviations expands DH correctly");
+
+  // 2. Verify all 13 required exercises are present in defaultCatalog
+  const requiredExercises = [
+    { name: "SH Banded KB Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+    { name: "SH KB Suitcase Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
+    { name: "KB Farmers Walk", implement: "Kettlebell", primary: "Full Body", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
+    { name: "KB Shoulder Press", implement: "Kettlebell", primary: "Shoulders", secondaries: ["Triceps", "Core/Abs", "Chest"] },
+    { name: "SH KB Snatch", implement: "Kettlebell", primary: "Full Body", secondaries: ["Hamstrings/Glutes", "Back", "Shoulders", "Core/Abs"] },
+    { name: "SH KB Clean and Press", implement: "Kettlebell", primary: "Full Body", secondaries: ["Shoulders", "Hamstrings/Glutes", "Back", "Triceps", "Core/Abs"] },
+    { name: "SH KB High Pull", implement: "Kettlebell", primary: "Back", secondaries: ["Hamstrings/Glutes", "Shoulders", "Biceps", "Core/Abs"] },
+    { name: "Chest Dips", implement: "Bodyweight", primary: "Chest", secondaries: ["Triceps", "Shoulders", "Core/Abs"] },
+    { name: "Tricep Bar Dips", implement: "Bodyweight", primary: "Triceps", secondaries: ["Chest", "Shoulders", "Core/Abs"] },
+    { name: "Bent Arm Cross Over", implement: "Bodyweight", primary: "Chest", secondaries: ["Shoulders", "Biceps", "Core/Abs"] },
+    { name: "Glute Bridge", implement: "Bodyweight", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Quads"] },
+    { name: "Lunges", implement: "Bodyweight", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs"] },
+    { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Back", "Core/Abs", "Shoulders"] },
+    { name: "SH KB Squat", implement: "Kettlebell", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
+    { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
+  ];
+
+  requiredExercises.forEach(req => {
+    const found = defaultCatalog.find(c => c.name.toLowerCase() === req.name.toLowerCase());
+    assert(found !== undefined, req.name + " exists in defaultCatalog");
+    assert(found.implement === req.implement, req.name + " implement is " + req.implement);
+    assert(found.muscle === req.primary, req.name + " primary muscle is accurately " + req.primary);
+    req.secondaries.forEach(sec => {
+      assert(found.secondary && found.secondary.includes(sec), req.name + " secondary includes " + sec);
+    });
+  });
+
+  // 3. Test Auto Muscle Identification Engine & Implement Inference
+  assert(typeof resolveExerciseMuscles === 'function', "resolveExerciseMuscles is a defined function");
+  assert(typeof inferImplementFromExerciseName === 'function', "inferImplementFromExerciseName is a defined function");
+
+  // Implement inference from exercise name
+  assert(inferImplementFromExerciseName("SH KB Squat") === "Kettlebell", "Infers Kettlebell from SH KB Squat");
+  assert(inferImplementFromExerciseName("SH KB Thruster") === "Kettlebell", "Infers Kettlebell from SH KB Thruster");
+  assert(inferImplementFromExerciseName("DB Incline Press") === "Dumbbell", "Infers Dumbbell from DB Incline Press");
+  assert(inferImplementFromExerciseName("Barbell Back Squat") === "Barbell", "Infers Barbell from Barbell Back Squat");
+
+  // Direct catalog resolve
+  const carryProfile = resolveExerciseMuscles("SH KB Suitcase Carry");
+  assert(carryProfile.primary === "Core/Abs", "SH KB Suitcase Carry auto resolves primary to Core/Abs");
+  assert(carryProfile.implement === "Kettlebell", "SH KB Suitcase Carry auto resolves implement to Kettlebell");
+
+  const squatProfile = resolveExerciseMuscles("SH KB Squat");
+  assert(squatProfile.primary === "Quads", "SH KB Squat auto resolves primary to Quads");
+  assert(squatProfile.implement === "Kettlebell", "SH KB Squat auto resolves implement to Kettlebell");
+  assert(squatProfile.secondary.includes("Hamstrings/Glutes"), "SH KB Squat secondary includes Hamstrings/Glutes");
+
+  const thrusterProfile = resolveExerciseMuscles("SH KB Thruster");
+  assert(thrusterProfile.primary === "Full Body", "SH KB Thruster auto resolves primary to Full Body");
+  assert(thrusterProfile.implement === "Kettlebell", "SH KB Thruster auto resolves implement to Kettlebell");
+  assert(thrusterProfile.secondary.includes("Quads") && thrusterProfile.secondary.includes("Shoulders"), "SH KB Thruster secondary includes Quads and Shoulders");
+
+  // Expanded form resolve
+  const snatchProfile = resolveExerciseMuscles("Single Hand Kettle Bell Snatch");
+  assert(snatchProfile.primary === "Full Body", "Expanded 'Single Hand Kettle Bell Snatch' auto resolves to Full Body");
+  assert(snatchProfile.implement === "Kettlebell", "Expanded 'Single Hand Kettle Bell Snatch' auto resolves implement to Kettlebell");
+
+  // RDL alias resolve
+  const rdlProfile = resolveExerciseMuscles("SH KB RDL");
+  assert(rdlProfile.primary === "Hamstrings/Glutes", "SH KB RDL auto resolves to Hamstrings/Glutes");
+
+  // SA alias resolve
+  const saCleanProfile = resolveExerciseMuscles("SA KB Clean and Press");
+  assert(saCleanProfile.primary === "Full Body", "SA KB Clean and Press auto resolves to Full Body");
+
+  // 4. Test handleExerciseInput automatic DOM updates
+  const exInput = getOrCreateElement('exercise-name-input');
+  const impSelect = getOrCreateElement('implement-select');
+  const musSelect = getOrCreateElement('muscle-group-select');
+  const autoPill = getOrCreateElement('exercise-auto-muscles-pill');
+  const autoPrimary = getOrCreateElement('auto-muscle-primary');
+  const autoSecondary = getOrCreateElement('auto-muscle-secondary');
+  const autoImplement = getOrCreateElement('auto-implement-val');
+
+  exInput.value = "Chest Dips";
+  handleExerciseInput("Chest Dips");
+  assert(impSelect.value === "Bodyweight", "handleExerciseInput sets implement-select to Bodyweight for Chest Dips");
+  assert(musSelect.value === "Chest", "handleExerciseInput automatically sets primary muscle to Chest for Chest Dips");
+  assert(!autoPill.classList.contains('hidden'), "Auto muscle pill is displayed when exercise entered");
+  assert(autoPrimary.innerText === "Chest", "Auto muscle primary indicator displays Chest");
+  assert(autoSecondary.innerText.includes("Triceps"), "Auto muscle secondary indicator includes Triceps");
+
+  // Test optional implement input: type SH KB Squat without touching implement select
+  impSelect.value = "Bodyweight"; // default untouched value
+  exInput.value = "SH KB Squat";
+  handleExerciseInput("SH KB Squat");
+  assert(impSelect.value === "Kettlebell", "handleExerciseInput automatically infers and sets Kettlebell implement for SH KB Squat");
+  assert(musSelect.value === "Quads", "handleExerciseInput automatically sets primary muscle to Quads for SH KB Squat");
+  assert(autoImplement.innerText === "Kettlebell", "Auto implement indicator displays Kettlebell");
+
+  // 5. Test logSet automatic muscle identification without manual input
+  currentSessionSets = [];
+  exInput.value = "SH Banded KB Carry";
+  handleExerciseInput("SH Banded KB Carry");
+  logSet();
+
+  assert(currentSessionSets.length === 1, "Set was logged successfully");
+  const loggedSet = currentSessionSets[0];
+  assert(loggedSet.exerciseName === "SH Banded KB Carry", "Logged set has correct exercise name");
+  assert(loggedSet.implement === "Kettlebell", "Logged set automatically has Kettlebell implement");
+  assert(loggedSet.muscle === "Core/Abs", "Logged set automatically has Core/Abs primary muscle without manual input");
+  assert(Array.isArray(loggedSet.secondaryMuscles) && loggedSet.secondaryMuscles.includes("Shoulders"), "Logged set automatically has secondary muscles attached");
+
+  // Log second set with SH KB Thruster (implement untouched)
+  impSelect.value = "Bodyweight";
+  musSelect.value = "Full Body";
+  exInput.value = "SH KB Thruster";
+  handleExerciseInput("SH KB Thruster");
+  logSet();
+
+  assert(currentSessionSets.length === 2, "Second set logged");
+  const secondSet = currentSessionSets[1];
+  assert(secondSet.implement === "Kettlebell", "Second set automatically inferred Kettlebell implement from exercise name");
+  assert(secondSet.muscle === "Full Body", "Second set automatically has Full Body primary muscle without manual input");
+  assert(secondSet.secondaryMuscles.includes("Quads"), "Second set has Quads secondary muscle");
+  assert(secondSet.secondaryMuscles.includes("Shoulders"), "Second set has Shoulders secondary muscle");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");
