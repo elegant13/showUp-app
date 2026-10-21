@@ -1050,7 +1050,7 @@
           squads.forEach(sq => {
             (sq.members || []).forEach(m => {
               if (m.id !== user.id && m.email !== user.email) {
-                if (m.isWorkingOut) teammatesLiftingNow++;
+                if (m.isWorkingOut && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m))) teammatesLiftingNow++;
                 if (m.completedToday && m.completedDate === todayKey) teammatesCompletedToday++;
               }
             });

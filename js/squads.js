@@ -109,11 +109,26 @@
             existing.name = m.name;
             existing.rawName = m.rawName || m.name;
           }
-          if (m.isWorkingOut || existing.isWorkingOut) existing.isWorkingOut = true;
-          if (m.currentWorkout) existing.currentWorkout = m.currentWorkout;
+          const isMActive = (typeof isMemberWorkoutActive === 'function') ? isMemberWorkoutActive(m) : !!m.isWorkingOut;
+          const isExistingActive = (typeof isMemberWorkoutActive === 'function') ? isMemberWorkoutActive(existing) : !!existing.isWorkingOut;
+          if (isMActive) {
+            existing.isWorkingOut = true;
+            existing.currentWorkout = m.currentWorkout;
+            existing.workoutStartedAt = m.workoutStartedAt;
+            existing.isSimulatedWorkout = !!m.isSimulatedWorkout;
+          } else if (isExistingActive) {
+            existing.isWorkingOut = true;
+            existing.currentWorkout = existing.currentWorkout;
+            existing.workoutStartedAt = existing.workoutStartedAt;
+          } else {
+            existing.isWorkingOut = false;
+            existing.currentWorkout = null;
+            existing.workoutStartedAt = null;
+            existing.isSimulatedWorkout = false;
+          }
           if (m.completedDate) existing.completedDate = m.completedDate;
           const memberCompDate = m.completedDate || existing.completedDate;
-          const currentET = typeof getETDateKey === 'function' ? getETDateKey() : '';
+          const currentET = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : '');
           if ((m.completedToday || existing.completedToday) && (!memberCompDate || !currentET || memberCompDate === currentET)) {
             existing.completedToday = true;
           } else if (memberCompDate && currentET && memberCompDate !== currentET) {
@@ -127,6 +142,13 @@
           }
         } else {
           const cloned = { ...m };
+          if (cloned.isWorkingOut && typeof isMemberWorkoutActive === 'function' && !isMemberWorkoutActive(cloned)) {
+            cloned.isWorkingOut = false;
+            cloned.currentWorkout = null;
+            cloned.workoutStartedAt = null;
+            cloned.isSimulatedWorkout = false;
+            if (!cloned.completedToday) cloned.lastActive = 'Yet to show up';
+          }
           if (isCurrentUserEntity) {
             cloned.id = user.id;
             cloned.name = user.name;
@@ -752,11 +774,19 @@
     function getSquads() {
       if (!isCustomerLoggedIn()) return [];
       const user = getAppUser();
-      const squads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+      const raw = localStorage.getItem('showUp_squads');
+      const squads = JSON.parse(raw || '[]');
       if (!Array.isArray(squads)) return [];
-      return squads
+      const sanitized = squads
         .filter(sq => sq && isAthleteMemberOrCreator(sq, user))
         .map(s => sanitizeSquadMembers(s, user));
+      try {
+        const cleanedStr = JSON.stringify(sanitized);
+        if (raw && raw !== cleanedStr) {
+          localStorage.setItem('showUp_squads', cleanedStr);
+        }
+      } catch (e) {}
+      return sanitized;
     }
 
     function saveSquads(squads) {
@@ -787,7 +817,8 @@
 
       squads.forEach(sq => {
         sq.members.forEach(m => {
-          if (m.isWorkingOut && m.id !== user.id) {
+          const isActive = m.isWorkingOut && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m));
+          if (isActive && m.id !== user.id) {
             activeMemberCount++;
             if (!activeSummary) {
               activeSummary = `${m.rawName} is lifting right now in ${sq.name}! (${m.currentWorkout || 'Session'})`;
@@ -925,16 +956,17 @@
     function dismissSimulatedWorkout() {
       const squads = getSquads();
       let closedCount = 0;
-      const todayET = getETDateKey();
 
       squads.forEach(sq => {
         sq.members.forEach(m => {
           if (m.isWorkingOut) {
             m.isWorkingOut = false;
-            m.lastActive = 'Just finished';
             m.currentWorkout = null;
-            m.completedToday = true;
-            m.completedDate = todayET;
+            m.workoutStartedAt = null;
+            m.isSimulatedWorkout = false;
+            if (!m.completedToday) {
+              m.lastActive = 'Yet to show up';
+            }
             closedCount++;
           }
         });
@@ -950,7 +982,7 @@
       const banner = document.getElementById('squad-active-beacon-banner');
       if (banner) banner.classList.add('hidden');
 
-      showToast("Active workout simulation closed (saved as completed today).", "info");
+      showToast("Active workout session closed.", "info");
     }
 
     function stopSpecificMemberWorkout(squadId, memberId) {
@@ -961,14 +993,28 @@
       const member = squad.members.find(m => m.id === memberId);
       if (!member) return;
 
-      const finishedName = member.lastCompletedWorkout || member.currentWorkout || 'Strength Session';
+      const isSimulated = member.isSimulatedWorkout || 
+        member.currentWorkout === 'Macebell 360 & Dands' ||
+        member.currentWorkout === 'Incline Dumbbell Press & Chest' ||
+        member.currentWorkout === 'Barbell Deadlift & Lat Pulls' ||
+        member.currentWorkout === 'Barbell Back Squats & Core' ||
+        member.currentWorkout === 'Overhead Press & Tricep Burnout';
+
       member.isWorkingOut = false;
-      member.lastActive = 'Just finished';
-      member.lastCompletedWorkout = finishedName;
       member.currentWorkout = null;
-      member.completedToday = true;
-      member.completedDate = getETDateKey();
-      member.workoutDetails = generateSampleWorkoutDetails(finishedName, member);
+      member.workoutStartedAt = null;
+      member.isSimulatedWorkout = false;
+
+      // Only mark completed today if member had actual workout details recorded, not for mock simulations
+      if (!isSimulated && member.workoutDetails) {
+        const finishedName = member.lastCompletedWorkout || 'Strength Session';
+        member.lastActive = 'Just finished';
+        member.lastCompletedWorkout = finishedName;
+        member.completedToday = true;
+        member.completedDate = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
+      } else {
+        member.lastActive = member.completedToday ? 'Completed workout today' : 'Yet to show up';
+      }
 
       saveSquads(squads);
       renderSquadsTab();
@@ -976,7 +1022,7 @@
       updateGlobalStatsUI();
       renderHeatMap();
       dismissSquadPill();
-      showToast(`Ended active workout session for ${member.rawName || member.name}. Recorded as completed today.`, "info");
+      showToast(`Closed active workout session for ${member.rawName || member.name}.`, "info");
     }
 
 
@@ -1726,7 +1772,7 @@
                               ? `<img src="${m.avatar}" class="w-10 h-10 rounded-xl object-cover border border-slate-700" alt="${escapeHtml(m.rawName)}">`
                               : `<div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 font-bold flex items-center justify-center text-xs">${initials}</div>`
                             }
-                            ${m.isWorkingOut 
+                            ${(m.isWorkingOut && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m))) 
                               ? `<span class="absolute -top-1 -right-1 flex h-3 w-3">
                                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-slate-950"></span>
@@ -1802,11 +1848,11 @@
                                 </div>
                               `}
 
-                              ${m.isWorkingOut ? `
+                              ${(m.isWorkingOut && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m))) ? `
                                 <div class="flex items-center gap-1.5 flex-wrap">
                                   <button onclick="triggerHaptic('light'); openSquadWorkoutDetailsModal('${sq.id}', '${m.id}')" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 px-2 py-0.5 rounded-full flex items-center gap-1 transition cursor-pointer" title="View fellow athlete workout details">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')}
+                                    Lifting Now: ${escapeHtml(m.currentWorkout || 'Active Session')} ${m.isSimulatedWorkout ? '<span class="text-[8px] text-amber-400 font-normal">(Simulated)</span>' : ''}
                                     <i class="fa-solid fa-chevron-right text-[7px] ml-0.5 text-emerald-400/70"></i>
                                   </button>
                                   <!-- CLOSE SIMULATED WORKOUT ACTION ON MEMBER CARD -->
@@ -2525,9 +2571,32 @@
       }
 
       member.isWorkingOut = true;
+      member.isSimulatedWorkout = true;
       member.currentWorkout = randomWorkout;
       member.workoutStartedAt = new Date().toISOString();
       member.lastActive = 'Active now';
+
+      // Auto-expire simulation after 10 minutes so teammates are not left stuck as lifting
+      setTimeout(() => {
+        try {
+          const liveSquads = getSquads();
+          const targetSq = liveSquads.find(s => s.id === squad.id);
+          if (targetSq) {
+            const mem = targetSq.members.find(m => m.id === member.id);
+            if (mem && mem.isSimulatedWorkout) {
+              mem.isWorkingOut = false;
+              mem.currentWorkout = null;
+              mem.workoutStartedAt = null;
+              mem.isSimulatedWorkout = false;
+              if (!mem.completedToday) mem.lastActive = 'Yet to show up';
+              saveSquads(liveSquads);
+              renderSquadsTab();
+              updateSquadBeacon();
+              updateGlobalStatsUI();
+            }
+          }
+        } catch (e) {}
+      }, 10 * 60 * 1000);
 
       // Trigger user's chosen unobtrusive notifications for this squad
       triggerSquadWorkoutNotification(squad, member, randomWorkout);
@@ -2537,7 +2606,7 @@
       updateSquadBeacon();
       updateGlobalStatsUI();
       renderHeatMap();
-      showToast(`⚡ ${member.rawName} started a workout: ${randomWorkout}`, "info");
+      showToast(`⚡ Test Alert: Simulated ${member.rawName} starting ${randomWorkout} (auto-closes in 10m)`, "info");
     }
 
     function triggerSquadWorkoutNotification(squad, member, workoutName) {

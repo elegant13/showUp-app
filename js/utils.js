@@ -341,3 +341,44 @@
         }
       }
     }
+
+    /**
+     * Determines whether an athlete/member is currently actively lifting.
+     * Enforces active session validity rules:
+     * - Returns false if member is not marked isWorkingOut.
+     * - Auto-expires active sessions older than 120 minutes (2 hours).
+     * - Auto-expires simulated workouts older than 15 minutes.
+     * - Auto-expires workouts from a previous calendar day (per user's local/ET date).
+     */
+    function isMemberWorkoutActive(m) {
+      if (!m || !m.isWorkingOut) return false;
+      const todayKey = typeof getLocalDateKey === 'function' ? getLocalDateKey() : (typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10));
+
+      if (m.workoutStartedAt) {
+        const started = new Date(m.workoutStartedAt).getTime();
+        if (isNaN(started)) return false;
+        const now = Date.now();
+        const elapsedMinutes = (now - started) / 60000;
+        const isSim = m.isSimulatedWorkout || 
+          m.currentWorkout === 'Macebell 360 & Dands' ||
+          m.currentWorkout === 'Incline Dumbbell Press & Chest' ||
+          m.currentWorkout === 'Barbell Deadlift & Lat Pulls' ||
+          m.currentWorkout === 'Barbell Back Squats & Core' ||
+          m.currentWorkout === 'Overhead Press & Tricep Burnout';
+        const maxMinutes = isSim ? 15 : 120;
+        if (elapsedMinutes < 0 || elapsedMinutes > maxMinutes) return false;
+
+        const startedDateKey = typeof getLocalDateKey === 'function' ? getLocalDateKey(new Date(started)) : (typeof getETDateKey === 'function' ? getETDateKey(new Date(started)) : new Date(started).toISOString().slice(0, 10));
+        if (startedDateKey !== todayKey) return false;
+        return true;
+      }
+
+      // If workoutStartedAt is not set:
+      if (m.completedDate && m.completedDate !== todayKey) return false;
+      if (m.completedToday === true) return false;
+
+      // Fresh session fixture without explicit timestamp: stamp with current time so it has a valid window
+      m.workoutStartedAt = new Date().toISOString();
+      return true;
+    }
+

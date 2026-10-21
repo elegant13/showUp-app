@@ -440,8 +440,8 @@
         if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
           if (!m) return;
-          const isMe = (m.id === user.id || m.email === user.email);
-          if (m.isWorkingOut === true && !isMe) squadActive++;
+          const isAct = m.isWorkingOut === true && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m));
+          if (isAct && !isMe) squadActive++;
         });
       });
 
@@ -673,7 +673,7 @@
           const mZip = m.zip && isValidZip(m.zip) ? m.zip.trim() : null;
           if (!mZip) return; // Discard unvetted locations without a valid postal zip
 
-          const isMemberActive = isToday && (m.isWorkingOut === true && (m.currentWorkout || m.workoutStartedAt));
+          const isMemberActive = isToday && (m.isWorkingOut === true && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m)));
           
           let memberCompletedCount = 0;
           const mCompDate = m.completedDate ? String(m.completedDate).slice(0, 10) : '';
