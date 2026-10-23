@@ -871,53 +871,85 @@
       }, 1500);
     }
 
+    function setFirestoreButtonLoading(isBackup, isLoading) {
+      const btn = document.getElementById(isBackup ? 'btn-settings-firestore-backup' : 'btn-settings-firestore-restore');
+      const bannerBtn = isBackup ? document.getElementById('backup-banner-firestore-btn') : null;
+      if (btn) {
+        btn.disabled = isLoading;
+        if (isLoading) {
+          btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i><span>${isBackup ? 'Syncing...' : 'Restoring...'}</span>`;
+        } else {
+          btn.innerHTML = isBackup
+            ? `<i class="fa-solid fa-cloud-arrow-up text-xs"></i><span id="settings-firestore-btn-backup-text">Sync to Firestore</span>`
+            : `<i class="fa-solid fa-cloud-arrow-down text-xs text-amber-400"></i><span id="settings-firestore-btn-restore-text">Restore from Firestore</span>`;
+        }
+      }
+      if (bannerBtn) {
+        bannerBtn.disabled = isLoading;
+        bannerBtn.innerHTML = isLoading
+          ? `<i class="fa-solid fa-spinner fa-spin text-xs"></i><span>Syncing...</span>`
+          : `<i class="fa-solid fa-cloud-arrow-up text-xs mr-1.5"></i><span>Sync to Firestore</span>`;
+      }
+    }
+
     async function syncToFirestore(isSilent = false) {
-      if (typeof getFirestoreDb !== 'function') {
-        if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
-        return { success: false, error: "Firestore not loaded" };
-      }
-
-      const db = getFirestoreDb();
-      if (!db) {
-        if (!isSilent) showToast("Could not connect to Firebase database.", "error");
-        return { success: false, error: "Database unavailable" };
-      }
-
-      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
-      const rawEmail = (user?.email || '').toLowerCase().trim();
-      if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
-        if (!isSilent) showToast("Please log in with email/password or Google to sync with Firebase Cloud.", "info");
-        return { success: false, error: "User not logged in" };
-      }
-
-      const normEmail = rawEmail;
-      let workoutsToSync = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
-        ? AppStorage.getAthleteWorkouts()
-        : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
-
-      const payload = {
-        app: "showUp",
-        version: "2.0",
-        email: normEmail,
-        lastSyncedAt: new Date().toISOString(),
-        profile: {
-          height: typeof userHeight !== 'undefined' ? userHeight : null,
-          weight: typeof userWeight !== 'undefined' ? userWeight : null,
-          firstName: user?.rawName || user?.name || 'Athlete'
-        },
-        workouts: workoutsToSync,
-        weightHistory: typeof weightHistory !== 'undefined' && Array.isArray(weightHistory) ? weightHistory : [],
-        squads: typeof getSquads === 'function' ? getSquads() : [],
-        activeSession: typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets) ? currentSessionSets : []
-      };
-
+      if (!isSilent) setFirestoreButtonLoading(true, true);
       try {
+        if (typeof getFirestoreDb !== 'function') {
+          if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
+          return { success: false, error: "Firestore not loaded" };
+        }
+
+        const db = getFirestoreDb();
+        if (!db) {
+          if (!isSilent) showToast("Could not connect to Firebase database.", "error");
+          return { success: false, error: "Database unavailable" };
+        }
+
+        const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+        const rawEmail = (user?.email || '').toLowerCase().trim();
+        if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
+          if (!isSilent) {
+            showToast("Please log in with email/password or Google to sync with Firebase Cloud.", "info");
+            const settingsModal = document.getElementById('settings-modal');
+            if (settingsModal) settingsModal.classList.add('hidden');
+            if (typeof openAuthLoginModal === 'function') {
+              openAuthLoginModal('signin');
+            }
+          }
+          return { success: false, error: "User not logged in" };
+        }
+
+        const normEmail = rawEmail;
+        let workoutsToSync = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
+          ? AppStorage.getAthleteWorkouts()
+          : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
+
+        const payload = {
+          app: "showUp",
+          version: "2.0",
+          email: normEmail,
+          lastSyncedAt: new Date().toISOString(),
+          profile: {
+            height: typeof userHeight !== 'undefined' ? userHeight : null,
+            weight: typeof userWeight !== 'undefined' ? userWeight : null,
+            firstName: user?.rawName || user?.name || 'Athlete'
+          },
+          workouts: workoutsToSync,
+          weightHistory: typeof weightHistory !== 'undefined' && Array.isArray(weightHistory) ? weightHistory : [],
+          squads: typeof getSquads === 'function' ? getSquads() : [],
+          activeSession: typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets) ? currentSessionSets : []
+        };
+
         const docRef = db.collection('user_backups').doc(normEmail);
 
-        // 1. Read existing remote backup to merge non-destructively
+        // 1. Read existing remote backup to merge non-destructively (timeout guard: 8 seconds)
         try {
-          const snap = await docRef.get();
-          if (snap.exists) {
+          const snap = await Promise.race([
+            docRef.get(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000))
+          ]);
+          if (snap && snap.exists) {
             const remoteData = snap.data();
             if (remoteData && Array.isArray(remoteData.workouts) && remoteData.workouts.length > 0) {
               const merged = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
@@ -951,8 +983,11 @@
           console.debug("Remote backup pre-check notice:", e);
         }
 
-        // 2. Commit payload to Firestore
-        await docRef.set(payload, { merge: true });
+        // 2. Commit payload to Firestore (timeout guard: 12 seconds)
+        await Promise.race([
+          docRef.set(payload, { merge: true }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase request timed out. Please check your internet connection or Firestore rules.")), 12000))
+        ]);
         localStorage.setItem('showUp_last_firestore_sync', payload.lastSyncedAt);
 
         updateCloudBackupUI();
@@ -966,35 +1001,48 @@
           showToast(`Firebase Cloud backup error: ${err.message || 'Check network connection'}`, "error");
         }
         return { success: false, error: err.message };
+      } finally {
+        if (!isSilent) setFirestoreButtonLoading(true, false);
       }
     }
 
     async function restoreFromFirestore(isSilent = false) {
-      if (typeof getFirestoreDb !== 'function') {
-        if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
-        return { success: false, error: "Firestore not loaded" };
-      }
-
-      const db = getFirestoreDb();
-      if (!db) {
-        if (!isSilent) showToast("Could not connect to Firebase database.", "error");
-        return { success: false, error: "Database unavailable" };
-      }
-
-      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
-      const rawEmail = (user?.email || '').toLowerCase().trim();
-      if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
-        if (!isSilent) showToast("Please log in to restore from Firebase Cloud.", "info");
-        return { success: false, error: "User not logged in" };
-      }
-
-      const normEmail = rawEmail;
-
+      if (!isSilent) setFirestoreButtonLoading(false, true);
       try {
-        const docRef = db.collection('user_backups').doc(normEmail);
-        const snap = await docRef.get();
+        if (typeof getFirestoreDb !== 'function') {
+          if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
+          return { success: false, error: "Firestore not loaded" };
+        }
 
-        if (!snap.exists) {
+        const db = getFirestoreDb();
+        if (!db) {
+          if (!isSilent) showToast("Could not connect to Firebase database.", "error");
+          return { success: false, error: "Database unavailable" };
+        }
+
+        const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+        const rawEmail = (user?.email || '').toLowerCase().trim();
+        if (!rawEmail || rawEmail === 'you@showup.app' || rawEmail === 'user@showup.app') {
+          if (!isSilent) {
+            showToast("Please log in to restore from Firebase Cloud.", "info");
+            const settingsModal = document.getElementById('settings-modal');
+            if (settingsModal) settingsModal.classList.add('hidden');
+            if (typeof openAuthLoginModal === 'function') {
+              openAuthLoginModal('signin');
+            }
+          }
+          return { success: false, error: "User not logged in" };
+        }
+
+        const normEmail = rawEmail;
+
+        const docRef = db.collection('user_backups').doc(normEmail);
+        const snap = await Promise.race([
+          docRef.get(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("Firebase restore request timed out. Please check connection.")), 12000))
+        ]);
+
+        if (!snap || !snap.exists) {
           if (!isSilent) {
             showToast("No Firebase cloud backup found for this account.", "warning");
           }
@@ -1073,6 +1121,8 @@
           showToast(`Firebase restore error: ${err.message || 'Check network connection'}`, "error");
         }
         return { success: false, error: err.message };
+      } finally {
+        if (!isSilent) setFirestoreButtonLoading(false, false);
       }
     }
 
