@@ -2042,6 +2042,47 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   switchSettingsTab('styling');
   assert(!getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane visible when selected");
   assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane hidden when styling selected");
+
+  // 8. Test Phase 1, Phase 2 & Phase 3 UX enhancements
+  // Phase 1: BMI badge and target weight badge rendering in 4-metric grid
+  assert(getOrCreateElement('cal-current-bmi-badge').innerHTML.length > 0, "cal-current-bmi-badge displays BMI category badge");
+  assert(typeof openLogWeightModal === 'function', "openLogWeightModal is a defined function");
+  assert(typeof openWeightTrendGraph === 'function', "openWeightTrendGraph is a defined function");
+
+  // Phase 2: Quick plate chips and repeat set
+  assert(typeof renderQuickWeightChips === 'function', "renderQuickWeightChips is a defined function");
+  assert(typeof applyQuickWeightChip === 'function', "applyQuickWeightChip is a defined function");
+  assert(typeof repeatSet === 'function', "repeatSet is a defined function");
+
+  renderQuickWeightChips('Barbell');
+  assert(getOrCreateElement('quick-plate-chips-container').innerHTML.includes('+45'), "Barbell plate chips include +45 plate");
+  
+  renderQuickWeightChips('Kettlebell');
+  assert(getOrCreateElement('quick-plate-chips-container').innerHTML.includes('16kg'), "Kettlebell plate chips include 16kg standard bell");
+
+  getOrCreateElement('input-weight').value = "45";
+  applyQuickWeightChip(45, 'add');
+  assert(Number(getOrCreateElement('input-weight').value) === 90, "applyQuickWeightChip correctly adds 45 to input-weight");
+  
+  applyQuickWeightChip(53, 'set');
+  assert(Number(getOrCreateElement('input-weight').value) === 53, "applyQuickWeightChip correctly sets 53 on input-weight");
+
+  // Test repeatSet loading previous set into active controls
+  repeatSet(secondSet.id);
+  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates exercise name from previous set");
+  assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
+  assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
+
+  // Phase 3: Default rest time preference and target weight goal
+  assert(typeof getDefaultRestTimeSeconds === 'function', "getDefaultRestTimeSeconds is a defined function");
+  assert(typeof saveDefaultRestTimePref === 'function', "saveDefaultRestTimePref is a defined function");
+  saveDefaultRestTimePref(120);
+  assert(getDefaultRestTimeSeconds() === 120, "getDefaultRestTimeSeconds returns 120 after preference saved");
+
+  getOrCreateElement('user-target-weight-input').value = "170";
+  savePhysicalProfile();
+  assert(localStorage.getItem('showUp_user_target_weight') === "170", "savePhysicalProfile stores target weight in localStorage");
+  assert(getOrCreateElement('cal-weight-target-badge').innerHTML.includes('Goal'), "cal-weight-target-badge renders goal information");
 });
 
 print("\\n============================================================");

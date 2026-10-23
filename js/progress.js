@@ -64,7 +64,7 @@
       handleLogHeightInput(current);
     }
 
-    function openLogWeightModal(targetDate = null) {
+    function openLogWeightModal(targetDate = null, focusField = 'weight') {
       const modal = document.getElementById('log-weight-modal');
       if (!modal) return;
 
@@ -98,12 +98,15 @@
       handleLogWeightDateChange(defaultDate);
 
       modal.classList.remove('hidden');
-      if (numInput) {
-        setTimeout(() => {
+      setTimeout(() => {
+        if (focusField === 'height' && heightInput) {
+          heightInput.focus();
+          heightInput.select();
+        } else if (numInput) {
           numInput.focus();
           numInput.select();
-        }, 120);
-      }
+        }
+      }, 120);
     }
 
     function closeLogWeightModal() {
@@ -299,13 +302,38 @@
       }
 
       const activeBMI = calculateBMI(userWeight, userHeight);
+      const currentBmiBadgeEl = document.getElementById('cal-current-bmi-badge');
       if (currentBmiEl) {
         if (activeBMI) {
-          currentBmiEl.innerHTML = `<span class="text-base font-black text-slate-200">${activeBMI}</span> ${getBMIBadge(activeBMI)}`;
           currentBmiEl.innerText = `${activeBMI}`;
         } else {
           currentBmiEl.innerText = '--';
-          currentBmiEl.innerHTML = '--';
+        }
+      }
+      if (currentBmiBadgeEl) {
+        if (activeBMI) {
+          currentBmiBadgeEl.innerHTML = getBMIBadge(activeBMI);
+        } else {
+          currentBmiBadgeEl.innerHTML = '';
+        }
+      }
+
+      // Target Weight Goal Progress Indicator
+      const targetBadgeEl = document.getElementById('cal-weight-target-badge');
+      const savedTarget = localStorage.getItem('showUp_user_target_weight');
+      if (targetBadgeEl) {
+        if (savedTarget && userWeight) {
+          const targetNum = parseFloat(savedTarget);
+          const diffToTarget = Math.round((userWeight - targetNum) * 10) / 10;
+          if (diffToTarget === 0) {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal Met: ${targetNum}#</span>`;
+          } else if (diffToTarget > 0) {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal: ${targetNum}# (-${diffToTarget})</span>`;
+          } else {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-bold text-purple-400 bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal: ${targetNum}# (+${Math.abs(diffToTarget)})</span>`;
+          }
+        } else {
+          targetBadgeEl.innerHTML = '';
         }
       }
 
@@ -477,6 +505,34 @@
 
         svg.appendChild(circle);
       });
+
+      // Target Goal Guideline
+      const savedTarget = localStorage.getItem('showUp_user_target_weight');
+      if (savedTarget) {
+        const targetVal = parseFloat(savedTarget);
+        if (!isNaN(targetVal) && targetVal >= (minW - 30) && targetVal <= (maxW + 30)) {
+          const targetY = Math.max(padding, Math.min(height - padding, height - padding - ((targetVal - minW) / range) * effectiveHeight));
+          const goalLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          goalLine.setAttribute("x1", padding);
+          goalLine.setAttribute("y1", targetY);
+          goalLine.setAttribute("x2", width - padding);
+          goalLine.setAttribute("y2", targetY);
+          goalLine.setAttribute("stroke", "#38bdf8");
+          goalLine.setAttribute("stroke-width", "1.5");
+          goalLine.setAttribute("stroke-dasharray", "4,4");
+          svg.appendChild(goalLine);
+
+          const goalText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          goalText.setAttribute("x", width - padding);
+          goalText.setAttribute("y", Math.max(12, targetY - 4));
+          goalText.setAttribute("text-anchor", "end");
+          goalText.setAttribute("fill", "#38bdf8");
+          goalText.setAttribute("font-size", "9");
+          goalText.setAttribute("font-weight", "bold");
+          goalText.textContent = `Goal: ${targetVal}#`;
+          svg.appendChild(goalText);
+        }
+      }
     }
 
 

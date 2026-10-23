@@ -4066,13 +4066,33 @@ if (typeof window !== 'undefined') {
 
 
     function loadPhysicalProfile() {
-      document.getElementById('user-height-input').value = userHeight;
-      document.getElementById('user-weight-input').value = userWeight;
+      const hInput = document.getElementById('user-height-input');
+      const wInput = document.getElementById('user-weight-input');
+      const targetInput = document.getElementById('user-target-weight-input');
+      const restSelect = document.getElementById('pref-default-rest-time');
+
+      if (hInput) hInput.value = userHeight;
+      if (wInput) wInput.value = userWeight;
+
+      const savedTarget = localStorage.getItem('showUp_user_target_weight');
+      if (targetInput && savedTarget) targetInput.value = savedTarget;
+
+      const savedRest = localStorage.getItem('showUp_default_rest_time') || '90';
+      if (restSelect) restSelect.value = savedRest;
+
+      if (typeof renderQuickWeightChips === 'function') {
+        const impSelect = document.getElementById('implement-select');
+        renderQuickWeightChips(impSelect ? impSelect.value : 'Barbell');
+      }
     }
 
     function savePhysicalProfile() {
-      const h = parseFloat(document.getElementById('user-height-input').value) || userHeight;
-      const w = parseFloat(document.getElementById('user-weight-input').value) || userWeight;
+      const hInput = document.getElementById('user-height-input');
+      const wInput = document.getElementById('user-weight-input');
+      const targetInput = document.getElementById('user-target-weight-input');
+
+      const h = (hInput && parseFloat(hInput.value)) || userHeight;
+      const w = (wInput && parseFloat(wInput.value)) || userWeight;
 
       userHeight = h;
       userWeight = w;
@@ -4080,14 +4100,18 @@ if (typeof window !== 'undefined') {
       localStorage.setItem('showUp_user_height', userHeight);
       localStorage.setItem('showUp_user_weight', userWeight);
 
+      if (targetInput && targetInput.value) {
+        localStorage.setItem('showUp_user_target_weight', targetInput.value);
+      }
+
       const latestEntry = weightHistory[0];
       const todayISO = typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10);
 
       if (!latestEntry || latestEntry.weight !== userWeight || latestEntry.date !== todayISO) {
-        weightHistory.unshift({ date: todayISO, weight: userWeight });
+        weightHistory.unshift({ date: todayISO, weight: userWeight, height: userHeight });
         localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
-        renderWeightHistory();
       }
+      renderWeightHistory();
     }
 
     // ================= HISTORICAL WEIGHT LOGGING & INTUITIVE DATE PICKER =================
@@ -4533,7 +4557,77 @@ if (typeof window !== 'undefined') {
       if (impSelect && impSelect.value !== implementVal) {
         impSelect.value = implementVal;
       }
+      renderQuickWeightChips(implementVal);
       updateWorkoutExtraOptionsPreview();
+    }
+
+    function renderQuickWeightChips(implement = 'Barbell') {
+      const container = document.getElementById('quick-plate-chips-container');
+      const labelEl = document.getElementById('quick-plate-chips-label');
+      if (!container) return;
+
+      const imp = (implement || '').toLowerCase();
+      let chips = [];
+      let labelText = "Quick Plate Load";
+
+      if (imp.includes('kettlebell') || imp.includes('kb')) {
+        labelText = "Standard KB Sizes";
+        chips = [
+          { label: "16kg (35#)", val: 35, mode: "set" },
+          { label: "20kg (44#)", val: 44, mode: "set" },
+          { label: "24kg (53#)", val: 53, mode: "set" },
+          { label: "28kg (62#)", val: 62, mode: "set" },
+          { label: "32kg (70#)", val: 70, mode: "set" }
+        ];
+      } else if (imp.includes('barbell')) {
+        labelText = "Barbell Plates";
+        chips = [
+          { label: "+45 (Plate)", val: 45, mode: "add" },
+          { label: "+25 (Quarter)", val: 25, mode: "add" },
+          { label: "+10", val: 10, mode: "add" },
+          { label: "+5", val: 5, mode: "add" },
+          { label: "+2.5", val: 2.5, mode: "add" },
+          { label: "Bar (45#)", val: 45, mode: "set" }
+        ];
+      } else if (imp.includes('dumbbell') || imp.includes('db')) {
+        labelText = "Dumbbell Weights";
+        chips = [
+          { label: "+5", val: 5, mode: "add" },
+          { label: "+10", val: 10, mode: "add" },
+          { label: "25#", val: 25, mode: "set" },
+          { label: "35#", val: 35, mode: "set" },
+          { label: "45#", val: 45, mode: "set" },
+          { label: "50#", val: 50, mode: "set" }
+        ];
+      } else {
+        labelText = "Quick Load";
+        chips = [
+          { label: "+5", val: 5, mode: "add" },
+          { label: "+10", val: 10, mode: "add" },
+          { label: "+25", val: 25, mode: "add" },
+          { label: "+45", val: 45, mode: "add" }
+        ];
+      }
+
+      if (labelEl) labelEl.innerText = labelText;
+
+      container.innerHTML = chips.map(c => `
+        <button type="button" onclick="triggerHaptic('light'); applyQuickWeightChip(${c.val}, '${c.mode}')" class="px-2.5 py-1 rounded-xl text-[11px] font-black border transition shrink-0 active:scale-95 bg-slate-900/90 text-slate-200 border-slate-700 hover:border-emerald-500/50 hover:bg-emerald-950/30 hover:text-emerald-300">
+          ${c.label}
+        </button>
+      `).join('');
+    }
+
+    function applyQuickWeightChip(val, mode) {
+      const input = document.getElementById('input-weight');
+      if (!input) return;
+      let cur = parseFloat(input.value) || 0;
+      if (mode === 'set') {
+        cur = val;
+      } else {
+        cur = Math.max(0, Math.round((cur + val) * 10) / 10);
+      }
+      input.value = cur;
     }
 
     function toggleWorkoutExtraOptions() {
@@ -4959,20 +5053,55 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function getDefaultRestTimeSeconds() {
+      const saved = localStorage.getItem('showUp_default_rest_time');
+      return saved ? parseInt(saved, 10) : 90;
+    }
+
+    function saveDefaultRestTimePref(val) {
+      const seconds = parseInt(val, 10) || 90;
+      localStorage.setItem('showUp_default_rest_time', seconds);
+      if (typeof showToast === 'function') {
+        showToast(`Default rest target set to ${seconds}s`, "info");
+      }
+      if (isRestTimerRunning) {
+        updateRestTimerUI();
+      }
+    }
+
     function updateRestTimerUI() {
       const banner = document.getElementById('rest-timer-banner');
       const valEl = document.getElementById('rest-timer-val');
       const captionEl = document.getElementById('rest-timer-caption');
+      const badgeEl = document.getElementById('rest-timer-status-badge');
 
       if (!banner) return;
 
       if (isRestTimerRunning) {
         banner.classList.remove('hidden');
         if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
-        if (captionEl) {
-          const setNum = currentSessionSets.length;
-          const nextNum = setNum + 1;
-          captionEl.innerText = `Resting after Set ${setNum}... Tap "Start Set ${nextNum}" to record rest & lift!`;
+        const setNum = currentSessionSets.length;
+        const nextNum = setNum + 1;
+        const targetRest = getDefaultRestTimeSeconds();
+
+        if (restTimerSeconds >= targetRest) {
+          if (badgeEl) {
+            badgeEl.className = "text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider animate-bounce";
+            badgeEl.innerText = "Ready to Lift!";
+          }
+          if (captionEl) {
+            captionEl.innerHTML = `<span class="text-emerald-300 font-bold">Target recovery reached (${targetRest}s).</span> Tap "Start Set ${nextNum}" to lift!`;
+          }
+          banner.classList.add('border-emerald-400', 'shadow-emerald-500/30');
+        } else {
+          if (badgeEl) {
+            badgeEl.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider";
+            badgeEl.innerText = `Resting (${targetRest}s target)`;
+          }
+          if (captionEl) {
+            captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Start Set ${nextNum}" when ready.`;
+          }
+          banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
         }
       } else {
         banner.classList.add('hidden');
@@ -5175,11 +5304,15 @@ if (typeof window !== 'undefined') {
               </div>
             </div>
 
-            <div class="flex items-center gap-1 shrink-0">
-              <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2.5 rounded-xl hover:bg-slate-900 transition" title="Edit Set">
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button onclick="triggerHaptic('medium'); repeatSet(${s.id})" class="text-xs font-black px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition active:scale-95 shadow-sm" title="Repeat this set in workout controls">
+                <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                <span class="hidden sm:inline">Repeat</span>
+              </button>
+              <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl hover:bg-slate-900 transition" title="Edit Set">
                 <i class="fa-solid fa-pen-to-square text-base"></i>
               </button>
-              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2.5 rounded-xl hover:bg-slate-900 transition" title="Delete Set">
+              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition" title="Delete Set">
                 <i class="fa-solid fa-trash-can text-base"></i>
               </button>
             </div>
@@ -5199,6 +5332,64 @@ if (typeof window !== 'undefined') {
 
       if (googleAccessToken) {
         syncToGoogleDrive();
+      }
+    }
+
+    function repeatSet(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      const set = currentSessionSets.find(s => s.id === setId);
+      if (!set) return;
+
+      const exInput = document.getElementById('input-exercise-name');
+      const impSelect = document.getElementById('implement-select');
+      const muscleSelect = document.getElementById('muscle-group-select');
+      const weightInput = document.getElementById('input-weight');
+      const repsInput = document.getElementById('input-reps');
+      const rpeSelect = document.getElementById('rpe-select');
+      const ergDistInput = document.getElementById('input-erg-distance');
+      const ergTimeInput = document.getElementById('input-erg-time');
+      const swimDistInput = document.getElementById('input-swim-distance');
+      const swimTimeInput = document.getElementById('input-swim-time');
+      const endDistInput = document.getElementById('input-endurance-distance');
+      const endTimeInput = document.getElementById('input-endurance-time');
+      const runDistInput = document.getElementById('input-running-distance');
+      const runTimeInput = document.getElementById('input-running-time');
+      const runAvgHRInput = document.getElementById('input-running-avg-hr');
+      const runMaxHRInput = document.getElementById('input-running-max-hr');
+
+      if (exInput) exInput.value = set.exerciseName || '';
+      if (impSelect && set.implement) {
+        impSelect.value = set.implement;
+        handleImplementChange(set.implement);
+      }
+      if (muscleSelect && set.muscle) muscleSelect.value = set.muscle;
+      if (weightInput && typeof set.weight === 'number') weightInput.value = set.weight;
+      if (repsInput && typeof set.reps === 'number') repsInput.value = set.reps;
+      if (rpeSelect && set.rpe) rpeSelect.value = set.rpe;
+      if (ergDistInput && set.ergDistance) ergDistInput.value = set.ergDistance;
+      if (ergTimeInput && set.ergTime) ergTimeInput.value = set.ergTime;
+      if (swimDistInput && set.swimDistance) swimDistInput.value = set.swimDistance;
+      if (swimTimeInput && set.swimTime) swimTimeInput.value = set.swimTime;
+      if (endDistInput && set.enduranceDistance) endDistInput.value = set.enduranceDistance;
+      if (endTimeInput && set.enduranceTime) endTimeInput.value = set.enduranceTime;
+      if (runDistInput && set.runningDistance) runDistInput.value = set.runningDistance;
+      if (runTimeInput && set.runningTime) runTimeInput.value = set.runningTime;
+      if (runAvgHRInput && set.runningAvgHR) runAvgHRInput.value = set.runningAvgHR;
+      if (runMaxHRInput && set.runningMaxHR) runMaxHRInput.value = set.runningMaxHR;
+
+      if (typeof updateAutoMuscleIndicator === 'function' && set.exerciseName) {
+        updateAutoMuscleIndicator(set.exerciseName);
+      }
+
+      const panel = document.getElementById('exercise-selection-container') || document.getElementById('standard-metrics-panel');
+      if (panel && typeof panel.scrollIntoView === 'function') {
+        try {
+          panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (e) {}
+      }
+
+      if (typeof showToast === 'function') {
+        showToast(`Loaded ${set.exerciseName} (${set.weight || 0} lbs × ${set.reps || 0}) for next set!`, "success");
       }
     }
 
@@ -7108,7 +7299,7 @@ if (typeof window !== 'undefined') {
       handleLogHeightInput(current);
     }
 
-    function openLogWeightModal(targetDate = null) {
+    function openLogWeightModal(targetDate = null, focusField = 'weight') {
       const modal = document.getElementById('log-weight-modal');
       if (!modal) return;
 
@@ -7142,12 +7333,15 @@ if (typeof window !== 'undefined') {
       handleLogWeightDateChange(defaultDate);
 
       modal.classList.remove('hidden');
-      if (numInput) {
-        setTimeout(() => {
+      setTimeout(() => {
+        if (focusField === 'height' && heightInput) {
+          heightInput.focus();
+          heightInput.select();
+        } else if (numInput) {
           numInput.focus();
           numInput.select();
-        }, 120);
-      }
+        }
+      }, 120);
     }
 
     function closeLogWeightModal() {
@@ -7343,13 +7537,38 @@ if (typeof window !== 'undefined') {
       }
 
       const activeBMI = calculateBMI(userWeight, userHeight);
+      const currentBmiBadgeEl = document.getElementById('cal-current-bmi-badge');
       if (currentBmiEl) {
         if (activeBMI) {
-          currentBmiEl.innerHTML = `<span class="text-base font-black text-slate-200">${activeBMI}</span> ${getBMIBadge(activeBMI)}`;
           currentBmiEl.innerText = `${activeBMI}`;
         } else {
           currentBmiEl.innerText = '--';
-          currentBmiEl.innerHTML = '--';
+        }
+      }
+      if (currentBmiBadgeEl) {
+        if (activeBMI) {
+          currentBmiBadgeEl.innerHTML = getBMIBadge(activeBMI);
+        } else {
+          currentBmiBadgeEl.innerHTML = '';
+        }
+      }
+
+      // Target Weight Goal Progress Indicator
+      const targetBadgeEl = document.getElementById('cal-weight-target-badge');
+      const savedTarget = localStorage.getItem('showUp_user_target_weight');
+      if (targetBadgeEl) {
+        if (savedTarget && userWeight) {
+          const targetNum = parseFloat(savedTarget);
+          const diffToTarget = Math.round((userWeight - targetNum) * 10) / 10;
+          if (diffToTarget === 0) {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-black text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal Met: ${targetNum}#</span>`;
+          } else if (diffToTarget > 0) {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-bold text-blue-400 bg-blue-500/15 border border-blue-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal: ${targetNum}# (-${diffToTarget})</span>`;
+          } else {
+            targetBadgeEl.innerHTML = `<span class="text-[9px] font-bold text-purple-400 bg-purple-500/15 border border-purple-500/30 px-1.5 py-0.5 rounded-full mt-0.5 inline-block">Goal: ${targetNum}# (+${Math.abs(diffToTarget)})</span>`;
+          }
+        } else {
+          targetBadgeEl.innerHTML = '';
         }
       }
 
@@ -7521,6 +7740,34 @@ if (typeof window !== 'undefined') {
 
         svg.appendChild(circle);
       });
+
+      // Target Goal Guideline
+      const savedTarget = localStorage.getItem('showUp_user_target_weight');
+      if (savedTarget) {
+        const targetVal = parseFloat(savedTarget);
+        if (!isNaN(targetVal) && targetVal >= (minW - 30) && targetVal <= (maxW + 30)) {
+          const targetY = Math.max(padding, Math.min(height - padding, height - padding - ((targetVal - minW) / range) * effectiveHeight));
+          const goalLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+          goalLine.setAttribute("x1", padding);
+          goalLine.setAttribute("y1", targetY);
+          goalLine.setAttribute("x2", width - padding);
+          goalLine.setAttribute("y2", targetY);
+          goalLine.setAttribute("stroke", "#38bdf8");
+          goalLine.setAttribute("stroke-width", "1.5");
+          goalLine.setAttribute("stroke-dasharray", "4,4");
+          svg.appendChild(goalLine);
+
+          const goalText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          goalText.setAttribute("x", width - padding);
+          goalText.setAttribute("y", Math.max(12, targetY - 4));
+          goalText.setAttribute("text-anchor", "end");
+          goalText.setAttribute("fill", "#38bdf8");
+          goalText.setAttribute("font-size", "9");
+          goalText.setAttribute("font-weight", "bold");
+          goalText.textContent = `Goal: ${targetVal}#`;
+          svg.appendChild(goalText);
+        }
+      }
     }
 
 
@@ -16452,6 +16699,47 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   switchSettingsTab('styling');
   assert(!getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane visible when selected");
   assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane hidden when styling selected");
+
+  // 8. Test Phase 1, Phase 2 & Phase 3 UX enhancements
+  // Phase 1: BMI badge and target weight badge rendering in 4-metric grid
+  assert(getOrCreateElement('cal-current-bmi-badge').innerHTML.length > 0, "cal-current-bmi-badge displays BMI category badge");
+  assert(typeof openLogWeightModal === 'function', "openLogWeightModal is a defined function");
+  assert(typeof openWeightTrendGraph === 'function', "openWeightTrendGraph is a defined function");
+
+  // Phase 2: Quick plate chips and repeat set
+  assert(typeof renderQuickWeightChips === 'function', "renderQuickWeightChips is a defined function");
+  assert(typeof applyQuickWeightChip === 'function', "applyQuickWeightChip is a defined function");
+  assert(typeof repeatSet === 'function', "repeatSet is a defined function");
+
+  renderQuickWeightChips('Barbell');
+  assert(getOrCreateElement('quick-plate-chips-container').innerHTML.includes('+45'), "Barbell plate chips include +45 plate");
+  
+  renderQuickWeightChips('Kettlebell');
+  assert(getOrCreateElement('quick-plate-chips-container').innerHTML.includes('16kg'), "Kettlebell plate chips include 16kg standard bell");
+
+  getOrCreateElement('input-weight').value = "45";
+  applyQuickWeightChip(45, 'add');
+  assert(Number(getOrCreateElement('input-weight').value) === 90, "applyQuickWeightChip correctly adds 45 to input-weight");
+  
+  applyQuickWeightChip(53, 'set');
+  assert(Number(getOrCreateElement('input-weight').value) === 53, "applyQuickWeightChip correctly sets 53 on input-weight");
+
+  // Test repeatSet loading previous set into active controls
+  repeatSet(secondSet.id);
+  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates exercise name from previous set");
+  assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
+  assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
+
+  // Phase 3: Default rest time preference and target weight goal
+  assert(typeof getDefaultRestTimeSeconds === 'function', "getDefaultRestTimeSeconds is a defined function");
+  assert(typeof saveDefaultRestTimePref === 'function', "saveDefaultRestTimePref is a defined function");
+  saveDefaultRestTimePref(120);
+  assert(getDefaultRestTimeSeconds() === 120, "getDefaultRestTimeSeconds returns 120 after preference saved");
+
+  getOrCreateElement('user-target-weight-input').value = "170";
+  savePhysicalProfile();
+  assert(localStorage.getItem('showUp_user_target_weight') === "170", "savePhysicalProfile stores target weight in localStorage");
+  assert(getOrCreateElement('cal-weight-target-badge').innerHTML.includes('Goal'), "cal-weight-target-badge renders goal information");
 });
 
 print("\n============================================================");

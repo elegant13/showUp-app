@@ -73,26 +73,11 @@
         </div>
       </div>
 
-      <!-- Right Header Controls: Settings, Visitor Counter & Google Profile -->
-      <div class="relative flex items-center gap-1.5 sm:gap-2 shrink-0">
-        <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
-        <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/90 active:scale-95 transition flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-800/80 border border-slate-700/60 shadow-sm shrink-0" title="Click to view Global Visitor Telemetry">
-          <span class="relative flex h-2 w-2 shrink-0">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-          </span>
-          <i class="fa-solid fa-users text-xs text-purple-400"></i>
-          <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
-          <span class="text-[10px] font-semibold text-slate-400 hidden min-[540px]:inline">Visitors</span>
-        </div>
-
-        <button id="quick-ui-mode-toggle" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2 py-1.5 sm:px-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Toggle UI Paradigm (Glass / Zen / HUD / Light)">
-          <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
-          <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-slate-200 hidden sm:inline">Glass</span>
-        </button>
-
-        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="p-1.5 sm:p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 transition active:scale-95 shrink-0" title="UI Customization & Physical Profile">
-          <i class="fa-solid fa-sliders text-xs sm:text-sm"></i>
+      <!-- Right Header Controls: Settings & Google Profile -->
+      <div class="relative flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-200 transition active:scale-95 shrink-0" title="Settings, UI Styling & Physical Profile">
+          <i class="fa-solid fa-sliders text-xs sm:text-sm text-emerald-400"></i>
+          <span class="text-xs font-bold text-slate-200 hidden sm:inline">Settings</span>
         </button>
 
         <div id="google-user-profile" class="hidden relative flex items-center gap-1.5 sm:gap-2.5 bg-slate-800/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border border-slate-700 shadow-inner shrink-0">
@@ -750,7 +735,11 @@
                 <i class="fa-solid fa-wand-magic-sparkles text-xs text-emerald-400"></i>
                 <span>Experience Mode</span>
               </label>
-              <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">4 Modes</span>
+              <button id="quick-ui-mode-toggle" type="button" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Cycle UI Paradigm (Glass / Zen / HUD / Light)">
+                <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
+                <span class="text-[10px] text-slate-400">Cycle:</span>
+                <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-emerald-400">Glass</span>
+              </button>
             </div>
             
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -873,15 +862,20 @@
             <span class="text-[9px] text-slate-500 font-mono">Calorie Burn Engine</span>
           </div>
           
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-3 gap-2.5">
             <div>
-              <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (inches)</label>
-              <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (in)</label>
+              <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
             </div>
 
             <div>
-              <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
-              <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Weight (lbs)</label>
+              <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Goal (lbs)</label>
+              <input type="number" id="user-target-weight-input" placeholder="e.g. 170" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold text-blue-400 focus:outline-none focus:border-blue-500 transition" title="Target Goal Weight">
             </div>
           </div>
         </div>
@@ -893,6 +887,19 @@
             Module Defaults
           </h3>
           <div class="space-y-2">
+            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-xs text-slate-300 block">Default Rest Timer</span>
+                <span class="text-[10px] text-slate-500">Recovery target between sets</span>
+              </div>
+              <select id="pref-default-rest-time" onchange="saveDefaultRestTimePref(this.value)" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                <option value="60">60s (Short)</option>
+                <option value="90" selected>90s (Standard)</option>
+                <option value="120">120s (2 min)</option>
+                <option value="180">180s (3 min)</option>
+              </select>
+            </div>
+
             <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
                 <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
@@ -1042,7 +1049,16 @@
               <i class="fa-solid fa-chart-line text-purple-400"></i>
               Website & Community Telemetry
             </h3>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Cumulative</span>
+            <!-- UNIQUE VISITOR WEBSITE COUNTER BADGE -->
+            <div id="header-visitor-pill" onclick="triggerHaptic('light'); openGlobalVisitorTelemetryModal()" class="cursor-pointer hover:border-purple-500/50 hover:bg-slate-800/90 active:scale-95 transition flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 border border-slate-700/60 shadow-sm shrink-0" title="Click to view Global Visitor Telemetry">
+              <span class="relative flex h-2 w-2 shrink-0">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+              </span>
+              <i class="fa-solid fa-users text-xs text-purple-400"></i>
+              <span id="header-visitor-count" class="text-xs font-mono font-bold text-slate-100">1</span>
+              <span class="text-[10px] font-semibold text-slate-400">Live</span>
+            </div>
           </div>
           <div class="grid grid-cols-3 gap-2 pt-1">
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
@@ -2457,6 +2473,18 @@
               <button type="button" onclick="triggerHaptic('light'); adjustWeight(2.5)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+2.5</button>
               <button type="button" onclick="triggerHaptic('light'); adjustWeight(5)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+5</button>
             </div>
+
+            <!-- QUICK IMPLEMENT / PLATE LOAD CHIPS -->
+            <div class="pt-2 border-t border-slate-800/80">
+              <div class="flex items-center justify-between pb-1">
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <i class="fa-solid fa-layer-group text-[10px] text-emerald-400"></i>
+                  <span id="quick-plate-chips-label">Quick Plate Load</span>
+                </span>
+                <span class="text-[9px] font-mono text-slate-500">Tap to load</span>
+              </div>
+              <div id="quick-plate-chips-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"></div>
+            </div>
           </div>
 
           <!-- REPS -->
@@ -2729,16 +2757,17 @@
         <!-- REST TIMER HUD BANNER (HIGH-CONTRAST, OVERSIZED COUNTDOWN FOR LIFT RECOVERY) -->
         <div id="rest-timer-banner" class="hidden bg-gradient-to-r from-emerald-950/80 via-slate-900 to-emerald-950/80 border-2 border-emerald-500/50 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl transition-all">
           <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 sm:gap-4">
-              <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-xl shadow-lg shadow-emerald-500/20 shrink-0">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-xl sm:text-2xl shadow-lg shadow-emerald-500/20 shrink-0">
                 <i class="fa-solid fa-hourglass-half animate-pulse"></i>
               </div>
-              <div>
-                <div class="flex items-baseline gap-2">
+              <div class="min-w-0">
+                <div class="flex items-baseline gap-2.5 flex-wrap">
                   <span class="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">Rest Timer</span>
-                  <span id="rest-timer-val" class="font-mono text-3xl sm:text-5xl font-black text-white tracking-wider">0s</span>
+                  <span id="rest-timer-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">Resting</span>
+                  <span id="rest-timer-val" class="font-mono text-4xl sm:text-6xl font-black text-white tracking-wider block sm:inline">0s</span>
                 </div>
-                <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium">Resting between sets... Tap "Start Set" when ready to lift.</div>
+                <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">Resting between sets... Tap "Start Set" when ready to lift.</div>
               </div>
             </div>
 
@@ -3129,30 +3158,31 @@
           <!-- 4-METRIC GRID: WEIGHT | HEIGHT | CHANGE | BMI -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <!-- CURRENT WEIGHT -->
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div onclick="triggerHaptic('light'); openLogWeightModal(null, 'weight')" class="cursor-pointer bg-slate-950 hover:bg-slate-900/90 hover:border-emerald-500/40 p-3 rounded-2xl border border-slate-800 flex items-center justify-between active:scale-[0.98] transition group shadow-sm" title="Click to log or update weight">
               <div>
-                <div class="text-[10px] font-bold text-slate-500 uppercase">Weight</div>
+                <div class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-400 uppercase transition">Weight</div>
                 <div id="cal-current-weight-val" class="text-lg font-black text-emerald-400">-- lbs</div>
+                <div id="cal-weight-target-badge"></div>
               </div>
-              <i class="fa-solid fa-weight-scale text-slate-700 text-base"></i>
+              <i class="fa-solid fa-weight-scale text-slate-700 group-hover:text-emerald-400 text-base transition"></i>
             </div>
 
             <!-- CURRENT HEIGHT -->
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div onclick="triggerHaptic('light'); openLogWeightModal(null, 'height')" class="cursor-pointer bg-slate-950 hover:bg-slate-900/90 hover:border-emerald-500/40 p-3 rounded-2xl border border-slate-800 flex items-center justify-between active:scale-[0.98] transition group shadow-sm" title="Click to log or update height">
               <div>
-                <div class="text-[10px] font-bold text-slate-500 uppercase">Height</div>
+                <div class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-400 uppercase transition">Height</div>
                 <div id="cal-current-height-val" class="text-lg font-black text-emerald-400">--</div>
               </div>
-              <i class="fa-solid fa-ruler-vertical text-slate-700 text-base"></i>
+              <i class="fa-solid fa-ruler-vertical text-slate-700 group-hover:text-emerald-400 text-base transition"></i>
             </div>
 
             <!-- WEIGHT CHANGE WITH TREND GRAPH BUTTON -->
-            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+            <div onclick="triggerHaptic('medium'); openWeightTrendGraph()" class="cursor-pointer bg-slate-950 hover:bg-slate-900/90 hover:border-emerald-500/40 p-3 rounded-2xl border border-slate-800 flex items-center justify-between active:scale-[0.98] transition group shadow-sm" title="Click to view weight trend analytics & graph">
               <div>
-                <div class="text-[10px] font-bold text-slate-500 uppercase">Change</div>
+                <div class="text-[10px] font-bold text-slate-500 group-hover:text-emerald-400 uppercase transition">Change</div>
                 <div id="cal-weight-change-val" class="text-lg font-black text-slate-300">0.0 lbs</div>
               </div>
-              <button onclick="triggerHaptic('medium'); openWeightTrendGraph()" class="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 transition" title="View Weight Trend Line Graph">
+              <button type="button" onclick="event.stopPropagation(); triggerHaptic('medium'); openWeightTrendGraph()" class="p-1.5 rounded-xl bg-slate-900 group-hover:bg-emerald-500/20 text-emerald-400 border border-slate-700 group-hover:border-emerald-500/40 transition" title="View Weight Trend Line Graph">
                 <i class="fa-solid fa-chart-line text-sm"></i>
               </button>
             </div>
@@ -3162,6 +3192,7 @@
               <div>
                 <div class="text-[10px] font-bold text-slate-500 uppercase">BMI</div>
                 <div id="cal-current-bmi-val" class="text-lg font-black text-slate-300">--</div>
+                <div id="cal-current-bmi-badge" class="mt-1"></div>
               </div>
               <i class="fa-solid fa-heart-pulse text-slate-700 text-base"></i>
             </div>
@@ -3446,18 +3477,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023i"></script>
-  <script defer src="js/storage.js?v=20261023i"></script>
-  <script defer src="js/utils.js?v=20261023i"></script>
-  <script defer src="js/theme.js?v=20261023i"></script>
-  <script defer src="js/auth.js?v=20261023i"></script>
-  <script defer src="js/workout.js?v=20261023i"></script>
-  <script defer src="js/history.js?v=20261023i"></script>
-  <script defer src="js/progress.js?v=20261023i"></script>
-  <script defer src="js/squads.js?v=20261023i"></script>
-  <script defer src="js/map.js?v=20261023i"></script>
-  <script defer src="js/visitors.js?v=20261023i"></script>
-  <script defer src="js/backup.js?v=20261023i"></script>
-  <script defer src="js/main.js?v=20261023i"></script>
+  <script defer src="js/config.js?v=20261023j"></script>
+  <script defer src="js/storage.js?v=20261023j"></script>
+  <script defer src="js/utils.js?v=20261023j"></script>
+  <script defer src="js/theme.js?v=20261023j"></script>
+  <script defer src="js/auth.js?v=20261023j"></script>
+  <script defer src="js/workout.js?v=20261023j"></script>
+  <script defer src="js/history.js?v=20261023j"></script>
+  <script defer src="js/progress.js?v=20261023j"></script>
+  <script defer src="js/squads.js?v=20261023j"></script>
+  <script defer src="js/map.js?v=20261023j"></script>
+  <script defer src="js/visitors.js?v=20261023j"></script>
+  <script defer src="js/backup.js?v=20261023j"></script>
+  <script defer src="js/main.js?v=20261023j"></script>
 </body>
 </html>
