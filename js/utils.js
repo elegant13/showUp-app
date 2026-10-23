@@ -140,7 +140,7 @@
       const activeBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20";
       const inactiveBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
 
-      if (subTab === 'weight') {
+      if (subTab === 'weight' || subTab === 'body') {
         if (workoutsPane) workoutsPane.classList.add('hidden');
         if (weightPane) weightPane.classList.remove('hidden');
         if (workoutsBtn) workoutsBtn.className = inactiveBtnClass;

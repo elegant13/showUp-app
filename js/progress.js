@@ -1,6 +1,68 @@
 /* ==========================================================================
-   showUp Progress Engine: Body Weight Analytics, 1RM, Sparklines & Heatmap
+   showUp Progress Engine: Body Metrics (Weight & Height) Analytics, 1RM, Sparklines & Heatmap
    ========================================================================== */
+
+    function formatHeightDisplay(inches) {
+      if (!inches || isNaN(inches) || inches <= 0) return "--";
+      const totalInches = Math.round(inches * 10) / 10;
+      const feet = Math.floor(totalInches / 12);
+      const remInches = Math.round((totalInches % 12) * 10) / 10;
+      return `${feet}' ${remInches}" (${totalInches}")`;
+    }
+
+    function formatHeightShort(inches) {
+      if (!inches || isNaN(inches) || inches <= 0) return "";
+      const totalInches = Math.round(inches * 10) / 10;
+      const feet = Math.floor(totalInches / 12);
+      const remInches = Math.round((totalInches % 12) * 10) / 10;
+      return `${feet}' ${remInches}"`;
+    }
+
+    function calculateBMI(weightLbs, heightInches) {
+      if (!weightLbs || !heightInches || weightLbs <= 0 || heightInches <= 0) return null;
+      const bmi = (weightLbs * 703) / (heightInches * heightInches);
+      return Math.round(bmi * 10) / 10;
+    }
+
+    function getBMIBadge(bmi) {
+      if (!bmi) return "";
+      let cat = "Normal";
+      let colorClass = "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
+      if (bmi < 18.5) {
+        cat = "Under";
+        colorClass = "bg-sky-500/15 text-sky-400 border-sky-500/30";
+      } else if (bmi >= 25 && bmi < 30) {
+        cat = "Over";
+        colorClass = "bg-amber-500/15 text-amber-400 border-amber-500/30";
+      } else if (bmi >= 30) {
+        cat = "Obese";
+        colorClass = "bg-rose-500/15 text-rose-400 border-rose-500/30";
+      }
+      return `<span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${colorClass}">${cat} ${bmi}</span>`;
+    }
+
+    function handleLogHeightInput(val) {
+      const label = document.getElementById('log-height-ftin-label');
+      const num = parseFloat(val);
+      if (!label) return;
+      if (isNaN(num) || num <= 0) {
+        label.innerText = "--";
+        return;
+      }
+      const feet = Math.floor(num / 12);
+      const inches = Math.round((num % 12) * 10) / 10;
+      label.innerText = `${feet}' ${inches}"`;
+    }
+
+    function adjustLogHeight(delta) {
+      const input = document.getElementById('log-height-num-input');
+      if (!input) return;
+      let current = parseFloat(input.value) || userHeight || 70;
+      current = Math.max(20, Math.min(108, Math.round((current + delta) * 10) / 10));
+      input.value = current;
+      input.dataset.autoFilled = "false";
+      handleLogHeightInput(current);
+    }
 
     function openLogWeightModal(targetDate = null) {
       const modal = document.getElementById('log-weight-modal');
@@ -8,6 +70,7 @@
 
       const dateInput = document.getElementById('log-weight-date-input');
       const numInput = document.getElementById('log-weight-num-input');
+      const heightInput = document.getElementById('log-height-num-input');
       const todayStr = getLocalDateISO();
 
       // Pick default date: targetDate -> selectedWorkoutDate -> today
@@ -20,10 +83,16 @@
       // Check if entry for chosen date already exists
       const existing = weightHistory.find(w => w.date === defaultDate);
       const initialWeight = existing ? existing.weight : (userWeight || 0);
+      const initialHeight = (existing && existing.height) ? existing.height : (userHeight || 70);
 
       if (numInput) {
         numInput.value = initialWeight > 0 ? initialWeight : "";
         numInput.dataset.autoFilled = "true";
+      }
+      if (heightInput) {
+        heightInput.value = initialHeight > 0 ? initialHeight : "";
+        heightInput.dataset.autoFilled = "true";
+        handleLogHeightInput(initialHeight);
       }
 
       handleLogWeightDateChange(defaultDate);
@@ -75,6 +144,7 @@
       const labelEl = document.getElementById('log-weight-date-label');
       const existingHint = document.getElementById('log-weight-existing-hint');
       const numInput = document.getElementById('log-weight-num-input');
+      const heightInput = document.getElementById('log-height-num-input');
 
       const todayStr = getLocalDateISO();
       let relLabel = "";
@@ -90,18 +160,31 @@
       const existing = weightHistory.find(w => w.date === dateStr);
       if (existing) {
         if (existingHint) {
-          existingHint.innerText = `Replaces recorded entry (${existing.weight} lbs)`;
+          const htStr = existing.height ? `, ${formatHeightShort(existing.height)}` : '';
+          existingHint.innerText = `Replaces recorded entry (${existing.weight} lbs${htStr})`;
           existingHint.classList.remove('hidden');
         }
         if (numInput && (!numInput.value || numInput.dataset.autoFilled === "true")) {
           numInput.value = existing.weight;
           numInput.dataset.autoFilled = "true";
         }
+        if (heightInput && (!heightInput.value || heightInput.dataset.autoFilled === "true")) {
+          const hVal = existing.height || userHeight || 70;
+          heightInput.value = hVal;
+          heightInput.dataset.autoFilled = "true";
+          handleLogHeightInput(hVal);
+        }
       } else {
         if (existingHint) existingHint.classList.add('hidden');
         if (numInput && numInput.dataset.autoFilled === "true") {
           numInput.value = userWeight || "";
           numInput.dataset.autoFilled = "true";
+        }
+        if (heightInput && heightInput.dataset.autoFilled === "true") {
+          const defaultH = userHeight || 70;
+          heightInput.value = defaultH;
+          heightInput.dataset.autoFilled = "true";
+          handleLogHeightInput(defaultH);
         }
       }
     }
@@ -129,12 +212,14 @@
     function saveLogWeightEntry() {
       const dateInput = document.getElementById('log-weight-date-input');
       const numInput = document.getElementById('log-weight-num-input');
+      const heightInput = document.getElementById('log-height-num-input');
 
       const chosenDate = dateInput ? dateInput.value : getLocalDateISO();
       const rawVal = numInput ? parseFloat(numInput.value) : 0;
+      const rawHeight = heightInput ? parseFloat(heightInput.value) : 0;
 
       if (!chosenDate) {
-        showToast("Please choose a valid date for this weigh-in.", "warning");
+        showToast("Please choose a valid date for this entry.", "warning");
         return;
       }
       if (isNaN(rawVal) || rawVal <= 0) {
@@ -144,33 +229,43 @@
       }
 
       const weight = Math.round(rawVal * 10) / 10;
+      const height = (!isNaN(rawHeight) && rawHeight > 0) ? (Math.round(rawHeight * 10) / 10) : (userHeight || 70);
 
       // Update if date already exists in history, otherwise insert
       const existingIndex = weightHistory.findIndex(w => w.date === chosenDate);
       if (existingIndex >= 0) {
         weightHistory[existingIndex].weight = weight;
+        if (height > 0) weightHistory[existingIndex].height = height;
       } else {
-        weightHistory.push({ date: chosenDate, weight: weight });
+        weightHistory.push({ date: chosenDate, weight: weight, height: height });
       }
 
       // Always sort chronological descending (newest first)
       weightHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
       localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
 
-      // If the saved date is today or the latest entry, synchronize profile current weight
+      // If the saved date is today or the latest entry, synchronize profile current weight & height
       const latestEntry = weightHistory[0];
       if (latestEntry && (chosenDate === getLocalDateISO() || chosenDate === latestEntry.date)) {
         userWeight = latestEntry.weight;
         localStorage.setItem('showUp_user_weight', userWeight);
         const profileInput = document.getElementById('user-weight-input');
         if (profileInput) profileInput.value = userWeight;
+
+        if (latestEntry.height && latestEntry.height > 0) {
+          userHeight = latestEntry.height;
+          localStorage.setItem('showUp_user_height', userHeight);
+          const profileHInput = document.getElementById('user-height-input');
+          if (profileHInput) profileHInput.value = userHeight;
+        }
       }
 
       renderWeightHistory();
       closeLogWeightModal();
 
       const humanDate = (chosenDate === getLocalDateISO()) ? "Today" : formatHistoricalDate(chosenDate);
-      showToast(`Recorded ${weight} lbs for ${humanDate}!`, "success");
+      const htDisplay = height > 0 ? ` (${formatHeightShort(height)})` : '';
+      showToast(`Recorded ${weight} lbs${htDisplay} for ${humanDate}!`, "success");
 
       if (googleAccessToken) {
         syncToGoogleDrive(true);
@@ -183,6 +278,8 @@
 
     function renderWeightHistory() {
       const currentValEl = document.getElementById('cal-current-weight-val');
+      const currentHeightEl = document.getElementById('cal-current-height-val');
+      const currentBmiEl = document.getElementById('cal-current-bmi-val');
       const changeValEl = document.getElementById('cal-weight-change-val');
       const container = document.getElementById('weight-history-list');
 
@@ -191,14 +288,30 @@
 
       if (weightHistory.length > 0) {
         userWeight = weightHistory[0].weight;
-        currentValEl.innerText = `${userWeight} lbs`;
+        if (weightHistory[0].height) userHeight = weightHistory[0].height;
+        if (currentValEl) currentValEl.innerText = `${userWeight} lbs`;
       } else {
-        currentValEl.innerText = `${userWeight || '--'} lbs`;
+        if (currentValEl) currentValEl.innerText = `${userWeight || '--'} lbs`;
+      }
+
+      if (currentHeightEl) {
+        currentHeightEl.innerText = userHeight ? formatHeightShort(userHeight) : '--';
+      }
+
+      const activeBMI = calculateBMI(userWeight, userHeight);
+      if (currentBmiEl) {
+        if (activeBMI) {
+          currentBmiEl.innerHTML = `<span class="text-base font-black text-slate-200">${activeBMI}</span> ${getBMIBadge(activeBMI)}`;
+          currentBmiEl.innerText = `${activeBMI}`;
+        } else {
+          currentBmiEl.innerText = '--';
+          currentBmiEl.innerHTML = '--';
+        }
       }
 
       if (weightHistory.length === 0) {
-        changeValEl.innerText = "0.0 lbs";
-        container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet. Click "+ Log Weight" above to record an entry.</div>`;
+        if (changeValEl) changeValEl.innerText = "0.0 lbs";
+        if (container) container.innerHTML = `<div class="text-center py-4 text-slate-600 text-xs italic">No historical body metric entries recorded yet. Click "+ Log Entry" above to record an entry.</div>`;
         return;
       }
 
@@ -206,32 +319,42 @@
       const oldest = weightHistory[weightHistory.length - 1].weight;
       const diff = (latest - oldest).toFixed(1);
 
-      changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
-      changeValEl.className = `text-xl font-black ${diff < 0 ? 'text-emerald-400' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
+      if (changeValEl) {
+        changeValEl.innerText = `${diff > 0 ? '+' : ''}${diff} lbs`;
+        changeValEl.className = `text-lg font-black ${diff < 0 ? 'text-emerald-400' : diff > 0 ? 'text-rose-400' : 'text-slate-300'}`;
+      }
 
-      container.innerHTML = weightHistory.map((item, index) => {
-        const humanDate = formatHistoricalDate(item.date);
-        return `
-          <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs hover:border-slate-700 transition group">
-            <div class="flex items-center gap-2 cursor-pointer" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit weight for ${item.date}">
-              <i class="fa-solid fa-calendar-day text-slate-500 group-hover:text-emerald-400 transition"></i>
-              <div>
-                <span class="text-slate-200 font-semibold font-mono">${item.date}</span>
-                <span class="text-[10px] text-slate-500 ml-1.5 hidden sm:inline">(${humanDate.split(',')[0]})</span>
+      if (container) {
+        container.innerHTML = weightHistory.map((item, index) => {
+          const humanDate = formatHistoricalDate(item.date);
+          const itemHeight = item.height || userHeight;
+          const itemBmi = calculateBMI(item.weight, itemHeight);
+          return `
+            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs hover:border-slate-700 transition group">
+              <div class="flex items-center gap-2 cursor-pointer" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit entry for ${item.date}">
+                <i class="fa-solid fa-calendar-day text-slate-500 group-hover:text-emerald-400 transition"></i>
+                <div>
+                  <span class="text-slate-200 font-semibold font-mono">${item.date}</span>
+                  <span class="text-[10px] text-slate-500 ml-1.5 hidden sm:inline">(${humanDate.split(',')[0]})</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 cursor-pointer" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit">
+                  <span class="font-bold text-emerald-400 font-mono">${item.weight} lbs</span>
+                  ${itemHeight ? `<span class="text-[10px] text-slate-400 font-mono hidden xs:inline">(${formatHeightShort(itemHeight)})</span>` : ''}
+                  ${itemBmi ? getBMIBadge(itemBmi) : ''}
+                </div>
+                <button onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" class="text-slate-500 hover:text-slate-300 p-1 transition" title="Edit entry">
+                  <i class="fa-solid fa-pen text-[10px]"></i>
+                </button>
+                <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 p-1 transition" title="Delete Entry">
+                  <i class="fa-solid fa-trash-can text-[10px]"></i>
+                </button>
               </div>
             </div>
-            <div class="flex items-center gap-3">
-              <span class="font-bold text-emerald-400 cursor-pointer font-mono" onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" title="Click to edit">${item.weight} lbs</span>
-              <button onclick="triggerHaptic('light'); openLogWeightModal('${item.date}')" class="text-slate-500 hover:text-slate-300 p-1 transition" title="Edit weight">
-                <i class="fa-solid fa-pen text-[10px]"></i>
-              </button>
-              <button onclick="triggerHaptic('light'); deleteWeightEntry(${index})" class="text-slate-600 hover:text-rose-400 p-1 transition" title="Delete Entry">
-                <i class="fa-solid fa-trash-can text-[10px]"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
+          `;
+        }).join('');
+      }
     }
 
     function deleteWeightEntry(index) {
@@ -242,18 +365,25 @@
         localStorage.setItem('showUp_user_weight', userWeight);
         const profileInput = document.getElementById('user-weight-input');
         if (profileInput) profileInput.value = userWeight;
+
+        if (weightHistory[0].height) {
+          userHeight = weightHistory[0].height;
+          localStorage.setItem('showUp_user_height', userHeight);
+          const profileHInput = document.getElementById('user-height-input');
+          if (profileHInput) profileHInput.value = userHeight;
+        }
       }
       localStorage.setItem('showUp_weight_history', JSON.stringify(weightHistory));
       renderWeightHistory();
       if (googleAccessToken) {
         syncToGoogleDrive(true);
       }
-      showToast("Weight entry removed", "info");
+      showToast("Entry removed", "info");
     }
 
     function openWeightTrendGraph() {
       if (weightHistory.length === 0) {
-        alert("Please log at least one body weight entry to view the trend graph.");
+        alert("Please log at least one body metric entry to view the trend graph.");
         return;
       }
       renderWeightTrendGraphSVG();
@@ -276,9 +406,12 @@
       const maxW = Math.max(...weights);
       const avgW = (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1);
 
-      document.getElementById('graph-min-weight').innerText = `${minW} lbs`;
-      document.getElementById('graph-max-weight').innerText = `${avgW} lbs`;
-      document.getElementById('graph-max-weight').innerText = `${maxW} lbs`;
+      const elMin = document.getElementById('graph-min-weight');
+      const elAvg = document.getElementById('graph-avg-weight');
+      const elMax = document.getElementById('graph-max-weight');
+      if (elMin) elMin.innerText = `${minW} lbs`;
+      if (elAvg) elAvg.innerText = `${avgW} lbs`;
+      if (elMax) elMax.innerText = `${maxW} lbs`;
 
       const width = 320;
       const height = 160;

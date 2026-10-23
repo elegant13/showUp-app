@@ -1893,6 +1893,31 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane hidden when weight selected");
   assert(!getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Weight subpane visible when weight selected");
 
+  // Test Progress sub-tab switching with 'body'
+  switchProgressSubTab('body');
+  assert(currentProgressSubTab === 'body', "currentProgressSubTab accepts 'body'");
+  assert(getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane hidden when body selected");
+  assert(!getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Body metrics subpane visible when body selected");
+
+  // Test Height & BMI calculation functions
+  assert(typeof formatHeightDisplay === 'function', "formatHeightDisplay is a defined function");
+  assert(formatHeightShort(70) === "5' 10\\"", "formatHeightShort correctly formats 70 inches");
+  assert(formatHeightShort(72) === "6' 0\\"", "formatHeightShort correctly formats 72 inches");
+  assert(calculateBMI(175, 70) === 25.1, "calculateBMI accurately computes BMI");
+
+  // Test Body Metric Logging with Weight and Height
+  getOrCreateElement('log-weight-date-input').value = '2026-10-23';
+  getOrCreateElement('log-weight-num-input').value = '175';
+  getOrCreateElement('log-height-num-input').value = '70';
+  saveLogWeightEntry();
+
+  assert(weightHistory.length > 0, "Weight history has logged entries");
+  assert(weightHistory[0].weight === 175, "Latest entry has weight 175 lbs");
+  assert(weightHistory[0].height === 70, "Latest entry has height 70 inches");
+  assert(userHeight === 70, "userHeight synchronized with logged entry");
+  assert(getOrCreateElement('cal-current-height-val').innerText.includes("5' 10"), "Current height element displays formatted height");
+  assert(getOrCreateElement('cal-current-bmi-val').innerText.includes("25.1"), "Current BMI element displays calculated BMI");
+
   switchProgressSubTab('workouts');
   assert(currentProgressSubTab === 'workouts', "currentProgressSubTab is updated to workouts");
   assert(!getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane visible when workouts selected");
