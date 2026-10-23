@@ -196,11 +196,12 @@
         }
       })();
 
+      if (banner) {
+        banner.classList.add('hidden');
+        banner.style.display = 'none';
+      }
+
       if (googleAccessToken || isAthleteLoggedIn || isDismissed) {
-        // Once athlete is signed in (Google, Email/Password) or manually dismissed, hide reminder banner
-        if (banner) {
-          banner.classList.add('hidden');
-        }
         if (settingsBadge) {
           settingsBadge.className = (googleAccessToken || isAthleteLoggedIn)
             ? "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
@@ -214,9 +215,6 @@
           gdrivePill.innerText = googleAccessToken ? "Connected" : "Offline";
         }
       } else {
-        if (banner) {
-          banner.classList.remove('hidden');
-        }
         if (bannerBadge) {
           bannerBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30";
           bannerBadge.innerText = "Sign-in Recommended";

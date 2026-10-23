@@ -2085,6 +2085,50 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(getOrCreateElement('cal-weight-target-badge').innerHTML.includes('Goal'), "cal-weight-target-badge renders goal information");
 });
 
+runSuite("24. Frictionless Sign-In UX & Decluttered Top Feed", () => {
+  // 1. Cloud backup banner kept hidden from main screen
+  const banner = getOrCreateElement('cloud-backup-reminder-banner');
+  assert(banner.classList.contains('hidden'), "Cloud backup banner has hidden class by default");
+  updateCloudBackupUI();
+  assert(banner.classList.contains('hidden'), "Cloud backup banner remains hidden after updateCloudBackupUI");
+
+  // 2. First set logged prompts for login when unauthenticated
+  assert(typeof isAthleteAuthenticated === 'function', "isAthleteAuthenticated is a defined function");
+  assert(typeof dismissFirstSetLoginPrompt === 'function', "dismissFirstSetLoginPrompt is a defined function");
+  
+  const savedProfile = localStorage.getItem('showUp_user_profile');
+  localStorage.removeItem('showUp_user_profile');
+  if (typeof googleAccessToken !== 'undefined') googleAccessToken = null;
+  assert(!isAthleteAuthenticated(), "Athlete is recognized as guest when profile is not set");
+
+  sessionStorage.removeItem('showUp_first_set_login_prompt_dismissed');
+  currentSessionSets = [
+    { id: 991, exerciseName: "Bench Press", implement: "Barbell", weight: 135, reps: 10, rpe: 8 }
+  ];
+  renderLoggedSets();
+  const listHtml = getOrCreateElement('logged-sets-list').innerHTML;
+  assert(listHtml.includes('first-set-login-prompt'), "first-set-login-prompt renders when first set is logged by guest athlete");
+  assert(listHtml.includes('First set in the books!'), "first-set-login-prompt contains encouraging copy");
+  assert(listHtml.includes('Sign In to Save'), "first-set-login-prompt contains Sign In to Save action");
+
+  // 3. Dismissal of first-set prompt
+  dismissFirstSetLoginPrompt();
+  assert(sessionStorage.getItem('showUp_first_set_login_prompt_dismissed') === 'true', "Dismissal saved in sessionStorage");
+  renderLoggedSets();
+  assert(!getOrCreateElement('logged-sets-list').innerHTML.includes('first-set-login-prompt'), "Prompt does not re-render once dismissed");
+
+  // 4. Authenticated athletes do not see first-set prompt
+  sessionStorage.removeItem('showUp_first_set_login_prompt_dismissed');
+  if (savedProfile) localStorage.setItem('showUp_user_profile', savedProfile);
+  assert(isAthleteAuthenticated(), "Athlete is authenticated when profile is present");
+  renderLoggedSets();
+  assert(!getOrCreateElement('logged-sets-list').innerHTML.includes('first-set-login-prompt'), "Authenticated athlete does not see guest prompt");
+
+  // 5. Clean up session sets
+  currentSessionSets = [];
+  renderLoggedSets();
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

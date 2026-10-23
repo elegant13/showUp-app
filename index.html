@@ -2104,8 +2104,8 @@
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
   <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
 
-    <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (MATERIAL DESIGN 3 STANDARDS) -->
-    <section id="cloud-backup-reminder-banner" class="m3-card rounded-3xl p-4 sm:p-5 border border-[var(--m3-primary)]/25 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-xl relative overflow-hidden transition-all">
+    <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (PRESERVED FOR DOM REFS, RESTORE/BACKUP ACCESSIBLE VIA SETTINGS) -->
+    <section id="cloud-backup-reminder-banner" class="hidden m3-card rounded-3xl p-4 sm:p-5 border border-[var(--m3-primary)]/25 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-xl relative overflow-hidden transition-all" style="display: none !important;">
       <!-- Background Ambient Glow Accent -->
       <div class="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
@@ -2869,6 +2869,26 @@
 
         <!-- TAB PANE 1: OVERVIEW & TIME BREAKDOWN -->
         <div id="tab-pane-summary-overview" class="space-y-4">
+          <!-- NON-INTRUSIVE SUMMARY SIGN-IN / CLOUD SYNC PROMPT -->
+          <div id="summary-cloud-save-prompt" class="hidden p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/50 via-slate-900/95 to-slate-950 border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg shadow-emerald-950/20">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-sm shrink-0">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <div>
+                <h4 class="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
+                  <span>Save Your Workout & Streaks</span>
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Offline Stored</span>
+                </h4>
+                <p class="text-[11px] text-slate-400 mt-0.5">Workout saved on this device. Sign in to sync across devices & backup to cloud.</p>
+              </div>
+            </div>
+            <button type="button" onclick="triggerHaptic('medium'); openAuthLoginModal('signin')" class="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-md shadow-emerald-500/20 transition active:scale-95 flex items-center justify-center gap-1.5 shrink-0">
+              <i class="fa-solid fa-right-to-bracket text-xs"></i>
+              <span>Sign In to Sync</span>
+            </button>
+          </div>
+
           <!-- WORKOUT TIME & REST BREAKDOWN (TOTAL TIME, REST TIME, ACTIVE TIME) -->
           <div class="space-y-3">
             <div class="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
@@ -3477,18 +3497,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023j"></script>
-  <script defer src="js/storage.js?v=20261023j"></script>
-  <script defer src="js/utils.js?v=20261023j"></script>
-  <script defer src="js/theme.js?v=20261023j"></script>
-  <script defer src="js/auth.js?v=20261023j"></script>
-  <script defer src="js/workout.js?v=20261023j"></script>
-  <script defer src="js/history.js?v=20261023j"></script>
-  <script defer src="js/progress.js?v=20261023j"></script>
-  <script defer src="js/squads.js?v=20261023j"></script>
-  <script defer src="js/map.js?v=20261023j"></script>
-  <script defer src="js/visitors.js?v=20261023j"></script>
-  <script defer src="js/backup.js?v=20261023j"></script>
-  <script defer src="js/main.js?v=20261023j"></script>
+  <script defer src="js/config.js?v=20261023k"></script>
+  <script defer src="js/storage.js?v=20261023k"></script>
+  <script defer src="js/utils.js?v=20261023k"></script>
+  <script defer src="js/theme.js?v=20261023k"></script>
+  <script defer src="js/auth.js?v=20261023k"></script>
+  <script defer src="js/workout.js?v=20261023k"></script>
+  <script defer src="js/history.js?v=20261023k"></script>
+  <script defer src="js/progress.js?v=20261023k"></script>
+  <script defer src="js/squads.js?v=20261023k"></script>
+  <script defer src="js/map.js?v=20261023k"></script>
+  <script defer src="js/visitors.js?v=20261023k"></script>
+  <script defer src="js/backup.js?v=20261023k"></script>
+  <script defer src="js/main.js?v=20261023k"></script>
 </body>
 </html>

@@ -5262,6 +5262,36 @@ if (typeof window !== 'undefined') {
       updateSetControlsUI();
     }
 
+    function isAthleteAuthenticated() {
+      if (typeof isCustomerLoggedIn === 'function' && isCustomerLoggedIn()) return true;
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken) return true;
+      return false;
+    }
+
+    function isFirstSetLoginPromptDismissed() {
+      try {
+        return sessionStorage.getItem('showUp_first_set_login_prompt_dismissed') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function dismissFirstSetLoginPrompt() {
+      try {
+        sessionStorage.setItem('showUp_first_set_login_prompt_dismissed', 'true');
+      } catch (e) {}
+      const el = document.getElementById('first-set-login-prompt');
+      if (el) {
+        el.style.transition = 'opacity 0.2s ease, max-height 0.25s ease';
+        el.style.opacity = '0';
+        el.style.maxHeight = '0px';
+        el.style.overflow = 'hidden';
+        setTimeout(() => {
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+        }, 250);
+      }
+    }
+
     function renderLoggedSets() {
       const container = document.getElementById('logged-sets-list');
       const badge = document.getElementById('set-count-badge');
@@ -5319,6 +5349,35 @@ if (typeof window !== 'undefined') {
           </div>
         `;
       });
+
+      // Contextual prompt: after set 1 is logged, invite guest athlete to save workout & sync
+      if (currentSessionSets.length >= 1 && !isAthleteAuthenticated() && !isFirstSetLoginPromptDismissed()) {
+        html += `
+          <div id="first-set-login-prompt" class="mt-3.5 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 via-slate-900/95 to-slate-900 border border-emerald-500/35 shadow-lg shadow-emerald-950/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-lg shrink-0 shadow-sm">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs sm:text-sm font-black text-slate-100">First set in the books! 🎉</span>
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Auto-Save</span>
+                </div>
+                <p class="text-[11px] sm:text-xs text-slate-300/90 mt-0.5">Sign in to save your workout and sync your streaks to the cloud.</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0 pt-1 sm:pt-0">
+              <button type="button" onclick="triggerHaptic('light'); dismissFirstSetLoginPrompt()" class="text-slate-400 hover:text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl hover:bg-slate-800/80 transition">
+                Later
+              </button>
+              <button type="button" onclick="triggerHaptic('medium'); openAuthLoginModal('signin')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-md shadow-emerald-500/20 transition active:scale-95 flex items-center gap-1.5">
+                <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                <span>Sign In to Save</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }
 
       container.innerHTML = html;
       updateSetControlsUI();
@@ -5947,6 +6006,14 @@ if (typeof window !== 'undefined') {
       if (typeof switchSummaryTab === 'function') {
         switchSummaryTab('overview');
       }
+      const summaryPrompt = document.getElementById('summary-cloud-save-prompt');
+      if (summaryPrompt) {
+        if (!isAthleteAuthenticated()) {
+          summaryPrompt.classList.remove('hidden');
+        } else {
+          summaryPrompt.classList.add('hidden');
+        }
+      }
       document.getElementById('workout-summary-card').scrollIntoView({ behavior: 'smooth' });
 
       currentSessionSets = [];
@@ -6149,6 +6216,9 @@ if (typeof window !== 'undefined') {
       window.scrollExerciseInputIntoView = scrollExerciseInputIntoView;
       window.handleExerciseInputFocus = handleExerciseInputFocus;
       window.handleExerciseInputKeydown = handleExerciseInputKeydown;
+      window.isAthleteAuthenticated = isAthleteAuthenticated;
+      window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
+      window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
     }
 
 /* ==========================================================================
@@ -13933,11 +14003,12 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         }
       })();
 
+      if (banner) {
+        banner.classList.add('hidden');
+        banner.style.display = 'none';
+      }
+
       if (googleAccessToken || isAthleteLoggedIn || isDismissed) {
-        // Once athlete is signed in (Google, Email/Password) or manually dismissed, hide reminder banner
-        if (banner) {
-          banner.classList.add('hidden');
-        }
         if (settingsBadge) {
           settingsBadge.className = (googleAccessToken || isAthleteLoggedIn)
             ? "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
@@ -13951,9 +14022,6 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           gdrivePill.innerText = googleAccessToken ? "Connected" : "Offline";
         }
       } else {
-        if (banner) {
-          banner.classList.remove('hidden');
-        }
         if (bannerBadge) {
           bannerBadge.className = "text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30";
           bannerBadge.innerText = "Sign-in Recommended";
@@ -16740,6 +16808,50 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   savePhysicalProfile();
   assert(localStorage.getItem('showUp_user_target_weight') === "170", "savePhysicalProfile stores target weight in localStorage");
   assert(getOrCreateElement('cal-weight-target-badge').innerHTML.includes('Goal'), "cal-weight-target-badge renders goal information");
+});
+
+runSuite("24. Frictionless Sign-In UX & Decluttered Top Feed", () => {
+  // 1. Cloud backup banner kept hidden from main screen
+  const banner = getOrCreateElement('cloud-backup-reminder-banner');
+  assert(banner.classList.contains('hidden'), "Cloud backup banner has hidden class by default");
+  updateCloudBackupUI();
+  assert(banner.classList.contains('hidden'), "Cloud backup banner remains hidden after updateCloudBackupUI");
+
+  // 2. First set logged prompts for login when unauthenticated
+  assert(typeof isAthleteAuthenticated === 'function', "isAthleteAuthenticated is a defined function");
+  assert(typeof dismissFirstSetLoginPrompt === 'function', "dismissFirstSetLoginPrompt is a defined function");
+  
+  const savedProfile = localStorage.getItem('showUp_user_profile');
+  localStorage.removeItem('showUp_user_profile');
+  if (typeof googleAccessToken !== 'undefined') googleAccessToken = null;
+  assert(!isAthleteAuthenticated(), "Athlete is recognized as guest when profile is not set");
+
+  sessionStorage.removeItem('showUp_first_set_login_prompt_dismissed');
+  currentSessionSets = [
+    { id: 991, exerciseName: "Bench Press", implement: "Barbell", weight: 135, reps: 10, rpe: 8 }
+  ];
+  renderLoggedSets();
+  const listHtml = getOrCreateElement('logged-sets-list').innerHTML;
+  assert(listHtml.includes('first-set-login-prompt'), "first-set-login-prompt renders when first set is logged by guest athlete");
+  assert(listHtml.includes('First set in the books!'), "first-set-login-prompt contains encouraging copy");
+  assert(listHtml.includes('Sign In to Save'), "first-set-login-prompt contains Sign In to Save action");
+
+  // 3. Dismissal of first-set prompt
+  dismissFirstSetLoginPrompt();
+  assert(sessionStorage.getItem('showUp_first_set_login_prompt_dismissed') === 'true', "Dismissal saved in sessionStorage");
+  renderLoggedSets();
+  assert(!getOrCreateElement('logged-sets-list').innerHTML.includes('first-set-login-prompt'), "Prompt does not re-render once dismissed");
+
+  // 4. Authenticated athletes do not see first-set prompt
+  sessionStorage.removeItem('showUp_first_set_login_prompt_dismissed');
+  if (savedProfile) localStorage.setItem('showUp_user_profile', savedProfile);
+  assert(isAthleteAuthenticated(), "Athlete is authenticated when profile is present");
+  renderLoggedSets();
+  assert(!getOrCreateElement('logged-sets-list').innerHTML.includes('first-set-login-prompt'), "Authenticated athlete does not see guest prompt");
+
+  // 5. Clean up session sets
+  currentSessionSets = [];
+  renderLoggedSets();
 });
 
 print("\n============================================================");
