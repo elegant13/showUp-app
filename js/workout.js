@@ -562,20 +562,20 @@
 
       if (iconEl && toggleBtn) {
         if (workoutTimerState === 'running') {
-          iconEl.className = "fa-solid fa-pause text-amber-400";
+          iconEl.className = "fa-solid fa-pause text-amber-400 text-xs";
           toggleBtn.title = "Pause Session Timer";
-          toggleBtn.className = "w-6 h-6 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 flex items-center justify-center text-[10px] transition";
-          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block";
+          toggleBtn.className = "px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 flex items-center justify-center text-xs font-black gap-2 transition active:scale-95 border border-amber-500/30 shadow";
+          if (pulseEl) pulseEl.className = "w-3.5 h-3.5 rounded-full bg-emerald-400 animate-ping inline-block";
         } else if (workoutTimerState === 'paused') {
-          iconEl.className = "fa-solid fa-play text-emerald-400";
+          iconEl.className = "fa-solid fa-play text-emerald-400 text-xs";
           toggleBtn.title = "Resume Session Timer";
-          toggleBtn.className = "w-6 h-6 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center text-[10px] transition";
-          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-amber-400 inline-block";
+          toggleBtn.className = "px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 flex items-center justify-center text-xs font-black gap-2 transition active:scale-95 border border-emerald-500/30 shadow";
+          if (pulseEl) pulseEl.className = "w-3.5 h-3.5 rounded-full bg-amber-400 inline-block";
         } else {
-          iconEl.className = "fa-solid fa-play text-slate-400";
+          iconEl.className = "fa-solid fa-play text-slate-200 text-xs";
           toggleBtn.title = "Start Session Timer";
-          toggleBtn.className = "w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 flex items-center justify-center text-[10px] transition";
-          if (pulseEl) pulseEl.className = "w-2 h-2 rounded-full bg-slate-600 inline-block";
+          toggleBtn.className = "px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs font-black gap-2 transition active:scale-95 border border-slate-700 shadow";
+          if (pulseEl) pulseEl.className = "w-3.5 h-3.5 rounded-full bg-slate-600 inline-block";
         }
       }
     }
@@ -728,16 +728,16 @@
 
       if (startBtn && startLabel && startIcon) {
         if (isSetInProgress) {
-          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-amber-500/50 bg-amber-500/20 text-amber-300 active:scale-[0.99] transition flex items-center justify-center gap-2 animate-pulse";
-          startIcon.className = "fa-solid fa-stopwatch text-amber-400";
+          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-amber-500/50 bg-amber-500/20 text-amber-300 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3 animate-pulse";
+          startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-lg";
           startLabel.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
         } else if (isRestTimerRunning) {
-          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400 active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-emerald-500/20";
-          startIcon.className = "fa-solid fa-play text-slate-950";
+          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3 shadow-emerald-500/25";
+          startIcon.className = "fa-solid fa-play text-slate-950 text-lg";
           startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
         } else {
-          startBtn.className = "font-bold py-3 px-4 rounded-2xl shadow-lg border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 active:scale-[0.99] transition flex items-center justify-center gap-2";
-          startIcon.className = "fa-solid fa-play";
+          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3";
+          startIcon.className = "fa-solid fa-play text-lg";
           startLabel.innerText = `Start Set ${nextSetNum}`;
         }
       }
@@ -877,44 +877,43 @@
       if (!container) return;
 
       if (currentSessionSets.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
+        container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs sm:text-sm italic font-medium">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
         updateSetControlsUI();
         return;
       }
 
+      // Descending order: latest to oldest sets
+      const reversedSets = [...currentSessionSets].reverse();
       let html = '';
-      currentSessionSets.forEach((s, idx) => {
-        // Requirement 3: Rest period recorded between prior set and newly started set is visualized
-        if (s.restPeriod && s.restPeriod > 0) {
-          html += `
-            <div class="flex items-center justify-center gap-2 py-1 text-[11px] text-slate-400 font-mono">
-              <div class="h-px bg-slate-800 flex-1"></div>
-              <span class="bg-slate-900 border border-slate-800 px-2.5 py-0.5 rounded-full text-emerald-400 flex items-center gap-1.5 shadow-sm">
-                <i class="fa-solid fa-hourglass-half text-[10px] text-emerald-400"></i> Rest: ${formatDurationSecs(s.restPeriod)}
-              </span>
-              <div class="h-px bg-slate-800 flex-1"></div>
-            </div>
-          `;
-        }
+      reversedSets.forEach((s, revIdx) => {
+        const setNumber = currentSessionSets.length - revIdx;
+        const isLatest = revIdx === 0;
 
         html += `
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-            <div>
-              <div class="text-sm font-bold text-slate-200">${s.exerciseName}</div>
-              <div class="text-xs text-slate-400 gap-2 flex items-center flex-wrap mt-0.5">
-                <span class="bg-slate-800 text-emerald-400 px-1.5 py-0.5 rounded-lg font-semibold">${s.implement}</span>
-                ${s.implement === "Running" ? `<span>${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
-                  s.implement === "Row Erg" ? `<span>${s.ergDistance}m | ${s.ergTime}</span>` :
-                  s.implement === "Swimming" ? `<span>${s.swimDistance} yds | ${s.swimTime}</span>` :
-                  ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span>${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
-                  `<span>${s.weight} lbs × ${s.reps} reps</span>`}
-                <span class="text-slate-500">RPE ${s.rpe}</span>
-                ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-1.5 py-0.5 rounded-lg font-mono text-[10px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
+          <div class="bg-slate-950 p-3.5 sm:p-4 rounded-2xl border ${isLatest ? 'border-emerald-500/50 bg-emerald-950/20 shadow-emerald-500/10' : 'border-slate-800'} shadow-md flex items-center justify-between gap-3 transition-all">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs font-black uppercase ${isLatest ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-500/40' : 'text-slate-400 bg-slate-900 border border-slate-800'} px-2.5 py-0.5 rounded-lg">Set #${setNumber}</span>
+                ${isLatest ? '<span class="text-[10px] font-black uppercase tracking-wider text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded">Latest Set</span>' : ''}
+                <div class="text-sm sm:text-base font-black text-slate-100 truncate">${s.exerciseName}</div>
+              </div>
+
+              <div class="text-xs text-slate-300 gap-2 flex items-center flex-wrap mt-1.5">
+                <span class="bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-lg font-bold">${s.implement}</span>
+                ${s.implement === "Running" ? `<span class="font-bold text-slate-200">${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
+                  s.implement === "Row Erg" ? `<span class="font-bold text-slate-200">${s.ergDistance}m | ${s.ergTime}</span>` :
+                  s.implement === "Swimming" ? `<span class="font-bold text-slate-200">${s.swimDistance} yds | ${s.swimTime}</span>` :
+                  ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span class="font-bold text-slate-200">${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
+                  `<span class="font-black text-emerald-300 text-sm">${s.weight} lbs × ${s.reps} reps</span>`}
+                <span class="text-slate-400 font-semibold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">RPE ${s.rpe}</span>
+                ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
+                ${s.restPeriod && s.restPeriod > 0 ? `<span class="bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-400"></i>Rest: ${formatDurationSecs(s.restPeriod)}</span>` : ''}
               </div>
             </div>
-            <div class="flex items-center gap-1">
-              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-600 hover:text-rose-400 p-2 transition" title="Delete Set">
-                <i class="fa-solid fa-trash-can text-sm"></i>
+
+            <div class="flex items-center gap-1 shrink-0">
+              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2.5 rounded-xl hover:bg-slate-900 transition" title="Delete Set">
+                <i class="fa-solid fa-trash-can text-base"></i>
               </button>
             </div>
           </div>
