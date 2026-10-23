@@ -132,6 +132,9 @@ function getOrCreateElement(id, tag = 'div') {
       focus: () => {},
       blur: () => {},
       scrollIntoView: () => {},
+      getBoundingClientRect: () => ({ top: 100, bottom: 150, left: 10, right: 300, width: 290, height: 50 }),
+      closest: (sel) => null,
+      contains: (target) => false,
       getContext: () => ({
         clearRect: () => {},
         beginPath: () => {},
@@ -183,6 +186,8 @@ globalThis.window.setInterval = globalThis.setInterval;
 globalThis.window.clearInterval = globalThis.clearInterval;
 globalThis.requestAnimationFrame = (fn) => 1;
 globalThis.cancelAnimationFrame = (id) => {};
+globalThis.scrollTo = (opts) => {};
+globalThis.window.scrollTo = globalThis.scrollTo;
 
 globalThis.document = {
   getElementById: (id) => getOrCreateElement(id),
@@ -1886,6 +1891,45 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(impSelect.value === "Kettlebell", "handleExerciseInput automatically infers and sets Kettlebell implement for SH KB Squat");
   assert(musSelect.value === "Quads", "handleExerciseInput automatically sets primary muscle to Quads for SH KB Squat");
   assert(autoImplement.innerText === "Kettlebell", "Auto implement indicator displays Kettlebell");
+
+  // Dynamic Exercise Suggestions & Viewport Scrolling Tests
+  assert(typeof filterExerciseCatalog === 'function', "filterExerciseCatalog is a defined function");
+  assert(typeof updateExerciseSuggestions === 'function', "updateExerciseSuggestions is a defined function");
+  assert(typeof selectExerciseSuggestion === 'function', "selectExerciseSuggestion is a defined function");
+  assert(typeof scrollExerciseInputIntoView === 'function', "scrollExerciseInputIntoView is a defined function");
+
+  // Filtering on "swings"
+  const swingsMatches = filterExerciseCatalog("swings");
+  assert(swingsMatches.length >= 2, "filterExerciseCatalog('swings') returns at least 2 matches (" + swingsMatches.length + " found)");
+  assert(swingsMatches.some(e => e.name === "KB Swings"), "Matches contain KB Swings");
+  assert(swingsMatches.some(e => e.name === "SH KB Swings"), "Matches contain SH KB Swings");
+
+  // Filtering on "sh kb"
+  const shMatches = filterExerciseCatalog("sh kb");
+  assert(shMatches.length >= 5, "filterExerciseCatalog('sh kb') returns matching single-hand KB exercises");
+  assert(shMatches.some(e => e.name === "SH KB Swings"), "sh kb matches include SH KB Swings");
+
+  // Test dynamic dropdown updates
+  const suggestionsDropdown = getOrCreateElement('exercise-suggestions-dropdown');
+  updateExerciseSuggestions("swings", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Suggestions dropdown is visible when typing query");
+  assert(suggestionsDropdown.innerHTML.includes("KB Swings"), "Suggestions dropdown contains matching exercise names");
+
+  // Test selection from dropdown
+  selectExerciseSuggestion("KB Swings", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(exInput.value === "KB Swings", "Exercise name input populated with selected exercise name");
+  assert(impSelect.value === "Kettlebell", "Selected exercise automatically inferred Kettlebell implement");
+  assert(musSelect.value === "Hamstrings/Glutes", "Selected exercise automatically set primary muscle to Hamstrings/Glutes");
+  assert(suggestionsDropdown.classList.contains('hidden'), "Suggestions dropdown closed upon selection");
+
+  // Test scrollExerciseInputIntoView executes smoothly
+  let scrollException = null;
+  try {
+    scrollExerciseInputIntoView(exInput);
+  } catch (e) {
+    scrollException = e;
+  }
+  assert(scrollException === null, "scrollExerciseInputIntoView executed smoothly without exception");
 
   // 5. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];

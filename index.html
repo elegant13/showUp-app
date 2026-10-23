@@ -424,11 +424,12 @@
         <!-- Exercise Name -->
         <div class="space-y-1.5">
           <label class="block text-xs font-black text-slate-300 uppercase tracking-wider">Exercise Name</label>
-          <div class="relative">
+          <div class="relative" id="edit-exercise-autocomplete-wrapper">
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
               <i class="fa-solid fa-dumbbell text-xs"></i>
             </div>
-            <input type="text" id="edit-active-set-exercise" placeholder="e.g. Bench Press" list="exercise-catalog-list" oninput="handleEditActiveSetExerciseInput(this.value)" class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm font-bold text-slate-100 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <input type="text" id="edit-active-set-exercise" placeholder="e.g. Bench Press" list="exercise-catalog-list" oninput="handleEditActiveSetExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'edit-exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'edit-active-set-exercise', 'edit-exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm font-bold text-slate-100 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <div id="edit-exercise-suggestions-dropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-900/98 backdrop-blur-xl border border-slate-700/90 rounded-xl shadow-2xl overflow-hidden max-h-56 overflow-y-auto divide-y divide-slate-800/70" role="listbox"></div>
           </div>
         </div>
 
@@ -2395,12 +2396,15 @@
             <span class="text-xs text-slate-400 font-semibold">Type or pick quick chip below</span>
           </div>
 
-          <div class="relative">
+          <div class="relative" id="exercise-autocomplete-wrapper">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
               <i class="fa-solid fa-dumbbell text-base"></i>
             </div>
-            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl pl-11 pr-4 py-3 sm:py-3.5 text-base sm:text-lg font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." list="exercise-catalog-list" oninput="handleExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'exercise-name-input', 'exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl pl-11 pr-4 py-3 sm:py-3.5 text-base sm:text-lg font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
             <datalist id="exercise-catalog-list"></datalist>
+
+            <!-- DYNAMIC EXERCISE SUGGESTIONS DROPDOWN -->
+            <div id="exercise-suggestions-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 z-50 bg-slate-900/98 backdrop-blur-xl border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto divide-y divide-slate-800/70" role="listbox"></div>
           </div>
 
           <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL -->
@@ -3442,18 +3446,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023h"></script>
-  <script defer src="js/storage.js?v=20261023h"></script>
-  <script defer src="js/utils.js?v=20261023h"></script>
-  <script defer src="js/theme.js?v=20261023h"></script>
-  <script defer src="js/auth.js?v=20261023h"></script>
-  <script defer src="js/workout.js?v=20261023h"></script>
-  <script defer src="js/history.js?v=20261023h"></script>
-  <script defer src="js/progress.js?v=20261023h"></script>
-  <script defer src="js/squads.js?v=20261023h"></script>
-  <script defer src="js/map.js?v=20261023h"></script>
-  <script defer src="js/visitors.js?v=20261023h"></script>
-  <script defer src="js/backup.js?v=20261023h"></script>
-  <script defer src="js/main.js?v=20261023h"></script>
+  <script defer src="js/config.js?v=20261023i"></script>
+  <script defer src="js/storage.js?v=20261023i"></script>
+  <script defer src="js/utils.js?v=20261023i"></script>
+  <script defer src="js/theme.js?v=20261023i"></script>
+  <script defer src="js/auth.js?v=20261023i"></script>
+  <script defer src="js/workout.js?v=20261023i"></script>
+  <script defer src="js/history.js?v=20261023i"></script>
+  <script defer src="js/progress.js?v=20261023i"></script>
+  <script defer src="js/squads.js?v=20261023i"></script>
+  <script defer src="js/map.js?v=20261023i"></script>
+  <script defer src="js/visitors.js?v=20261023i"></script>
+  <script defer src="js/backup.js?v=20261023i"></script>
+  <script defer src="js/main.js?v=20261023i"></script>
 </body>
 </html>

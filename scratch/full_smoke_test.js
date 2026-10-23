@@ -49,6 +49,9 @@ function getOrCreateElement(id, tag = 'div') {
       focus: () => {},
       blur: () => {},
       scrollIntoView: () => {},
+      getBoundingClientRect: () => ({ top: 100, bottom: 150, left: 10, right: 300, width: 290, height: 50 }),
+      closest: (sel) => null,
+      contains: (target) => false,
       getContext: () => ({
         clearRect: () => {},
         beginPath: () => {},
@@ -100,6 +103,8 @@ globalThis.window.setInterval = globalThis.setInterval;
 globalThis.window.clearInterval = globalThis.clearInterval;
 globalThis.requestAnimationFrame = (fn) => 1;
 globalThis.cancelAnimationFrame = (id) => {};
+globalThis.scrollTo = (opts) => {};
+globalThis.window.scrollTo = globalThis.scrollTo;
 
 globalThis.document = {
   getElementById: (id) => getOrCreateElement(id),
@@ -4088,36 +4093,345 @@ if (typeof window !== 'undefined') {
     // ================= HISTORICAL WEIGHT LOGGING & INTUITIVE DATE PICKER =================
 
 
-    function initCatalog() {
-      const datalist = document.getElementById('exercise-catalog-list');
-      if (!datalist) return;
-      datalist.innerHTML = '';
-      const optionValues = new Set();
+    let isScrollingExerciseInput = false;
+    let activeSuggestionIndex = -1;
 
-      defaultCatalog.forEach(ex => {
-        if (ex.name) optionValues.add(ex.name);
+    function filterExerciseCatalog(query) {
+      if (!query || typeof query !== 'string') return [];
+      const clean = query.trim().toLowerCase();
+      if (!clean) return [];
 
-        if (typeof expandExerciseAbbreviations === 'function') {
-          const expanded = expandExerciseAbbreviations(ex.name);
-          if (expanded) optionValues.add(expanded);
+      const cleanAlphanum = clean.replace(/[^a-z0-9]/g, '');
+
+      const catalog = (typeof defaultCatalog !== 'undefined' && Array.isArray(defaultCatalog)) 
+        ? defaultCatalog 
+        : ((typeof window !== 'undefined' && window.defaultCatalog) || []);
+
+      const results = [];
+      const seen = new Set();
+
+      catalog.forEach(ex => {
+        if (!ex || !ex.name) return;
+        const name = ex.name;
+        const nameLower = name.toLowerCase();
+        const nameAlphanum = nameLower.replace(/[^a-z0-9]/g, '');
+
+        let priority = -1;
+
+        if (nameLower === clean) {
+          priority = 0; // exact match
+        } else if (nameLower.startsWith(clean)) {
+          priority = 1; // prefix match (e.g. "kb" -> "KB Swings")
+        } else {
+          // Word boundary match: any word starts with query
+          const words = nameLower.split(/[\s/()\-]+/);
+          const wordMatch = words.some(w => w.startsWith(clean));
+          if (wordMatch) {
+            priority = 2; // word start match (e.g. "swings" -> "KB Swings", "SH KB Swings")
+          } else if (clean.length >= 3 && nameLower.includes(clean)) {
+            priority = 3; // substring match
+          } else if (clean.length >= 3 && cleanAlphanum.length >= 3 && nameAlphanum.includes(cleanAlphanum)) {
+            priority = 4; // normalized match
+          } else {
+            // Abbreviation / expansion check
+            const expanded = (typeof expandExerciseAbbreviations === 'function') 
+              ? expandExerciseAbbreviations(name).toLowerCase() 
+              : '';
+            const abbr = (typeof abbreviateExerciseName === 'function') 
+              ? abbreviateExerciseName(name).toLowerCase() 
+              : '';
+            if (expanded.includes(clean) || abbr.includes(clean) || (cleanAlphanum.length >= 3 && (expanded.replace(/[^a-z0-9]/g, '').includes(cleanAlphanum) || abbr.replace(/[^a-z0-9]/g, '').includes(cleanAlphanum)))) {
+              priority = 5;
+            }
+          }
         }
 
-        if (typeof abbreviateExerciseName === 'function') {
-          const abbr = abbreviateExerciseName(ex.name);
-          if (abbr) optionValues.add(abbr);
+        if (priority >= 0 && !seen.has(name)) {
+          seen.add(name);
+          results.push({
+            exercise: ex,
+            priority
+          });
         }
       });
 
-      Array.from(optionValues)
-        .sort((a, b) => a.localeCompare(b))
-        .forEach(val => {
-          const option = document.createElement('option');
-          option.value = val;
-          datalist.appendChild(option);
+      // Sort by priority first, then alphabetically by exercise name
+      results.sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return a.exercise.name.localeCompare(b.exercise.name);
+      });
+
+      return results.map(r => r.exercise);
+    }
+
+    function highlightExerciseMatch(text, query) {
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+      if (!text || !query) return safe(text || '');
+      const cleanQ = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      if (!cleanQ) return safe(text);
+      try {
+        const regex = new RegExp('(' + cleanQ + ')', 'gi');
+        const parts = text.split(regex);
+        return parts.map(part => {
+          if (part.toLowerCase() === query.trim().toLowerCase()) {
+            return `<span class="text-emerald-400 font-black underline decoration-emerald-500/60">${safe(part)}</span>`;
+          }
+          return safe(part);
+        }).join('');
+      } catch (e) {
+        return safe(text);
+      }
+    }
+
+    function scrollExerciseInputIntoView(inputEl) {
+      if (!inputEl) return;
+      
+      const modalParent = (typeof inputEl.closest === 'function') ? inputEl.closest('.overflow-y-auto') : null;
+      if (modalParent && modalParent !== (typeof document !== 'undefined' ? document.documentElement : null) && modalParent !== (typeof document !== 'undefined' ? document.body : null)) {
+        if (typeof inputEl.scrollIntoView === 'function') {
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        return;
+      }
+
+      if (isScrollingExerciseInput) return;
+
+      try {
+        const rect = (typeof inputEl.getBoundingClientRect === 'function') ? inputEl.getBoundingClientRect() : null;
+        if (!rect) {
+          if (typeof inputEl.scrollIntoView === 'function') inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+
+        const header = (typeof document !== 'undefined' && document.querySelector) ? document.querySelector('header') : null;
+        const headerHeight = (header && header.offsetHeight) ? header.offsetHeight : 64;
+        const vh = (typeof window !== 'undefined' && window.innerHeight) ? window.innerHeight : 800;
+
+        const desiredTop = headerHeight + 16;
+
+        if (rect.top < desiredTop - 8 || rect.top > vh * 0.35) {
+          isScrollingExerciseInput = true;
+          const currentScrollY = (typeof window !== 'undefined' ? (window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0)) : 0) || 0;
+          const targetScrollY = Math.max(0, currentScrollY + rect.top - desiredTop);
+          
+          if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+            window.scrollTo({
+              top: targetScrollY,
+              behavior: 'smooth'
+            });
+          }
+          setTimeout(() => {
+            isScrollingExerciseInput = false;
+          }, 250);
+        }
+      } catch (err) {
+        if (typeof inputEl.scrollIntoView === 'function') {
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    }
+
+    function updateExerciseSuggestions(query, inputId, dropdownId) {
+      const dropdown = document.getElementById(dropdownId);
+      const inputEl = document.getElementById(inputId);
+      if (!dropdown || !inputEl) return;
+
+      const trimmed = (query || '').trim();
+      if (!trimmed) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+        activeSuggestionIndex = -1;
+        return;
+      }
+
+      const matches = filterExerciseCatalog(trimmed);
+      activeSuggestionIndex = -1;
+
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+
+      if (matches.length === 0) {
+        dropdown.innerHTML = `
+          <div class="px-4 py-3 text-xs text-slate-400 font-medium flex items-center justify-between">
+            <span>No catalog matches for "<b class="text-slate-200">${safe(trimmed)}</b>"</span>
+            <span class="text-[10px] text-slate-500 italic">Custom exercise</span>
+          </div>
+        `;
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      let html = '';
+      matches.forEach((ex) => {
+        const displayName = highlightExerciseMatch(ex.name, trimmed);
+        const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
+        html += `
+          <div class="exercise-suggestion-item px-3.5 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer hover:bg-emerald-500/15 active:bg-emerald-500/25 transition select-none group"
+               role="option"
+               data-exercise-name="${escapedNameAttr}"
+               onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
+            <div class="flex items-center gap-2.5 min-w-0 pr-2">
+              <div class="w-7 h-7 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition shrink-0">
+                <i class="fa-solid fa-dumbbell text-xs"></i>
+              </div>
+              <div class="truncate">
+                <span class="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition block truncate">${displayName}</span>
+                <span class="text-[10px] text-slate-400 font-medium sm:hidden">${safe(ex.implement || 'General')}</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/80 hidden sm:inline-block">${safe(ex.implement || 'General')}</span>
+              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">${safe(ex.muscle || 'Full Body')}</span>
+            </div>
+          </div>
+        `;
+      });
+
+      dropdown.innerHTML = html;
+      dropdown.classList.remove('hidden');
+    }
+
+    function selectExerciseSuggestion(exerciseName, inputId, dropdownId) {
+      const inputEl = document.getElementById(inputId);
+      if (!inputEl) return;
+
+      const cleanName = typeof exerciseName === 'string'
+        ? exerciseName.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+        : exerciseName;
+
+      inputEl.value = cleanName;
+
+      if (inputId === 'exercise-name-input') {
+        if (typeof handleExerciseInput === 'function') {
+          handleExerciseInput(cleanName);
+        }
+      } else if (inputId === 'edit-active-set-exercise') {
+        if (typeof handleEditActiveSetExerciseInput === 'function') {
+          handleEditActiveSetExerciseInput(cleanName);
+        }
+      }
+
+      closeExerciseSuggestions(dropdownId);
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+
+      scrollExerciseInputIntoView(inputEl);
+    }
+
+    function closeExerciseSuggestions(dropdownId) {
+      const targetDropdowns = dropdownId 
+        ? [document.getElementById(dropdownId)] 
+        : [document.getElementById('exercise-suggestions-dropdown'), document.getElementById('edit-exercise-suggestions-dropdown')];
+
+      targetDropdowns.forEach(dd => {
+        if (dd) {
+          dd.classList.add('hidden');
+          dd.innerHTML = '';
+        }
+      });
+      activeSuggestionIndex = -1;
+    }
+
+    function handleExerciseInputFocus(inputEl, dropdownId) {
+      if (!inputEl) return;
+      scrollExerciseInputIntoView(inputEl);
+      if (inputEl.value && inputEl.value.trim()) {
+        updateExerciseSuggestions(inputEl.value, inputEl.id, dropdownId);
+      }
+    }
+
+    function handleExerciseInputKeydown(e, inputId, dropdownId) {
+      const dropdown = document.getElementById(dropdownId);
+      if (!dropdown || dropdown.classList.contains('hidden')) return;
+
+      const items = dropdown.querySelectorAll ? dropdown.querySelectorAll('.exercise-suggestion-item') : [];
+      if (!items || items.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeSuggestionIndex = (activeSuggestionIndex + 1) % items.length;
+        updateHighlightedSuggestion(items, activeSuggestionIndex);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeSuggestionIndex = (activeSuggestionIndex - 1 + items.length) % items.length;
+        updateHighlightedSuggestion(items, activeSuggestionIndex);
+      } else if (e.key === 'Enter') {
+        if (activeSuggestionIndex >= 0 && activeSuggestionIndex < items.length) {
+          e.preventDefault();
+          const targetItem = items[activeSuggestionIndex];
+          const selectedName = targetItem.getAttribute ? targetItem.getAttribute('data-exercise-name') : null;
+          if (selectedName) {
+            selectExerciseSuggestion(selectedName, inputId, dropdownId);
+          }
+        }
+      } else if (e.key === 'Escape') {
+        closeExerciseSuggestions(dropdownId);
+      }
+    }
+
+    function updateHighlightedSuggestion(items, index) {
+      items.forEach((item, i) => {
+        if (i === index) {
+          item.classList.add('bg-emerald-500/25');
+          if (typeof item.scrollIntoView === 'function') {
+            item.scrollIntoView({ block: 'nearest' });
+          }
+        } else {
+          item.classList.remove('bg-emerald-500/25');
+        }
+      });
+    }
+
+    function initCatalog() {
+      const datalist = document.getElementById('exercise-catalog-list');
+      if (datalist) {
+        datalist.innerHTML = '';
+        const optionValues = new Set();
+
+        defaultCatalog.forEach(ex => {
+          if (ex.name) optionValues.add(ex.name);
+
+          if (typeof expandExerciseAbbreviations === 'function') {
+            const expanded = expandExerciseAbbreviations(ex.name);
+            if (expanded) optionValues.add(expanded);
+          }
+
+          if (typeof abbreviateExerciseName === 'function') {
+            const abbr = abbreviateExerciseName(ex.name);
+            if (abbr) optionValues.add(abbr);
+          }
         });
+
+        Array.from(optionValues)
+          .sort((a, b) => a.localeCompare(b))
+          .forEach(val => {
+            const option = document.createElement('option');
+            option.value = val;
+            datalist.appendChild(option);
+          });
+      }
+
+      // Wire click-outside dismisser
+      if (typeof document !== 'undefined' && !document._hasExerciseSuggestionListener) {
+        document._hasExerciseSuggestionListener = true;
+        document.addEventListener('click', (e) => {
+          const mainWrapper = document.getElementById('exercise-autocomplete-wrapper');
+          if (mainWrapper && typeof mainWrapper.contains === 'function' && !mainWrapper.contains(e.target)) {
+            closeExerciseSuggestions('exercise-suggestions-dropdown');
+          }
+          const editWrapper = document.getElementById('edit-exercise-autocomplete-wrapper');
+          if (editWrapper && typeof editWrapper.contains === 'function' && !editWrapper.contains(e.target)) {
+            closeExerciseSuggestions('edit-exercise-suggestions-dropdown');
+          }
+        });
+      }
     }
 
     function handleExerciseInput(val) {
+      const inputEl = document.getElementById('exercise-name-input');
+      if (inputEl) {
+        scrollExerciseInputIntoView(inputEl);
+        updateExerciseSuggestions(val, 'exercise-name-input', 'exercise-suggestions-dropdown');
+      }
+
       if (typeof resolveExerciseMuscles === 'function') {
         const profile = resolveExerciseMuscles(val);
         const impSelect = document.getElementById('implement-select');
@@ -4945,6 +5259,11 @@ if (typeof window !== 'undefined') {
     }
 
     function handleEditActiveSetExerciseInput(val) {
+      const inputEl = document.getElementById('edit-active-set-exercise');
+      if (inputEl) {
+        scrollExerciseInputIntoView(inputEl);
+        updateExerciseSuggestions(val, 'edit-active-set-exercise', 'edit-exercise-suggestions-dropdown');
+      }
       if (!val) return;
       if (typeof resolveExerciseMuscles === 'function') {
         const profile = resolveExerciseMuscles(val);
@@ -5629,6 +5948,16 @@ if (typeof window !== 'undefined') {
       text += `\n_Compound your progress with showUp_`;
 
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    if (typeof window !== 'undefined') {
+      window.filterExerciseCatalog = filterExerciseCatalog;
+      window.updateExerciseSuggestions = updateExerciseSuggestions;
+      window.selectExerciseSuggestion = selectExerciseSuggestion;
+      window.closeExerciseSuggestions = closeExerciseSuggestions;
+      window.scrollExerciseInputIntoView = scrollExerciseInputIntoView;
+      window.handleExerciseInputFocus = handleExerciseInputFocus;
+      window.handleExerciseInputKeydown = handleExerciseInputKeydown;
     }
 
 /* ==========================================================================
@@ -15972,6 +16301,45 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(impSelect.value === "Kettlebell", "handleExerciseInput automatically infers and sets Kettlebell implement for SH KB Squat");
   assert(musSelect.value === "Quads", "handleExerciseInput automatically sets primary muscle to Quads for SH KB Squat");
   assert(autoImplement.innerText === "Kettlebell", "Auto implement indicator displays Kettlebell");
+
+  // Dynamic Exercise Suggestions & Viewport Scrolling Tests
+  assert(typeof filterExerciseCatalog === 'function', "filterExerciseCatalog is a defined function");
+  assert(typeof updateExerciseSuggestions === 'function', "updateExerciseSuggestions is a defined function");
+  assert(typeof selectExerciseSuggestion === 'function', "selectExerciseSuggestion is a defined function");
+  assert(typeof scrollExerciseInputIntoView === 'function', "scrollExerciseInputIntoView is a defined function");
+
+  // Filtering on "swings"
+  const swingsMatches = filterExerciseCatalog("swings");
+  assert(swingsMatches.length >= 2, "filterExerciseCatalog('swings') returns at least 2 matches (" + swingsMatches.length + " found)");
+  assert(swingsMatches.some(e => e.name === "KB Swings"), "Matches contain KB Swings");
+  assert(swingsMatches.some(e => e.name === "SH KB Swings"), "Matches contain SH KB Swings");
+
+  // Filtering on "sh kb"
+  const shMatches = filterExerciseCatalog("sh kb");
+  assert(shMatches.length >= 5, "filterExerciseCatalog('sh kb') returns matching single-hand KB exercises");
+  assert(shMatches.some(e => e.name === "SH KB Swings"), "sh kb matches include SH KB Swings");
+
+  // Test dynamic dropdown updates
+  const suggestionsDropdown = getOrCreateElement('exercise-suggestions-dropdown');
+  updateExerciseSuggestions("swings", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Suggestions dropdown is visible when typing query");
+  assert(suggestionsDropdown.innerHTML.includes("KB Swings"), "Suggestions dropdown contains matching exercise names");
+
+  // Test selection from dropdown
+  selectExerciseSuggestion("KB Swings", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(exInput.value === "KB Swings", "Exercise name input populated with selected exercise name");
+  assert(impSelect.value === "Kettlebell", "Selected exercise automatically inferred Kettlebell implement");
+  assert(musSelect.value === "Hamstrings/Glutes", "Selected exercise automatically set primary muscle to Hamstrings/Glutes");
+  assert(suggestionsDropdown.classList.contains('hidden'), "Suggestions dropdown closed upon selection");
+
+  // Test scrollExerciseInputIntoView executes smoothly
+  let scrollException = null;
+  try {
+    scrollExerciseInputIntoView(exInput);
+  } catch (e) {
+    scrollException = e;
+  }
+  assert(scrollException === null, "scrollExerciseInputIntoView executed smoothly without exception");
 
   // 5. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
