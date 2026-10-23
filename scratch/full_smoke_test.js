@@ -286,6 +286,7 @@ function runSuite(name, fn) {
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
       { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
       { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs", "Chest"] },
+      { name: "KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
@@ -299,6 +300,7 @@ function runSuite(name, fn) {
       { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Shoulders", "Core/Abs"] },
       { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
       { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
+      { name: "SH KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
       { name: "Single Leg RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Stationary Bike Sprint", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
@@ -500,7 +502,7 @@ function runSuite(name, fn) {
       } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
         primary = 'Core/Abs';
         secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
-      } else if (lower.includes('glute bridge') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl')) {
+      } else if (lower.includes('glute bridge') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
         primary = 'Hamstrings/Glutes';
         secondary = ['Core/Abs', 'Back', 'Quads'];
       } else if (lower.includes('thruster')) {
@@ -15877,6 +15879,8 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "Glute Bridge", implement: "Bodyweight", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Quads"] },
     { name: "Lunges", implement: "Bodyweight", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs"] },
     { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Back", "Core/Abs", "Shoulders"] },
+    { name: "KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
+    { name: "SH KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Squat", implement: "Kettlebell", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
     { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
   ];
@@ -15903,10 +15907,20 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   // Implement inference from exercise name
   assert(inferImplementFromExerciseName("SH KB Squat") === "Kettlebell", "Infers Kettlebell from SH KB Squat");
   assert(inferImplementFromExerciseName("SH KB Thruster") === "Kettlebell", "Infers Kettlebell from SH KB Thruster");
+  assert(inferImplementFromExerciseName("KB Swings") === "Kettlebell", "Infers Kettlebell from KB Swings");
+  assert(inferImplementFromExerciseName("SH KB Swings") === "Kettlebell", "Infers Kettlebell from SH KB Swings");
   assert(inferImplementFromExerciseName("DB Incline Press") === "Dumbbell", "Infers Dumbbell from DB Incline Press");
   assert(inferImplementFromExerciseName("Barbell Back Squat") === "Barbell", "Infers Barbell from Barbell Back Squat");
 
   // Direct catalog resolve
+  const kbSwingsProfile = resolveExerciseMuscles("KB Swings");
+  assert(kbSwingsProfile.primary === "Hamstrings/Glutes", "KB Swings auto resolves primary to Hamstrings/Glutes");
+  assert(kbSwingsProfile.implement === "Kettlebell", "KB Swings auto resolves implement to Kettlebell");
+
+  const shKbSwingsProfile = resolveExerciseMuscles("SH KB Swings");
+  assert(shKbSwingsProfile.primary === "Hamstrings/Glutes", "SH KB Swings auto resolves primary to Hamstrings/Glutes");
+  assert(shKbSwingsProfile.implement === "Kettlebell", "SH KB Swings auto resolves implement to Kettlebell");
+
   const carryProfile = resolveExerciseMuscles("SH KB Suitcase Carry");
   assert(carryProfile.primary === "Core/Abs", "SH KB Suitcase Carry auto resolves primary to Core/Abs");
   assert(carryProfile.implement === "Kettlebell", "SH KB Suitcase Carry auto resolves implement to Kettlebell");

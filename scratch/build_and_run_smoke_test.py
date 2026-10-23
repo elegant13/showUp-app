@@ -1793,6 +1793,8 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "Glute Bridge", implement: "Bodyweight", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Quads"] },
     { name: "Lunges", implement: "Bodyweight", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs"] },
     { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Back", "Core/Abs", "Shoulders"] },
+    { name: "KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
+    { name: "SH KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Squat", implement: "Kettlebell", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
     { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
   ];
@@ -1819,10 +1821,20 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   // Implement inference from exercise name
   assert(inferImplementFromExerciseName("SH KB Squat") === "Kettlebell", "Infers Kettlebell from SH KB Squat");
   assert(inferImplementFromExerciseName("SH KB Thruster") === "Kettlebell", "Infers Kettlebell from SH KB Thruster");
+  assert(inferImplementFromExerciseName("KB Swings") === "Kettlebell", "Infers Kettlebell from KB Swings");
+  assert(inferImplementFromExerciseName("SH KB Swings") === "Kettlebell", "Infers Kettlebell from SH KB Swings");
   assert(inferImplementFromExerciseName("DB Incline Press") === "Dumbbell", "Infers Dumbbell from DB Incline Press");
   assert(inferImplementFromExerciseName("Barbell Back Squat") === "Barbell", "Infers Barbell from Barbell Back Squat");
 
   // Direct catalog resolve
+  const kbSwingsProfile = resolveExerciseMuscles("KB Swings");
+  assert(kbSwingsProfile.primary === "Hamstrings/Glutes", "KB Swings auto resolves primary to Hamstrings/Glutes");
+  assert(kbSwingsProfile.implement === "Kettlebell", "KB Swings auto resolves implement to Kettlebell");
+
+  const shKbSwingsProfile = resolveExerciseMuscles("SH KB Swings");
+  assert(shKbSwingsProfile.primary === "Hamstrings/Glutes", "SH KB Swings auto resolves primary to Hamstrings/Glutes");
+  assert(shKbSwingsProfile.implement === "Kettlebell", "SH KB Swings auto resolves implement to Kettlebell");
+
   const carryProfile = resolveExerciseMuscles("SH KB Suitcase Carry");
   assert(carryProfile.primary === "Core/Abs", "SH KB Suitcase Carry auto resolves primary to Core/Abs");
   assert(carryProfile.implement === "Kettlebell", "SH KB Suitcase Carry auto resolves implement to Kettlebell");
