@@ -912,6 +912,9 @@
             </div>
 
             <div class="flex items-center gap-1 shrink-0">
+              <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2.5 rounded-xl hover:bg-slate-900 transition" title="Edit Set">
+                <i class="fa-solid fa-pen-to-square text-base"></i>
+              </button>
               <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2.5 rounded-xl hover:bg-slate-900 transition" title="Delete Set">
                 <i class="fa-solid fa-trash-can text-base"></i>
               </button>
@@ -932,6 +935,243 @@
 
       if (googleAccessToken) {
         syncToGoogleDrive();
+      }
+    }
+
+    function openEditActiveSetModal(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const set = currentSessionSets.find(s => s.id === setId);
+      if (!set) return;
+
+      const setIndex = currentSessionSets.findIndex(s => s.id === setId) + 1;
+      const modal = document.getElementById('edit-active-set-modal');
+      const idEl = document.getElementById('edit-active-set-id');
+      const titleEl = document.getElementById('edit-active-set-title');
+      const exEl = document.getElementById('edit-active-set-exercise');
+      const impEl = document.getElementById('edit-active-set-implement');
+      const musEl = document.getElementById('edit-active-set-muscle');
+      const weightEl = document.getElementById('edit-active-set-weight');
+      const repsEl = document.getElementById('edit-active-set-reps');
+      const ergDistEl = document.getElementById('edit-active-set-erg-distance');
+      const ergTimeEl = document.getElementById('edit-active-set-erg-time');
+      const swimDistEl = document.getElementById('edit-active-set-swim-distance');
+      const swimTimeEl = document.getElementById('edit-active-set-swim-time');
+      const endDistEl = document.getElementById('edit-active-set-endurance-distance');
+      const endTimeEl = document.getElementById('edit-active-set-endurance-time');
+      const runDistEl = document.getElementById('edit-active-set-running-distance');
+      const runTimeEl = document.getElementById('edit-active-set-running-time');
+      const runAvgHREl = document.getElementById('edit-active-set-running-avg-hr');
+      const runMaxHREl = document.getElementById('edit-active-set-running-max-hr');
+      const rpeEl = document.getElementById('edit-active-set-rpe');
+      const restEl = document.getElementById('edit-active-set-rest');
+
+      if (idEl) idEl.value = set.id;
+      if (titleEl) titleEl.innerHTML = `<span>Edit Set #${setIndex}</span>`;
+      if (exEl) exEl.value = set.exerciseName || '';
+      if (impEl) impEl.value = set.implement || 'Bodyweight';
+      if (musEl) musEl.value = set.muscle || 'Full Body';
+      if (weightEl) weightEl.value = (typeof set.weight === 'number') ? set.weight : 0;
+      if (repsEl) repsEl.value = (typeof set.reps === 'number') ? set.reps : 10;
+      if (ergDistEl) ergDistEl.value = set.ergDistance || 500;
+      if (ergTimeEl) ergTimeEl.value = set.ergTime || '02:00';
+      if (swimDistEl) swimDistEl.value = set.swimDistance || 500;
+      if (swimTimeEl) swimTimeEl.value = set.swimTime || '10:00';
+      if (endDistEl) endDistEl.value = (typeof set.enduranceDistance === 'number') ? set.enduranceDistance : 2.5;
+      if (endTimeEl) endTimeEl.value = set.enduranceTime || '00:30:00';
+      if (runDistEl) runDistEl.value = (typeof set.runningDistance === 'number') ? set.runningDistance : 3.1;
+      if (runTimeEl) runTimeEl.value = set.runningTime || '00:25:00';
+      if (runAvgHREl) runAvgHREl.value = set.runningAvgHR !== null && set.runningAvgHR !== undefined ? set.runningAvgHR : '';
+      if (runMaxHREl) runMaxHREl.value = set.runningMaxHR !== null && set.runningMaxHR !== undefined ? set.runningMaxHR : '';
+      if (rpeEl) rpeEl.value = set.rpe || 8;
+      if (restEl) restEl.value = (typeof set.restPeriod === 'number') ? set.restPeriod : 0;
+
+      handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeEditActiveSetModal() {
+      const modal = document.getElementById('edit-active-set-modal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleEditActiveSetExerciseInput(val) {
+      if (!val) return;
+      if (typeof resolveExerciseMuscles === 'function') {
+        const profile = resolveExerciseMuscles(val);
+        const impEl = document.getElementById('edit-active-set-implement');
+        const musEl = document.getElementById('edit-active-set-muscle');
+        if (profile) {
+          if (impEl && profile.implement) {
+            impEl.value = profile.implement;
+            handleEditActiveSetImplementChange(profile.implement);
+          }
+          if (musEl && profile.primary) {
+            musEl.value = profile.primary;
+          }
+        }
+      }
+    }
+
+    function handleEditActiveSetImplementChange(implement) {
+      const stdPanel = document.getElementById('edit-active-set-standard-panel');
+      const ergPanel = document.getElementById('edit-active-set-erg-panel');
+      const swimPanel = document.getElementById('edit-active-set-swim-panel');
+      const endPanel = document.getElementById('edit-active-set-endurance-panel');
+      const runPanel = document.getElementById('edit-active-set-running-panel');
+
+      if (stdPanel) stdPanel.classList.add('hidden');
+      if (ergPanel) ergPanel.classList.add('hidden');
+      if (swimPanel) swimPanel.classList.add('hidden');
+      if (endPanel) endPanel.classList.add('hidden');
+      if (runPanel) runPanel.classList.add('hidden');
+
+      if (implement === "Running") {
+        if (runPanel) runPanel.classList.remove('hidden');
+      } else if (implement === "Row Erg") {
+        if (ergPanel) ergPanel.classList.remove('hidden');
+      } else if (implement === "Swimming") {
+        if (swimPanel) swimPanel.classList.remove('hidden');
+      } else if (["Walking", "Hiking", "Biking"].includes(implement)) {
+        if (endPanel) endPanel.classList.remove('hidden');
+      } else {
+        if (stdPanel) stdPanel.classList.remove('hidden');
+      }
+    }
+
+    function adjustEditActiveSetWeight(delta) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const el = document.getElementById('edit-active-set-weight');
+      if (!el) return;
+      const current = parseFloat(el.value) || 0;
+      el.value = Math.max(0, parseFloat((current + delta).toFixed(1)));
+    }
+
+    function adjustEditActiveSetReps(delta) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const el = document.getElementById('edit-active-set-reps');
+      if (!el) return;
+      const current = parseInt(el.value) || 0;
+      el.value = Math.max(1, current + delta);
+    }
+
+    function adjustEditActiveSetRest(delta) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const el = document.getElementById('edit-active-set-rest');
+      if (!el) return;
+      const current = parseInt(el.value) || 0;
+      el.value = Math.max(0, current + delta);
+    }
+
+    function saveActiveSetEdits() {
+      const idEl = document.getElementById('edit-active-set-id');
+      const setId = idEl ? parseInt(idEl.value) : null;
+      if (!setId) return;
+
+      const idx = currentSessionSets.findIndex(s => s.id === setId);
+      if (idx === -1) return;
+
+      const exerciseName = document.getElementById('edit-active-set-exercise')?.value.trim() || currentSessionSets[idx].exerciseName;
+      const implement = document.getElementById('edit-active-set-implement')?.value || currentSessionSets[idx].implement;
+      const muscle = document.getElementById('edit-active-set-muscle')?.value || currentSessionSets[idx].muscle;
+      const rpe = parseFloat(document.getElementById('edit-active-set-rpe')?.value) || 8;
+      const restPeriod = Math.max(0, parseInt(document.getElementById('edit-active-set-rest')?.value) || 0);
+
+      let weight = 0, reps = 1;
+      let ergDistance = 0, ergTime = "";
+      let swimDistance = 0, swimTime = "";
+      let enduranceDistance = 0, enduranceTime = "";
+      let runningDistance = 0, runningTime = "", runningAvgHR = null, runningMaxHR = null;
+
+      if (implement === "Running") {
+        runningDistance = parseFloat(document.getElementById('edit-active-set-running-distance')?.value) || 1.0;
+        runningTime = document.getElementById('edit-active-set-running-time')?.value || "00:25:00";
+        const parsedAvg = parseInt(document.getElementById('edit-active-set-running-avg-hr')?.value);
+        const parsedMax = parseInt(document.getElementById('edit-active-set-running-max-hr')?.value);
+        runningAvgHR = !isNaN(parsedAvg) ? parsedAvg : currentSessionSets[idx].runningAvgHR;
+        runningMaxHR = !isNaN(parsedMax) ? parsedMax : currentSessionSets[idx].runningMaxHR;
+      } else if (implement === "Row Erg") {
+        ergDistance = parseInt(document.getElementById('edit-active-set-erg-distance')?.value) || 500;
+        ergTime = document.getElementById('edit-active-set-erg-time')?.value || "02:00";
+      } else if (implement === "Swimming") {
+        swimDistance = parseInt(document.getElementById('edit-active-set-swim-distance')?.value) || 500;
+        swimTime = document.getElementById('edit-active-set-swim-time')?.value || "10:00";
+      } else if (["Walking", "Hiking", "Biking"].includes(implement)) {
+        enduranceDistance = parseFloat(document.getElementById('edit-active-set-endurance-distance')?.value) || 1.0;
+        enduranceTime = document.getElementById('edit-active-set-endurance-time')?.value || "00:30:00";
+      } else {
+        weight = parseFloat(document.getElementById('edit-active-set-weight')?.value) || 0;
+        reps = parseInt(document.getElementById('edit-active-set-reps')?.value) || 1;
+      }
+
+      // Re-resolve secondary muscles if exercise name changed
+      let secondaryMuscles = currentSessionSets[idx].secondaryMuscles || [];
+      if (typeof resolveExerciseMuscles === 'function') {
+        const profile = resolveExerciseMuscles(exerciseName, implement);
+        if (profile && profile.secondary) secondaryMuscles = profile.secondary;
+      }
+
+      // Update set object in place
+      currentSessionSets[idx] = {
+        ...currentSessionSets[idx],
+        exerciseName,
+        implement,
+        muscle,
+        secondaryMuscles,
+        weight,
+        reps,
+        ergDistance,
+        ergTime,
+        swimDistance,
+        swimTime,
+        enduranceDistance,
+        enduranceTime,
+        runningDistance,
+        runningTime,
+        runningAvgHR,
+        runningMaxHR,
+        rpe,
+        restPeriod
+      };
+
+      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      renderLoggedSets();
+      closeEditActiveSetModal();
+
+      if (googleAccessToken) {
+        syncToGoogleDrive();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      if (typeof showToast === 'function') {
+        showToast(`Set #${idx + 1} updated!`, "success");
+      }
+    }
+
+    function copyEditActiveSetToActiveForm() {
+      const exVal = document.getElementById('edit-active-set-exercise')?.value || '';
+      const impVal = document.getElementById('edit-active-set-implement')?.value || 'Bodyweight';
+      const weightVal = document.getElementById('edit-active-set-weight')?.value || '0';
+      const repsVal = document.getElementById('edit-active-set-reps')?.value || '10';
+
+      const mainEx = document.getElementById('exercise-name-input');
+      const mainImp = document.getElementById('implement-select');
+      const mainWeight = document.getElementById('input-weight');
+      const mainReps = document.getElementById('input-reps');
+
+      if (mainEx && exVal) {
+        mainEx.value = exVal;
+        handleExerciseInput(exVal);
+      }
+      if (mainImp && impVal) {
+        mainImp.value = impVal;
+        handleImplementChange(impVal);
+      }
+      if (mainWeight) mainWeight.value = weightVal;
+      if (mainReps) mainReps.value = repsVal;
+
+      closeEditActiveSetModal();
+      if (typeof showToast === 'function') {
+        showToast("Set copied to workout form!", "info");
       }
     }
 

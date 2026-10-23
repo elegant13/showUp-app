@@ -1902,6 +1902,32 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(secondSet.secondaryMuscles.includes("Quads"), "Second set has Quads secondary muscle");
   assert(secondSet.secondaryMuscles.includes("Shoulders"), "Second set has Shoulders secondary muscle");
 
+  // Test active set editing functionality
+  assert(typeof openEditActiveSetModal === 'function', "openEditActiveSetModal is a defined function");
+  assert(typeof saveActiveSetEdits === 'function', "saveActiveSetEdits is a defined function");
+  assert(typeof closeEditActiveSetModal === 'function', "closeEditActiveSetModal is a defined function");
+  
+  openEditActiveSetModal(secondSet.id);
+  assert(!getOrCreateElement('edit-active-set-modal').classList.contains('hidden'), "Edit active set modal is visible when opened");
+  assert(getOrCreateElement('edit-active-set-exercise').value === "SH KB Thruster", "Edit modal populated with correct exercise name");
+
+  // Modify values in modal
+  getOrCreateElement('edit-active-set-exercise').value = "Barbell Back Squat";
+  handleEditActiveSetExerciseInput("Barbell Back Squat");
+  getOrCreateElement('edit-active-set-weight').value = "225";
+  getOrCreateElement('edit-active-set-reps').value = "8";
+  getOrCreateElement('edit-active-set-rpe').value = "9";
+  saveActiveSetEdits();
+
+  assert(getOrCreateElement('edit-active-set-modal').classList.contains('hidden'), "Edit modal closes after saving changes");
+  const editedSet = currentSessionSets.find(s => s.id === secondSet.id);
+  assert(editedSet.exerciseName === "Barbell Back Squat", "Active set exercise name successfully edited");
+  assert(editedSet.weight === 225, "Active set weight successfully updated to 225");
+  assert(editedSet.reps === 8, "Active set reps successfully updated to 8");
+  assert(editedSet.rpe === 9, "Active set RPE successfully updated to 9");
+  assert(editedSet.implement === "Barbell", "Active set implement automatically updated to Barbell");
+  assert(editedSet.muscle === "Quads", "Active set muscle automatically updated to Quads");
+
   // 6. Test Progress sub-tab switching (Workouts | Weight)
   assert(typeof switchProgressSubTab === 'function', "switchProgressSubTab is a defined function");
   switchProgressSubTab('weight');
