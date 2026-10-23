@@ -128,6 +128,34 @@
 
 
 
+    let currentProgressSubTab = 'workouts';
+
+    function switchProgressSubTab(subTab) {
+      currentProgressSubTab = subTab;
+      const workoutsPane = document.getElementById('progress-subpane-workouts');
+      const weightPane = document.getElementById('progress-subpane-weight');
+      const workoutsBtn = document.getElementById('progress-subtab-btn-workouts');
+      const weightBtn = document.getElementById('progress-subtab-btn-weight');
+
+      const activeBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20";
+      const inactiveBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+
+      if (subTab === 'weight') {
+        if (workoutsPane) workoutsPane.classList.add('hidden');
+        if (weightPane) weightPane.classList.remove('hidden');
+        if (workoutsBtn) workoutsBtn.className = inactiveBtnClass;
+        if (weightBtn) weightBtn.className = activeBtnClass;
+        try { if (typeof renderWeightHistory === 'function') renderWeightHistory(); } catch (err) { console.error("renderWeightHistory error:", err); }
+      } else {
+        if (weightPane) weightPane.classList.add('hidden');
+        if (workoutsPane) workoutsPane.classList.remove('hidden');
+        if (weightBtn) weightBtn.className = inactiveBtnClass;
+        if (workoutsBtn) workoutsBtn.className = activeBtnClass;
+        try { if (typeof renderCalendar === 'function') renderCalendar(); } catch (err) { console.error("renderCalendar error:", err); }
+        try { if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory(); } catch (err) { console.error("renderMonthlyHistory error:", err); }
+      }
+    }
+
     function switchTab(tabName) {
       try {
         if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
@@ -168,12 +196,20 @@
       } else if (tabName === 'workout') {
         if (workoutView) workoutView.classList.remove('hidden');
         if (btnWorkout) btnWorkout.className = activeClass;
-      } else if (tabName === 'calendar') {
+      } else if (tabName === 'calendar' || tabName === 'progress') {
         if (calendarView) calendarView.classList.remove('hidden');
         if (btnCalendar) btnCalendar.className = activeClass;
-        try { if (typeof renderCalendar === 'function') renderCalendar(); } catch (err) { console.error("renderCalendar error:", err); }
-        try { if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory(); } catch (err) { console.error("renderMonthlyHistory error:", err); }
-        try { if (typeof renderWeightHistory === 'function') renderWeightHistory(); } catch (err) { console.error("renderWeightHistory error:", err); }
+        try {
+          if (typeof switchProgressSubTab === 'function') {
+            switchProgressSubTab(currentProgressSubTab || 'workouts');
+          } else {
+            if (typeof renderCalendar === 'function') renderCalendar();
+            if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+            if (typeof renderWeightHistory === 'function') renderWeightHistory();
+          }
+        } catch (err) {
+          console.error("switchProgressSubTab error:", err);
+        }
       } else if (tabName === 'squads') {
         if (squadsView) squadsView.classList.remove('hidden');
         if (btnSquads) btnSquads.className = activeClass;
@@ -185,6 +221,7 @@
 
     if (typeof window !== 'undefined') {
       window.switchTab = switchTab;
+      window.switchProgressSubTab = switchProgressSubTab;
     }
 
     function parseJwtPayload(token) {

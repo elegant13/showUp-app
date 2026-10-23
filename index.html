@@ -509,220 +509,222 @@
     </div>
   </div>
 
-  <!-- ================= SETTINGS & PHYSICAL PROFILE MODAL ================= -->
-  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+  <!-- ================= SETTINGS MODAL ================= -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) toggleSettingsModal()">
+    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-sliders text-emerald-400"></i>
-          Settings & Physical Profile
+          Settings
         </h2>
         <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300 p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <!-- APP BRANDING EMBLEM -->
-      <div onclick="triggerHaptic('light'); openLargeLogoModal()" class="cursor-pointer group flex flex-col items-center justify-center p-3.5 bg-slate-950/90 hover:bg-slate-900/90 rounded-2xl border border-slate-800 hover:border-slate-700 shadow-inner transition" title="Click to view large icon">
-        <img src="showup_emblem.png" alt="showUp - Compound Your Progress" class="h-20 w-auto object-contain filter drop-shadow-lg group-hover:scale-105 transition-transform">
-        <span class="text-[10px] font-bold tracking-widest text-slate-400 group-hover:text-slate-300 uppercase mt-1 flex items-center gap-1.5">
-          <span>Material 3 • Privacy-First Telemetry</span>
-          <i class="fa-solid fa-expand text-[9px] opacity-70"></i>
-        </span>
+      <!-- SETTINGS TABS: STYLING | DEFAULTS | BACKUP | TELEMETRY -->
+      <div class="flex items-center justify-between p-1 bg-slate-950 rounded-2xl border border-slate-800 gap-1 text-xs">
+        <button id="settings-tab-btn-styling" type="button" onclick="triggerHaptic('light'); switchSettingsTab('styling')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20">
+          Styling
+        </button>
+        <button id="settings-tab-btn-defaults" type="button" onclick="triggerHaptic('light'); switchSettingsTab('defaults')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200">
+          Defaults
+        </button>
+        <button id="settings-tab-btn-backup" type="button" onclick="triggerHaptic('light'); switchSettingsTab('backup')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200">
+          Backup
+        </button>
+        <button id="settings-tab-btn-telemetry" type="button" onclick="triggerHaptic('light'); switchSettingsTab('telemetry')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200">
+          Telemetry
+        </button>
       </div>
 
-      <!-- ATHLETE ACCOUNT & SIGN IN SHORTCUT (Hidden when already logged in) -->
-      <div id="settings-athlete-account-card" class="space-y-2 bg-slate-950 p-4 rounded-3xl border border-slate-800">
-        <div class="flex items-center justify-between">
-          <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-user-lock text-emerald-400"></i>
-            Athlete Account & Sign In
-          </label>
-          <button type="button" onclick="triggerHaptic('light'); toggleSettingsModal(); openAuthLoginModal('signin')" class="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition active:scale-95 shadow-md shadow-emerald-500/20">
-            Sign In / Set Up
-          </button>
-        </div>
-        <p class="text-[11px] text-slate-400">Sign in with your chosen email address and password, set up a new account, or reset your password.</p>
-      </div>
-
-      <!-- ================= UNIFIED APPEARANCE & STYLING (PARADIGM, PALETTES & TYPOGRAPHY) ================= -->
-      <div id="settings-appearance-card" class="space-y-4 bg-slate-950 p-4 rounded-3xl border border-slate-800 shadow-sm">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-          <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20 shrink-0">
-              <i class="fa-solid fa-palette"></i>
+      <!-- TAB PANE 1: STYLING -->
+      <div id="settings-pane-styling" class="space-y-4">
+        <!-- ================= UNIFIED APPEARANCE & STYLING (PARADIGM, PALETTES & TYPOGRAPHY) ================= -->
+        <div id="settings-appearance-card" class="space-y-4 bg-slate-950 p-4 rounded-3xl border border-slate-800 shadow-sm">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20 shrink-0">
+                <i class="fa-solid fa-palette"></i>
+              </div>
+              <div>
+                <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Appearance & Styling</h3>
+                <p class="text-[10px] text-slate-400">Design paradigm, accent palette & typography</p>
+              </div>
             </div>
-            <div>
-              <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Appearance & Styling</h3>
-              <p class="text-[10px] text-slate-400">Design paradigm, accent palette & typography</p>
+          </div>
+
+          <!-- 1. UI/UX Design Paradigm -->
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-wand-magic-sparkles text-xs text-emerald-400"></i>
+                <span>Experience Mode</span>
+              </label>
+              <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">4 Modes</span>
+            </div>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <!-- Option A: Precision Glass -->
+              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('precision')" id="ui-mode-btn-precision" class="p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <i class="fa-solid fa-gem text-xs text-emerald-400"></i>
+                  <span class="text-xs font-bold">Precision</span>
+                </div>
+                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">M3 frosted cards & glow</div>
+              </button>
+
+              <!-- Option B: Executive Zen -->
+              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('zen')" id="ui-mode-btn-zen" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <i class="fa-solid fa-spa text-xs text-slate-300"></i>
+                  <span class="text-xs font-bold">Zen</span>
+                </div>
+                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">OLED minimalist canvas</div>
+              </button>
+
+              <!-- Option C: Cyber HUD -->
+              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('hud')" id="ui-mode-btn-hud" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <i class="fa-solid fa-microchip text-xs text-blue-400"></i>
+                  <span class="text-xs font-bold">HUD</span>
+                </div>
+                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Tactical athletic center</div>
+              </button>
+
+              <!-- Option D: Daylight Frost -->
+              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('light')" id="ui-mode-btn-light" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
+                <div class="flex items-center gap-1.5 mb-0.5">
+                  <i class="fa-solid fa-sun text-xs text-amber-400"></i>
+                  <span class="text-xs font-bold">Daylight</span>
+                </div>
+                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Crisp porcelain light mode</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Color Palette Accent -->
+          <div class="space-y-2 pt-2 border-t border-slate-900">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-droplet text-xs text-blue-400"></i>
+                <span>Theme Palette Accent</span>
+              </label>
+              <span class="text-[9px] text-slate-500 font-mono">Tap color to apply</span>
+            </div>
+            <div class="grid grid-cols-7 gap-1.5 sm:gap-2" id="theme-palette-grid">
+              <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" style="background-color: #10b981 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Emerald Green"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" style="background-color: #f97316 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" style="background-color: #3b82f6 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" style="background-color: #a855f7 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" style="background-color: #f43f5e !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" style="background-color: #64748b !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
+              <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" style="background-color: #000000 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
+            </div>
+          </div>
+
+          <!-- 3. Typography & Font Type -->
+          <div class="space-y-2 pt-2 border-t border-slate-900">
+            <div class="flex items-center justify-between">
+              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-font text-xs text-amber-400"></i>
+                <span>Typography Font</span>
+              </label>
+              <span class="text-[9px] text-slate-500 font-mono">5 Typefaces</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">
+              <button type="button" onclick="triggerHaptic('light'); setFontFamily('jakarta')" id="font-btn-jakarta" class="p-2 rounded-xl border text-left transition active:scale-95 group">
+                <div class="text-xs font-bold truncate" style="font-family: 'Plus Jakarta Sans', sans-serif;">Jakarta</div>
+                <div class="text-[9px] text-slate-400 opacity-80 truncate">Default</div>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); setFontFamily('outfit')" id="font-btn-outfit" class="p-2 rounded-xl border text-left transition active:scale-95 group">
+                <div class="text-xs font-bold truncate" style="font-family: 'Outfit', sans-serif;">Outfit</div>
+                <div class="text-[9px] text-slate-400 opacity-80 truncate">Geometric</div>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); setFontFamily('space')" id="font-btn-space" class="p-2 rounded-xl border text-left transition active:scale-95 group">
+                <div class="text-xs font-bold truncate" style="font-family: 'Space Grotesk', sans-serif;">Space</div>
+                <div class="text-[9px] text-slate-400 opacity-80 truncate">Dynamic</div>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); setFontFamily('lexend')" id="font-btn-lexend" class="p-2 rounded-xl border text-left transition active:scale-95 group">
+                <div class="text-xs font-bold truncate" style="font-family: 'Lexend', sans-serif;">Lexend</div>
+                <div class="text-[9px] text-slate-400 opacity-80 truncate">Athletic</div>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); setFontFamily('mono')" id="font-btn-mono" class="p-2 rounded-xl border text-left transition active:scale-95 group col-span-2 sm:col-span-1">
+                <div class="text-xs font-bold truncate" style="font-family: 'JetBrains Mono', monospace;">Mono</div>
+                <div class="text-[9px] text-slate-400 opacity-80 truncate">Tactical</div>
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- 1. UI/UX Design Paradigm -->
-        <div class="space-y-2">
+      <!-- TAB PANE 2: DEFAULTS -->
+      <div id="settings-pane-defaults" class="hidden space-y-4">
+        <!-- ATHLETE ACCOUNT & SIGN IN SHORTCUT (Hidden when already logged in) -->
+        <div id="settings-athlete-account-card" class="space-y-2 bg-slate-950 p-4 rounded-3xl border border-slate-800">
           <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-wand-magic-sparkles text-xs text-emerald-400"></i>
-              <span>Experience Mode</span>
+            <label class="block text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-user-lock text-emerald-400"></i>
+              Athlete Account & Sign In
             </label>
-            <span class="text-[9px] font-mono font-extrabold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">4 Modes</span>
+            <button type="button" onclick="triggerHaptic('light'); toggleSettingsModal(); openAuthLoginModal('signin')" class="text-xs font-bold px-3 py-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition active:scale-95 shadow-md shadow-emerald-500/20">
+              Sign In / Set Up
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">Sign in with your chosen email address and password, set up a new account, or reset your password.</p>
+        </div>
+
+        <!-- PHYSICAL PROFILE -->
+        <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-weight-scale text-emerald-400"></i>
+              Physical Profile
+            </h3>
+            <span class="text-[9px] text-slate-500 font-mono">Calorie Burn Engine</span>
           </div>
           
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <!-- Option A: Precision Glass -->
-            <button type="button" onclick="triggerHaptic('light'); setAppUIMode('precision')" id="ui-mode-btn-precision" class="p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <i class="fa-solid fa-gem text-xs text-emerald-400"></i>
-                <span class="text-xs font-bold">Precision</span>
-              </div>
-              <div class="text-[9px] text-slate-400 opacity-90 leading-tight">M3 frosted cards & glow</div>
-            </button>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (inches)</label>
+              <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+            </div>
 
-            <!-- Option B: Executive Zen -->
-            <button type="button" onclick="triggerHaptic('light'); setAppUIMode('zen')" id="ui-mode-btn-zen" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <i class="fa-solid fa-spa text-xs text-slate-300"></i>
-                <span class="text-xs font-bold">Zen</span>
-              </div>
-              <div class="text-[9px] text-slate-400 opacity-90 leading-tight">OLED minimalist canvas</div>
-            </button>
-
-            <!-- Option C: Cyber HUD -->
-            <button type="button" onclick="triggerHaptic('light'); setAppUIMode('hud')" id="ui-mode-btn-hud" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <i class="fa-solid fa-microchip text-xs text-blue-400"></i>
-                <span class="text-xs font-bold">HUD</span>
-              </div>
-              <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Tactical athletic center</div>
-            </button>
-
-            <!-- Option D: Daylight Frost -->
-            <button type="button" onclick="triggerHaptic('light'); setAppUIMode('light')" id="ui-mode-btn-light" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-              <div class="flex items-center gap-1.5 mb-0.5">
-                <i class="fa-solid fa-sun text-xs text-amber-400"></i>
-                <span class="text-xs font-bold">Daylight</span>
-              </div>
-              <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Crisp porcelain light mode</div>
-            </button>
+            <div>
+              <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
+              <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
+            </div>
           </div>
         </div>
 
-        <!-- 2. Color Palette Accent -->
-        <div class="space-y-2 pt-2 border-t border-slate-900">
-          <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-droplet text-xs text-blue-400"></i>
-              <span>Theme Palette Accent</span>
-            </label>
-            <span class="text-[9px] text-slate-500 font-mono">Tap color to apply</span>
-          </div>
-          <div class="grid grid-cols-7 gap-1.5 sm:gap-2" id="theme-palette-grid">
-            <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" style="background-color: #10b981 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Emerald Green"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" style="background-color: #f97316 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" style="background-color: #3b82f6 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" style="background-color: #a855f7 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" style="background-color: #f43f5e !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" style="background-color: #64748b !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
-            <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" style="background-color: #000000 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
-          </div>
-        </div>
-
-        <!-- 3. Typography & Font Type -->
-        <div class="space-y-2 pt-2 border-t border-slate-900">
-          <div class="flex items-center justify-between">
-            <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <i class="fa-solid fa-font text-xs text-amber-400"></i>
-              <span>Typography Font</span>
-            </label>
-            <span class="text-[9px] text-slate-500 font-mono">5 Typefaces</span>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">
-            <button type="button" onclick="triggerHaptic('light'); setFontFamily('jakarta')" id="font-btn-jakarta" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-              <div class="text-xs font-bold truncate" style="font-family: 'Plus Jakarta Sans', sans-serif;">Jakarta</div>
-              <div class="text-[9px] text-slate-400 opacity-80 truncate">Default</div>
-            </button>
-            <button type="button" onclick="triggerHaptic('light'); setFontFamily('outfit')" id="font-btn-outfit" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-              <div class="text-xs font-bold truncate" style="font-family: 'Outfit', sans-serif;">Outfit</div>
-              <div class="text-[9px] text-slate-400 opacity-80 truncate">Geometric</div>
-            </button>
-            <button type="button" onclick="triggerHaptic('light'); setFontFamily('space')" id="font-btn-space" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-              <div class="text-xs font-bold truncate" style="font-family: 'Space Grotesk', sans-serif;">Space</div>
-              <div class="text-[9px] text-slate-400 opacity-80 truncate">Dynamic</div>
-            </button>
-            <button type="button" onclick="triggerHaptic('light'); setFontFamily('lexend')" id="font-btn-lexend" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-              <div class="text-xs font-bold truncate" style="font-family: 'Lexend', sans-serif;">Lexend</div>
-              <div class="text-[9px] text-slate-400 opacity-80 truncate">Athletic</div>
-            </button>
-            <button type="button" onclick="triggerHaptic('light'); setFontFamily('mono')" id="font-btn-mono" class="p-2 rounded-xl border text-left transition active:scale-95 group col-span-2 sm:col-span-1">
-              <div class="text-xs font-bold truncate" style="font-family: 'JetBrains Mono', monospace;">Mono</div>
-              <div class="text-[9px] text-slate-400 opacity-80 truncate">Tactical</div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= PHYSICAL PROFILE & TIMEZONE TELEMETRY ================= -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
-        <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-weight-scale text-emerald-400"></i>
-            Physical Profile & Device Telemetry
+        <!-- MODULE DEFAULTS -->
+        <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+          <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800/80 pb-2">
+            <i class="fa-solid fa-sliders text-emerald-400"></i>
+            Module Defaults
           </h3>
-          <span class="text-[9px] text-slate-500 font-mono">Calorie Burn Engine</span>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Height (inches)</label>
-            <input type="number" id="user-height-input" placeholder="e.g. 70" step="0.5" min="30" max="96" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-medium text-slate-400 mb-1">Current Weight (lbs)</label>
-            <input type="number" id="user-weight-input" placeholder="e.g. 175" step="0.1" min="30" max="600" onchange="savePhysicalProfile()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 transition">
-          </div>
-        </div>
-
-        <div class="pt-2 border-t border-slate-900 flex items-center justify-between">
-          <div class="space-y-0.5">
-            <div class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-              <i class="fa-solid fa-earth-americas text-xs text-emerald-400"></i>
-              <span>Local Time Zone</span>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
+                <span class="text-[10px] text-slate-500">Keep HR card collapsed by default</span>
+              </div>
+              <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
             </div>
-            <div class="text-[10px] text-slate-500">Day boundaries & calendars sync to your device time zone</div>
-          </div>
-          <div class="text-right">
-            <span id="settings-timezone-label" class="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20"></span>
+
+            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-xs text-slate-300 block">Squads Cards</span>
+                <span class="text-[10px] text-slate-500">Compact view showing member avatars</span>
+              </div>
+              <input type="checkbox" id="pref-squads-collapsed" onchange="toggleSquadsDefaultCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- ================= INTERFACE & MODULE PREFERENCES ================= -->
-      <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
-        <h3 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800/80 pb-2">
-          <i class="fa-solid fa-sliders text-emerald-400"></i>
-          Module Defaults
-        </h3>
-        <div class="space-y-2">
-          <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
-            <div>
-              <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
-              <span class="text-[10px] text-slate-500">Keep HR card collapsed by default</span>
-            </div>
-            <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
-          </div>
-
-          <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
-            <div>
-              <span class="text-xs text-slate-300 block">Squads Cards</span>
-              <span class="text-[10px] text-slate-500">Compact view showing member avatars</span>
-            </div>
-            <input type="checkbox" id="pref-squads-collapsed" onchange="toggleSquadsDefaultCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
-          </div>
-        </div>
-      </div>
-
+      <!-- TAB PANE 3: BACKUP -->
+      <div id="settings-pane-backup" class="hidden space-y-4">
         <!-- WORKOUT & SQUADS DATA BACKUP & RESTORE SECTION (MATERIAL DESIGN 3) -->
         <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
           <div class="flex items-center justify-between pb-0.5">
@@ -824,6 +826,25 @@
             <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
           </div>
         </div>
+      </div>
+
+      <!-- TAB PANE 4: TELEMETRY -->
+      <div id="settings-pane-telemetry" class="hidden space-y-4">
+        <!-- LOCAL TIME ZONE TELEMETRY -->
+        <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-earth-americas text-xs text-emerald-400"></i>
+                <span>Local Time Zone</span>
+              </div>
+              <div class="text-[10px] text-slate-500">Day boundaries & calendars sync to your device time zone</div>
+            </div>
+            <div class="text-right">
+              <span id="settings-timezone-label" class="text-xs font-mono font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-xl border border-emerald-500/20"></span>
+            </div>
+          </div>
+        </div>
 
         <!-- WEBSITE & COMMUNITY TELEMETRY -->
         <div class="space-y-2 bg-slate-950 p-4 rounded-2xl border border-slate-800">
@@ -852,6 +873,7 @@
             <span>View Global Visitors Telemetry</span>
           </button>
         </div>
+      </div>
 
       <!-- LEGAL & PRIVACY FOOTER -->
       <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
@@ -2740,100 +2762,122 @@
 
     </div>
 
-    <!-- VIEW TAB 2: CALENDAR, HISTORICAL WORKOUT MANAGEMENT & ISOLATED WEIGHT TRACKER -->
+    <!-- VIEW TAB 2: PROGRESS (WORKOUTS & WEIGHT SUB-TABS) -->
     <div id="tab-calendar-view" class="hidden space-y-6">
 
-      <!-- HISTORICAL BODY WEIGHT PROGRESS CARD (WITH CLICKABLE LINE GRAPH ICON) -->
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-weight-scale text-emerald-400"></i>
-              Body Weight Tracking & History
-            </h2>
-            <p class="text-xs text-slate-400">Historical weight progress timeline</p>
-          </div>
-
-          <button onclick="triggerHaptic('medium'); logBodyWeightEntry()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
-            <i class="fa-solid fa-plus"></i>
-            <span>Log Weight</span>
+      <!-- PROGRESS SUB-TAB NAVIGATION: WORKOUTS | WEIGHT -->
+      <div class="flex items-center justify-center">
+        <div class="inline-flex p-1 bg-slate-900/90 rounded-2xl border border-slate-800 shadow-lg gap-1 w-full max-w-xs">
+          <button id="progress-subtab-btn-workouts" type="button" onclick="triggerHaptic('light'); switchProgressSubTab('workouts')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20">
+            <i class="fa-solid fa-dumbbell"></i>
+            <span>Workouts</span>
+          </button>
+          <button id="progress-subtab-btn-weight" type="button" onclick="triggerHaptic('light'); switchProgressSubTab('weight')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200">
+            <i class="fa-solid fa-weight-scale"></i>
+            <span>Weight</span>
           </button>
         </div>
+      </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+      <!-- PROGRESS SUB-PANE 1: WORKOUTS -->
+      <div id="progress-subpane-workouts" class="space-y-6">
+        <!-- WORKOUT CONSISTENCY MATRIX -->
+        <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
             <div>
-              <div class="text-[10px] font-bold text-slate-500 uppercase">Current Weight</div>
-              <div id="cal-current-weight-val" class="text-xl font-black text-emerald-400">-- lbs</div>
+              <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-emerald-400"></i>
+                Workout Consistency Matrix
+              </h2>
+              <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
             </div>
-            <i class="fa-solid fa-user-check text-slate-700 text-lg"></i>
+
+            <div class="flex items-center gap-2 text-xs">
+              <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-fire text-amber-500"></i>
+                <span class="text-slate-400">Streak:</span>
+                <span id="current-streak-val" class="font-bold text-slate-100">0 days</span>
+              </div>
+              <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
+                <i class="fa-solid fa-trophy text-yellow-400"></i>
+                <span class="text-slate-400">Best:</span>
+                <span id="best-streak-val" class="font-bold text-slate-100">0 days</span>
+              </div>
+            </div>
           </div>
 
-          <!-- CLICKABLE LINE GRAPH ICON FOR WEIGHT CHANGE METRIC -->
-          <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
-            <div>
-              <div class="text-[10px] font-bold text-slate-500 uppercase">Weight Change</div>
-              <div id="cal-weight-change-val" class="text-xl font-black text-slate-300">0.0 lbs</div>
-            </div>
-            <button onclick="triggerHaptic('medium'); openWeightTrendGraph()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 transition" title="View Weight Trend Line Graph">
-              <i class="fa-solid fa-chart-line text-lg"></i>
+          <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800">
+            <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
+            <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
+              <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
-        </div>
 
-        <div id="weight-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
-          <div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>
-        </div>
-      </section>
+          <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
+        </section>
 
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-          <div>
-            <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-days text-emerald-400"></i>
-              Workout Consistency Matrix
-            </h2>
-            <p class="text-xs text-slate-400">Loop-style visual activity matrix</p>
+        <!-- MONTHLY WORKOUTS HISTORY -->
+        <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-list-check text-emerald-400"></i>
+              Monthly Workouts History
+            </h3>
+            <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
           </div>
 
-          <div class="flex items-center gap-2 text-xs">
-            <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-fire text-amber-500"></i>
-              <span class="text-slate-400">Streak:</span>
-              <span id="current-streak-val" class="font-bold text-slate-100">0 days</span>
+          <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
+        </section>
+      </div>
+
+      <!-- PROGRESS SUB-PANE 2: WEIGHT -->
+      <div id="progress-subpane-weight" class="hidden space-y-6">
+        <!-- HISTORICAL BODY WEIGHT PROGRESS CARD (WITH CLICKABLE LINE GRAPH ICON) -->
+        <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <i class="fa-solid fa-weight-scale text-emerald-400"></i>
+                Body Weight Tracking & History
+              </h2>
+              <p class="text-xs text-slate-400">Historical weight progress timeline</p>
             </div>
-            <div class="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5">
-              <i class="fa-solid fa-trophy text-yellow-400"></i>
-              <span class="text-slate-400">Best:</span>
-              <span id="best-streak-val" class="font-bold text-slate-100">0 days</span>
+
+            <button onclick="triggerHaptic('medium'); logBodyWeightEntry()" class="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>Log Weight</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase">Current Weight</div>
+                <div id="cal-current-weight-val" class="text-xl font-black text-emerald-400">-- lbs</div>
+              </div>
+              <i class="fa-solid fa-user-check text-slate-700 text-lg"></i>
+            </div>
+
+            <!-- CLICKABLE LINE GRAPH ICON FOR WEIGHT CHANGE METRIC -->
+            <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <div class="text-[10px] font-bold text-slate-500 uppercase">Weight Change</div>
+                <div id="cal-weight-change-val" class="text-xl font-black text-slate-300">0.0 lbs</div>
+              </div>
+              <button onclick="triggerHaptic('medium'); openWeightTrendGraph()" class="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-slate-700 transition" title="View Weight Trend Line Graph">
+                <i class="fa-solid fa-chart-line text-lg"></i>
+              </button>
             </div>
           </div>
-        </div>
 
-        <div class="flex items-center justify-between bg-slate-950 px-4 py-2 rounded-2xl border border-slate-800">
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(-1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
-          <span id="calendar-month-year-label" class="text-sm font-bold text-slate-200">October 2026</span>
-          <button onclick="triggerHaptic('medium'); navigateCalendarMonth(1)" class="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800 transition">
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-
-        <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center text-xs"></div>
-      </section>
-
-      <section class="m3-card rounded-3xl p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-emerald-400"></i>
-            Monthly Workouts History
-          </h3>
-          <span id="monthly-count-badge" class="text-xs font-bold bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full border border-slate-700">0 Workouts</span>
-        </div>
-
-        <div id="monthly-history-list" class="space-y-3 max-h-96 overflow-y-auto pr-1"></div>
-      </section>
+          <div id="weight-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <div class="text-center py-4 text-slate-600 text-xs italic">No historical weight entries recorded yet.</div>
+          </div>
+        </section>
+      </div>
 
     </div>
 
@@ -3088,9 +3132,9 @@
             <i class="fa-solid fa-dumbbell text-lg mb-0.5"></i>
             <span>Workout</span>
           </button>
-          <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('calendar')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
-            <i class="fa-solid fa-calendar text-lg mb-0.5"></i>
-            <span>Calendar</span>
+          <button id="nav-btn-calendar" onclick="triggerHaptic('medium'); switchTab('progress')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
+            <i class="fa-solid fa-chart-line text-lg mb-0.5"></i>
+            <span>Progress</span>
           </button>
           <button id="nav-btn-squads" onclick="triggerHaptic('medium'); switchTab('squads')" class="flex flex-col items-center justify-center py-1 text-slate-400 hover:text-slate-200 transition relative">
             <div class="relative">
@@ -3112,18 +3156,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023b"></script>
-  <script defer src="js/storage.js?v=20261023b"></script>
-  <script defer src="js/utils.js?v=20261023b"></script>
-  <script defer src="js/theme.js?v=20261023b"></script>
-  <script defer src="js/auth.js?v=20261023b"></script>
-  <script defer src="js/workout.js?v=20261023b"></script>
-  <script defer src="js/history.js?v=20261023b"></script>
-  <script defer src="js/progress.js?v=20261023b"></script>
-  <script defer src="js/squads.js?v=20261023b"></script>
-  <script defer src="js/map.js?v=20261023b"></script>
-  <script defer src="js/visitors.js?v=20261023b"></script>
-  <script defer src="js/backup.js?v=20261023b"></script>
-  <script defer src="js/main.js?v=20261023b"></script>
+  <script defer src="js/config.js?v=20261023c"></script>
+  <script defer src="js/storage.js?v=20261023c"></script>
+  <script defer src="js/utils.js?v=20261023c"></script>
+  <script defer src="js/theme.js?v=20261023c"></script>
+  <script defer src="js/auth.js?v=20261023c"></script>
+  <script defer src="js/workout.js?v=20261023c"></script>
+  <script defer src="js/history.js?v=20261023c"></script>
+  <script defer src="js/progress.js?v=20261023c"></script>
+  <script defer src="js/squads.js?v=20261023c"></script>
+  <script defer src="js/map.js?v=20261023c"></script>
+  <script defer src="js/visitors.js?v=20261023c"></script>
+  <script defer src="js/backup.js?v=20261023c"></script>
+  <script defer src="js/main.js?v=20261023c"></script>
 </body>
 </html>

@@ -271,6 +271,7 @@ function runSuite(name, fn) {
     };
 
     const defaultCatalog = [
+      { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
       { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
@@ -280,6 +281,7 @@ function runSuite(name, fn) {
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
+      { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back", "Shoulders"] },
       { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
       { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
@@ -287,10 +289,10 @@ function runSuite(name, fn) {
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest", "Shoulders", "Triceps", "Back"] },
       { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
       { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
       { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Hamstrings/Glutes", "Triceps"] },
-      { name: "SH Banded KB Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Hamstrings/Glutes", "Back", "Triceps", "Core/Abs"] },
       { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes", "Shoulders", "Biceps", "Core/Abs"] },
       { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs", "Shoulders"] },
@@ -367,6 +369,12 @@ function runSuite(name, fn) {
       const rdlKey = normKey.replace(/romaniandeadlift/g, 'rdl');
       match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name).replace(/romaniandeadlift/g, 'rdl') === rdlKey);
       if (match) return match;
+
+      // 2d. Legacy alias for Banded KB Suitcase Carry
+      if (normKey === 'shbandedkbcarry' || normKey === 'shbandedkbsuitcasecarry' || normKey === 'bandedkbcarry') {
+        const carryMatch = defaultCatalog.find(c => c.name === "Banded KB Suitcase Carry");
+        if (carryMatch) return carryMatch;
+      }
 
       // 3. Partial or substring match if input length >= 3
       if (clean.length >= 3) {
@@ -1680,6 +1688,34 @@ if (typeof window !== 'undefined') {
 
 
 
+    let currentProgressSubTab = 'workouts';
+
+    function switchProgressSubTab(subTab) {
+      currentProgressSubTab = subTab;
+      const workoutsPane = document.getElementById('progress-subpane-workouts');
+      const weightPane = document.getElementById('progress-subpane-weight');
+      const workoutsBtn = document.getElementById('progress-subtab-btn-workouts');
+      const weightBtn = document.getElementById('progress-subtab-btn-weight');
+
+      const activeBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20";
+      const inactiveBtnClass = "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 text-slate-400 hover:text-slate-200";
+
+      if (subTab === 'weight') {
+        if (workoutsPane) workoutsPane.classList.add('hidden');
+        if (weightPane) weightPane.classList.remove('hidden');
+        if (workoutsBtn) workoutsBtn.className = inactiveBtnClass;
+        if (weightBtn) weightBtn.className = activeBtnClass;
+        try { if (typeof renderWeightHistory === 'function') renderWeightHistory(); } catch (err) { console.error("renderWeightHistory error:", err); }
+      } else {
+        if (weightPane) weightPane.classList.add('hidden');
+        if (workoutsPane) workoutsPane.classList.remove('hidden');
+        if (weightBtn) weightBtn.className = inactiveBtnClass;
+        if (workoutsBtn) workoutsBtn.className = activeBtnClass;
+        try { if (typeof renderCalendar === 'function') renderCalendar(); } catch (err) { console.error("renderCalendar error:", err); }
+        try { if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory(); } catch (err) { console.error("renderMonthlyHistory error:", err); }
+      }
+    }
+
     function switchTab(tabName) {
       try {
         if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
@@ -1720,12 +1756,20 @@ if (typeof window !== 'undefined') {
       } else if (tabName === 'workout') {
         if (workoutView) workoutView.classList.remove('hidden');
         if (btnWorkout) btnWorkout.className = activeClass;
-      } else if (tabName === 'calendar') {
+      } else if (tabName === 'calendar' || tabName === 'progress') {
         if (calendarView) calendarView.classList.remove('hidden');
         if (btnCalendar) btnCalendar.className = activeClass;
-        try { if (typeof renderCalendar === 'function') renderCalendar(); } catch (err) { console.error("renderCalendar error:", err); }
-        try { if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory(); } catch (err) { console.error("renderMonthlyHistory error:", err); }
-        try { if (typeof renderWeightHistory === 'function') renderWeightHistory(); } catch (err) { console.error("renderWeightHistory error:", err); }
+        try {
+          if (typeof switchProgressSubTab === 'function') {
+            switchProgressSubTab(currentProgressSubTab || 'workouts');
+          } else {
+            if (typeof renderCalendar === 'function') renderCalendar();
+            if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+            if (typeof renderWeightHistory === 'function') renderWeightHistory();
+          }
+        } catch (err) {
+          console.error("switchProgressSubTab error:", err);
+        }
       } else if (tabName === 'squads') {
         if (squadsView) squadsView.classList.remove('hidden');
         if (btnSquads) btnSquads.className = activeClass;
@@ -1737,6 +1781,7 @@ if (typeof window !== 'undefined') {
 
     if (typeof window !== 'undefined') {
       window.switchTab = switchTab;
+      window.switchProgressSubTab = switchProgressSubTab;
     }
 
     function parseJwtPayload(token) {
@@ -1947,6 +1992,32 @@ if (typeof window !== 'undefined') {
           updateSettingsModalAuthVisibility();
         }
       }
+    }
+
+    let currentSettingsTab = 'styling';
+
+    function switchSettingsTab(tabName) {
+      currentSettingsTab = tabName;
+      const tabs = ['styling', 'defaults', 'backup', 'telemetry'];
+      tabs.forEach(t => {
+        const pane = document.getElementById('settings-pane-' + t);
+        const btn = document.getElementById('settings-tab-btn-' + t);
+        if (pane) {
+          if (t === tabName) pane.classList.remove('hidden');
+          else pane.classList.add('hidden');
+        }
+        if (btn) {
+          if (t === tabName) {
+            btn.className = "flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20";
+          } else {
+            btn.className = "flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200";
+          }
+        }
+      });
+    }
+
+    if (typeof window !== 'undefined') {
+      window.switchSettingsTab = switchSettingsTab;
     }
 
     function updateSettingsModalAuthVisibility() {
@@ -15304,9 +15375,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(expandExerciseAbbreviations("SA DB Press") === "Single Arm Dumbell Press", "expandExerciseAbbreviations expands SA DB correctly");
   assert(expandExerciseAbbreviations("DH Carry") === "Double Hand Carry", "expandExerciseAbbreviations expands DH correctly");
 
-  // 2. Verify all 13 required exercises are present in defaultCatalog
+  // 2. Verify all required exercises are present in defaultCatalog
   const requiredExercises = [
-    { name: "SH Banded KB Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+    { name: "Banded KB Suitcase Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+    { name: "Hanging Knee Tucks", implement: "Bodyweight", primary: "Core/Abs", secondaries: ["Back", "Shoulders"] },
+    { name: "Ring Walk Out", implement: "Gymnastics Rings", primary: "Core/Abs", secondaries: ["Chest", "Shoulders", "Triceps", "Back"] },
     { name: "SH KB Suitcase Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
     { name: "KB Farmers Walk", implement: "Kettlebell", primary: "Full Body", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
     { name: "KB Shoulder Press", implement: "Kettlebell", primary: "Shoulders", secondaries: ["Triceps", "Core/Abs", "Chest"] },
@@ -15403,13 +15476,13 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
 
   // 5. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
-  exInput.value = "SH Banded KB Carry";
-  handleExerciseInput("SH Banded KB Carry");
+  exInput.value = "Banded KB Suitcase Carry";
+  handleExerciseInput("Banded KB Suitcase Carry");
   logSet();
 
   assert(currentSessionSets.length === 1, "Set was logged successfully");
   const loggedSet = currentSessionSets[0];
-  assert(loggedSet.exerciseName === "SH Banded KB Carry", "Logged set has correct exercise name");
+  assert(loggedSet.exerciseName === "Banded KB Suitcase Carry", "Logged set has correct exercise name");
   assert(loggedSet.implement === "Kettlebell", "Logged set automatically has Kettlebell implement");
   assert(loggedSet.muscle === "Core/Abs", "Logged set automatically has Core/Abs primary muscle without manual input");
   assert(Array.isArray(loggedSet.secondaryMuscles) && loggedSet.secondaryMuscles.includes("Shoulders"), "Logged set automatically has secondary muscles attached");
@@ -15427,6 +15500,40 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(secondSet.muscle === "Full Body", "Second set automatically has Full Body primary muscle without manual input");
   assert(secondSet.secondaryMuscles.includes("Quads"), "Second set has Quads secondary muscle");
   assert(secondSet.secondaryMuscles.includes("Shoulders"), "Second set has Shoulders secondary muscle");
+
+  // 6. Test Progress sub-tab switching (Workouts | Weight)
+  assert(typeof switchProgressSubTab === 'function', "switchProgressSubTab is a defined function");
+  switchProgressSubTab('weight');
+  assert(currentProgressSubTab === 'weight', "currentProgressSubTab is updated to weight");
+  assert(getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane hidden when weight selected");
+  assert(!getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Weight subpane visible when weight selected");
+
+  switchProgressSubTab('workouts');
+  assert(currentProgressSubTab === 'workouts', "currentProgressSubTab is updated to workouts");
+  assert(!getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane visible when workouts selected");
+  assert(getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Weight subpane hidden when workouts selected");
+
+  // Test switchTab('progress')
+  switchTab('progress');
+  assert(!getOrCreateElement('tab-calendar-view').classList.contains('hidden'), "tab-calendar-view visible when switchTab('progress') called");
+
+  // 7. Test Settings modal tab switching (Styling | Defaults | Backup | Telemetry)
+  assert(typeof switchSettingsTab === 'function', "switchSettingsTab is a defined function");
+  switchSettingsTab('defaults');
+  assert(!getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane visible when selected");
+  assert(getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane hidden when defaults selected");
+
+  switchSettingsTab('backup');
+  assert(!getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane visible when selected");
+  assert(getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane hidden when backup selected");
+
+  switchSettingsTab('telemetry');
+  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected");
+  assert(getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane hidden when telemetry selected");
+
+  switchSettingsTab('styling');
+  assert(!getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane visible when selected");
+  assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane hidden when styling selected");
 });
 
 print("\n============================================================");

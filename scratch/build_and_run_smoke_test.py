@@ -1760,9 +1760,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(expandExerciseAbbreviations("SA DB Press") === "Single Arm Dumbell Press", "expandExerciseAbbreviations expands SA DB correctly");
   assert(expandExerciseAbbreviations("DH Carry") === "Double Hand Carry", "expandExerciseAbbreviations expands DH correctly");
 
-  // 2. Verify all 13 required exercises are present in defaultCatalog
+  // 2. Verify all required exercises are present in defaultCatalog
   const requiredExercises = [
-    { name: "SH Banded KB Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+    { name: "Banded KB Suitcase Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+    { name: "Hanging Knee Tucks", implement: "Bodyweight", primary: "Core/Abs", secondaries: ["Back", "Shoulders"] },
+    { name: "Ring Walk Out", implement: "Gymnastics Rings", primary: "Core/Abs", secondaries: ["Chest", "Shoulders", "Triceps", "Back"] },
     { name: "SH KB Suitcase Carry", implement: "Kettlebell", primary: "Core/Abs", secondaries: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
     { name: "KB Farmers Walk", implement: "Kettlebell", primary: "Full Body", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
     { name: "KB Shoulder Press", implement: "Kettlebell", primary: "Shoulders", secondaries: ["Triceps", "Core/Abs", "Chest"] },
@@ -1859,13 +1861,13 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
 
   // 5. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
-  exInput.value = "SH Banded KB Carry";
-  handleExerciseInput("SH Banded KB Carry");
+  exInput.value = "Banded KB Suitcase Carry";
+  handleExerciseInput("Banded KB Suitcase Carry");
   logSet();
 
   assert(currentSessionSets.length === 1, "Set was logged successfully");
   const loggedSet = currentSessionSets[0];
-  assert(loggedSet.exerciseName === "SH Banded KB Carry", "Logged set has correct exercise name");
+  assert(loggedSet.exerciseName === "Banded KB Suitcase Carry", "Logged set has correct exercise name");
   assert(loggedSet.implement === "Kettlebell", "Logged set automatically has Kettlebell implement");
   assert(loggedSet.muscle === "Core/Abs", "Logged set automatically has Core/Abs primary muscle without manual input");
   assert(Array.isArray(loggedSet.secondaryMuscles) && loggedSet.secondaryMuscles.includes("Shoulders"), "Logged set automatically has secondary muscles attached");
@@ -1883,6 +1885,40 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(secondSet.muscle === "Full Body", "Second set automatically has Full Body primary muscle without manual input");
   assert(secondSet.secondaryMuscles.includes("Quads"), "Second set has Quads secondary muscle");
   assert(secondSet.secondaryMuscles.includes("Shoulders"), "Second set has Shoulders secondary muscle");
+
+  // 6. Test Progress sub-tab switching (Workouts | Weight)
+  assert(typeof switchProgressSubTab === 'function', "switchProgressSubTab is a defined function");
+  switchProgressSubTab('weight');
+  assert(currentProgressSubTab === 'weight', "currentProgressSubTab is updated to weight");
+  assert(getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane hidden when weight selected");
+  assert(!getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Weight subpane visible when weight selected");
+
+  switchProgressSubTab('workouts');
+  assert(currentProgressSubTab === 'workouts', "currentProgressSubTab is updated to workouts");
+  assert(!getOrCreateElement('progress-subpane-workouts').classList.contains('hidden'), "Workouts subpane visible when workouts selected");
+  assert(getOrCreateElement('progress-subpane-weight').classList.contains('hidden'), "Weight subpane hidden when workouts selected");
+
+  // Test switchTab('progress')
+  switchTab('progress');
+  assert(!getOrCreateElement('tab-calendar-view').classList.contains('hidden'), "tab-calendar-view visible when switchTab('progress') called");
+
+  // 7. Test Settings modal tab switching (Styling | Defaults | Backup | Telemetry)
+  assert(typeof switchSettingsTab === 'function', "switchSettingsTab is a defined function");
+  switchSettingsTab('defaults');
+  assert(!getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane visible when selected");
+  assert(getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane hidden when defaults selected");
+
+  switchSettingsTab('backup');
+  assert(!getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane visible when selected");
+  assert(getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane hidden when backup selected");
+
+  switchSettingsTab('telemetry');
+  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected");
+  assert(getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane hidden when telemetry selected");
+
+  switchSettingsTab('styling');
+  assert(!getOrCreateElement('settings-pane-styling').classList.contains('hidden'), "Styling pane visible when selected");
+  assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane hidden when styling selected");
 });
 
 print("\\n============================================================");

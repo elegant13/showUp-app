@@ -93,6 +93,7 @@
     };
 
     const defaultCatalog = [
+      { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
       { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
@@ -102,6 +103,7 @@
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
+      { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back", "Shoulders"] },
       { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
       { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
@@ -109,10 +111,10 @@
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest", "Shoulders", "Triceps", "Back"] },
       { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
       { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
       { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Hamstrings/Glutes", "Triceps"] },
-      { name: "SH Banded KB Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Hamstrings/Glutes", "Back", "Triceps", "Core/Abs"] },
       { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes", "Shoulders", "Biceps", "Core/Abs"] },
       { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs", "Shoulders"] },
@@ -189,6 +191,12 @@
       const rdlKey = normKey.replace(/romaniandeadlift/g, 'rdl');
       match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name).replace(/romaniandeadlift/g, 'rdl') === rdlKey);
       if (match) return match;
+
+      // 2d. Legacy alias for Banded KB Suitcase Carry
+      if (normKey === 'shbandedkbcarry' || normKey === 'shbandedkbsuitcasecarry' || normKey === 'bandedkbcarry') {
+        const carryMatch = defaultCatalog.find(c => c.name === "Banded KB Suitcase Carry");
+        if (carryMatch) return carryMatch;
+      }
 
       // 3. Partial or substring match if input length >= 3
       if (clean.length >= 3) {

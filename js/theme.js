@@ -12,6 +12,32 @@
       }
     }
 
+    let currentSettingsTab = 'styling';
+
+    function switchSettingsTab(tabName) {
+      currentSettingsTab = tabName;
+      const tabs = ['styling', 'defaults', 'backup', 'telemetry'];
+      tabs.forEach(t => {
+        const pane = document.getElementById('settings-pane-' + t);
+        const btn = document.getElementById('settings-tab-btn-' + t);
+        if (pane) {
+          if (t === tabName) pane.classList.remove('hidden');
+          else pane.classList.add('hidden');
+        }
+        if (btn) {
+          if (t === tabName) {
+            btn.className = "flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20";
+          } else {
+            btn.className = "flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200";
+          }
+        }
+      });
+    }
+
+    if (typeof window !== 'undefined') {
+      window.switchSettingsTab = switchSettingsTab;
+    }
+
     function updateSettingsModalAuthVisibility() {
       const card = document.getElementById('settings-athlete-account-card');
       if (card) {
