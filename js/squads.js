@@ -418,7 +418,7 @@
         });
 
         if (hasChanges) {
-          saveSquads(remainingSquads);
+          saveSquads(remainingSquads, false);
           renderSquadsTab();
           updateSquadBeacon();
           updateGlobalStatsUI();
@@ -516,7 +516,7 @@
           });
 
           if (hasChanges) {
-            saveSquads(remainingSquads);
+            saveSquads(remainingSquads, false);
             renderSquadsTab();
             updateSquadBeacon();
             updateGlobalStatsUI();
@@ -789,7 +789,7 @@
       return sanitized;
     }
 
-    function saveSquads(squads) {
+    function saveSquads(squads, syncToCloud = true) {
       if (!Array.isArray(squads)) return;
       const user = getAppUser();
       const filtered = squads.filter(sq => sq && isAthleteMemberOrCreator(sq, user));
@@ -802,7 +802,9 @@
       }
       filtered.forEach(sq => {
         saveSquadToGlobalRegistry(sq);
-        syncSquadToFirestore(sq);
+        if (syncToCloud) {
+          syncSquadToFirestore(sq);
+        }
       });
       updateSquadBeacon();
     }

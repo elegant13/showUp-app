@@ -958,7 +958,7 @@
               workoutsToSync = merged;
               completedWorkoutsHistory = merged;
               if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-                AppStorage.saveAthleteWorkouts(merged);
+                AppStorage.saveAthleteWorkouts(merged, false);
               }
               payload.workouts = merged;
             }
@@ -1062,7 +1062,7 @@
 
           completedWorkoutsHistory = merged;
           if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory, false);
           } else {
             localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
             localStorage.setItem('showUp_user_workouts_' + normEmail, JSON.stringify(completedWorkoutsHistory));

@@ -813,7 +813,7 @@ const AppStorage = {
   /**
    * Save athlete workouts with per-user persistent isolation
    */
-  saveAthleteWorkouts(workouts) {
+  saveAthleteWorkouts(workouts, triggerAutoSync = true) {
     if (!Array.isArray(workouts)) return;
     if (typeof completedWorkoutsHistory !== 'undefined') {
       completedWorkoutsHistory = workouts;
@@ -832,7 +832,7 @@ const AppStorage = {
     } catch (e) {
       console.warn("[AppStorage] Error saving workouts:", e);
     }
-    if (typeof queueFirestoreAutoSync === 'function') {
+    if (triggerAutoSync && typeof queueFirestoreAutoSync === 'function') {
       try { queueFirestoreAutoSync(); } catch (e) {}
     }
   },

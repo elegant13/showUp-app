@@ -356,8 +356,12 @@
       
       function draw() {
         if (canvas.parentElement && canvas.parentElement.clientWidth > 0 && canvas.parentElement.clientHeight > 0) {
-          canvas.width = canvas.parentElement.clientWidth;
-          canvas.height = canvas.parentElement.clientHeight;
+          const parentW = canvas.parentElement.clientWidth;
+          const parentH = canvas.parentElement.clientHeight;
+          if (canvas.width !== parentW || canvas.height !== parentH) {
+            canvas.width = parentW;
+            canvas.height = parentH;
+          }
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (hrHistory.length > 1) {

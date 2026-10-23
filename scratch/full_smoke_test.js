@@ -1469,7 +1469,7 @@ const AppStorage = {
   /**
    * Save athlete workouts with per-user persistent isolation
    */
-  saveAthleteWorkouts(workouts) {
+  saveAthleteWorkouts(workouts, triggerAutoSync = true) {
     if (!Array.isArray(workouts)) return;
     if (typeof completedWorkoutsHistory !== 'undefined') {
       completedWorkoutsHistory = workouts;
@@ -1488,7 +1488,7 @@ const AppStorage = {
     } catch (e) {
       console.warn("[AppStorage] Error saving workouts:", e);
     }
-    if (typeof queueFirestoreAutoSync === 'function') {
+    if (triggerAutoSync && typeof queueFirestoreAutoSync === 'function') {
       try { queueFirestoreAutoSync(); } catch (e) {}
     }
   },
@@ -6759,8 +6759,12 @@ if (typeof window !== 'undefined') {
       
       function draw() {
         if (canvas.parentElement && canvas.parentElement.clientWidth > 0 && canvas.parentElement.clientHeight > 0) {
-          canvas.width = canvas.parentElement.clientWidth;
-          canvas.height = canvas.parentElement.clientHeight;
+          const parentW = canvas.parentElement.clientWidth;
+          const parentH = canvas.parentElement.clientHeight;
+          if (canvas.width !== parentW || canvas.height !== parentH) {
+            canvas.width = parentW;
+            canvas.height = parentH;
+          }
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (hrHistory.length > 1) {
@@ -7614,7 +7618,7 @@ if (typeof window !== 'undefined') {
         });
 
         if (hasChanges) {
-          saveSquads(remainingSquads);
+          saveSquads(remainingSquads, false);
           renderSquadsTab();
           updateSquadBeacon();
           updateGlobalStatsUI();
@@ -7712,7 +7716,7 @@ if (typeof window !== 'undefined') {
           });
 
           if (hasChanges) {
-            saveSquads(remainingSquads);
+            saveSquads(remainingSquads, false);
             renderSquadsTab();
             updateSquadBeacon();
             updateGlobalStatsUI();
@@ -7985,7 +7989,7 @@ if (typeof window !== 'undefined') {
       return sanitized;
     }
 
-    function saveSquads(squads) {
+    function saveSquads(squads, syncToCloud = true) {
       if (!Array.isArray(squads)) return;
       const user = getAppUser();
       const filtered = squads.filter(sq => sq && isAthleteMemberOrCreator(sq, user));
@@ -7998,7 +8002,9 @@ if (typeof window !== 'undefined') {
       }
       filtered.forEach(sq => {
         saveSquadToGlobalRegistry(sq);
-        syncSquadToFirestore(sq);
+        if (syncToCloud) {
+          syncSquadToFirestore(sq);
+        }
       });
       updateSquadBeacon();
     }
@@ -13571,7 +13577,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
               workoutsToSync = merged;
               completedWorkoutsHistory = merged;
               if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-                AppStorage.saveAthleteWorkouts(merged);
+                AppStorage.saveAthleteWorkouts(merged, false);
               }
               payload.workouts = merged;
             }
@@ -13675,7 +13681,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
 
           completedWorkoutsHistory = merged;
           if (typeof AppStorage !== 'undefined' && typeof AppStorage.saveAthleteWorkouts === 'function') {
-            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory);
+            AppStorage.saveAthleteWorkouts(completedWorkoutsHistory, false);
           } else {
             localStorage.setItem('showUp_synced_workouts', JSON.stringify(completedWorkoutsHistory));
             localStorage.setItem('showUp_user_workouts_' + normEmail, JSON.stringify(completedWorkoutsHistory));
