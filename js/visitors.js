@@ -242,9 +242,32 @@ function closeGlobalVisitorTelemetryModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+let adminCloudSquads = [];
+let unsubscribeAdminSquadsTelemetry = null;
+
+function getAdminAllSquads() {
+  const localReg = typeof getGlobalSquadRegistry === 'function' ? getGlobalSquadRegistry() : [];
+  const squadMap = new Map();
+
+  [...localReg, ...adminCloudSquads].forEach(sq => {
+    if (!sq || !sq.name) return;
+    if (sq.creatorName === 'Squad Leader' || (sq.creatorId && String(sq.creatorId).startsWith('creator_SHOWUP'))) return;
+    const key = sq.id || sq.inviteCode;
+    if (!key) return;
+    if (!squadMap.has(key)) {
+      squadMap.set(key, sq);
+    } else {
+      const existing = squadMap.get(key);
+      squadMap.set(key, { ...existing, ...sq });
+    }
+  });
+
+  return Array.from(squadMap.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
 function setAdminVisitorViewMode(mode) {
   adminVisitorViewMode = mode;
-  const modes = ['day', 'week', 'month', 'year', 'state', 'city'];
+  const modes = ['day', 'week', 'month', 'year', 'state', 'city', 'squads'];
   modes.forEach(m => {
     const tab = document.getElementById(`admin-view-tab-${m}`);
     if (tab) {
@@ -259,20 +282,29 @@ function setAdminVisitorViewMode(mode) {
   const tfContainer = document.getElementById('admin-timeframe-groups-container');
   const stateContainer = document.getElementById('admin-state-groups-container');
   const cityContainer = document.getElementById('admin-city-log-container');
+  const squadsContainer = document.getElementById('admin-squads-container');
 
   if (mode === 'state') {
     if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.remove('hidden');
     if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
   } else if (mode === 'city') {
     if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.add('hidden');
     if (cityContainer) cityContainer.classList.remove('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
+  } else if (mode === 'squads') {
+    if (tfContainer) tfContainer.classList.add('hidden');
+    if (stateContainer) stateContainer.classList.add('hidden');
+    if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.remove('hidden');
   } else {
     // 'day', 'week', 'month', 'year'
     if (tfContainer) tfContainer.classList.remove('hidden');
     if (stateContainer) stateContainer.classList.add('hidden');
     if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
   }
   renderAdminGlobalVisitorTelemetry(true);
 }
@@ -289,6 +321,10 @@ function subscribeAdminGlobalVisitorTelemetry() {
   if (unsubscribeAdminTelemetry) {
     unsubscribeAdminTelemetry();
     unsubscribeAdminTelemetry = null;
+  }
+  if (unsubscribeAdminSquadsTelemetry) {
+    unsubscribeAdminSquadsTelemetry();
+    unsubscribeAdminSquadsTelemetry = null;
   }
   try {
     unsubscribeAdminTelemetry = db.collection('global_visitors').onSnapshot((snapshot) => {
@@ -329,6 +365,21 @@ function subscribeAdminGlobalVisitorTelemetry() {
       updateVisitorCounterUI(liveTotal);
     }, (err) => {
       console.warn("Firestore live telemetry subscription notice:", err);
+    });
+
+    unsubscribeAdminSquadsTelemetry = db.collection('squads').onSnapshot((snapshot) => {
+      if (!snapshot) return;
+      const remoteSquads = [];
+      snapshot.forEach(doc => {
+        const sq = doc.data();
+        if (sq && sq.id && sq.name) {
+          remoteSquads.push(sq);
+        }
+      });
+      adminCloudSquads = remoteSquads;
+      renderAdminGlobalVisitorTelemetry();
+    }, (err) => {
+      console.debug("Firestore live squads subscription notice:", err);
     });
   } catch (err) {
     console.debug("Firestore live subscription exception:", err);
@@ -376,6 +427,20 @@ async function refreshAdminVisitorData() {
       }
     } catch (err) {
       console.warn("Firestore refresh notice:", err);
+    }
+
+    try {
+      const sqSnap = await db.collection('squads').get();
+      if (sqSnap) {
+        const remoteSquads = [];
+        sqSnap.forEach(d => {
+          const sq = d.data();
+          if (sq && sq.id && sq.name) remoteSquads.push(sq);
+        });
+        adminCloudSquads = remoteSquads;
+      }
+    } catch (e) {
+      console.debug("Firestore squads fetch notice:", e);
     }
   }
   renderAdminGlobalVisitorTelemetry();
@@ -535,11 +600,18 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
   const uniqueStatesCount = sortedStates.length;
   const topState = sortedStates[0] ? `${sortedStates[0].stateName} (${sortedStates[0].stateCode})` : '-';
 
+  const allSquads = getAdminAllSquads();
+  const totalSquadsCount = allSquads.length;
+
   // Update Summary Tiles
   if (totalVisitorsEl) totalVisitorsEl.innerText = totalVisitorsCount.toLocaleString();
   if (totalStatesEl) totalStatesEl.innerText = uniqueStatesCount;
   if (topStateEl) topStateEl.innerText = topState;
   if (totalCitiesEl) totalCitiesEl.innerText = uniqueCitiesSet.size;
+  const totalSquadsEl = document.getElementById('admin-telemetry-total-squads');
+  if (totalSquadsEl) totalSquadsEl.innerText = totalSquadsCount.toLocaleString();
+  const settingsSquadsEl = document.getElementById('settings-total-squads-count');
+  if (settingsSquadsEl) settingsSquadsEl.innerText = totalSquadsCount.toLocaleString();
   if (lastSyncEl) lastSyncEl.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
   // Guarantee top level visitors metric and telemetry total visitors metric remain strictly identical
@@ -765,6 +837,85 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
               </table>
             </div>
           `;
+    }
+  }
+
+  // 6. Render Squads View
+  const squadsContainer = document.getElementById('admin-squads-container');
+  if (squadsContainer && adminVisitorViewMode === 'squads') {
+    const filteredSquads = allSquads.filter(sq => {
+      if (!q) return true;
+      const n = (sq.name || '').toLowerCase();
+      const m = (sq.motto || '').toLowerCase();
+      const c = (sq.creatorName || sq.creatorEmail || '').toLowerCase();
+      const code = (sq.inviteCode || '').toLowerCase();
+      return n.includes(q) || m.includes(q) || c.includes(q) || code.includes(q);
+    });
+
+    if (filteredSquads.length === 0) {
+      squadsContainer.innerHTML = `
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+          <i class="fa-solid fa-users mb-2 text-base text-slate-600 block"></i>
+          ${q ? `No squads matched "${escapeHtml(q)}".` : 'No squads created yet.'}
+        </div>
+      `;
+    } else {
+      squadsContainer.innerHTML = filteredSquads.map((sq, idx) => {
+        const memberCount = Array.isArray(sq.members) ? sq.members.length : 0;
+        const activeMembers = Array.isArray(sq.members) ? sq.members.filter(m => m && m.isWorkingOut).length : 0;
+        const createdDateStr = sq.createdAt ? new Date(sq.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+        const iconName = sq.icon || 'dumbbell';
+        const accent = sq.accent || 'emerald';
+        const accentBorder = accent === 'rose' ? 'border-rose-500/30' : accent === 'amber' ? 'border-amber-500/30' : accent === 'blue' ? 'border-blue-500/30' : accent === 'purple' ? 'border-purple-500/30' : 'border-emerald-500/30';
+        const accentBg = accent === 'rose' ? 'bg-rose-500/10 text-rose-400' : accent === 'amber' ? 'bg-amber-500/10 text-amber-400' : accent === 'blue' ? 'bg-blue-500/10 text-blue-400' : accent === 'purple' ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400';
+
+        return `
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${accentBorder} hover:border-slate-700 transition space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-9 h-9 rounded-xl ${accentBg} border border-white/10 flex items-center justify-center shrink-0 text-sm">
+                  <i class="fa-solid fa-${iconName}"></i>
+                </span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-xs font-bold text-slate-100 truncate">${escapeHtml(sq.name)}</h4>
+                    ${activeMembers > 0 ? `
+                      <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        ${activeMembers} lifting now
+                      </span>
+                    ` : ''}
+                  </div>
+                  <p class="text-[11px] text-slate-400 truncate">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0">
+                <span class="text-xs font-mono font-bold text-amber-400 block">${memberCount} ${memberCount === 1 ? 'member' : 'members'}</span>
+                <span class="text-[10px] text-slate-500 font-mono block">#${idx + 1}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-400 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1 text-slate-300">
+                  <i class="fa-solid fa-crown text-amber-400 text-[9px]"></i>
+                  <span>${escapeHtml(sq.creatorName || sq.creatorEmail || 'Squad Leader')}</span>
+                </span>
+                ${sq.inviteCode ? `
+                  <span class="font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-emerald-400 font-bold tracking-wider">
+                    ${escapeHtml(sq.inviteCode)}
+                  </span>
+                ` : ''}
+              </div>
+              <span class="text-slate-500 flex items-center gap-1">
+                <i class="fa-solid fa-calendar-days text-[9px]"></i>
+                ${createdDateStr}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
   }
 }

@@ -566,6 +566,21 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   applyUserProfile({ firstName: "Hithesh", email: "hithesh@gmail.com" });
   assert(isGlobalVisitorTelemetryAdmin() === true, "hithesh@gmail.com is recognized as admin for visitor telemetry");
 
+  // Verify Squads Telemetry tab & container in Global Telemetry Modal
+  assert(typeof setAdminVisitorViewMode === "function", "setAdminVisitorViewMode is defined");
+  setAdminVisitorViewMode('squads');
+  assert(adminVisitorViewMode === 'squads', "adminVisitorViewMode is set to squads");
+  const squadsContainer = getOrCreateElement('admin-squads-container');
+  assert(!squadsContainer.classList.contains('hidden'), "admin-squads-container is visible in squads view mode");
+  const tfContainer = getOrCreateElement('admin-timeframe-groups-container');
+  assert(tfContainer.classList.contains('hidden'), "timeframe container is hidden in squads view mode");
+  
+  // Verify Squads summary tiles exist and update
+  const totalSquadsAdmin = getOrCreateElement('admin-telemetry-total-squads');
+  assert(totalSquadsAdmin !== null, "admin-telemetry-total-squads exists");
+  const totalSquadsSettings = getOrCreateElement('settings-total-squads-count');
+  assert(totalSquadsSettings !== null, "settings-total-squads-count exists");
+
   // Verify Firebase Firestore configuration
   assert(typeof FIREBASE_CONFIG === "object" && FIREBASE_CONFIG !== null, "FIREBASE_CONFIG is defined");
   assert(FIREBASE_CONFIG.projectId === "showup-app-ca372", "FIREBASE_CONFIG projectId is showup-app-ca372");
@@ -739,6 +754,7 @@ runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
   const squadTabHtml = document.getElementById('squads-list-container').innerHTML;
   assert(squadTabHtml.includes("<span>Yet to join</span>"), "Squad card contains 'Yet to join' status pill");
   assert(squadTabHtml.includes("fa-envelope-circle-check"), "Squad card contains small mail checkmark icon");
+  assert(!squadTabHtml.includes("simulateTeammateWorkout"), "Squad card does NOT contain simulateTeammateWorkout button");
   assert(!squadTabHtml.includes("Invite Delivered ("), "Bulky 'Invite Delivered (...)' text pill is avoided");
 
   // 5c: Once athlete joins, verify Yet to join & delivery badge are avoided

@@ -7411,25 +7411,28 @@ if (typeof window !== 'undefined') {
       if (!user) user = getAppUser();
       const userId = user.id;
       const userEmail = (user.email || '').toLowerCase().trim();
-      const userName = (user.rawName || user.name || '').toLowerCase().trim();
+
+      // STRICT ISOLATION: Unauthenticated guests or logged-out athletes do not inherit squads
+      const isLoggedIn = typeof isCustomerLoggedIn === 'function' ? isCustomerLoggedIn() : (userId && userId !== 'local_user');
+      if (!isLoggedIn) {
+        return false;
+      }
 
       // 1. Is athlete the squad creator?
-      const isCreatorById = squad.creatorId && (squad.creatorId === userId || (userEmail && squad.creatorId === userEmail) || squad.creatorId === 'local_user');
+      const isCreatorById = squad.creatorId && squad.creatorId !== 'local_user' && (squad.creatorId === userId || (userEmail && squad.creatorId.toLowerCase().trim() === userEmail));
       const isCreatorByEmail = userEmail && squad.creatorEmail && (squad.creatorEmail.toLowerCase().trim() === userEmail);
-      const isCreatorByName = userName && ((squad.creatorName && squad.creatorName.toLowerCase().trim() === userName) || (typeof squad.creator === 'string' && squad.creator.toLowerCase().trim() === userName));
       const isCreatorInMembers = Array.isArray(squad.members) && squad.members.some(m => {
         if (!m) return false;
         if (typeof m === 'string') {
           const str = m.toLowerCase().trim();
-          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+          return (userId && m === userId) || (userEmail && str === userEmail);
         }
-        const matchId = m.id === userId || (userEmail && m.id === userEmail) || m.id === 'local_user';
+        const matchId = m.id && m.id !== 'local_user' && (m.id === userId || (userEmail && m.id.toLowerCase().trim() === userEmail));
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName;
-        return (matchId || matchEmail || matchName) && m.isCreator === true;
+        return (matchId || matchEmail) && m.isCreator === true;
       });
 
-      if (isCreatorById || isCreatorByEmail || isCreatorByName || isCreatorInMembers) {
+      if (isCreatorById || isCreatorByEmail || isCreatorInMembers) {
         return true;
       }
 
@@ -7438,18 +7441,17 @@ if (typeof window !== 'undefined') {
         if (!m) return false;
         if (typeof m === 'string') {
           const str = m.toLowerCase().trim();
-          return m === userId || (userEmail && str === userEmail) || (userName && str === userName);
+          return (userId && m === userId) || (userEmail && str === userEmail);
         }
-        const matchId = (m.id && (m.id === userId || (userEmail && m.id === userEmail))) || (m.id === 'local_user' && squad.creatorId === userId);
+        const matchId = m.id && m.id !== 'local_user' && (m.id === userId || (userEmail && m.id.toLowerCase().trim() === userEmail));
         const matchEmail = userEmail && m.email && m.email.toLowerCase().trim() === userEmail;
-        const matchName = userName && (m.rawName || m.name) && (m.rawName || m.name).toLowerCase().trim() === userName && (m.inviteStatus === 'accepted' || m.isBackupCreator || m.isCreator || m.isMember !== false);
-        return matchId || matchEmail || matchName;
+        return matchId || matchEmail;
       });
 
       if (isMember) return true;
 
       // 3. Backup creator match
-      if (squad.backupCreatorId && (squad.backupCreatorId === userId || squad.backupCreatorId === userEmail)) return true;
+      if (squad.backupCreatorId && squad.backupCreatorId !== 'local_user' && (squad.backupCreatorId === userId || (userEmail && squad.backupCreatorId.toLowerCase().trim() === userEmail))) return true;
       if (squad.backupCreatorEmail && userEmail && squad.backupCreatorEmail.toLowerCase().trim() === userEmail) return true;
 
       return false;
@@ -8029,6 +8031,27 @@ if (typeof window !== 'undefined') {
       });
 
       let squads = Array.from(squadMap.values());
+
+      // Filter out auto-fabricated squads or squads with dummy creators
+      squads = squads.filter(sq => {
+        if (!sq || !sq.name) return false;
+        if (sq.creatorName === 'Squad Leader' || (sq.creatorId && String(sq.creatorId).startsWith('creator_SHOWUP'))) return false;
+        return isAthleteMemberOrCreator(sq, user);
+      });
+
+      // Clear any simulated workouts from members
+      squads.forEach(sq => {
+        if (Array.isArray(sq.members)) {
+          sq.members.forEach(m => {
+            if (m.isSimulatedWorkout) {
+              m.isWorkingOut = false;
+              m.isSimulatedWorkout = false;
+              m.currentWorkout = null;
+              m.workoutStartedAt = null;
+            }
+          });
+        }
+      });
 
       // Sanitize and deduplicate members across all valid squads
       squads = squads.map(sq => sanitizeSquadMembers(sq, user));
@@ -8672,7 +8695,7 @@ if (typeof window !== 'undefined') {
       }
     }
 
-    function submitJoinSquadByCode() {
+    async function submitJoinSquadByCode() {
       const input = document.getElementById('join-squad-code-input');
       if (!input) return;
 
@@ -8794,66 +8817,65 @@ if (typeof window !== 'undefined') {
         return;
       }
 
-      // 3. New external join code -> construct squad with this code
-      const newJoinedSquad = {
-        id: 'squad_joined_' + Date.now(),
-        name: `Squad ${rawCode.replace(/^SHOWUP-?/, '') || rawCode}`,
-        motto: 'Consistency in motion • Stronger together',
-        icon: 'dumbbell',
-        accent: 'emerald',
-        inviteCode: rawCode,
-        isCollapsed: false,
-        createdAt: new Date().toISOString(),
-        creatorId: 'creator_' + rawCode,
-        creatorName: 'Squad Leader',
-        notificationPreferences: {
-          inAppPill: true,
-          beaconPulse: true,
-          hapticPulse: true,
-          soundChime: true,
-          browserNotify: false
-        },
-        members: [
-          {
-            id: 'creator_' + rawCode,
-            name: 'Squad Leader',
-            rawName: 'Squad Leader',
-            email: '',
-            avatar: null,
-            isCreator: true,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Active today'
-          },
-          {
-            id: user.id,
-            name: user.name,
-            rawName: user.rawName,
-            email: user.email,
-            avatar: user.picture,
-            hasJoined: true,
-            inviteStatus: 'accepted',
-            isCreator: false,
-            isBackupCreator: false,
-            isWorkingOut: false,
-            currentWorkout: null,
-            lastActive: 'Just joined'
+      // 3. Lookup real squad in cloud Firestore by inviteCode
+      if (typeof getFirestoreDb === 'function') {
+        const db = getFirestoreDb();
+        if (db) {
+          try {
+            const querySnap = await db.collection('squads').where('inviteCode', '==', rawCode).limit(1).get();
+            if (querySnap && !querySnap.empty) {
+              const docData = querySnap.docs[0].data();
+              if (docData && docData.id) {
+                const squadToImport = JSON.parse(JSON.stringify(docData));
+                if (!Array.isArray(squadToImport.members)) squadToImport.members = [];
+                const memberIdx = squadToImport.members.findIndex(m => m.id === user.id || (m.email && m.email.toLowerCase() === userEmail));
+                if (memberIdx >= 0) {
+                  squadToImport.members[memberIdx].id = user.id;
+                  squadToImport.members[memberIdx].name = user.name;
+                  squadToImport.members[memberIdx].rawName = user.rawName;
+                  squadToImport.members[memberIdx].email = user.email;
+                  squadToImport.members[memberIdx].avatar = user.picture;
+                  squadToImport.members[memberIdx].hasJoined = true;
+                  squadToImport.members[memberIdx].inviteStatus = 'accepted';
+                } else {
+                  squadToImport.members.push({
+                    id: user.id,
+                    name: user.name,
+                    rawName: user.rawName,
+                    email: user.email,
+                    avatar: user.picture,
+                    hasJoined: true,
+                    inviteStatus: 'accepted',
+                    isCreator: false,
+                    isBackupCreator: false,
+                    isWorkingOut: false,
+                    currentWorkout: null,
+                    lastActive: 'Just joined'
+                  });
+                }
+                squads.unshift(squadToImport);
+                saveSquads(squads);
+                saveSquadToGlobalRegistry(squadToImport);
+                syncSquadToFirestore(squadToImport);
+                closeJoinSquadModal();
+                renderSquadsTab();
+                updateGlobalStatsUI();
+                updateSquadBeacon();
+                showToast(`🎉 Joined "${squadToImport.name}" with code ${rawCode}!`, "success");
+                if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+                  syncToGoogleDrive(false);
+                }
+                return;
+              }
+            }
+          } catch (e) {
+            console.debug("Firestore squad lookup notice:", e);
           }
-        ]
-      };
-
-      squads.unshift(newJoinedSquad);
-      saveSquads(squads);
-      saveSquadToGlobalRegistry(newJoinedSquad);
-      syncSquadToFirestore(newJoinedSquad);
-      closeJoinSquadModal();
-      renderSquadsTab();
-      updateGlobalStatsUI();
-      updateSquadBeacon();
-      showToast(`🎉 Successfully joined squad with code ${rawCode}!`, "success");
-      if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
-        syncToGoogleDrive(false);
+        }
       }
+
+      // If squad code not found, NEVER create random fake squads
+      showToast(`No squad found with code "${rawCode}". Please check the code with your squad creator.`, "error");
     }
 
 
@@ -9018,11 +9040,6 @@ if (typeof window !== 'undefined') {
                 <button onclick="triggerHaptic('light'); openAddMemberModal('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Add or invite workout buddy">
                   <i class="fa-solid fa-user-plus text-xs text-blue-400"></i>
                   <span>Invite</span>
-                </button>
-
-                <button onclick="triggerHaptic('light'); simulateTeammateWorkout('${sq.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Simulate a teammate starting workout">
-                  <i class="fa-solid fa-bolt text-xs text-amber-400"></i>
-                  <span>Simulate</span>
                 </button>
 
                 <!-- CREATOR DELETE SQUAD BUTTON -->
@@ -9941,78 +9958,7 @@ if (typeof window !== 'undefined') {
     }
 
     function simulateTeammateWorkout(targetSquadId) {
-      const squads = getSquads();
-      if (squads.length === 0) {
-        showToast("Create a squad first to simulate workout alerts", "info");
-        return;
-      }
-
-      const squad = targetSquadId ? squads.find(s => s.id === targetSquadId) : squads[0];
-      if (!squad) return;
-
-      const user = getAppUser();
-      let otherMembers = squad.members.filter(m => m.id !== user.id && m.email !== user.email);
-
-      if (otherMembers.length === 0) {
-        showToast("Invite at least one teammate to this squad first to simulate workouts.", "info");
-        return;
-      }
-
-      const member = otherMembers[Math.floor(Math.random() * otherMembers.length)];
-      const workoutNames = [
-        "Incline Dumbbell Press & Chest",
-        "Barbell Deadlift & Lat Pulls",
-        "Barbell Back Squats & Core",
-        "Overhead Press & Tricep Burnout",
-        "Macebell 360 & Dands"
-      ];
-      const randomWorkout = workoutNames[Math.floor(Math.random() * workoutNames.length)];
-
-      if (!member.zip || !/^\d{5}$/.test(member.zip)) {
-        member.zip = getUserZip() || '20105';
-        const coords = getZipCoordinates(member.zip);
-        member.city = coords.city;
-        member.lat = coords.lat;
-        member.lng = coords.lng;
-      }
-
-      member.isWorkingOut = true;
-      member.isSimulatedWorkout = true;
-      member.currentWorkout = randomWorkout;
-      member.workoutStartedAt = new Date().toISOString();
-      member.lastActive = 'Active now';
-
-      // Auto-expire simulation after 10 minutes so teammates are not left stuck as lifting
-      setTimeout(() => {
-        try {
-          const liveSquads = getSquads();
-          const targetSq = liveSquads.find(s => s.id === squad.id);
-          if (targetSq) {
-            const mem = targetSq.members.find(m => m.id === member.id);
-            if (mem && mem.isSimulatedWorkout) {
-              mem.isWorkingOut = false;
-              mem.currentWorkout = null;
-              mem.workoutStartedAt = null;
-              mem.isSimulatedWorkout = false;
-              if (!mem.completedToday) mem.lastActive = 'Yet to show up';
-              saveSquads(liveSquads);
-              renderSquadsTab();
-              updateSquadBeacon();
-              updateGlobalStatsUI();
-            }
-          }
-        } catch (e) {}
-      }, 10 * 60 * 1000);
-
-      // Trigger user's chosen unobtrusive notifications for this squad
-      triggerSquadWorkoutNotification(squad, member, randomWorkout);
-
-      saveSquads(squads);
-      renderSquadsTab();
-      updateSquadBeacon();
-      updateGlobalStatsUI();
-      renderHeatMap();
-      showToast(`⚡ Test Alert: Simulated ${member.rawName} starting ${randomWorkout} (auto-closes in 10m)`, "info");
+      // Simulate function removed per user preference
     }
 
     function triggerSquadWorkoutNotification(squad, member, workoutName) {
@@ -12294,9 +12240,32 @@ function closeGlobalVisitorTelemetryModal() {
   if (modal) modal.classList.add('hidden');
 }
 
+let adminCloudSquads = [];
+let unsubscribeAdminSquadsTelemetry = null;
+
+function getAdminAllSquads() {
+  const localReg = typeof getGlobalSquadRegistry === 'function' ? getGlobalSquadRegistry() : [];
+  const squadMap = new Map();
+
+  [...localReg, ...adminCloudSquads].forEach(sq => {
+    if (!sq || !sq.name) return;
+    if (sq.creatorName === 'Squad Leader' || (sq.creatorId && String(sq.creatorId).startsWith('creator_SHOWUP'))) return;
+    const key = sq.id || sq.inviteCode;
+    if (!key) return;
+    if (!squadMap.has(key)) {
+      squadMap.set(key, sq);
+    } else {
+      const existing = squadMap.get(key);
+      squadMap.set(key, { ...existing, ...sq });
+    }
+  });
+
+  return Array.from(squadMap.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
 function setAdminVisitorViewMode(mode) {
   adminVisitorViewMode = mode;
-  const modes = ['day', 'week', 'month', 'year', 'state', 'city'];
+  const modes = ['day', 'week', 'month', 'year', 'state', 'city', 'squads'];
   modes.forEach(m => {
     const tab = document.getElementById(`admin-view-tab-${m}`);
     if (tab) {
@@ -12311,20 +12280,29 @@ function setAdminVisitorViewMode(mode) {
   const tfContainer = document.getElementById('admin-timeframe-groups-container');
   const stateContainer = document.getElementById('admin-state-groups-container');
   const cityContainer = document.getElementById('admin-city-log-container');
+  const squadsContainer = document.getElementById('admin-squads-container');
 
   if (mode === 'state') {
     if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.remove('hidden');
     if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
   } else if (mode === 'city') {
     if (tfContainer) tfContainer.classList.add('hidden');
     if (stateContainer) stateContainer.classList.add('hidden');
     if (cityContainer) cityContainer.classList.remove('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
+  } else if (mode === 'squads') {
+    if (tfContainer) tfContainer.classList.add('hidden');
+    if (stateContainer) stateContainer.classList.add('hidden');
+    if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.remove('hidden');
   } else {
     // 'day', 'week', 'month', 'year'
     if (tfContainer) tfContainer.classList.remove('hidden');
     if (stateContainer) stateContainer.classList.add('hidden');
     if (cityContainer) cityContainer.classList.add('hidden');
+    if (squadsContainer) squadsContainer.classList.add('hidden');
   }
   renderAdminGlobalVisitorTelemetry(true);
 }
@@ -12341,6 +12319,10 @@ function subscribeAdminGlobalVisitorTelemetry() {
   if (unsubscribeAdminTelemetry) {
     unsubscribeAdminTelemetry();
     unsubscribeAdminTelemetry = null;
+  }
+  if (unsubscribeAdminSquadsTelemetry) {
+    unsubscribeAdminSquadsTelemetry();
+    unsubscribeAdminSquadsTelemetry = null;
   }
   try {
     unsubscribeAdminTelemetry = db.collection('global_visitors').onSnapshot((snapshot) => {
@@ -12381,6 +12363,21 @@ function subscribeAdminGlobalVisitorTelemetry() {
       updateVisitorCounterUI(liveTotal);
     }, (err) => {
       console.warn("Firestore live telemetry subscription notice:", err);
+    });
+
+    unsubscribeAdminSquadsTelemetry = db.collection('squads').onSnapshot((snapshot) => {
+      if (!snapshot) return;
+      const remoteSquads = [];
+      snapshot.forEach(doc => {
+        const sq = doc.data();
+        if (sq && sq.id && sq.name) {
+          remoteSquads.push(sq);
+        }
+      });
+      adminCloudSquads = remoteSquads;
+      renderAdminGlobalVisitorTelemetry();
+    }, (err) => {
+      console.debug("Firestore live squads subscription notice:", err);
     });
   } catch (err) {
     console.debug("Firestore live subscription exception:", err);
@@ -12428,6 +12425,20 @@ async function refreshAdminVisitorData() {
       }
     } catch (err) {
       console.warn("Firestore refresh notice:", err);
+    }
+
+    try {
+      const sqSnap = await db.collection('squads').get();
+      if (sqSnap) {
+        const remoteSquads = [];
+        sqSnap.forEach(d => {
+          const sq = d.data();
+          if (sq && sq.id && sq.name) remoteSquads.push(sq);
+        });
+        adminCloudSquads = remoteSquads;
+      }
+    } catch (e) {
+      console.debug("Firestore squads fetch notice:", e);
     }
   }
   renderAdminGlobalVisitorTelemetry();
@@ -12587,11 +12598,18 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
   const uniqueStatesCount = sortedStates.length;
   const topState = sortedStates[0] ? `${sortedStates[0].stateName} (${sortedStates[0].stateCode})` : '-';
 
+  const allSquads = getAdminAllSquads();
+  const totalSquadsCount = allSquads.length;
+
   // Update Summary Tiles
   if (totalVisitorsEl) totalVisitorsEl.innerText = totalVisitorsCount.toLocaleString();
   if (totalStatesEl) totalStatesEl.innerText = uniqueStatesCount;
   if (topStateEl) topStateEl.innerText = topState;
   if (totalCitiesEl) totalCitiesEl.innerText = uniqueCitiesSet.size;
+  const totalSquadsEl = document.getElementById('admin-telemetry-total-squads');
+  if (totalSquadsEl) totalSquadsEl.innerText = totalSquadsCount.toLocaleString();
+  const settingsSquadsEl = document.getElementById('settings-total-squads-count');
+  if (settingsSquadsEl) settingsSquadsEl.innerText = totalSquadsCount.toLocaleString();
   if (lastSyncEl) lastSyncEl.innerText = `Updated ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
   // Guarantee top level visitors metric and telemetry total visitors metric remain strictly identical
@@ -12817,6 +12835,85 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
               </table>
             </div>
           `;
+    }
+  }
+
+  // 6. Render Squads View
+  const squadsContainer = document.getElementById('admin-squads-container');
+  if (squadsContainer && adminVisitorViewMode === 'squads') {
+    const filteredSquads = allSquads.filter(sq => {
+      if (!q) return true;
+      const n = (sq.name || '').toLowerCase();
+      const m = (sq.motto || '').toLowerCase();
+      const c = (sq.creatorName || sq.creatorEmail || '').toLowerCase();
+      const code = (sq.inviteCode || '').toLowerCase();
+      return n.includes(q) || m.includes(q) || c.includes(q) || code.includes(q);
+    });
+
+    if (filteredSquads.length === 0) {
+      squadsContainer.innerHTML = `
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 text-center text-slate-500 text-xs">
+          <i class="fa-solid fa-users mb-2 text-base text-slate-600 block"></i>
+          ${q ? `No squads matched "${escapeHtml(q)}".` : 'No squads created yet.'}
+        </div>
+      `;
+    } else {
+      squadsContainer.innerHTML = filteredSquads.map((sq, idx) => {
+        const memberCount = Array.isArray(sq.members) ? sq.members.length : 0;
+        const activeMembers = Array.isArray(sq.members) ? sq.members.filter(m => m && m.isWorkingOut).length : 0;
+        const createdDateStr = sq.createdAt ? new Date(sq.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
+        const iconName = sq.icon || 'dumbbell';
+        const accent = sq.accent || 'emerald';
+        const accentBorder = accent === 'rose' ? 'border-rose-500/30' : accent === 'amber' ? 'border-amber-500/30' : accent === 'blue' ? 'border-blue-500/30' : accent === 'purple' ? 'border-purple-500/30' : 'border-emerald-500/30';
+        const accentBg = accent === 'rose' ? 'bg-rose-500/10 text-rose-400' : accent === 'amber' ? 'bg-amber-500/10 text-amber-400' : accent === 'blue' ? 'bg-blue-500/10 text-blue-400' : accent === 'purple' ? 'bg-purple-500/10 text-purple-400' : 'bg-emerald-500/10 text-emerald-400';
+
+        return `
+          <div class="bg-slate-950 p-3.5 rounded-2xl border ${accentBorder} hover:border-slate-700 transition space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-9 h-9 rounded-xl ${accentBg} border border-white/10 flex items-center justify-center shrink-0 text-sm">
+                  <i class="fa-solid fa-${iconName}"></i>
+                </span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-xs font-bold text-slate-100 truncate">${escapeHtml(sq.name)}</h4>
+                    ${activeMembers > 0 ? `
+                      <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                        ${activeMembers} lifting now
+                      </span>
+                    ` : ''}
+                  </div>
+                  <p class="text-[11px] text-slate-400 truncate">${escapeHtml(sq.motto || 'Consistency in motion')}</p>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0">
+                <span class="text-xs font-mono font-bold text-amber-400 block">${memberCount} ${memberCount === 1 ? 'member' : 'members'}</span>
+                <span class="text-[10px] text-slate-500 font-mono block">#${idx + 1}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-900 text-[10px] text-slate-400 flex-wrap gap-2">
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1 text-slate-300">
+                  <i class="fa-solid fa-crown text-amber-400 text-[9px]"></i>
+                  <span>${escapeHtml(sq.creatorName || sq.creatorEmail || 'Squad Leader')}</span>
+                </span>
+                ${sq.inviteCode ? `
+                  <span class="font-mono bg-slate-900 border border-slate-800 px-2 py-0.5 rounded text-emerald-400 font-bold tracking-wider">
+                    ${escapeHtml(sq.inviteCode)}
+                  </span>
+                ` : ''}
+              </div>
+              <span class="text-slate-500 flex items-center gap-1">
+                <i class="fa-solid fa-calendar-days text-[9px]"></i>
+                ${createdDateStr}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
   }
 }
@@ -14314,6 +14411,21 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   applyUserProfile({ firstName: "Hithesh", email: "hithesh@gmail.com" });
   assert(isGlobalVisitorTelemetryAdmin() === true, "hithesh@gmail.com is recognized as admin for visitor telemetry");
 
+  // Verify Squads Telemetry tab & container in Global Telemetry Modal
+  assert(typeof setAdminVisitorViewMode === "function", "setAdminVisitorViewMode is defined");
+  setAdminVisitorViewMode('squads');
+  assert(adminVisitorViewMode === 'squads', "adminVisitorViewMode is set to squads");
+  const squadsContainer = getOrCreateElement('admin-squads-container');
+  assert(!squadsContainer.classList.contains('hidden'), "admin-squads-container is visible in squads view mode");
+  const tfContainer = getOrCreateElement('admin-timeframe-groups-container');
+  assert(tfContainer.classList.contains('hidden'), "timeframe container is hidden in squads view mode");
+  
+  // Verify Squads summary tiles exist and update
+  const totalSquadsAdmin = getOrCreateElement('admin-telemetry-total-squads');
+  assert(totalSquadsAdmin !== null, "admin-telemetry-total-squads exists");
+  const totalSquadsSettings = getOrCreateElement('settings-total-squads-count');
+  assert(totalSquadsSettings !== null, "settings-total-squads-count exists");
+
   // Verify Firebase Firestore configuration
   assert(typeof FIREBASE_CONFIG === "object" && FIREBASE_CONFIG !== null, "FIREBASE_CONFIG is defined");
   assert(FIREBASE_CONFIG.projectId === "showup-app-ca372", "FIREBASE_CONFIG projectId is showup-app-ca372");
@@ -14487,6 +14599,7 @@ runSuite("11. Squads Collapsible UI & Athlete Profile Isolation Engine", () => {
   const squadTabHtml = document.getElementById('squads-list-container').innerHTML;
   assert(squadTabHtml.includes("<span>Yet to join</span>"), "Squad card contains 'Yet to join' status pill");
   assert(squadTabHtml.includes("fa-envelope-circle-check"), "Squad card contains small mail checkmark icon");
+  assert(!squadTabHtml.includes("simulateTeammateWorkout"), "Squad card does NOT contain simulateTeammateWorkout button");
   assert(!squadTabHtml.includes("Invite Delivered ("), "Bulky 'Invite Delivered (...)' text pill is avoided");
 
   // 5c: Once athlete joins, verify Yet to join & delivery badge are avoided

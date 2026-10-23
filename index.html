@@ -855,11 +855,16 @@
             </h3>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-400 border border-purple-500/25">Cumulative</span>
           </div>
-          <div class="grid grid-cols-2 gap-2 pt-1">
+          <div class="grid grid-cols-3 gap-2 pt-1">
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Cumulative Visitors</span>
               <span id="settings-unique-visitor-count" class="text-base font-extrabold font-mono text-purple-400 mt-0.5 block">1</span>
               <span class="text-[9px] text-slate-500 block">Verified Unique</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
+              <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Squads Created</span>
+              <span id="settings-total-squads-count" class="text-base font-extrabold font-mono text-emerald-400 mt-0.5 block">0</span>
+              <span class="text-[9px] text-slate-500 block">Verified Squads</span>
             </div>
             <div class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl">
               <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Your Visitor ID</span>
@@ -928,7 +933,7 @@
       </div>
 
       <!-- TELEMETRY SUMMARY TILES -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
         <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
           <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Total Visitors</span>
           <span id="admin-telemetry-total-visitors" class="text-lg sm:text-xl font-black font-mono text-purple-400 mt-0.5 block">0</span>
@@ -945,11 +950,15 @@
           <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Unique Cities</span>
           <span id="admin-telemetry-total-cities" class="text-lg sm:text-xl font-black font-mono text-blue-400 mt-0.5 block">0</span>
         </div>
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800/80">
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Squads Created</span>
+          <span id="admin-telemetry-total-squads" class="text-lg sm:text-xl font-black font-mono text-amber-400 mt-0.5 block">0</span>
+        </div>
       </div>
 
       <!-- CONTROLS: TIMEFRAME & VIEW TOGGLE TABS + INSTANT SEARCH -->
       <div class="flex flex-col gap-2.5 pt-1">
-        <!-- View Toggle Tabs (Day / Week / Month / Year / State / City) -->
+        <!-- View Toggle Tabs (Day / Week / Month / Year / State / City / Squads) -->
         <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-2xl border border-slate-800 overflow-x-auto scrollbar-none">
           <button id="admin-view-tab-day" onclick="triggerHaptic('light'); setAdminVisitorViewMode('day')" class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm flex items-center gap-1 shrink-0">
             <i class="fa-solid fa-calendar-day text-[11px]"></i>
@@ -975,12 +984,16 @@
             <i class="fa-solid fa-list-ul text-[11px]"></i>
             <span>City Log</span>
           </button>
+          <button id="admin-view-tab-squads" onclick="triggerHaptic('light'); setAdminVisitorViewMode('squads')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold transition text-slate-400 hover:text-slate-200 flex items-center gap-1 shrink-0">
+            <i class="fa-solid fa-users text-[11px] text-amber-400"></i>
+            <span>Squads</span>
+          </button>
         </div>
 
         <!-- Instant Search -->
         <div class="relative w-full">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" id="admin-visitor-search-input" oninput="handleAdminVisitorSearch(this.value)" placeholder="Search by date, city, or state..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
+          <input type="text" id="admin-visitor-search-input" oninput="handleAdminVisitorSearch(this.value)" placeholder="Search by date, city, state, or squad..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition">
         </div>
       </div>
 
@@ -997,6 +1010,11 @@
       <!-- CONTAINER 2: CITY & STATE DETAILED LOG -->
       <div id="admin-city-log-container" class="hidden space-y-2 max-h-[46vh] overflow-y-auto pr-1">
         <!-- Dynamically populated with city/state list -->
+      </div>
+
+      <!-- CONTAINER 3: SQUADS CREATED TELEMETRY -->
+      <div id="admin-squads-container" class="hidden space-y-2.5 max-h-[46vh] overflow-y-auto pr-1">
+        <!-- Dynamically populated with squads list and metrics -->
       </div>
 
       <div class="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500">
@@ -3138,10 +3156,6 @@
               <i class="fa-solid fa-plus"></i>
               <span>Create Squad</span>
             </button>
-            <button onclick="triggerHaptic('light'); simulateTeammateWorkout()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-2 rounded-2xl flex items-center gap-1.5 active:scale-95 transition" title="Test workout start notification">
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-              <span>Simulate Workout</span>
-            </button>
           </div>
         </div>
 
@@ -3212,18 +3226,18 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023d"></script>
-  <script defer src="js/storage.js?v=20261023d"></script>
-  <script defer src="js/utils.js?v=20261023d"></script>
-  <script defer src="js/theme.js?v=20261023d"></script>
-  <script defer src="js/auth.js?v=20261023d"></script>
-  <script defer src="js/workout.js?v=20261023d"></script>
-  <script defer src="js/history.js?v=20261023d"></script>
-  <script defer src="js/progress.js?v=20261023d"></script>
-  <script defer src="js/squads.js?v=20261023d"></script>
-  <script defer src="js/map.js?v=20261023d"></script>
-  <script defer src="js/visitors.js?v=20261023d"></script>
-  <script defer src="js/backup.js?v=20261023d"></script>
-  <script defer src="js/main.js?v=20261023d"></script>
+  <script defer src="js/config.js?v=20261023e"></script>
+  <script defer src="js/storage.js?v=20261023e"></script>
+  <script defer src="js/utils.js?v=20261023e"></script>
+  <script defer src="js/theme.js?v=20261023e"></script>
+  <script defer src="js/auth.js?v=20261023e"></script>
+  <script defer src="js/workout.js?v=20261023e"></script>
+  <script defer src="js/history.js?v=20261023e"></script>
+  <script defer src="js/progress.js?v=20261023e"></script>
+  <script defer src="js/squads.js?v=20261023e"></script>
+  <script defer src="js/map.js?v=20261023e"></script>
+  <script defer src="js/visitors.js?v=20261023e"></script>
+  <script defer src="js/backup.js?v=20261023e"></script>
+  <script defer src="js/main.js?v=20261023e"></script>
 </body>
 </html>
