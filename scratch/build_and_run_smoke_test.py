@@ -59,8 +59,14 @@ def generate_and_run_smoke_test():
 
     # 1. Audit DOM IDs and Inline handlers
     missing_ids = set(baseline['dom_ids']) - auditor.ids
-    # Note: we intentionally removed 'auth-modal-name-input' and 'auth-modal-email-input' in Phase 0
-    expected_removed_ids = {'auth-modal-name-input', 'auth-modal-email-input'}
+    # Note: we intentionally removed 'auth-modal-name-input', 'auth-modal-email-input' in Phase 0,
+    # and Experience Mode controls ('quick-ui-mode-toggle', 'quick-ui-mode-name', 'ui-mode-btn-*')
+    # as Zen is now the exclusive default experience mode
+    expected_removed_ids = {
+        'auth-modal-name-input', 'auth-modal-email-input',
+        'quick-ui-mode-toggle', 'quick-ui-mode-name',
+        'ui-mode-btn-precision', 'ui-mode-btn-zen', 'ui-mode-btn-hud', 'ui-mode-btn-light'
+    }
     actual_missing_ids = missing_ids - expected_removed_ids
     if actual_missing_ids:
         print(f"[FAIL] Unexpected missing DOM IDs ({len(actual_missing_ids)}): {actual_missing_ids}")
@@ -274,7 +280,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
 });
 
 runSuite("2. Theme Palette & Typography Engine", () => {
-  const palettes = ['emerald', 'orange', 'blue', 'purple', 'red', 'slate', 'amoled'];
+  const palettes = ['orange', 'teal', 'lime', 'obsidian'];
   palettes.forEach(p => {
     setThemePalette(p);
     assert(localStorage.getItem('showUp_theme_accent') === p, "Palette persistence for: " + p);
@@ -286,20 +292,13 @@ runSuite("2. Theme Palette & Typography Engine", () => {
     assert(localStorage.getItem('showUp_font') === f, "Font persistence for: " + f);
   });
 
-  const uiModes = ['precision', 'zen', 'hud', 'light'];
-  uiModes.forEach(m => {
-    setAppUIMode(m);
-    assert(localStorage.getItem('showUp_ui_mode') === m, "UI Mode persistence for: " + m);
-  });
-  setAppUIMode('precision');
+  // Zen is the exclusive default experience mode
+  restoreAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Zen is default experience mode");
+  setAppUIMode('zen');
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "UI mode persistence is zen");
   cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycle UI Mode from precision to zen");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'hud', "Cycle UI Mode from zen to hud");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'light', "Cycle UI Mode from hud to light");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'precision', "Cycle UI Mode from light back to precision");
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycling UI mode remains in zen");
 });
 
 runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9.2)", () => {
@@ -1953,6 +1952,15 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(bwCatalog.length >= 5, "filterExerciseCatalog('', 'Bodyweight') returns bodyweight exercises (" + bwCatalog.length + " found)");
   assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
 
+  const ringsCatalog = filterExerciseCatalog("", "Gymnastics Rings");
+  assert(ringsCatalog.length >= 4, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
+  assert(ringsCatalog.every(e => e.implement === "Gymnastics Rings" || e.name.toLowerCase().includes("ring")), "All filtered rings items belong to Gymnastics Rings");
+
+  assert(inferImplementFromExerciseName("Ring Dips") === "Gymnastics Rings", "Ring Dips infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Rows") === "Gymnastics Rings", "Ring Rows infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Gymnastic Ring Pullups") === "Gymnastics Rings", "Gymnastic Ring Pullups infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Inverted Row") === "Gymnastics Rings", "Ring Inverted Row infers Gymnastics Rings");
+
   // 2. Interactive toggle on Kettlebell pill
   const pillKb = getOrCreateElement('filter-pill-kettlebell');
   const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
@@ -2135,9 +2143,25 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
 
   // Test repeatSet loading previous set into active controls
   repeatSet(secondSet.id);
-  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates exercise name from previous set");
+  assert(getOrCreateElement('exercise-name-input').value === "Barbell Back Squat", "repeatSet populates exercise-name-input from previous set");
+  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates legacy input-exercise-name from previous set");
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
+
+  // Rest Timer LocalStorage Persistence & Restoration Test
+  startRestTimer(10);
+  assert(isRestTimerRunning === true, "startRestTimer sets isRestTimerRunning to true");
+  assert(localStorage.getItem('showUp_rest_timer_data') !== null, "startRestTimer persists rest timer data to localStorage");
+  stopRestTimer();
+  assert(isRestTimerRunning === false, "stopRestTimer stops rest timer");
+  assert(localStorage.getItem('showUp_rest_timer_data') === null, "stopRestTimer removes rest timer data from localStorage");
+
+  // Test background restoration
+  localStorage.setItem('showUp_rest_timer_data', JSON.stringify({ running: true, startTime: Date.now() - 45000 }));
+  restoreRestTimerState();
+  assert(isRestTimerRunning === true, "restoreRestTimerState restores running rest timer");
+  assert(restTimerSeconds >= 45, "restoreRestTimerState accurately recovers elapsed rest seconds");
+  stopRestTimer();
 
   // Phase 3: Default rest time preference and target weight goal
   assert(typeof getDefaultRestTimeSeconds === 'function', "getDefaultRestTimeSeconds is a defined function");

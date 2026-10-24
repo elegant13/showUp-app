@@ -22,34 +22,19 @@ body.font-mono {
 
 /* ==========================================================================
    Google Material 3 Dynamic Color Tokens & Contrast Pairings
+   Curated 4-Theme Lineup: Hot Orange, Cyber Teal, Volt Lime, Obsidian White
    ========================================================================== */
 
 :root,
-.theme-emerald {
-  --m3-primary: #10b981;
-  --m3-primary-light: #34d399;
-  --m3-onPrimary: #002217;
-  --m3-primaryContainer: rgba(16, 185, 129, 0.16);
-  --m3-onPrimaryContainer: #a7f3d0;
-  --m3-secondary: #3b82f6;
-  --m3-secondaryContainer: #1e40af;
-  --m3-onSecondaryContainer: #bfdbfe;
-  --m3-surface: #0f172a;
-  --m3-surfaceVariant: #1e293b;
-  --m3-onSurface: #f8fafc;
-  --m3-onSurfaceVariant: #94a3b8;
-  --m3-outline: #334155;
-}
-
 .theme-orange {
   --m3-primary: #f97316;
   --m3-primary-light: #fb923c;
   --m3-onPrimary: #1e0800;
   --m3-primaryContainer: rgba(249, 115, 22, 0.16);
   --m3-onPrimaryContainer: #fed7aa;
-  --m3-secondary: #f59e0b;
-  --m3-secondaryContainer: #78350f;
-  --m3-onSecondaryContainer: #fef3c7;
+  --m3-secondary: #ea580c;
+  --m3-secondaryContainer: #7c2d12;
+  --m3-onSecondaryContainer: #ffedd5;
   --m3-surface: #0f172a;
   --m3-surfaceVariant: #1e293b;
   --m3-onSurface: #f8fafc;
@@ -57,20 +42,56 @@ body.font-mono {
   --m3-outline: #334155;
 }
 
+.theme-teal,
 .theme-blue {
-  --m3-primary: #3b82f6;
-  --m3-primary-light: #60a5fa;
-  --m3-onPrimary: #021438;
-  --m3-primaryContainer: rgba(59, 130, 246, 0.16);
-  --m3-onPrimaryContainer: #bfdbfe;
-  --m3-secondary: #8b5cf6;
-  --m3-secondaryContainer: #5b21b6;
-  --m3-onSecondaryContainer: #ddd6fe;
+  --m3-primary: #14b8a6;
+  --m3-primary-light: #2dd4bf;
+  --m3-onPrimary: #00201c;
+  --m3-primaryContainer: rgba(20, 184, 166, 0.16);
+  --m3-onPrimaryContainer: #99f6e4;
+  --m3-secondary: #06b6d4;
+  --m3-secondaryContainer: #155e75;
+  --m3-onSecondaryContainer: #cffafe;
   --m3-surface: #0f172a;
   --m3-surfaceVariant: #1e293b;
   --m3-onSurface: #f8fafc;
   --m3-onSurfaceVariant: #94a3b8;
   --m3-outline: #334155;
+}
+
+.theme-lime,
+.theme-emerald {
+  --m3-primary: #84cc16;
+  --m3-primary-light: #a3e635;
+  --m3-onPrimary: #1a2e05;
+  --m3-primaryContainer: rgba(132, 204, 22, 0.16);
+  --m3-onPrimaryContainer: #d9f99d;
+  --m3-secondary: #10b981;
+  --m3-secondaryContainer: #064e3b;
+  --m3-onSecondaryContainer: #a7f3d0;
+  --m3-surface: #0f172a;
+  --m3-surfaceVariant: #1e293b;
+  --m3-onSurface: #f8fafc;
+  --m3-onSurfaceVariant: #94a3b8;
+  --m3-outline: #334155;
+}
+
+.theme-obsidian,
+.theme-amoled,
+.theme-slate {
+  --m3-primary: #ffffff;
+  --m3-primary-light: #ffffff;
+  --m3-onPrimary: #000000;
+  --m3-primaryContainer: rgba(255, 255, 255, 0.14);
+  --m3-onPrimaryContainer: #ffffff;
+  --m3-secondary: #a1a1aa;
+  --m3-secondaryContainer: #27272a;
+  --m3-onSecondaryContainer: #f4f4f5;
+  --m3-surface: #000000;
+  --m3-surfaceVariant: #09090b;
+  --m3-onSurface: #ffffff;
+  --m3-onSurfaceVariant: #a1a1aa;
+  --m3-outline: #27272a;
 }
 
 .theme-purple {
@@ -103,38 +124,6 @@ body.font-mono {
   --m3-onSurface: #f8fafc;
   --m3-onSurfaceVariant: #94a3b8;
   --m3-outline: #334155;
-}
-
-.theme-slate {
-  --m3-primary: #94a3b8;
-  --m3-primary-light: #cbd5e1;
-  --m3-onPrimary: #0a0f1d;
-  --m3-primaryContainer: rgba(148, 163, 184, 0.16);
-  --m3-onPrimaryContainer: #f1f5f9;
-  --m3-secondary: #64748b;
-  --m3-secondaryContainer: #1e293b;
-  --m3-onSecondaryContainer: #e2e8f0;
-  --m3-surface: #0f172a;
-  --m3-surfaceVariant: #1e293b;
-  --m3-onSurface: #f8fafc;
-  --m3-onSurfaceVariant: #94a3b8;
-  --m3-outline: #334155;
-}
-
-.theme-amoled {
-  --m3-primary: #ffffff;
-  --m3-primary-light: #ffffff;
-  --m3-onPrimary: #000000;
-  --m3-primaryContainer: rgba(255, 255, 255, 0.12);
-  --m3-onPrimaryContainer: #ffffff;
-  --m3-secondary: #a1a1aa;
-  --m3-secondaryContainer: #27272a;
-  --m3-onSecondaryContainer: #f4f4f5;
-  --m3-surface: #000000;
-  --m3-surfaceVariant: #09090b;
-  --m3-onSurface: #ffffff;
-  --m3-onSurfaceVariant: #a1a1aa;
-  --m3-outline: #27272a;
 }
 
 /* ==========================================================================

@@ -129,6 +129,9 @@
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
+      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
+      { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Shoulders"] },
       { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest", "Shoulders", "Triceps", "Back"] },
       { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
       { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
@@ -254,7 +257,10 @@
 
       // 2. Anatomical implement keyword inference
       const lower = expandExerciseAbbreviations(trimmed).toLowerCase();
-      if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
+      // Requirement: Whenever an exercise starts with Ring or has ring in it, it is Gymnastics Rings
+      if (lower.startsWith('ring') || lower.includes('ring') || lower.includes('gymnastic')) {
+        return 'Gymnastics Rings';
+      } else if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
         return 'Dumbbell';
@@ -264,8 +270,6 @@
         return 'Resistance Band';
       } else if (lower.includes('mace') || lower.includes('gada')) {
         return 'Macebell / Gada';
-      } else if (lower.includes('ring')) {
-        return 'Gymnastics Rings';
       } else if (lower.includes('jori') || lower.includes('karlakattai')) {
         return 'Jori Clubs / Karlakattai';
       } else if (lower.includes('run') || lower.includes('sprint') || lower.includes('jog')) {
@@ -326,7 +330,7 @@
       let implement = effectiveImplement;
 
       // Precise anatomical muscle mapping
-      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec')) {
+      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
         primary = 'Chest';
         secondary = ['Triceps', 'Shoulders', 'Core/Abs'];
       } else if (lower.includes('tricep') || lower.includes('skull crusher') || lower.includes('kickback')) {

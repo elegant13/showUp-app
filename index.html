@@ -48,7 +48,7 @@
     (function() {
       try {
         const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
-        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'precision';
+        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'zen';
         document.body.classList.add('theme-' + savedTheme);
         document.body.classList.add('ui-mode-' + savedUIMode);
       } catch (e) {}
@@ -719,66 +719,13 @@
               </div>
               <div>
                 <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Appearance & Styling</h3>
-                <p class="text-[10px] text-slate-400">Design paradigm, accent palette & typography</p>
+                <p class="text-[10px] text-slate-400">Accent palette & typography</p>
               </div>
             </div>
           </div>
 
-          <!-- 1. UI/UX Design Paradigm -->
+          <!-- 1. Color Palette Accent -->
           <div class="space-y-2">
-            <div class="flex items-center justify-between">
-              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-solid fa-wand-magic-sparkles text-xs text-emerald-400"></i>
-                <span>Experience Mode</span>
-              </label>
-              <button id="quick-ui-mode-toggle" type="button" onclick="triggerHaptic('light'); cycleAppUIMode()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-semibold text-slate-300 transition active:scale-95 shrink-0" title="Cycle UI Paradigm (Glass / Zen / HUD / Light)">
-                <i class="fa-solid fa-wand-magic-sparkles text-xs m3-accent-text"></i>
-                <span class="text-[10px] text-slate-400">Cycle:</span>
-                <span id="quick-ui-mode-name" class="font-mono text-[10px] uppercase font-bold text-emerald-400">Glass</span>
-              </button>
-            </div>
-            
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <!-- Option A: Precision Glass -->
-              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('precision')" id="ui-mode-btn-precision" class="p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden">
-                <div class="flex items-center gap-1.5 mb-0.5">
-                  <i class="fa-solid fa-gem text-xs text-emerald-400"></i>
-                  <span class="text-xs font-bold">Precision</span>
-                </div>
-                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">M3 frosted cards & glow</div>
-              </button>
-
-              <!-- Option B: Executive Zen -->
-              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('zen')" id="ui-mode-btn-zen" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-                <div class="flex items-center gap-1.5 mb-0.5">
-                  <i class="fa-solid fa-spa text-xs text-slate-300"></i>
-                  <span class="text-xs font-bold">Zen</span>
-                </div>
-                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">OLED minimalist canvas</div>
-              </button>
-
-              <!-- Option C: Cyber HUD -->
-              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('hud')" id="ui-mode-btn-hud" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-                <div class="flex items-center gap-1.5 mb-0.5">
-                  <i class="fa-solid fa-microchip text-xs text-blue-400"></i>
-                  <span class="text-xs font-bold">HUD</span>
-                </div>
-                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Tactical athletic center</div>
-              </button>
-
-              <!-- Option D: Daylight Frost -->
-              <button type="button" onclick="triggerHaptic('light'); setAppUIMode('light')" id="ui-mode-btn-light" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95">
-                <div class="flex items-center gap-1.5 mb-0.5">
-                  <i class="fa-solid fa-sun text-xs text-amber-400"></i>
-                  <span class="text-xs font-bold">Daylight</span>
-                </div>
-                <div class="text-[9px] text-slate-400 opacity-90 leading-tight">Crisp porcelain light mode</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- 2. Color Palette Accent -->
-          <div class="space-y-2 pt-2 border-t border-slate-900">
             <div class="flex items-center justify-between">
               <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fa-solid fa-droplet text-xs text-blue-400"></i>
@@ -786,18 +733,42 @@
               </label>
               <span class="text-[9px] text-slate-500 font-mono">Tap color to apply</span>
             </div>
-            <div class="grid grid-cols-7 gap-1.5 sm:gap-2" id="theme-palette-grid">
-              <button onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" style="background-color: #10b981 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Emerald Green"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" style="background-color: #f97316 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Warm Orange"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('blue')" data-theme="blue" style="background-color: #3b82f6 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Ocean Blue"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('purple')" data-theme="purple" style="background-color: #a855f7 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Royal Purple"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('red')" data-theme="red" style="background-color: #f43f5e !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Rose Red"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('slate')" data-theme="slate" style="background-color: #64748b !important;" class="h-8 sm:h-9 rounded-xl border-2 border-transparent active:scale-95 transition" title="Slate Titanium"></button>
-              <button onclick="triggerHaptic('light'); setThemePalette('amoled')" data-theme="amoled" style="background-color: #000000 !important;" class="h-8 sm:h-9 rounded-xl border-2 border-slate-700 active:scale-95 transition" title="AMOLED Black"></button>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="theme-palette-grid">
+              <button type="button" onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Hot Orange">
+                <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #f97316 !important;"></span>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Hot Orange</div>
+                  <div class="text-[9px] text-slate-400 truncate">Adrenaline</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="triggerHaptic('light'); setThemePalette('teal')" data-theme="teal" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Cyber Teal">
+                <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #14b8a6 !important;"></span>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Cyber Teal</div>
+                  <div class="text-[9px] text-slate-400 truncate">Focus & Clarity</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="triggerHaptic('light'); setThemePalette('lime')" data-theme="lime" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Volt Lime">
+                <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #84cc16 !important;"></span>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Volt Lime</div>
+                  <div class="text-[9px] text-slate-400 truncate">Telemetry</div>
+                </div>
+              </button>
+
+              <button type="button" onclick="triggerHaptic('light'); setThemePalette('obsidian')" data-theme="obsidian" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Obsidian White">
+                <span class="w-6 h-6 rounded-full border border-slate-600 shadow-sm shrink-0" style="background-color: #ffffff !important;"></span>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Obsidian</div>
+                  <div class="text-[9px] text-slate-400 truncate">Monochrome</div>
+                </div>
+              </button>
             </div>
           </div>
 
-          <!-- 3. Typography & Font Type -->
+          <!-- 2. Typography & Font Type -->
           <div class="space-y-2 pt-2 border-t border-slate-900">
             <div class="flex items-center justify-between">
               <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -2392,6 +2363,14 @@
                     class="exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm">
               <i class="fa-solid fa-person text-[10px] opacity-70"></i>
               <span>Bodyweight</span>
+            </button>
+            <button type="button"
+                    id="filter-pill-rings"
+                    onclick="triggerHaptic('light'); toggleExerciseCatalogFilter('Gymnastics Rings')"
+                    aria-pressed="false"
+                    class="exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm">
+              <i class="fa-solid fa-circle-notch text-[10px] opacity-70"></i>
+              <span>Rings</span>
             </button>
           </div>
 

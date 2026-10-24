@@ -175,7 +175,7 @@ function runSuite(name, fn) {
     (function() {
       try {
         const savedTheme = localStorage.getItem('showUp_theme') || localStorage.getItem('showUp_theme_accent') || 'emerald';
-        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'precision';
+        const savedUIMode = localStorage.getItem('showUp_ui_mode') || 'zen';
         document.body.classList.add('theme-' + savedTheme);
         document.body.classList.add('ui-mode-' + savedUIMode);
       } catch (e) {}
@@ -312,6 +312,9 @@ function runSuite(name, fn) {
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
+      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
+      { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Shoulders"] },
       { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest", "Shoulders", "Triceps", "Back"] },
       { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
       { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
@@ -437,7 +440,10 @@ function runSuite(name, fn) {
 
       // 2. Anatomical implement keyword inference
       const lower = expandExerciseAbbreviations(trimmed).toLowerCase();
-      if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
+      // Requirement: Whenever an exercise starts with Ring or has ring in it, it is Gymnastics Rings
+      if (lower.startsWith('ring') || lower.includes('ring') || lower.includes('gymnastic')) {
+        return 'Gymnastics Rings';
+      } else if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
         return 'Dumbbell';
@@ -447,8 +453,6 @@ function runSuite(name, fn) {
         return 'Resistance Band';
       } else if (lower.includes('mace') || lower.includes('gada')) {
         return 'Macebell / Gada';
-      } else if (lower.includes('ring')) {
-        return 'Gymnastics Rings';
       } else if (lower.includes('jori') || lower.includes('karlakattai')) {
         return 'Jori Clubs / Karlakattai';
       } else if (lower.includes('run') || lower.includes('sprint') || lower.includes('jog')) {
@@ -509,7 +513,7 @@ function runSuite(name, fn) {
       let implement = effectiveImplement;
 
       // Precise anatomical muscle mapping
-      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec')) {
+      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
         primary = 'Chest';
         secondary = ['Triceps', 'Shoulders', 'Core/Abs'];
       } else if (lower.includes('tricep') || lower.includes('skull crusher') || lower.includes('kickback')) {
@@ -2070,14 +2074,24 @@ if (typeof window !== 'undefined') {
       }
     });
 
+    const THEME_ALIASES = {
+      'emerald': 'lime',
+      'amoled': 'obsidian',
+      'slate': 'obsidian',
+      'blue': 'teal',
+      'red': 'orange'
+    };
+
     function setThemePalette(themeKey) {
-      if (!themeKey) themeKey = 'emerald';
+      if (!themeKey) themeKey = 'orange';
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\btheme-\S+/g, '').trim();
         body.classList.add(`theme-${themeKey}`);
       }
-      document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+      }
       
       localStorage.setItem('showUp_theme', themeKey);
       localStorage.setItem('showUp_theme_accent', themeKey);
@@ -2109,29 +2123,25 @@ if (typeof window !== 'undefined') {
     function updateThemeButtonsUI(activeTheme) {
       const container = document.getElementById('theme-palette-grid');
       if (!container) return;
+      if (THEME_ALIASES[activeTheme]) activeTheme = THEME_ALIASES[activeTheme];
       const buttons = container.querySelectorAll('button[data-theme]');
       buttons.forEach(btn => {
         const theme = btn.getAttribute('data-theme');
         if (theme === activeTheme) {
-          btn.classList.remove('border-transparent', 'border-slate-700');
-          btn.classList.add('border-white', 'ring-2', 'ring-white/50');
+          btn.className = "p-2.5 rounded-2xl border-2 border-white bg-slate-900 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer ring-2 ring-white/30 shadow-lg";
         } else {
-          btn.classList.remove('border-white', 'ring-2', 'ring-white/50');
-          if (theme === 'amoled') {
-            btn.classList.add('border-slate-700');
-          } else {
-            btn.classList.add('border-transparent');
-          }
+          btn.className = "p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group";
         }
       });
     }
 
     function restoreThemePreferences() {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
-      const savedTheme = localStorage.getItem('showUp_theme') || 
-                         localStorage.getItem('showUp_theme_accent') || 
-                         (savedProfile && savedProfile.theme) || 
-                         'emerald';
+      let savedTheme = localStorage.getItem('showUp_theme') || 
+                       localStorage.getItem('showUp_theme_accent') || 
+                       (savedProfile && savedProfile.theme) || 
+                       'orange';
+      if (THEME_ALIASES[savedTheme]) savedTheme = THEME_ALIASES[savedTheme];
       setThemePalette(savedTheme);
 
       const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
@@ -2175,60 +2185,40 @@ if (typeof window !== 'undefined') {
       });
     }
 
-    // ================= UI/UX DESIGN PARADIGM MANAGEMENT (V3) =================
+    // ================= UI/UX DESIGN PARADIGM MANAGEMENT (ZEN DEFAULT) =================
 
-    function setAppUIMode(modeKey) {
-      if (!modeKey || !['precision', 'zen', 'hud', 'light'].includes(modeKey)) {
-        modeKey = 'precision';
-      }
+    function setAppUIMode(modeKey = 'zen') {
+      const mode = 'zen';
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\bui-mode-\S+/g, '').trim();
-        body.classList.add(`ui-mode-${modeKey}`);
+        body.classList.add('ui-mode-zen');
       }
-      document.documentElement.className = (document.documentElement.className || '').replace(/\bui-mode-\S+/g, '').trim() + ` ui-mode-${modeKey}`;
-      localStorage.setItem('showUp_ui_mode', modeKey);
-      updateUIModeButtons(modeKey);
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.className = (document.documentElement.className || '').replace(/\bui-mode-\S+/g, '').trim() + ' ui-mode-zen';
+      }
+      try {
+        localStorage.setItem('showUp_ui_mode', 'zen');
+      } catch (e) {}
+      updateUIModeButtons('zen');
     }
 
     function cycleAppUIMode() {
-      const current = localStorage.getItem('showUp_ui_mode') || 'precision';
-      const modes = ['precision', 'zen', 'hud', 'light'];
-      const nextIdx = (modes.indexOf(current) + 1) % modes.length;
-      const nextMode = modes[nextIdx];
-      setAppUIMode(nextMode);
-      const labels = {
-        precision: 'Precision Glass UI',
-        zen: 'Executive Zen UI (Minimalist)',
-        hud: 'Cyber Kinetic HUD (Telemetry)',
-        light: 'Daylight Frost UI (Light Mode)'
-      };
-      if (typeof showToast === 'function') {
-        showToast(`Switched to ${labels[nextMode]}`, 'info');
-      }
+      setAppUIMode('zen');
     }
 
     function restoreAppUIMode() {
-      const saved = localStorage.getItem('showUp_ui_mode') || 'precision';
-      setAppUIMode(saved);
+      setAppUIMode('zen');
     }
 
-    function updateUIModeButtons(activeMode) {
-      const modes = ['precision', 'zen', 'hud', 'light'];
-      modes.forEach(m => {
-        const btn = document.getElementById(`ui-mode-btn-${m}`);
-        if (btn) {
-          if (m === activeMode) {
-            btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden";
-          } else {
-            btn.className = "p-3 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95";
-          }
-        }
-      });
+    function updateUIModeButtons(activeMode = 'zen') {
+      const btn = document.getElementById('ui-mode-btn-zen');
+      if (btn) {
+        btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden";
+      }
       const quickToggleLabel = document.getElementById('quick-ui-mode-name');
       if (quickToggleLabel) {
-        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD', light: 'Light' };
-        quickToggleLabel.innerText = names[activeMode] || 'Glass';
+        quickToggleLabel.innerText = 'Zen';
       }
     }
 
@@ -4160,6 +4150,9 @@ if (typeof window !== 'undefined') {
       if (fLower === 'bodyweight') {
         return implLower === 'bodyweight' || implLower === 'calisthenics';
       }
+      if (fLower === 'gymnastics rings' || fLower === 'rings' || fLower === 'ring') {
+        return implLower.includes('ring') || nameLower.startsWith('ring') || nameLower.includes('ring') || nameLower.includes('gymnastic');
+      }
       return false;
     }
 
@@ -4333,7 +4326,8 @@ if (typeof window !== 'undefined') {
         { id: 'filter-pill-barbell', name: 'Barbell' },
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
-        { id: 'filter-pill-bodyweight', name: 'Bodyweight' }
+        { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
+        { id: 'filter-pill-rings', name: 'Gymnastics Rings' }
       ];
 
       pills.forEach(pill => {
@@ -5176,11 +5170,48 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function saveRestTimerState() {
+      try {
+        if (isRestTimerRunning && restTimerStartTime) {
+          localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
+            running: true,
+            startTime: restTimerStartTime
+          }));
+        } else {
+          localStorage.removeItem('showUp_rest_timer_data');
+        }
+      } catch (e) {}
+    }
+
+    function restoreRestTimerState() {
+      try {
+        const raw = localStorage.getItem('showUp_rest_timer_data');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data && data.running && data.startTime) {
+          const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
+          // Restore if started within the last 30 minutes (1800s)
+          if (elapsed >= 0 && elapsed < 1800) {
+            restTimerStartTime = data.startTime;
+            restTimerSeconds = elapsed;
+            isRestTimerRunning = true;
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimerInterval = setInterval(tickRestTimer, 1000);
+            updateRestTimerUI();
+            updateSetControlsUI();
+          } else {
+            localStorage.removeItem('showUp_rest_timer_data');
+          }
+        }
+      } catch (e) {}
+    }
+
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
+      saveRestTimerState();
       restTimerInterval = setInterval(tickRestTimer, 1000);
       updateRestTimerUI();
       updateSetControlsUI();
@@ -5192,6 +5223,7 @@ if (typeof window !== 'undefined') {
       isRestTimerRunning = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
+      saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
     }
@@ -5206,6 +5238,7 @@ if (typeof window !== 'undefined') {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (isRestTimerRunning && restTimerStartTime) {
         restTimerStartTime -= (deltaSecs * 1000);
+        saveRestTimerState();
         tickRestTimer();
       }
     }
@@ -5246,7 +5279,13 @@ if (typeof window !== 'undefined') {
       if (!banner) return;
 
       if (isRestTimerRunning) {
+        const wasHidden = banner.classList.contains('hidden');
         banner.classList.remove('hidden');
+        if (wasHidden && typeof banner.scrollIntoView === 'function') {
+          try {
+            banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } catch (e) {}
+        }
         if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
@@ -5408,26 +5447,49 @@ if (typeof window !== 'undefined') {
       };
 
       currentSessionSets.push(setObj);
-      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
-      renderLoggedSets();
-      broadcastUserWorkoutStarted(exerciseName);
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
 
-      if (googleAccessToken) {
-        syncToGoogleDrive();
+      try {
+        renderLoggedSets();
+      } catch (err) {
+        console.warn('Error rendering logged sets:', err);
       }
 
-      if (workoutTimerState === 'stopped') {
-        startWorkoutTimer();
-      }
+      try {
+        broadcastUserWorkoutStarted(exerciseName);
+      } catch (e) {}
 
-      if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
-      if (typeof playUnobtrusiveChime === 'function') {
-        playUnobtrusiveChime();
-      }
+      try {
+        if (googleAccessToken) {
+          syncToGoogleDrive();
+        }
+      } catch (e) {}
 
-      // Requirement 2: Once a set is logged, a rest timer shall start.
-      startRestTimer();
-      updateSetControlsUI();
+      try {
+        if (workoutTimerState === 'stopped') {
+          startWorkoutTimer();
+        }
+      } catch (e) {}
+
+      try {
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      } catch (e) {}
+
+      try {
+        if (typeof playUnobtrusiveChime === 'function') {
+          playUnobtrusiveChime();
+        }
+      } catch (e) {}
+
+      // Requirement 2: Once a set is logged, a rest timer shall start reliably.
+      try {
+        startRestTimer();
+        updateSetControlsUI();
+      } catch (err) {
+        console.error('Error starting rest timer:', err);
+      }
     }
 
     function isAthleteAuthenticated() {
@@ -5567,7 +5629,8 @@ if (typeof window !== 'undefined') {
       const set = currentSessionSets.find(s => s.id === setId);
       if (!set) return;
 
-      const exInput = document.getElementById('input-exercise-name');
+      const exInput = document.getElementById('exercise-name-input');
+      const legacyExInput = document.getElementById('input-exercise-name');
       const impSelect = document.getElementById('implement-select');
       const muscleSelect = document.getElementById('muscle-group-select');
       const weightInput = document.getElementById('input-weight');
@@ -5584,7 +5647,15 @@ if (typeof window !== 'undefined') {
       const runAvgHRInput = document.getElementById('input-running-avg-hr');
       const runMaxHRInput = document.getElementById('input-running-max-hr');
 
-      if (exInput) exInput.value = set.exerciseName || '';
+      if (exInput) {
+        exInput.value = set.exerciseName || '';
+        if (typeof handleExerciseInput === 'function' && set.exerciseName) {
+          handleExerciseInput(set.exerciseName);
+        }
+      }
+      if (legacyExInput) {
+        legacyExInput.value = set.exerciseName || '';
+      }
       if (impSelect && set.implement) {
         impSelect.value = set.implement;
         handleImplementChange(set.implement);
@@ -5608,7 +5679,7 @@ if (typeof window !== 'undefined') {
         updateAutoMuscleIndicator(set.exerciseName);
       }
 
-      const panel = document.getElementById('exercise-selection-container') || document.getElementById('standard-metrics-panel');
+      const panel = document.getElementById('exercise-selection-container') || document.getElementById('exercise-name-input') || document.getElementById('standard-metrics-panel');
       if (panel && typeof panel.scrollIntoView === 'function') {
         try {
           panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -6376,6 +6447,14 @@ if (typeof window !== 'undefined') {
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && isRestTimerRunning && restTimerStartTime) {
+          tickRestTimer();
+        }
+      });
+    }
+
     if (typeof window !== 'undefined') {
       window.filterExerciseCatalog = filterExerciseCatalog;
       window.updateExerciseSuggestions = updateExerciseSuggestions;
@@ -6389,6 +6468,8 @@ if (typeof window !== 'undefined') {
       window.setExerciseCatalogFilter = setExerciseCatalogFilter;
       window.renderExerciseCatalogFilterPills = renderExerciseCatalogFilterPills;
       window.toggleExerciseCatalogFilter = toggleExerciseCatalogFilter;
+      window.restoreRestTimerState = restoreRestTimerState;
+      window.saveRestTimerState = saveRestTimerState;
       window.isAthleteAuthenticated = isAthleteAuthenticated;
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
@@ -15196,6 +15277,9 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
       loadPhysicalProfile();
       renderLoggedSets();
       restoreWorkoutTimerState();
+      if (typeof restoreRestTimerState === 'function') {
+        restoreRestTimerState();
+      }
       updateSetControlsUI();
       renderCalendar();
       renderWeightHistory();
@@ -15236,7 +15320,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
 });
 
 runSuite("2. Theme Palette & Typography Engine", () => {
-  const palettes = ['emerald', 'orange', 'blue', 'purple', 'red', 'slate', 'amoled'];
+  const palettes = ['orange', 'teal', 'lime', 'obsidian'];
   palettes.forEach(p => {
     setThemePalette(p);
     assert(localStorage.getItem('showUp_theme_accent') === p, "Palette persistence for: " + p);
@@ -15248,20 +15332,13 @@ runSuite("2. Theme Palette & Typography Engine", () => {
     assert(localStorage.getItem('showUp_font') === f, "Font persistence for: " + f);
   });
 
-  const uiModes = ['precision', 'zen', 'hud', 'light'];
-  uiModes.forEach(m => {
-    setAppUIMode(m);
-    assert(localStorage.getItem('showUp_ui_mode') === m, "UI Mode persistence for: " + m);
-  });
-  setAppUIMode('precision');
+  // Zen is the exclusive default experience mode
+  restoreAppUIMode();
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Zen is default experience mode");
+  setAppUIMode('zen');
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "UI mode persistence is zen");
   cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycle UI Mode from precision to zen");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'hud', "Cycle UI Mode from zen to hud");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'light', "Cycle UI Mode from hud to light");
-  cycleAppUIMode();
-  assert(localStorage.getItem('showUp_ui_mode') === 'precision', "Cycle UI Mode from light back to precision");
+  assert(localStorage.getItem('showUp_ui_mode') === 'zen', "Cycling UI mode remains in zen");
 });
 
 runSuite("3. Auth Security, Fake Seed Removal & Logout Eradication (TC-9.1, TC-9.2)", () => {
@@ -16915,6 +16992,15 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(bwCatalog.length >= 5, "filterExerciseCatalog('', 'Bodyweight') returns bodyweight exercises (" + bwCatalog.length + " found)");
   assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
 
+  const ringsCatalog = filterExerciseCatalog("", "Gymnastics Rings");
+  assert(ringsCatalog.length >= 4, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
+  assert(ringsCatalog.every(e => e.implement === "Gymnastics Rings" || e.name.toLowerCase().includes("ring")), "All filtered rings items belong to Gymnastics Rings");
+
+  assert(inferImplementFromExerciseName("Ring Dips") === "Gymnastics Rings", "Ring Dips infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Rows") === "Gymnastics Rings", "Ring Rows infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Gymnastic Ring Pullups") === "Gymnastics Rings", "Gymnastic Ring Pullups infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Inverted Row") === "Gymnastics Rings", "Ring Inverted Row infers Gymnastics Rings");
+
   // 2. Interactive toggle on Kettlebell pill
   const pillKb = getOrCreateElement('filter-pill-kettlebell');
   const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
@@ -17097,9 +17183,25 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
 
   // Test repeatSet loading previous set into active controls
   repeatSet(secondSet.id);
-  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates exercise name from previous set");
+  assert(getOrCreateElement('exercise-name-input').value === "Barbell Back Squat", "repeatSet populates exercise-name-input from previous set");
+  assert(getOrCreateElement('input-exercise-name').value === "Barbell Back Squat", "repeatSet populates legacy input-exercise-name from previous set");
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
+
+  // Rest Timer LocalStorage Persistence & Restoration Test
+  startRestTimer(10);
+  assert(isRestTimerRunning === true, "startRestTimer sets isRestTimerRunning to true");
+  assert(localStorage.getItem('showUp_rest_timer_data') !== null, "startRestTimer persists rest timer data to localStorage");
+  stopRestTimer();
+  assert(isRestTimerRunning === false, "stopRestTimer stops rest timer");
+  assert(localStorage.getItem('showUp_rest_timer_data') === null, "stopRestTimer removes rest timer data from localStorage");
+
+  // Test background restoration
+  localStorage.setItem('showUp_rest_timer_data', JSON.stringify({ running: true, startTime: Date.now() - 45000 }));
+  restoreRestTimerState();
+  assert(isRestTimerRunning === true, "restoreRestTimerState restores running rest timer");
+  assert(restTimerSeconds >= 45, "restoreRestTimerState accurately recovers elapsed rest seconds");
+  stopRestTimer();
 
   // Phase 3: Default rest time preference and target weight goal
   assert(typeof getDefaultRestTimeSeconds === 'function', "getDefaultRestTimeSeconds is a defined function");

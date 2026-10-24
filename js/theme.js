@@ -64,14 +64,24 @@
       }
     });
 
+    const THEME_ALIASES = {
+      'emerald': 'lime',
+      'amoled': 'obsidian',
+      'slate': 'obsidian',
+      'blue': 'teal',
+      'red': 'orange'
+    };
+
     function setThemePalette(themeKey) {
-      if (!themeKey) themeKey = 'emerald';
+      if (!themeKey) themeKey = 'orange';
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\btheme-\S+/g, '').trim();
         body.classList.add(`theme-${themeKey}`);
       }
-      document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+      }
       
       localStorage.setItem('showUp_theme', themeKey);
       localStorage.setItem('showUp_theme_accent', themeKey);
@@ -103,29 +113,25 @@
     function updateThemeButtonsUI(activeTheme) {
       const container = document.getElementById('theme-palette-grid');
       if (!container) return;
+      if (THEME_ALIASES[activeTheme]) activeTheme = THEME_ALIASES[activeTheme];
       const buttons = container.querySelectorAll('button[data-theme]');
       buttons.forEach(btn => {
         const theme = btn.getAttribute('data-theme');
         if (theme === activeTheme) {
-          btn.classList.remove('border-transparent', 'border-slate-700');
-          btn.classList.add('border-white', 'ring-2', 'ring-white/50');
+          btn.className = "p-2.5 rounded-2xl border-2 border-white bg-slate-900 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer ring-2 ring-white/30 shadow-lg";
         } else {
-          btn.classList.remove('border-white', 'ring-2', 'ring-white/50');
-          if (theme === 'amoled') {
-            btn.classList.add('border-slate-700');
-          } else {
-            btn.classList.add('border-transparent');
-          }
+          btn.className = "p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group";
         }
       });
     }
 
     function restoreThemePreferences() {
       const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
-      const savedTheme = localStorage.getItem('showUp_theme') || 
-                         localStorage.getItem('showUp_theme_accent') || 
-                         (savedProfile && savedProfile.theme) || 
-                         'emerald';
+      let savedTheme = localStorage.getItem('showUp_theme') || 
+                       localStorage.getItem('showUp_theme_accent') || 
+                       (savedProfile && savedProfile.theme) || 
+                       'orange';
+      if (THEME_ALIASES[savedTheme]) savedTheme = THEME_ALIASES[savedTheme];
       setThemePalette(savedTheme);
 
       const savedHRCollapsed = JSON.parse(localStorage.getItem('showUp_hr_collapsed') || 'false');
@@ -169,59 +175,39 @@
       });
     }
 
-    // ================= UI/UX DESIGN PARADIGM MANAGEMENT (V3) =================
+    // ================= UI/UX DESIGN PARADIGM MANAGEMENT (ZEN DEFAULT) =================
 
-    function setAppUIMode(modeKey) {
-      if (!modeKey || !['precision', 'zen', 'hud', 'light'].includes(modeKey)) {
-        modeKey = 'precision';
-      }
+    function setAppUIMode(modeKey = 'zen') {
+      const mode = 'zen';
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\bui-mode-\S+/g, '').trim();
-        body.classList.add(`ui-mode-${modeKey}`);
+        body.classList.add('ui-mode-zen');
       }
-      document.documentElement.className = (document.documentElement.className || '').replace(/\bui-mode-\S+/g, '').trim() + ` ui-mode-${modeKey}`;
-      localStorage.setItem('showUp_ui_mode', modeKey);
-      updateUIModeButtons(modeKey);
+      if (typeof document !== 'undefined' && document.documentElement) {
+        document.documentElement.className = (document.documentElement.className || '').replace(/\bui-mode-\S+/g, '').trim() + ' ui-mode-zen';
+      }
+      try {
+        localStorage.setItem('showUp_ui_mode', 'zen');
+      } catch (e) {}
+      updateUIModeButtons('zen');
     }
 
     function cycleAppUIMode() {
-      const current = localStorage.getItem('showUp_ui_mode') || 'precision';
-      const modes = ['precision', 'zen', 'hud', 'light'];
-      const nextIdx = (modes.indexOf(current) + 1) % modes.length;
-      const nextMode = modes[nextIdx];
-      setAppUIMode(nextMode);
-      const labels = {
-        precision: 'Precision Glass UI',
-        zen: 'Executive Zen UI (Minimalist)',
-        hud: 'Cyber Kinetic HUD (Telemetry)',
-        light: 'Daylight Frost UI (Light Mode)'
-      };
-      if (typeof showToast === 'function') {
-        showToast(`Switched to ${labels[nextMode]}`, 'info');
-      }
+      setAppUIMode('zen');
     }
 
     function restoreAppUIMode() {
-      const saved = localStorage.getItem('showUp_ui_mode') || 'precision';
-      setAppUIMode(saved);
+      setAppUIMode('zen');
     }
 
-    function updateUIModeButtons(activeMode) {
-      const modes = ['precision', 'zen', 'hud', 'light'];
-      modes.forEach(m => {
-        const btn = document.getElementById(`ui-mode-btn-${m}`);
-        if (btn) {
-          if (m === activeMode) {
-            btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden";
-          } else {
-            btn.className = "p-3 rounded-2xl border border-slate-800 bg-slate-950/80 text-slate-400 hover:text-slate-200 hover:border-slate-700 text-left transition active:scale-95";
-          }
-        }
-      });
+    function updateUIModeButtons(activeMode = 'zen') {
+      const btn = document.getElementById('ui-mode-btn-zen');
+      if (btn) {
+        btn.className = "p-3 rounded-2xl border-2 border-emerald-500 bg-emerald-500/15 text-emerald-300 text-left transition active:scale-95 shadow-lg shadow-emerald-500/10 relative overflow-hidden";
+      }
       const quickToggleLabel = document.getElementById('quick-ui-mode-name');
       if (quickToggleLabel) {
-        const names = { precision: 'Glass', zen: 'Zen', hud: 'HUD', light: 'Light' };
-        quickToggleLabel.innerText = names[activeMode] || 'Glass';
+        quickToggleLabel.innerText = 'Zen';
       }
     }

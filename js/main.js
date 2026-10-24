@@ -14,6 +14,9 @@
       loadPhysicalProfile();
       renderLoggedSets();
       restoreWorkoutTimerState();
+      if (typeof restoreRestTimerState === 'function') {
+        restoreRestTimerState();
+      }
       updateSetControlsUI();
       renderCalendar();
       renderWeightHistory();

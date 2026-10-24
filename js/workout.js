@@ -188,6 +188,9 @@
       if (fLower === 'bodyweight') {
         return implLower === 'bodyweight' || implLower === 'calisthenics';
       }
+      if (fLower === 'gymnastics rings' || fLower === 'rings' || fLower === 'ring') {
+        return implLower.includes('ring') || nameLower.startsWith('ring') || nameLower.includes('ring') || nameLower.includes('gymnastic');
+      }
       return false;
     }
 
@@ -361,7 +364,8 @@
         { id: 'filter-pill-barbell', name: 'Barbell' },
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
-        { id: 'filter-pill-bodyweight', name: 'Bodyweight' }
+        { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
+        { id: 'filter-pill-rings', name: 'Gymnastics Rings' }
       ];
 
       pills.forEach(pill => {
@@ -1204,11 +1208,48 @@
       }
     }
 
+    function saveRestTimerState() {
+      try {
+        if (isRestTimerRunning && restTimerStartTime) {
+          localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
+            running: true,
+            startTime: restTimerStartTime
+          }));
+        } else {
+          localStorage.removeItem('showUp_rest_timer_data');
+        }
+      } catch (e) {}
+    }
+
+    function restoreRestTimerState() {
+      try {
+        const raw = localStorage.getItem('showUp_rest_timer_data');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data && data.running && data.startTime) {
+          const elapsed = Math.floor((Date.now() - data.startTime) / 1000);
+          // Restore if started within the last 30 minutes (1800s)
+          if (elapsed >= 0 && elapsed < 1800) {
+            restTimerStartTime = data.startTime;
+            restTimerSeconds = elapsed;
+            isRestTimerRunning = true;
+            if (restTimerInterval) clearInterval(restTimerInterval);
+            restTimerInterval = setInterval(tickRestTimer, 1000);
+            updateRestTimerUI();
+            updateSetControlsUI();
+          } else {
+            localStorage.removeItem('showUp_rest_timer_data');
+          }
+        }
+      } catch (e) {}
+    }
+
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
+      saveRestTimerState();
       restTimerInterval = setInterval(tickRestTimer, 1000);
       updateRestTimerUI();
       updateSetControlsUI();
@@ -1220,6 +1261,7 @@
       isRestTimerRunning = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
+      saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
     }
@@ -1234,6 +1276,7 @@
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (isRestTimerRunning && restTimerStartTime) {
         restTimerStartTime -= (deltaSecs * 1000);
+        saveRestTimerState();
         tickRestTimer();
       }
     }
@@ -1274,7 +1317,13 @@
       if (!banner) return;
 
       if (isRestTimerRunning) {
+        const wasHidden = banner.classList.contains('hidden');
         banner.classList.remove('hidden');
+        if (wasHidden && typeof banner.scrollIntoView === 'function') {
+          try {
+            banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } catch (e) {}
+        }
         if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
@@ -1436,26 +1485,49 @@
       };
 
       currentSessionSets.push(setObj);
-      localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
-      renderLoggedSets();
-      broadcastUserWorkoutStarted(exerciseName);
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
 
-      if (googleAccessToken) {
-        syncToGoogleDrive();
+      try {
+        renderLoggedSets();
+      } catch (err) {
+        console.warn('Error rendering logged sets:', err);
       }
 
-      if (workoutTimerState === 'stopped') {
-        startWorkoutTimer();
-      }
+      try {
+        broadcastUserWorkoutStarted(exerciseName);
+      } catch (e) {}
 
-      if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
-      if (typeof playUnobtrusiveChime === 'function') {
-        playUnobtrusiveChime();
-      }
+      try {
+        if (googleAccessToken) {
+          syncToGoogleDrive();
+        }
+      } catch (e) {}
 
-      // Requirement 2: Once a set is logged, a rest timer shall start.
-      startRestTimer();
-      updateSetControlsUI();
+      try {
+        if (workoutTimerState === 'stopped') {
+          startWorkoutTimer();
+        }
+      } catch (e) {}
+
+      try {
+        if (typeof triggerHaptic === 'function') triggerHaptic('heavy');
+      } catch (e) {}
+
+      try {
+        if (typeof playUnobtrusiveChime === 'function') {
+          playUnobtrusiveChime();
+        }
+      } catch (e) {}
+
+      // Requirement 2: Once a set is logged, a rest timer shall start reliably.
+      try {
+        startRestTimer();
+        updateSetControlsUI();
+      } catch (err) {
+        console.error('Error starting rest timer:', err);
+      }
     }
 
     function isAthleteAuthenticated() {
@@ -1595,7 +1667,8 @@
       const set = currentSessionSets.find(s => s.id === setId);
       if (!set) return;
 
-      const exInput = document.getElementById('input-exercise-name');
+      const exInput = document.getElementById('exercise-name-input');
+      const legacyExInput = document.getElementById('input-exercise-name');
       const impSelect = document.getElementById('implement-select');
       const muscleSelect = document.getElementById('muscle-group-select');
       const weightInput = document.getElementById('input-weight');
@@ -1612,7 +1685,15 @@
       const runAvgHRInput = document.getElementById('input-running-avg-hr');
       const runMaxHRInput = document.getElementById('input-running-max-hr');
 
-      if (exInput) exInput.value = set.exerciseName || '';
+      if (exInput) {
+        exInput.value = set.exerciseName || '';
+        if (typeof handleExerciseInput === 'function' && set.exerciseName) {
+          handleExerciseInput(set.exerciseName);
+        }
+      }
+      if (legacyExInput) {
+        legacyExInput.value = set.exerciseName || '';
+      }
       if (impSelect && set.implement) {
         impSelect.value = set.implement;
         handleImplementChange(set.implement);
@@ -1636,7 +1717,7 @@
         updateAutoMuscleIndicator(set.exerciseName);
       }
 
-      const panel = document.getElementById('exercise-selection-container') || document.getElementById('standard-metrics-panel');
+      const panel = document.getElementById('exercise-selection-container') || document.getElementById('exercise-name-input') || document.getElementById('standard-metrics-panel');
       if (panel && typeof panel.scrollIntoView === 'function') {
         try {
           panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2404,6 +2485,14 @@
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     }
 
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && isRestTimerRunning && restTimerStartTime) {
+          tickRestTimer();
+        }
+      });
+    }
+
     if (typeof window !== 'undefined') {
       window.filterExerciseCatalog = filterExerciseCatalog;
       window.updateExerciseSuggestions = updateExerciseSuggestions;
@@ -2417,6 +2506,8 @@
       window.setExerciseCatalogFilter = setExerciseCatalogFilter;
       window.renderExerciseCatalogFilterPills = renderExerciseCatalogFilterPills;
       window.toggleExerciseCatalogFilter = toggleExerciseCatalogFilter;
+      window.restoreRestTimerState = restoreRestTimerState;
+      window.saveRestTimerState = saveRestTimerState;
       window.isAthleteAuthenticated = isAthleteAuthenticated;
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
