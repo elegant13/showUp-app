@@ -94,15 +94,32 @@
 
     const defaultCatalog = [
       { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
+      { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads", "Core/Abs"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
+      { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
       { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
       { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Bicep Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
       { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
+      { name: "DB Bench Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "DB Bicep Curl", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "DB Hammer Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "DB Incline Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] },
+      { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
+      { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
+      { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "EZ Bar Bicep Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms", "Chest"] },
+      { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back", "Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
+      { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back", "Shoulders"] },
       { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
@@ -241,7 +258,7 @@
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
         return 'Dumbbell';
-      } else if (lower.includes('barbell') || /\bbb\b/i.test(trimmed)) {
+      } else if (lower.includes('barbell') || lower.includes('ez bar') || /\bbb\b/i.test(trimmed)) {
         return 'Barbell';
       } else if (lower.includes('band')) {
         return 'Resistance Band';
@@ -324,7 +341,7 @@
       } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
         primary = 'Core/Abs';
         secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
-      } else if (lower.includes('glute bridge') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
+      } else if (lower.includes('glute bridge') || lower.includes('lateral walk') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
         primary = 'Hamstrings/Glutes';
         secondary = ['Core/Abs', 'Back', 'Quads'];
       } else if (lower.includes('thruster')) {

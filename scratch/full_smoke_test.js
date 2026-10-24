@@ -277,15 +277,32 @@ function runSuite(name, fn) {
 
     const defaultCatalog = [
       { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
+      { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads", "Core/Abs"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
+      { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
       { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
       { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+      { name: "Bicep Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
       { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
+      { name: "DB Bench Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "DB Bicep Curl", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "DB Hammer Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "DB Incline Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] },
+      { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
+      { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
+      { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "EZ Bar Bicep Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms", "Chest"] },
+      { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back", "Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
+      { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back", "Shoulders"] },
       { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
       { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
@@ -424,7 +441,7 @@ function runSuite(name, fn) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
         return 'Dumbbell';
-      } else if (lower.includes('barbell') || /\bbb\b/i.test(trimmed)) {
+      } else if (lower.includes('barbell') || lower.includes('ez bar') || /\bbb\b/i.test(trimmed)) {
         return 'Barbell';
       } else if (lower.includes('band')) {
         return 'Resistance Band';
@@ -507,7 +524,7 @@ function runSuite(name, fn) {
       } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
         primary = 'Core/Abs';
         secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
-      } else if (lower.includes('glute bridge') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
+      } else if (lower.includes('glute bridge') || lower.includes('lateral walk') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
         primary = 'Hamstrings/Glutes';
         secondary = ['Core/Abs', 'Back', 'Quads'];
       } else if (lower.includes('thruster')) {
@@ -4119,11 +4136,39 @@ if (typeof window !== 'undefined') {
 
     let isScrollingExerciseInput = false;
     let activeSuggestionIndex = -1;
+    let activeExerciseCatalogFilter = null;
 
-    function filterExerciseCatalog(query) {
-      if (!query || typeof query !== 'string') return [];
-      const clean = query.trim().toLowerCase();
-      if (!clean) return [];
+    function exerciseMatchesImplementFilter(exercise, filter) {
+      if (!filter) return true;
+      if (!exercise) return false;
+      const fLower = String(filter).trim().toLowerCase();
+      const implLower = String(exercise.implement || '').trim().toLowerCase();
+      const nameLower = String(exercise.name || '').trim().toLowerCase();
+
+      if (implLower === fLower) return true;
+      if (implLower.includes(fLower)) return true;
+
+      if (fLower === 'kettlebell') {
+        return implLower === 'kettlebell' || nameLower.includes('kettlebell') || /\bkb\b/i.test(nameLower);
+      }
+      if (fLower === 'barbell') {
+        return implLower === 'barbell' || nameLower.includes('barbell') || nameLower.includes('ez bar');
+      }
+      if (fLower === 'dumbbell') {
+        return implLower === 'dumbbell' || nameLower.includes('dumbbell') || /\bdb\b/i.test(nameLower);
+      }
+      if (fLower === 'bodyweight') {
+        return implLower === 'bodyweight' || implLower === 'calisthenics';
+      }
+      return false;
+    }
+
+    function filterExerciseCatalog(query, implementFilter) {
+      const activeFilter = (implementFilter !== undefined) ? implementFilter : activeExerciseCatalogFilter;
+      const clean = (query && typeof query === 'string') ? query.trim().toLowerCase() : '';
+
+      // If both query and activeFilter are empty, return []
+      if (!clean && !activeFilter) return [];
 
       const cleanAlphanum = clean.replace(/[^a-z0-9]/g, '');
 
@@ -4136,9 +4181,27 @@ if (typeof window !== 'undefined') {
 
       catalog.forEach(ex => {
         if (!ex || !ex.name) return;
+
+        // Check implement filter first
+        if (activeFilter && !exerciseMatchesImplementFilter(ex, activeFilter)) {
+          return;
+        }
+
         const name = ex.name;
         const nameLower = name.toLowerCase();
         const nameAlphanum = nameLower.replace(/[^a-z0-9]/g, '');
+
+        // If query is blank but filter is active, include all matching exercises
+        if (!clean) {
+          if (!seen.has(name)) {
+            seen.add(name);
+            results.push({
+              exercise: ex,
+              priority: 0
+            });
+          }
+          return;
+        }
 
         let priority = -1;
 
@@ -4198,7 +4261,7 @@ if (typeof window !== 'undefined') {
         const parts = text.split(regex);
         return parts.map(part => {
           if (part.toLowerCase() === query.trim().toLowerCase()) {
-            return `<span class="text-emerald-400 font-black underline decoration-emerald-500/60">${safe(part)}</span>`;
+            return `<span class="text-emerald-400 font-bold">${safe(part)}</span>`;
           }
           return safe(part);
         }).join('');
@@ -4255,13 +4318,95 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function getActiveExerciseCatalogFilter() {
+      return activeExerciseCatalogFilter;
+    }
+
+    function setExerciseCatalogFilter(filterName) {
+      activeExerciseCatalogFilter = filterName || null;
+      renderExerciseCatalogFilterPills();
+    }
+
+    function renderExerciseCatalogFilterPills() {
+      if (typeof document === 'undefined') return;
+      const pills = [
+        { id: 'filter-pill-barbell', name: 'Barbell' },
+        { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
+        { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
+        { id: 'filter-pill-bodyweight', name: 'Bodyweight' }
+      ];
+
+      pills.forEach(pill => {
+        const el = document.getElementById(pill.id);
+        if (!el) return;
+        const isEngaged = activeExerciseCatalogFilter && (activeExerciseCatalogFilter.toLowerCase() === pill.name.toLowerCase());
+        el.setAttribute('aria-pressed', isEngaged ? 'true' : 'false');
+
+        const icon = el.querySelector('i');
+
+        if (isEngaged) {
+          // Depressed and engaged state: sunken inner shadow, 1px depression, emerald text & border
+          el.className = 'exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-black text-emerald-400 bg-slate-950 border border-emerald-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_8px_rgba(16,185,129,0.2)] translate-y-[1px] select-none flex items-center gap-1.5 cursor-pointer';
+          if (icon) {
+            icon.classList.remove('opacity-70');
+            icon.classList.add('opacity-100', 'text-emerald-400');
+          }
+        } else {
+          // Unselected resting state
+          el.className = 'exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm translate-y-0';
+          if (icon) {
+            icon.classList.remove('opacity-100', 'text-emerald-400');
+            icon.classList.add('opacity-70');
+          }
+        }
+      });
+
+      const indicator = document.getElementById('active-exercise-filter-indicator');
+      const nameLabel = document.getElementById('active-exercise-filter-name');
+      if (indicator) {
+        if (activeExerciseCatalogFilter) {
+          if (nameLabel) nameLabel.textContent = activeExerciseCatalogFilter;
+          indicator.classList.remove('hidden');
+        } else {
+          indicator.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleExerciseCatalogFilter(filterName, inputId = 'exercise-name-input', dropdownId = 'exercise-suggestions-dropdown') {
+      if (activeExerciseCatalogFilter && activeExerciseCatalogFilter.toLowerCase() === (filterName || '').toLowerCase()) {
+        // Tapping again removes the chosen filter
+        activeExerciseCatalogFilter = null;
+      } else {
+        activeExerciseCatalogFilter = filterName;
+      }
+
+      renderExerciseCatalogFilterPills();
+
+      const inputEl = document.getElementById(inputId);
+      const currentVal = inputEl ? inputEl.value : '';
+
+      if (activeExerciseCatalogFilter) {
+        updateExerciseSuggestions(currentVal, inputId, dropdownId);
+        if (inputEl) {
+          scrollExerciseInputIntoView(inputEl);
+        }
+      } else {
+        if (!currentVal || !currentVal.trim()) {
+          closeExerciseSuggestions(dropdownId);
+        } else {
+          updateExerciseSuggestions(currentVal, inputId, dropdownId);
+        }
+      }
+    }
+
     function updateExerciseSuggestions(query, inputId, dropdownId) {
       const dropdown = document.getElementById(dropdownId);
       const inputEl = document.getElementById(inputId);
       if (!dropdown || !inputEl) return;
 
       const trimmed = (query || '').trim();
-      if (!trimmed) {
+      if (!trimmed && !activeExerciseCatalogFilter) {
         dropdown.classList.add('hidden');
         dropdown.innerHTML = '';
         activeSuggestionIndex = -1;
@@ -4274,37 +4419,60 @@ if (typeof window !== 'undefined') {
       const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
 
       if (matches.length === 0) {
-        dropdown.innerHTML = `
-          <div class="px-4 py-3 text-xs text-slate-400 font-medium flex items-center justify-between">
-            <span>No catalog matches for "<b class="text-slate-200">${safe(trimmed)}</b>"</span>
-            <span class="text-[10px] text-slate-500 italic">Custom exercise</span>
+        let noMatchHtml = `
+          <div class="px-4 py-3.5 text-xs text-slate-400 font-medium flex items-center justify-between">
+            <span>No ${activeExerciseCatalogFilter ? `<span class="text-emerald-400 font-semibold">${safe(activeExerciseCatalogFilter)}</span> ` : ''}catalog matches for "<span class="text-slate-200 font-semibold">${safe(trimmed || '(empty)')}</span>"</span>
+            <span class="text-[11px] text-slate-500 font-medium">Custom exercise</span>
           </div>
         `;
+        if (activeExerciseCatalogFilter) {
+          noMatchHtml = `
+            <div class="px-4 py-2 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-400 sticky top-0 backdrop-blur-md z-10">
+              <span class="flex items-center gap-1.5 text-emerald-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span>
+                <span>${safe(activeExerciseCatalogFilter)}</span>
+              </span>
+              <button type="button" onclick="event.stopPropagation(); toggleExerciseCatalogFilter('${safe(activeExerciseCatalogFilter)}', '${inputId}', '${dropdownId}')" class="text-slate-400 hover:text-slate-200 text-[10px] uppercase tracking-wider font-semibold underline transition">Clear filter</button>
+            </div>
+          ` + noMatchHtml;
+        }
+        dropdown.innerHTML = noMatchHtml;
         dropdown.classList.remove('hidden');
         return;
       }
 
       let html = '';
+      if (activeExerciseCatalogFilter) {
+        html += `
+          <div class="px-4 py-2 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-400 sticky top-0 backdrop-blur-md z-10">
+            <span class="flex items-center gap-1.5 text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span>
+              <span>${safe(activeExerciseCatalogFilter)} Catalog (${matches.length})</span>
+            </span>
+            <button type="button" onclick="event.stopPropagation(); toggleExerciseCatalogFilter('${safe(activeExerciseCatalogFilter)}', '${inputId}', '${dropdownId}')" class="text-slate-400 hover:text-slate-200 text-[10px] uppercase tracking-wider font-semibold underline transition">Clear filter</button>
+          </div>
+        `;
+      }
+
       matches.forEach((ex) => {
-        const displayName = highlightExerciseMatch(ex.name, trimmed);
+        const displayName = trimmed ? highlightExerciseMatch(ex.name, trimmed) : safe(ex.name);
         const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
         html += `
-          <div class="exercise-suggestion-item px-3.5 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer hover:bg-emerald-500/15 active:bg-emerald-500/25 transition select-none group"
+          <div class="exercise-suggestion-item px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 active:bg-slate-800 transition select-none group border-b border-slate-800/50 last:border-b-0"
                role="option"
                data-exercise-name="${escapedNameAttr}"
                onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
-            <div class="flex items-center gap-2.5 min-w-0 pr-2">
-              <div class="w-7 h-7 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition shrink-0">
+            <div class="flex items-center gap-3 min-w-0 pr-2">
+              <div class="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition shrink-0">
                 <i class="fa-solid fa-dumbbell text-xs"></i>
               </div>
               <div class="truncate">
-                <span class="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition block truncate">${displayName}</span>
-                <span class="text-[10px] text-slate-400 font-medium sm:hidden">${safe(ex.implement || 'General')}</span>
+                <span class="text-sm font-semibold text-slate-100 group-hover:text-emerald-300 transition block truncate tracking-tight">${displayName}</span>
+                <span class="text-xs text-slate-400 font-medium">${safe(ex.muscle || 'Full Body')}</span>
               </div>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/80 hidden sm:inline-block">${safe(ex.implement || 'General')}</span>
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">${safe(ex.muscle || 'Full Body')}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700/60">${safe(ex.implement || 'General')}</span>
             </div>
           </div>
         `;
@@ -4357,7 +4525,7 @@ if (typeof window !== 'undefined') {
     function handleExerciseInputFocus(inputEl, dropdownId) {
       if (!inputEl) return;
       scrollExerciseInputIntoView(inputEl);
-      if (inputEl.value && inputEl.value.trim()) {
+      if ((inputEl.value && inputEl.value.trim()) || activeExerciseCatalogFilter) {
         updateExerciseSuggestions(inputEl.value, inputEl.id, dropdownId);
       }
     }
@@ -6216,6 +6384,11 @@ if (typeof window !== 'undefined') {
       window.scrollExerciseInputIntoView = scrollExerciseInputIntoView;
       window.handleExerciseInputFocus = handleExerciseInputFocus;
       window.handleExerciseInputKeydown = handleExerciseInputKeydown;
+      window.exerciseMatchesImplementFilter = exerciseMatchesImplementFilter;
+      window.getActiveExerciseCatalogFilter = getActiveExerciseCatalogFilter;
+      window.setExerciseCatalogFilter = setExerciseCatalogFilter;
+      window.renderExerciseCatalogFilterPills = renderExerciseCatalogFilterPills;
+      window.toggleExerciseCatalogFilter = toggleExerciseCatalogFilter;
       window.isAthleteAuthenticated = isAthleteAuthenticated;
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
@@ -12485,16 +12658,35 @@ if (typeof window !== 'undefined') {
       aggNodes.forEach(node => {
         const completedCount = node.completedToday || 0;
 
-        // Cleaner Map View: Circular marker displaying strictly the number of workouts scored
+        // Cleaner Map View: Circular marker displaying strictly the number of workouts scored, scaled proportionally by zoom level
+        let markerSize = 44;
+        let markerRadius = 18;
+        let fontSize = 15;
+        let strokeWidth = 3;
+        if (currentMapZoom < 5) {
+          markerSize = 28;
+          markerRadius = 11;
+          fontSize = 11;
+          strokeWidth = 2;
+        } else if (currentMapZoom < 11) {
+          markerSize = 36;
+          markerRadius = 15;
+          fontSize = 13;
+          strokeWidth = 2.5;
+        }
+
+        const half = markerSize / 2;
+        const textY = half + Math.round(fontSize * 0.38);
+
         const svgIcon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
-              <circle cx="23" cy="23" r="19" fill="${pal.fill}" stroke="#0b0f19" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))"/>
-              <text x="23" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="16" font-weight="900" text-anchor="middle">${completedCount}</text>
+            <svg xmlns="http://www.w3.org/2000/svg" width="${markerSize}" height="${markerSize}" viewBox="0 0 ${markerSize} ${markerSize}">
+              <circle cx="${half}" cy="${half}" r="${markerRadius}" fill="${pal.fill}" stroke="#0b0f19" stroke-width="${strokeWidth}" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.5))"/>
+              <text x="${half}" y="${textY}" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="${fontSize}" font-weight="900" text-anchor="middle">${completedCount}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(46, 46),
-          anchor: new google.maps.Point(23, 23)
+          scaledSize: new google.maps.Size(markerSize, markerSize),
+          anchor: new google.maps.Point(half, half)
         };
 
         const marker = new google.maps.Marker({
@@ -12532,7 +12724,7 @@ if (typeof window !== 'undefined') {
         topHud.innerHTML = '';
         centerHud.innerHTML = `
           <div class="pointer-events-auto flex items-center justify-center">
-            <div class="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 font-mono font-bold text-lg flex items-center justify-center shadow-lg" title="0 Workouts Scored">
+            <div class="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 font-mono font-bold text-sm flex items-center justify-center shadow-lg" title="0 Workouts Scored">
               0
             </div>
           </div>
@@ -12562,10 +12754,13 @@ if (typeof window !== 'undefined') {
       }
 
       const completedCount = selectedNode.completedToday || 0;
+      const hudSizeClass = currentMapZoom < 11
+        ? 'w-10 h-10 sm:w-11 sm:h-11 text-base sm:text-lg'
+        : 'w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl';
 
       centerHud.innerHTML = `
         <div class="pointer-events-auto cursor-pointer transition transform hover:scale-105 active:scale-95 flex items-center justify-center" onclick="triggerHaptic('light'); zoomToSelectedZip()">
-          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl sm:text-3xl flex items-center justify-center shadow-2xl shadow-[var(--m3-primary)]/40 ring-4 ring-slate-950/90" title="${completedCount} Workouts Scored">
+          <div class="${hudSizeClass} rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black flex items-center justify-center shadow-2xl shadow-[var(--m3-primary)]/40 ring-4 ring-slate-950/90" title="${completedCount} Workouts Scored">
             ${completedCount}
           </div>
         </div>
@@ -12604,11 +12799,11 @@ if (typeof window !== 'undefined') {
       const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
       const countryNode = (aggNodes && aggNodes.length > 0)
         ? (aggNodes.find(n => n.type === 'country') || aggNodes[0])
-        : { lat: 39.8283, lng: -98.5795, completedToday: 0, label: 'United States', shortTitle: 'USA' };
+        : { lat: 38.95, lng: -77.45, completedToday: 0, label: 'United States', shortTitle: 'USA' };
 
       const completedCount = countryNode.completedToday || 0;
-      const countryLat = countryNode.lat || 39.8283;
-      const countryLng = countryNode.lng || -98.5795;
+      const countryLat = countryNode.lat || 38.95;
+      const countryLng = countryNode.lng || -77.45;
 
       const width = canvas.clientWidth || 320;
       const height = canvas.clientHeight || 280;
@@ -12616,46 +12811,78 @@ if (typeof window !== 'undefined') {
       let screenX = width / 2;
       let screenY = height / 2;
 
-      if (googleMapInstance && !isMapEmbedMode) {
-        const bounds = googleMapInstance.getBounds();
-        if (bounds) {
-          const ne = bounds.getNorthEast();
-          const sw = bounds.getSouthWest();
-          let dLng = ne.lng() - sw.lng();
-          if (dLng <= 0) dLng += 360;
-          let relLng = countryLng - sw.lng();
-          if (relLng < 0) relLng += 360;
-          screenX = (relLng / dLng) * width;
+      const latToNormY = (lat) => {
+        const sin = Math.sin(lat * Math.PI / 180);
+        const clamped = Math.max(-0.9999, Math.min(0.9999, sin));
+        return 0.5 - Math.log((1 + clamped) / (1 - clamped)) / (4 * Math.PI);
+      };
 
-          const latToY = (lat) => {
-            const sin = Math.sin(lat * Math.PI / 180);
-            return Math.log((1 + sin) / Math.max(1e-5, (1 - sin))) / 2;
-          };
-          const topY = latToY(ne.lat());
-          const botY = latToY(sw.lat());
-          const cY = latToY(countryLat);
-          screenY = ((topY - cY) / Math.max(1e-5, (topY - botY))) * height;
-        } else {
-          const center = googleMapInstance.getCenter();
-          const cLat = center ? (typeof center.lat === 'function' ? center.lat() : center.lat) : 39.8283;
-          const cLng = center ? (typeof center.lng === 'function' ? center.lng() : center.lng) : -98.5795;
-          const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
-          const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
-          screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
-          screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
-        }
+      if (googleMapInstance && !isMapEmbedMode) {
+        const center = googleMapInstance.getCenter();
+        const cLat = center ? (typeof center.lat === 'function' ? center.lat() : center.lat) : 38.95;
+        const cLng = center ? (typeof center.lng === 'function' ? center.lng() : center.lng) : -77.45;
+        const zoom = (typeof googleMapInstance.getZoom === 'function') ? googleMapInstance.getZoom() : currentMapZoom;
+        const worldSize = 256 * Math.pow(2, zoom);
+
+        const targetNormX = (countryLng + 180) / 360;
+        const centerNormX = (cLng + 180) / 360;
+        let deltaX = targetNormX - centerNormX;
+        if (deltaX > 0.5) deltaX -= 1.0;
+        if (deltaX < -0.5) deltaX += 1.0;
+
+        const targetNormY = latToNormY(countryLat);
+        const centerNormY = latToNormY(cLat);
+        const deltaY = targetNormY - centerNormY;
+
+        screenX = (width / 2) + (deltaX * worldSize);
+        screenY = (height / 2) + (deltaY * worldSize);
       } else {
-        const cLat = 39.8283;
-        const cLng = -98.5795;
-        const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
-        const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
-        screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
-        screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
+        // Embed Mode: Accurate geographic projection across Continental / World zoom span
+        // For US coordinates, accurately positions within the USA (Western, Central, Eastern USA)
+        const isUS = (countryLng >= -130 && countryLng <= -65 && countryLat >= 24 && countryLat <= 50);
+        if (isUS) {
+          const usWestLng = -124.5;
+          const usEastLng = -67.0;
+          const usNorthLat = 49.0;
+          const usSouthLat = 25.0;
+
+          const lngFrac = Math.max(0, Math.min(1, (countryLng - usWestLng) / (usEastLng - usWestLng)));
+          const latFrac = Math.max(0, Math.min(1, (usNorthLat - countryLat) / (usNorthLat - usSouthLat)));
+
+          let minXRatio, maxXRatio, minYRatio, maxYRatio;
+          if (currentMapZoom <= 3) {
+            // Span of NAmerica, SAmerica, Africa, Europe, Asia:
+            // US spans from 19% (West Coast) to 35% (East Coast).
+            // Northern Virginia (lngFrac ~0.82) lands at ~32.1% (Eastern portion of USA).
+            minXRatio = 0.19;
+            maxXRatio = 0.35;
+            minYRatio = 0.34;
+            maxYRatio = 0.46;
+          } else {
+            // Zoom 4: US spans from 10% to 44% width
+            minXRatio = 0.10;
+            maxXRatio = 0.44;
+            minYRatio = 0.24;
+            maxYRatio = 0.54;
+          }
+
+          screenX = width * (minXRatio + lngFrac * (maxXRatio - minXRatio));
+          screenY = height * (minYRatio + latFrac * (maxYRatio - minYRatio));
+        } else {
+          // General world Mercator projection for international lifters
+          const normX = (countryLng + 180) / 360;
+          const normY = latToNormY(countryLat);
+          const deltaX = normX - 0.50;
+          const deltaY = normY - 0.42;
+          const worldSpan = width * (currentMapZoom <= 3 ? 1.05 : 1.75);
+          screenX = (width / 2) + deltaX * worldSpan;
+          screenY = (height / 2) + deltaY * worldSpan;
+        }
       }
 
       // Edge boundaries margins
-      const marginX = 42;
-      const marginY = 42;
+      const marginX = 24;
+      const marginY = 24;
       const minX = marginX;
       const maxX = width - marginX;
       const minY = marginY;
@@ -12688,21 +12915,31 @@ if (typeof window !== 'undefined') {
       badgeEl.style.transform = 'translate(-50%, -50%)';
 
       const titleText = isStickingToEdge
-        ? `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Click to Center)`
-        : `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Hovering over Country)`;
+        ? `${countryNode.label || 'United States'}: ${completedCount} Workout${completedCount === 1 ? '' : 's'} Scored (Click to Center)`
+        : `${countryNode.label || 'United States'}: ${completedCount} Workout${completedCount === 1 ? '' : 's'} Scored`;
 
-      badgeEl.innerHTML = `
-        <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
-             class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black shadow-2xl shadow-[var(--m3-primary)]/50 ring-4 ring-slate-950/90 ${isStickingToEdge ? 'border-2 border-emerald-300 ring-emerald-500/30' : 'hover-float-badge'}"
-             title="${titleText}">
-          ${arrowHtml}
-          <span class="text-xl sm:text-2xl">${completedCount}</span>
-          <span class="text-[9px] uppercase tracking-wider font-sans font-extrabold opacity-95">${isStickingToEdge ? 'Scored' : (countryNode.shortTitle || 'USA')}</span>
-        </div>
-      `;
+      if (isStickingToEdge) {
+        badgeEl.innerHTML = `
+          <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
+               class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-xs shadow-xl shadow-[var(--m3-primary)]/40 ring-2 ring-slate-950/90 border border-emerald-300"
+               title="${titleText}">
+            ${arrowHtml}
+            <span>${completedCount}</span>
+          </div>
+        `;
+      } else {
+        const sizeClass = currentMapZoom <= 3 ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm';
+        badgeEl.innerHTML = `
+          <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
+               class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center justify-center ${sizeClass} rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black shadow-xl shadow-[var(--m3-primary)]/40 ring-2 ring-slate-950/90 hover-float-badge"
+               title="${titleText}">
+            ${completedCount}
+          </div>
+        `;
+      }
     }
 
-    function panMapToCountry(lat = 39.8283, lng = -98.5795) {
+    function panMapToCountry(lat = 38.95, lng = -77.45) {
       if (googleMapInstance && !isMapEmbedMode) {
         googleMapInstance.panTo({ lat, lng });
       } else {
@@ -16656,7 +16893,73 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   }
   assert(scrollException === null, "scrollExerciseInputIntoView executed smoothly without exception");
 
-  // 5. Test logSet automatic muscle identification without manual input
+  // Implement Filter Capability Tests (Barbell, Kettlebell, Dumbbell, Bodyweight)
+  assert(typeof toggleExerciseCatalogFilter === 'function', "toggleExerciseCatalogFilter is a defined function");
+  assert(typeof renderExerciseCatalogFilterPills === 'function', "renderExerciseCatalogFilterPills is a defined function");
+  assert(typeof exerciseMatchesImplementFilter === 'function', "exerciseMatchesImplementFilter is a defined function");
+
+  // 1. Filter matching checks
+  const kbCatalog = filterExerciseCatalog("", "Kettlebell");
+  assert(kbCatalog.length > 0, "filterExerciseCatalog('', 'Kettlebell') returns kettlebell exercises (" + kbCatalog.length + " found)");
+  assert(kbCatalog.every(e => e.implement === "Kettlebell" || e.name.toLowerCase().includes("kb") || e.name.toLowerCase().includes("kettlebell")), "All filtered kettlebell items belong to Kettlebell");
+
+  const bbCatalog = filterExerciseCatalog("", "Barbell");
+  assert(bbCatalog.length >= 5, "filterExerciseCatalog('', 'Barbell') returns barbell exercises (" + bbCatalog.length + " found)");
+  assert(bbCatalog.every(e => e.implement === "Barbell" || e.name.toLowerCase().includes("barbell")), "All filtered barbell items belong to Barbell");
+
+  const dbCatalog = filterExerciseCatalog("", "Dumbbell");
+  assert(dbCatalog.length >= 7, "filterExerciseCatalog('', 'Dumbbell') returns dumbbell exercises (" + dbCatalog.length + " found)");
+  assert(dbCatalog.every(e => e.implement === "Dumbbell" || e.name.toLowerCase().includes("dumbbell") || e.name.startsWith("DB ") || e.name.includes("Dumbbell")), "All filtered dumbbell items belong to Dumbbell");
+
+  const bwCatalog = filterExerciseCatalog("", "Bodyweight");
+  assert(bwCatalog.length >= 5, "filterExerciseCatalog('', 'Bodyweight') returns bodyweight exercises (" + bwCatalog.length + " found)");
+  assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
+
+  // 2. Interactive toggle on Kettlebell pill
+  const pillKb = getOrCreateElement('filter-pill-kettlebell');
+  const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
+  const filterNameLabel = getOrCreateElement('active-exercise-filter-name');
+
+  toggleExerciseCatalogFilter("Kettlebell", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === "Kettlebell", "activeExerciseCatalogFilter is set to Kettlebell");
+  assert(pillKb.getAttribute('aria-pressed') === 'true', "Kettlebell pill aria-pressed is true (engaged)");
+  assert(pillKb.className.includes("text-emerald-400"), "Kettlebell pill displays depressed and engaged emerald styling");
+  assert(!filterIndicator.classList.contains('hidden'), "Active filter indicator is visible");
+  assert(filterNameLabel.textContent === "Kettlebell", "Active filter indicator name is Kettlebell");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Dropdown opens automatically showing Kettlebell catalog");
+  assert(suggestionsDropdown.innerHTML.includes("Kettlebell Catalog"), "Dropdown shows Kettlebell Catalog header with exercise count");
+
+  // 3. Search query refined within Kettlebell filter
+  updateExerciseSuggestions("press", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(suggestionsDropdown.innerHTML.includes("KB Shoulder Press"), "Suggestions dropdown includes KB Shoulder Press");
+  assert(!suggestionsDropdown.innerHTML.includes("Barbell Bench Press"), "Suggestions dropdown strictly excludes non-kettlebell exercises (e.g. Barbell Bench Press)");
+
+  // 4. Deselect / remove filter by tapping again on chosen filter
+  toggleExerciseCatalogFilter("Kettlebell", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === null, "Tapping again removes the chosen filter (null)");
+  assert(pillKb.getAttribute('aria-pressed') === 'false', "Kettlebell pill aria-pressed is false (disengaged)");
+  assert(!pillKb.className.includes("font-black text-emerald-400"), "Kettlebell pill returns to unselected resting styling");
+  assert(filterIndicator.classList.contains('hidden'), "Active filter indicator is hidden when filter is removed");
+
+  // 5. Test newly added exercises in defaultCatalog
+  const newExercises = [
+    { name: "DB Hammer Curls", imp: "Dumbbell", mus: "Biceps" },
+    { name: "EZ Bar Bicep Curls", imp: "Barbell", mus: "Biceps" },
+    { name: "EZ Bar Preacher Curls", imp: "Barbell", mus: "Biceps" },
+    { name: "EZ Bar Lying Down Tricep Extensions", imp: "Barbell", mus: "Triceps" },
+    { name: "EZ Bar Tricep Pull Overs", imp: "Barbell", mus: "Triceps" },
+    { name: "Bicep Curls", imp: "Dumbbell", mus: "Biceps" },
+    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" }
+  ];
+
+  newExercises.forEach(item => {
+    const found = findCatalogExercise(item.name);
+    assert(found !== null, "Catalog contains newly added exercise: " + item.name);
+    assert(found.implement === item.imp, item.name + " implement matches " + item.imp);
+    assert(found.muscle === item.mus, item.name + " muscle target matches " + item.mus);
+  });
+
+  // 6. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
   exInput.value = "Banded KB Suitcase Carry";
   handleExerciseInput("Banded KB Suitcase Carry");

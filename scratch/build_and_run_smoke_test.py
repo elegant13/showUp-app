@@ -1931,7 +1931,73 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   }
   assert(scrollException === null, "scrollExerciseInputIntoView executed smoothly without exception");
 
-  // 5. Test logSet automatic muscle identification without manual input
+  // Implement Filter Capability Tests (Barbell, Kettlebell, Dumbbell, Bodyweight)
+  assert(typeof toggleExerciseCatalogFilter === 'function', "toggleExerciseCatalogFilter is a defined function");
+  assert(typeof renderExerciseCatalogFilterPills === 'function', "renderExerciseCatalogFilterPills is a defined function");
+  assert(typeof exerciseMatchesImplementFilter === 'function', "exerciseMatchesImplementFilter is a defined function");
+
+  // 1. Filter matching checks
+  const kbCatalog = filterExerciseCatalog("", "Kettlebell");
+  assert(kbCatalog.length > 0, "filterExerciseCatalog('', 'Kettlebell') returns kettlebell exercises (" + kbCatalog.length + " found)");
+  assert(kbCatalog.every(e => e.implement === "Kettlebell" || e.name.toLowerCase().includes("kb") || e.name.toLowerCase().includes("kettlebell")), "All filtered kettlebell items belong to Kettlebell");
+
+  const bbCatalog = filterExerciseCatalog("", "Barbell");
+  assert(bbCatalog.length >= 5, "filterExerciseCatalog('', 'Barbell') returns barbell exercises (" + bbCatalog.length + " found)");
+  assert(bbCatalog.every(e => e.implement === "Barbell" || e.name.toLowerCase().includes("barbell")), "All filtered barbell items belong to Barbell");
+
+  const dbCatalog = filterExerciseCatalog("", "Dumbbell");
+  assert(dbCatalog.length >= 7, "filterExerciseCatalog('', 'Dumbbell') returns dumbbell exercises (" + dbCatalog.length + " found)");
+  assert(dbCatalog.every(e => e.implement === "Dumbbell" || e.name.toLowerCase().includes("dumbbell") || e.name.startsWith("DB ") || e.name.includes("Dumbbell")), "All filtered dumbbell items belong to Dumbbell");
+
+  const bwCatalog = filterExerciseCatalog("", "Bodyweight");
+  assert(bwCatalog.length >= 5, "filterExerciseCatalog('', 'Bodyweight') returns bodyweight exercises (" + bwCatalog.length + " found)");
+  assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
+
+  // 2. Interactive toggle on Kettlebell pill
+  const pillKb = getOrCreateElement('filter-pill-kettlebell');
+  const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
+  const filterNameLabel = getOrCreateElement('active-exercise-filter-name');
+
+  toggleExerciseCatalogFilter("Kettlebell", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === "Kettlebell", "activeExerciseCatalogFilter is set to Kettlebell");
+  assert(pillKb.getAttribute('aria-pressed') === 'true', "Kettlebell pill aria-pressed is true (engaged)");
+  assert(pillKb.className.includes("text-emerald-400"), "Kettlebell pill displays depressed and engaged emerald styling");
+  assert(!filterIndicator.classList.contains('hidden'), "Active filter indicator is visible");
+  assert(filterNameLabel.textContent === "Kettlebell", "Active filter indicator name is Kettlebell");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Dropdown opens automatically showing Kettlebell catalog");
+  assert(suggestionsDropdown.innerHTML.includes("Kettlebell Catalog"), "Dropdown shows Kettlebell Catalog header with exercise count");
+
+  // 3. Search query refined within Kettlebell filter
+  updateExerciseSuggestions("press", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(suggestionsDropdown.innerHTML.includes("KB Shoulder Press"), "Suggestions dropdown includes KB Shoulder Press");
+  assert(!suggestionsDropdown.innerHTML.includes("Barbell Bench Press"), "Suggestions dropdown strictly excludes non-kettlebell exercises (e.g. Barbell Bench Press)");
+
+  // 4. Deselect / remove filter by tapping again on chosen filter
+  toggleExerciseCatalogFilter("Kettlebell", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === null, "Tapping again removes the chosen filter (null)");
+  assert(pillKb.getAttribute('aria-pressed') === 'false', "Kettlebell pill aria-pressed is false (disengaged)");
+  assert(!pillKb.className.includes("font-black text-emerald-400"), "Kettlebell pill returns to unselected resting styling");
+  assert(filterIndicator.classList.contains('hidden'), "Active filter indicator is hidden when filter is removed");
+
+  // 5. Test newly added exercises in defaultCatalog
+  const newExercises = [
+    { name: "DB Hammer Curls", imp: "Dumbbell", mus: "Biceps" },
+    { name: "EZ Bar Bicep Curls", imp: "Barbell", mus: "Biceps" },
+    { name: "EZ Bar Preacher Curls", imp: "Barbell", mus: "Biceps" },
+    { name: "EZ Bar Lying Down Tricep Extensions", imp: "Barbell", mus: "Triceps" },
+    { name: "EZ Bar Tricep Pull Overs", imp: "Barbell", mus: "Triceps" },
+    { name: "Bicep Curls", imp: "Dumbbell", mus: "Biceps" },
+    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" }
+  ];
+
+  newExercises.forEach(item => {
+    const found = findCatalogExercise(item.name);
+    assert(found !== null, "Catalog contains newly added exercise: " + item.name);
+    assert(found.implement === item.imp, item.name + " implement matches " + item.imp);
+    assert(found.muscle === item.mus, item.name + " muscle target matches " + item.mus);
+  });
+
+  // 6. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
   exInput.value = "Banded KB Suitcase Carry";
   handleExerciseInput("Banded KB Suitcase Carry");

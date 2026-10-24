@@ -992,16 +992,35 @@
       aggNodes.forEach(node => {
         const completedCount = node.completedToday || 0;
 
-        // Cleaner Map View: Circular marker displaying strictly the number of workouts scored
+        // Cleaner Map View: Circular marker displaying strictly the number of workouts scored, scaled proportionally by zoom level
+        let markerSize = 44;
+        let markerRadius = 18;
+        let fontSize = 15;
+        let strokeWidth = 3;
+        if (currentMapZoom < 5) {
+          markerSize = 28;
+          markerRadius = 11;
+          fontSize = 11;
+          strokeWidth = 2;
+        } else if (currentMapZoom < 11) {
+          markerSize = 36;
+          markerRadius = 15;
+          fontSize = 13;
+          strokeWidth = 2.5;
+        }
+
+        const half = markerSize / 2;
+        const textY = half + Math.round(fontSize * 0.38);
+
         const svgIcon = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
-              <circle cx="23" cy="23" r="19" fill="${pal.fill}" stroke="#0b0f19" stroke-width="3" filter="drop-shadow(0 4px 6px rgba(0,0,0,0.5))"/>
-              <text x="23" y="29" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="16" font-weight="900" text-anchor="middle">${completedCount}</text>
+            <svg xmlns="http://www.w3.org/2000/svg" width="${markerSize}" height="${markerSize}" viewBox="0 0 ${markerSize} ${markerSize}">
+              <circle cx="${half}" cy="${half}" r="${markerRadius}" fill="${pal.fill}" stroke="#0b0f19" stroke-width="${strokeWidth}" filter="drop-shadow(0 3px 5px rgba(0,0,0,0.5))"/>
+              <text x="${half}" y="${textY}" fill="${pal.onColor}" font-family="monospace, sans-serif" font-size="${fontSize}" font-weight="900" text-anchor="middle">${completedCount}</text>
             </svg>
           `),
-          scaledSize: new google.maps.Size(46, 46),
-          anchor: new google.maps.Point(23, 23)
+          scaledSize: new google.maps.Size(markerSize, markerSize),
+          anchor: new google.maps.Point(half, half)
         };
 
         const marker = new google.maps.Marker({
@@ -1039,7 +1058,7 @@
         topHud.innerHTML = '';
         centerHud.innerHTML = `
           <div class="pointer-events-auto flex items-center justify-center">
-            <div class="w-12 h-12 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 font-mono font-bold text-lg flex items-center justify-center shadow-lg" title="0 Workouts Scored">
+            <div class="w-10 h-10 rounded-full bg-slate-900/90 border border-slate-700/80 text-slate-400 font-mono font-bold text-sm flex items-center justify-center shadow-lg" title="0 Workouts Scored">
               0
             </div>
           </div>
@@ -1069,10 +1088,13 @@
       }
 
       const completedCount = selectedNode.completedToday || 0;
+      const hudSizeClass = currentMapZoom < 11
+        ? 'w-10 h-10 sm:w-11 sm:h-11 text-base sm:text-lg'
+        : 'w-12 h-12 sm:w-14 sm:h-14 text-xl sm:text-2xl';
 
       centerHud.innerHTML = `
         <div class="pointer-events-auto cursor-pointer transition transform hover:scale-105 active:scale-95 flex items-center justify-center" onclick="triggerHaptic('light'); zoomToSelectedZip()">
-          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-2xl sm:text-3xl flex items-center justify-center shadow-2xl shadow-[var(--m3-primary)]/40 ring-4 ring-slate-950/90" title="${completedCount} Workouts Scored">
+          <div class="${hudSizeClass} rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black flex items-center justify-center shadow-2xl shadow-[var(--m3-primary)]/40 ring-4 ring-slate-950/90" title="${completedCount} Workouts Scored">
             ${completedCount}
           </div>
         </div>
@@ -1111,11 +1133,11 @@
       const aggNodes = getAggregatedNodesForZoom(currentMapZoom, activeNodes);
       const countryNode = (aggNodes && aggNodes.length > 0)
         ? (aggNodes.find(n => n.type === 'country') || aggNodes[0])
-        : { lat: 39.8283, lng: -98.5795, completedToday: 0, label: 'United States', shortTitle: 'USA' };
+        : { lat: 38.95, lng: -77.45, completedToday: 0, label: 'United States', shortTitle: 'USA' };
 
       const completedCount = countryNode.completedToday || 0;
-      const countryLat = countryNode.lat || 39.8283;
-      const countryLng = countryNode.lng || -98.5795;
+      const countryLat = countryNode.lat || 38.95;
+      const countryLng = countryNode.lng || -77.45;
 
       const width = canvas.clientWidth || 320;
       const height = canvas.clientHeight || 280;
@@ -1123,46 +1145,78 @@
       let screenX = width / 2;
       let screenY = height / 2;
 
-      if (googleMapInstance && !isMapEmbedMode) {
-        const bounds = googleMapInstance.getBounds();
-        if (bounds) {
-          const ne = bounds.getNorthEast();
-          const sw = bounds.getSouthWest();
-          let dLng = ne.lng() - sw.lng();
-          if (dLng <= 0) dLng += 360;
-          let relLng = countryLng - sw.lng();
-          if (relLng < 0) relLng += 360;
-          screenX = (relLng / dLng) * width;
+      const latToNormY = (lat) => {
+        const sin = Math.sin(lat * Math.PI / 180);
+        const clamped = Math.max(-0.9999, Math.min(0.9999, sin));
+        return 0.5 - Math.log((1 + clamped) / (1 - clamped)) / (4 * Math.PI);
+      };
 
-          const latToY = (lat) => {
-            const sin = Math.sin(lat * Math.PI / 180);
-            return Math.log((1 + sin) / Math.max(1e-5, (1 - sin))) / 2;
-          };
-          const topY = latToY(ne.lat());
-          const botY = latToY(sw.lat());
-          const cY = latToY(countryLat);
-          screenY = ((topY - cY) / Math.max(1e-5, (topY - botY))) * height;
-        } else {
-          const center = googleMapInstance.getCenter();
-          const cLat = center ? (typeof center.lat === 'function' ? center.lat() : center.lat) : 39.8283;
-          const cLng = center ? (typeof center.lng === 'function' ? center.lng() : center.lng) : -98.5795;
-          const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
-          const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
-          screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
-          screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
-        }
+      if (googleMapInstance && !isMapEmbedMode) {
+        const center = googleMapInstance.getCenter();
+        const cLat = center ? (typeof center.lat === 'function' ? center.lat() : center.lat) : 38.95;
+        const cLng = center ? (typeof center.lng === 'function' ? center.lng() : center.lng) : -77.45;
+        const zoom = (typeof googleMapInstance.getZoom === 'function') ? googleMapInstance.getZoom() : currentMapZoom;
+        const worldSize = 256 * Math.pow(2, zoom);
+
+        const targetNormX = (countryLng + 180) / 360;
+        const centerNormX = (cLng + 180) / 360;
+        let deltaX = targetNormX - centerNormX;
+        if (deltaX > 0.5) deltaX -= 1.0;
+        if (deltaX < -0.5) deltaX += 1.0;
+
+        const targetNormY = latToNormY(countryLat);
+        const centerNormY = latToNormY(cLat);
+        const deltaY = targetNormY - centerNormY;
+
+        screenX = (width / 2) + (deltaX * worldSize);
+        screenY = (height / 2) + (deltaY * worldSize);
       } else {
-        const cLat = 39.8283;
-        const cLng = -98.5795;
-        const degSpanLng = (360 / Math.pow(2, currentMapZoom)) * (width / 256);
-        const degSpanLat = (180 / Math.pow(2, currentMapZoom)) * (height / 256);
-        screenX = (width / 2) + ((countryLng - cLng) / degSpanLng) * width;
-        screenY = (height / 2) - ((countryLat - cLat) / degSpanLat) * height;
+        // Embed Mode: Accurate geographic projection across Continental / World zoom span
+        // For US coordinates, accurately positions within the USA (Western, Central, Eastern USA)
+        const isUS = (countryLng >= -130 && countryLng <= -65 && countryLat >= 24 && countryLat <= 50);
+        if (isUS) {
+          const usWestLng = -124.5;
+          const usEastLng = -67.0;
+          const usNorthLat = 49.0;
+          const usSouthLat = 25.0;
+
+          const lngFrac = Math.max(0, Math.min(1, (countryLng - usWestLng) / (usEastLng - usWestLng)));
+          const latFrac = Math.max(0, Math.min(1, (usNorthLat - countryLat) / (usNorthLat - usSouthLat)));
+
+          let minXRatio, maxXRatio, minYRatio, maxYRatio;
+          if (currentMapZoom <= 3) {
+            // Span of NAmerica, SAmerica, Africa, Europe, Asia:
+            // US spans from 19% (West Coast) to 35% (East Coast).
+            // Northern Virginia (lngFrac ~0.82) lands at ~32.1% (Eastern portion of USA).
+            minXRatio = 0.19;
+            maxXRatio = 0.35;
+            minYRatio = 0.34;
+            maxYRatio = 0.46;
+          } else {
+            // Zoom 4: US spans from 10% to 44% width
+            minXRatio = 0.10;
+            maxXRatio = 0.44;
+            minYRatio = 0.24;
+            maxYRatio = 0.54;
+          }
+
+          screenX = width * (minXRatio + lngFrac * (maxXRatio - minXRatio));
+          screenY = height * (minYRatio + latFrac * (maxYRatio - minYRatio));
+        } else {
+          // General world Mercator projection for international lifters
+          const normX = (countryLng + 180) / 360;
+          const normY = latToNormY(countryLat);
+          const deltaX = normX - 0.50;
+          const deltaY = normY - 0.42;
+          const worldSpan = width * (currentMapZoom <= 3 ? 1.05 : 1.75);
+          screenX = (width / 2) + deltaX * worldSpan;
+          screenY = (height / 2) + deltaY * worldSpan;
+        }
       }
 
       // Edge boundaries margins
-      const marginX = 42;
-      const marginY = 42;
+      const marginX = 24;
+      const marginY = 24;
       const minX = marginX;
       const maxX = width - marginX;
       const minY = marginY;
@@ -1195,21 +1249,31 @@
       badgeEl.style.transform = 'translate(-50%, -50%)';
 
       const titleText = isStickingToEdge
-        ? `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Click to Center)`
-        : `${countryNode.label || 'Country'}: ${completedCount} Workouts Scored (Hovering over Country)`;
+        ? `${countryNode.label || 'United States'}: ${completedCount} Workout${completedCount === 1 ? '' : 's'} Scored (Click to Center)`
+        : `${countryNode.label || 'United States'}: ${completedCount} Workout${completedCount === 1 ? '' : 's'} Scored`;
 
-      badgeEl.innerHTML = `
-        <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
-             class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black shadow-2xl shadow-[var(--m3-primary)]/50 ring-4 ring-slate-950/90 ${isStickingToEdge ? 'border-2 border-emerald-300 ring-emerald-500/30' : 'hover-float-badge'}"
-             title="${titleText}">
-          ${arrowHtml}
-          <span class="text-xl sm:text-2xl">${completedCount}</span>
-          <span class="text-[9px] uppercase tracking-wider font-sans font-extrabold opacity-95">${isStickingToEdge ? 'Scored' : (countryNode.shortTitle || 'USA')}</span>
-        </div>
-      `;
+      if (isStickingToEdge) {
+        badgeEl.innerHTML = `
+          <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
+               class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black text-xs shadow-xl shadow-[var(--m3-primary)]/40 ring-2 ring-slate-950/90 border border-emerald-300"
+               title="${titleText}">
+            ${arrowHtml}
+            <span>${completedCount}</span>
+          </div>
+        `;
+      } else {
+        const sizeClass = currentMapZoom <= 3 ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm';
+        badgeEl.innerHTML = `
+          <div onclick="triggerHaptic('light'); panMapToCountry(${countryLat}, ${countryLng})"
+               class="cursor-pointer transition transform hover:scale-110 active:scale-95 flex items-center justify-center ${sizeClass} rounded-full bg-[var(--m3-primary)] text-[var(--m3-onPrimary)] font-mono font-black shadow-xl shadow-[var(--m3-primary)]/40 ring-2 ring-slate-950/90 hover-float-badge"
+               title="${titleText}">
+            ${completedCount}
+          </div>
+        `;
+      }
     }
 
-    function panMapToCountry(lat = 39.8283, lng = -98.5795) {
+    function panMapToCountry(lat = 38.95, lng = -77.45) {
       if (googleMapInstance && !isMapEmbedMode) {
         googleMapInstance.panTo({ lat, lng });
       } else {

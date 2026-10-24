@@ -164,11 +164,39 @@
 
     let isScrollingExerciseInput = false;
     let activeSuggestionIndex = -1;
+    let activeExerciseCatalogFilter = null;
 
-    function filterExerciseCatalog(query) {
-      if (!query || typeof query !== 'string') return [];
-      const clean = query.trim().toLowerCase();
-      if (!clean) return [];
+    function exerciseMatchesImplementFilter(exercise, filter) {
+      if (!filter) return true;
+      if (!exercise) return false;
+      const fLower = String(filter).trim().toLowerCase();
+      const implLower = String(exercise.implement || '').trim().toLowerCase();
+      const nameLower = String(exercise.name || '').trim().toLowerCase();
+
+      if (implLower === fLower) return true;
+      if (implLower.includes(fLower)) return true;
+
+      if (fLower === 'kettlebell') {
+        return implLower === 'kettlebell' || nameLower.includes('kettlebell') || /\bkb\b/i.test(nameLower);
+      }
+      if (fLower === 'barbell') {
+        return implLower === 'barbell' || nameLower.includes('barbell') || nameLower.includes('ez bar');
+      }
+      if (fLower === 'dumbbell') {
+        return implLower === 'dumbbell' || nameLower.includes('dumbbell') || /\bdb\b/i.test(nameLower);
+      }
+      if (fLower === 'bodyweight') {
+        return implLower === 'bodyweight' || implLower === 'calisthenics';
+      }
+      return false;
+    }
+
+    function filterExerciseCatalog(query, implementFilter) {
+      const activeFilter = (implementFilter !== undefined) ? implementFilter : activeExerciseCatalogFilter;
+      const clean = (query && typeof query === 'string') ? query.trim().toLowerCase() : '';
+
+      // If both query and activeFilter are empty, return []
+      if (!clean && !activeFilter) return [];
 
       const cleanAlphanum = clean.replace(/[^a-z0-9]/g, '');
 
@@ -181,9 +209,27 @@
 
       catalog.forEach(ex => {
         if (!ex || !ex.name) return;
+
+        // Check implement filter first
+        if (activeFilter && !exerciseMatchesImplementFilter(ex, activeFilter)) {
+          return;
+        }
+
         const name = ex.name;
         const nameLower = name.toLowerCase();
         const nameAlphanum = nameLower.replace(/[^a-z0-9]/g, '');
+
+        // If query is blank but filter is active, include all matching exercises
+        if (!clean) {
+          if (!seen.has(name)) {
+            seen.add(name);
+            results.push({
+              exercise: ex,
+              priority: 0
+            });
+          }
+          return;
+        }
 
         let priority = -1;
 
@@ -243,7 +289,7 @@
         const parts = text.split(regex);
         return parts.map(part => {
           if (part.toLowerCase() === query.trim().toLowerCase()) {
-            return `<span class="text-emerald-400 font-black underline decoration-emerald-500/60">${safe(part)}</span>`;
+            return `<span class="text-emerald-400 font-bold">${safe(part)}</span>`;
           }
           return safe(part);
         }).join('');
@@ -300,13 +346,95 @@
       }
     }
 
+    function getActiveExerciseCatalogFilter() {
+      return activeExerciseCatalogFilter;
+    }
+
+    function setExerciseCatalogFilter(filterName) {
+      activeExerciseCatalogFilter = filterName || null;
+      renderExerciseCatalogFilterPills();
+    }
+
+    function renderExerciseCatalogFilterPills() {
+      if (typeof document === 'undefined') return;
+      const pills = [
+        { id: 'filter-pill-barbell', name: 'Barbell' },
+        { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
+        { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
+        { id: 'filter-pill-bodyweight', name: 'Bodyweight' }
+      ];
+
+      pills.forEach(pill => {
+        const el = document.getElementById(pill.id);
+        if (!el) return;
+        const isEngaged = activeExerciseCatalogFilter && (activeExerciseCatalogFilter.toLowerCase() === pill.name.toLowerCase());
+        el.setAttribute('aria-pressed', isEngaged ? 'true' : 'false');
+
+        const icon = el.querySelector('i');
+
+        if (isEngaged) {
+          // Depressed and engaged state: sunken inner shadow, 1px depression, emerald text & border
+          el.className = 'exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-black text-emerald-400 bg-slate-950 border border-emerald-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.8),0_0_8px_rgba(16,185,129,0.2)] translate-y-[1px] select-none flex items-center gap-1.5 cursor-pointer';
+          if (icon) {
+            icon.classList.remove('opacity-70');
+            icon.classList.add('opacity-100', 'text-emerald-400');
+          }
+        } else {
+          // Unselected resting state
+          el.className = 'exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm translate-y-0';
+          if (icon) {
+            icon.classList.remove('opacity-100', 'text-emerald-400');
+            icon.classList.add('opacity-70');
+          }
+        }
+      });
+
+      const indicator = document.getElementById('active-exercise-filter-indicator');
+      const nameLabel = document.getElementById('active-exercise-filter-name');
+      if (indicator) {
+        if (activeExerciseCatalogFilter) {
+          if (nameLabel) nameLabel.textContent = activeExerciseCatalogFilter;
+          indicator.classList.remove('hidden');
+        } else {
+          indicator.classList.add('hidden');
+        }
+      }
+    }
+
+    function toggleExerciseCatalogFilter(filterName, inputId = 'exercise-name-input', dropdownId = 'exercise-suggestions-dropdown') {
+      if (activeExerciseCatalogFilter && activeExerciseCatalogFilter.toLowerCase() === (filterName || '').toLowerCase()) {
+        // Tapping again removes the chosen filter
+        activeExerciseCatalogFilter = null;
+      } else {
+        activeExerciseCatalogFilter = filterName;
+      }
+
+      renderExerciseCatalogFilterPills();
+
+      const inputEl = document.getElementById(inputId);
+      const currentVal = inputEl ? inputEl.value : '';
+
+      if (activeExerciseCatalogFilter) {
+        updateExerciseSuggestions(currentVal, inputId, dropdownId);
+        if (inputEl) {
+          scrollExerciseInputIntoView(inputEl);
+        }
+      } else {
+        if (!currentVal || !currentVal.trim()) {
+          closeExerciseSuggestions(dropdownId);
+        } else {
+          updateExerciseSuggestions(currentVal, inputId, dropdownId);
+        }
+      }
+    }
+
     function updateExerciseSuggestions(query, inputId, dropdownId) {
       const dropdown = document.getElementById(dropdownId);
       const inputEl = document.getElementById(inputId);
       if (!dropdown || !inputEl) return;
 
       const trimmed = (query || '').trim();
-      if (!trimmed) {
+      if (!trimmed && !activeExerciseCatalogFilter) {
         dropdown.classList.add('hidden');
         dropdown.innerHTML = '';
         activeSuggestionIndex = -1;
@@ -319,37 +447,60 @@
       const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
 
       if (matches.length === 0) {
-        dropdown.innerHTML = `
-          <div class="px-4 py-3 text-xs text-slate-400 font-medium flex items-center justify-between">
-            <span>No catalog matches for "<b class="text-slate-200">${safe(trimmed)}</b>"</span>
-            <span class="text-[10px] text-slate-500 italic">Custom exercise</span>
+        let noMatchHtml = `
+          <div class="px-4 py-3.5 text-xs text-slate-400 font-medium flex items-center justify-between">
+            <span>No ${activeExerciseCatalogFilter ? `<span class="text-emerald-400 font-semibold">${safe(activeExerciseCatalogFilter)}</span> ` : ''}catalog matches for "<span class="text-slate-200 font-semibold">${safe(trimmed || '(empty)')}</span>"</span>
+            <span class="text-[11px] text-slate-500 font-medium">Custom exercise</span>
           </div>
         `;
+        if (activeExerciseCatalogFilter) {
+          noMatchHtml = `
+            <div class="px-4 py-2 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-400 sticky top-0 backdrop-blur-md z-10">
+              <span class="flex items-center gap-1.5 text-emerald-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span>
+                <span>${safe(activeExerciseCatalogFilter)}</span>
+              </span>
+              <button type="button" onclick="event.stopPropagation(); toggleExerciseCatalogFilter('${safe(activeExerciseCatalogFilter)}', '${inputId}', '${dropdownId}')" class="text-slate-400 hover:text-slate-200 text-[10px] uppercase tracking-wider font-semibold underline transition">Clear filter</button>
+            </div>
+          ` + noMatchHtml;
+        }
+        dropdown.innerHTML = noMatchHtml;
         dropdown.classList.remove('hidden');
         return;
       }
 
       let html = '';
+      if (activeExerciseCatalogFilter) {
+        html += `
+          <div class="px-4 py-2 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-400 sticky top-0 backdrop-blur-md z-10">
+            <span class="flex items-center gap-1.5 text-emerald-400">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span>
+              <span>${safe(activeExerciseCatalogFilter)} Catalog (${matches.length})</span>
+            </span>
+            <button type="button" onclick="event.stopPropagation(); toggleExerciseCatalogFilter('${safe(activeExerciseCatalogFilter)}', '${inputId}', '${dropdownId}')" class="text-slate-400 hover:text-slate-200 text-[10px] uppercase tracking-wider font-semibold underline transition">Clear filter</button>
+          </div>
+        `;
+      }
+
       matches.forEach((ex) => {
-        const displayName = highlightExerciseMatch(ex.name, trimmed);
+        const displayName = trimmed ? highlightExerciseMatch(ex.name, trimmed) : safe(ex.name);
         const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
         html += `
-          <div class="exercise-suggestion-item px-3.5 py-2.5 sm:py-3 flex items-center justify-between cursor-pointer hover:bg-emerald-500/15 active:bg-emerald-500/25 transition select-none group"
+          <div class="exercise-suggestion-item px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 active:bg-slate-800 transition select-none group border-b border-slate-800/50 last:border-b-0"
                role="option"
                data-exercise-name="${escapedNameAttr}"
                onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
-            <div class="flex items-center gap-2.5 min-w-0 pr-2">
-              <div class="w-7 h-7 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/40 transition shrink-0">
+            <div class="flex items-center gap-3 min-w-0 pr-2">
+              <div class="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition shrink-0">
                 <i class="fa-solid fa-dumbbell text-xs"></i>
               </div>
               <div class="truncate">
-                <span class="text-xs sm:text-sm font-bold text-slate-100 group-hover:text-emerald-300 transition block truncate">${displayName}</span>
-                <span class="text-[10px] text-slate-400 font-medium sm:hidden">${safe(ex.implement || 'General')}</span>
+                <span class="text-sm font-semibold text-slate-100 group-hover:text-emerald-300 transition block truncate tracking-tight">${displayName}</span>
+                <span class="text-xs text-slate-400 font-medium">${safe(ex.muscle || 'Full Body')}</span>
               </div>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/80 hidden sm:inline-block">${safe(ex.implement || 'General')}</span>
-              <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">${safe(ex.muscle || 'Full Body')}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700/60">${safe(ex.implement || 'General')}</span>
             </div>
           </div>
         `;
@@ -402,7 +553,7 @@
     function handleExerciseInputFocus(inputEl, dropdownId) {
       if (!inputEl) return;
       scrollExerciseInputIntoView(inputEl);
-      if (inputEl.value && inputEl.value.trim()) {
+      if ((inputEl.value && inputEl.value.trim()) || activeExerciseCatalogFilter) {
         updateExerciseSuggestions(inputEl.value, inputEl.id, dropdownId);
       }
     }
@@ -2261,6 +2412,11 @@
       window.scrollExerciseInputIntoView = scrollExerciseInputIntoView;
       window.handleExerciseInputFocus = handleExerciseInputFocus;
       window.handleExerciseInputKeydown = handleExerciseInputKeydown;
+      window.exerciseMatchesImplementFilter = exerciseMatchesImplementFilter;
+      window.getActiveExerciseCatalogFilter = getActiveExerciseCatalogFilter;
+      window.setExerciseCatalogFilter = setExerciseCatalogFilter;
+      window.renderExerciseCatalogFilterPills = renderExerciseCatalogFilterPills;
+      window.toggleExerciseCatalogFilter = toggleExerciseCatalogFilter;
       window.isAthleteAuthenticated = isAthleteAuthenticated;
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
