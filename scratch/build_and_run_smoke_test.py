@@ -2292,13 +2292,13 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
   assert(findCatalogExercise("Single Leg RDL").name === "Kickstand KB RDL", "findCatalogExercise alias resolves Single Leg RDL to Kickstand KB RDL");
   assert(findCatalogExercise("Kickstand KB RDL").name === "Kickstand KB RDL", "findCatalogExercise matches Kickstand KB RDL");
 
-  // 2. Single consistent Log Set button
+  // 2. Primary Log Set and Passive Start Set buttons
   const logBtn = getOrCreateElement('btn-log-set');
   const startBtn = getOrCreateElement('btn-start-set');
   assert(logBtn !== null, "btn-log-set is present in DOM");
-  assert(startBtn !== null, "btn-start-set retained in DOM for backward-compatibility hooks");
+  assert(startBtn !== null, "btn-start-set is present in DOM as passive CTA");
   updateSetControlsUI();
-  assert(startBtn.classList.contains('hidden'), "btn-start-set is hidden in UI favoring single consistent Log Set button");
+  assert(!startBtn.classList.contains('hidden'), "btn-start-set is visible as passive CTA option");
 
   // 3. Previous workout metrics
   completedWorkoutsHistory = [
@@ -2429,6 +2429,58 @@ runSuite("26. Workout in Progress HUD Redesign", () => {
   assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
   assert(completedEl.innerText === "0 exercises", "HUD completed exercises reset to 0 exercises");
   assert(setsLoggedEl.innerText === "0", "HUD sets logged reset to 0");
+});
+
+runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
+  const startBtn = getOrCreateElement('btn-start-set');
+  const startLabel = getOrCreateElement('btn-start-set-label');
+  const activeBanner = getOrCreateElement('active-set-timer-banner');
+  const activeVal = getOrCreateElement('active-set-timer-val');
+
+  assert(activeBanner !== null, "active-set-timer-banner exists in DOM");
+  assert(activeVal !== null, "active-set-timer-val exists in DOM");
+
+  // Initial passive state
+  isSetInProgress = false;
+  updateSetControlsUI();
+  assert(activeBanner.classList.contains('hidden'), "active-set-timer-banner hidden before set start");
+  assert(!startBtn.classList.contains('hidden'), "startBtn is visible as passive CTA");
+  assert(startLabel.innerText === "Start Set 1", "startBtn displays 'Start Set 1'");
+
+  // Start Set action
+  startSet();
+  assert(isSetInProgress === true, "isSetInProgress is true after startSet");
+  assert(!activeBanner.classList.contains('hidden'), "active-set-timer-banner is conspicuous and visible when set started");
+  assert(activeVal.innerText === "00:00", "active-set-timer-val displays initial 00:00");
+  assert(startLabel.innerText.includes("Timing Set 1"), "startLabel updates to Timing Set 1");
+
+  // Tick active set
+  activeSetStartTime = Date.now() - 15000; // 15 seconds ago
+  tickActiveSet();
+  assert(activeVal.innerText === "00:15", "active-set-timer-val formats 15s to 00:15");
+  assert(startLabel.innerText.includes("15s"), "startLabel reflects 15s elapsed");
+
+  // Cancel active set timer
+  cancelActiveSetTimer();
+  assert(isSetInProgress === false, "isSetInProgress is false after cancelActiveSetTimer");
+  assert(activeBanner.classList.contains('hidden'), "activeBanner hidden after cancellation");
+  assert(startLabel.innerText === "Start Set 1", "startBtn returns to passive Start Set 1");
+
+  // Start set and log set
+  startSet();
+  activeSetStartTime = Date.now() - 25000; // 25s elapsed
+  currentSessionSets = [];
+  const nameInput = getOrCreateElement('exercise-name-input');
+  nameInput.value = "Bench Press";
+  logSet();
+  assert(isSetInProgress === false, "isSetInProgress reset to false after logSet");
+  assert(activeBanner.classList.contains('hidden'), "activeBanner hidden after set logged");
+  assert(currentSessionSets.length === 1, "Set was logged");
+  assert(currentSessionSets[0].setDuration >= 24, "setDuration accurately captured from active set timer");
+
+  // Clean up
+  if (isRestTimerRunning) stopRestTimer();
+  currentSessionSets = [];
 });
 
 print("\\n============================================================");

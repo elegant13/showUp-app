@@ -2838,17 +2838,43 @@
           </div>
         </div>
 
-        <!-- SET ACTION CONTROLS: SINGLE CONSISTENT LOG SET OPTION -->
-        <div id="set-action-container" class="pt-2">
-          <!-- Retain btn-start-set hidden in DOM for backward-compatibility test harness hooks -->
-          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="hidden" aria-hidden="true">
-            <i id="btn-start-set-icon" class="fa-solid fa-play"></i>
-            <span id="btn-start-set-label">Start Set 1</span>
-          </button>
+        <!-- ACTIVE SET TIMER HUD BANNER (CONSPICUOUS, HIGH-CONTRAST TIMING FOR ACTIVE SET WORK) -->
+        <div id="active-set-timer-banner" class="hidden bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-2 border-amber-500/60 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl transition-all">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 text-xl sm:text-2xl shadow-lg shadow-amber-500/20 shrink-0">
+                <i class="fa-solid fa-stopwatch animate-pulse"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-baseline gap-2.5 flex-wrap">
+                  <span class="text-xs sm:text-sm font-black text-amber-400 uppercase tracking-widest">Active Set</span>
+                  <span id="active-set-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase tracking-wider animate-pulse">Timing Set</span>
+                  <span id="active-set-timer-val" class="font-mono text-4xl sm:text-6xl font-black text-amber-300 tracking-wider block sm:inline">00:00</span>
+                </div>
+                <div id="active-set-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">Timing active set... Tap "Log Set" when finished.</div>
+              </div>
+            </div>
 
+            <div class="flex items-center gap-2 shrink-0">
+              <button type="button" onclick="triggerHaptic('light'); cancelActiveSetTimer()" class="bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-700/80 text-xs sm:text-sm font-bold px-3.5 py-2.5 rounded-xl transition active:scale-95 shadow" title="Cancel Active Set Timer">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SET ACTION CONTROLS: PRIMARY LOG SET & PASSIVE START SET OPTION -->
+        <div id="set-action-container" class="space-y-2.5 pt-2">
+          <!-- PRIMARY CTA: LOG SET -->
           <button id="btn-log-set" type="button" onclick="triggerHaptic('heavy'); logSet()" class="w-full font-black py-4 px-6 rounded-2xl shadow-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-base sm:text-lg shadow-emerald-500/20 active:scale-[0.98] transition flex items-center justify-center gap-3">
             <i class="fa-solid fa-check text-xl"></i>
             <span id="btn-log-set-label">Log Set 1</span>
+          </button>
+
+          <!-- PASSIVE CTA: START SET (FOR ATHLETES TIMING ACTIVE SET) -->
+          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="w-full py-2.5 px-4 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2" title="Time Active Set">
+            <i id="btn-start-set-icon" class="fa-solid fa-stopwatch text-slate-400 text-xs"></i>
+            <span id="btn-start-set-label">Start Set 1</span>
           </button>
         </div>
       </section>

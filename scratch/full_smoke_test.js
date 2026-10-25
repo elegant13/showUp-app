@@ -5804,13 +5804,36 @@ if (typeof window !== 'undefined') {
       updateSetControlsUI();
     }
 
+    function formatTimerMS(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const mins = String(Math.floor(s / 60)).padStart(2, '0');
+      const secs = String(s % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
     function tickActiveSet() {
       if (!activeSetStartTime || !isSetInProgress) return;
       activeSetElapsedSeconds = Math.max(0, Math.floor((Date.now() - activeSetStartTime) / 1000));
       const nextSetNum = currentSessionSets.length + 1;
       const label = document.getElementById('btn-start-set-label');
       if (label) {
-        label.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
+        label.innerText = `Timing Set ${nextSetNum} (${formatDurationSecs(activeSetElapsedSeconds)})`;
+      }
+      const valEl = document.getElementById('active-set-timer-val');
+      if (valEl) {
+        valEl.innerText = formatTimerMS(activeSetElapsedSeconds);
+      }
+    }
+
+    function cancelActiveSetTimer() {
+      isSetInProgress = false;
+      activeSetStartTime = null;
+      activeSetElapsedSeconds = 0;
+      if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+      activeSetTimerInterval = null;
+      updateSetControlsUI();
+      if (typeof showToast === 'function') {
+        showToast("Active set timer cancelled", "info");
       }
     }
 
@@ -5970,20 +5993,49 @@ if (typeof window !== 'undefined') {
         logLabel.innerText = `Log Set ${nextSetNum}`;
       }
 
-      if (startBtn && startLabel && startIcon) {
-        startBtn.className = "hidden";
-        if (startBtn.classList && typeof startBtn.classList.add === 'function') {
-          startBtn.classList.add('hidden');
+      const activeBanner = document.getElementById('active-set-timer-banner');
+      const activeVal = document.getElementById('active-set-timer-val');
+      const activeCaption = document.getElementById('active-set-caption');
+      const activeBadge = document.getElementById('active-set-badge');
+
+      if (isSetInProgress) {
+        if (activeBanner) {
+          activeBanner.className = "bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-2 border-amber-500/60 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl transition-all";
+          if (activeBanner.classList && typeof activeBanner.classList.remove === 'function') {
+            activeBanner.classList.remove('hidden');
+          }
         }
-        if (isSetInProgress) {
-          startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-lg";
-          startLabel.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
-        } else if (isRestTimerRunning) {
-          startIcon.className = "fa-solid fa-play text-slate-950 text-lg";
-          startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
-        } else {
-          startIcon.className = "fa-solid fa-play text-lg";
-          startLabel.innerText = `Start Set ${nextSetNum}`;
+        if (activeVal) activeVal.innerText = formatTimerMS(activeSetElapsedSeconds);
+        if (activeCaption) activeCaption.innerText = `Set ${nextSetNum} in progress... Tap "Log Set ${nextSetNum}" when finished.`;
+        if (activeBadge) activeBadge.innerText = `Timing Set ${nextSetNum}`;
+
+        if (startBtn && startLabel && startIcon) {
+          startBtn.className = "w-full py-2.5 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2";
+          if (startBtn.classList && typeof startBtn.classList.remove === 'function') {
+            startBtn.classList.remove('hidden');
+          }
+          startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-xs animate-pulse";
+          startLabel.innerText = `Timing Set ${nextSetNum} (${formatDurationSecs(activeSetElapsedSeconds)})`;
+        }
+      } else {
+        if (activeBanner) {
+          activeBanner.className = "hidden";
+          if (activeBanner.classList && typeof activeBanner.classList.add === 'function') {
+            activeBanner.classList.add('hidden');
+          }
+        }
+
+        if (startBtn && startLabel && startIcon) {
+          startBtn.className = "w-full py-2.5 px-4 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2";
+          if (startBtn.classList && typeof startBtn.classList.remove === 'function') {
+            startBtn.classList.remove('hidden');
+          }
+          startIcon.className = "fa-solid fa-stopwatch text-slate-400 text-xs";
+          if (isRestTimerRunning) {
+            startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
+          } else {
+            startLabel.innerText = `Start Set ${nextSetNum}`;
+          }
         }
       }
     }
@@ -7134,6 +7186,8 @@ if (typeof window !== 'undefined') {
       window.updateWorkoutSessionHUD = updateWorkoutSessionHUD;
       window.toggleSessionOptionsMenu = toggleSessionOptionsMenu;
       window.resetWorkoutSession = resetWorkoutSession;
+      window.cancelActiveSetTimer = cancelActiveSetTimer;
+      window.formatTimerMS = formatTimerMS;
     }
 
     if (typeof document !== 'undefined') {
@@ -18004,13 +18058,13 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
   assert(findCatalogExercise("Single Leg RDL").name === "Kickstand KB RDL", "findCatalogExercise alias resolves Single Leg RDL to Kickstand KB RDL");
   assert(findCatalogExercise("Kickstand KB RDL").name === "Kickstand KB RDL", "findCatalogExercise matches Kickstand KB RDL");
 
-  // 2. Single consistent Log Set button
+  // 2. Primary Log Set and Passive Start Set buttons
   const logBtn = getOrCreateElement('btn-log-set');
   const startBtn = getOrCreateElement('btn-start-set');
   assert(logBtn !== null, "btn-log-set is present in DOM");
-  assert(startBtn !== null, "btn-start-set retained in DOM for backward-compatibility hooks");
+  assert(startBtn !== null, "btn-start-set is present in DOM as passive CTA");
   updateSetControlsUI();
-  assert(startBtn.classList.contains('hidden'), "btn-start-set is hidden in UI favoring single consistent Log Set button");
+  assert(!startBtn.classList.contains('hidden'), "btn-start-set is visible as passive CTA option");
 
   // 3. Previous workout metrics
   completedWorkoutsHistory = [
@@ -18141,6 +18195,58 @@ runSuite("26. Workout in Progress HUD Redesign", () => {
   assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
   assert(completedEl.innerText === "0 exercises", "HUD completed exercises reset to 0 exercises");
   assert(setsLoggedEl.innerText === "0", "HUD sets logged reset to 0");
+});
+
+runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
+  const startBtn = getOrCreateElement('btn-start-set');
+  const startLabel = getOrCreateElement('btn-start-set-label');
+  const activeBanner = getOrCreateElement('active-set-timer-banner');
+  const activeVal = getOrCreateElement('active-set-timer-val');
+
+  assert(activeBanner !== null, "active-set-timer-banner exists in DOM");
+  assert(activeVal !== null, "active-set-timer-val exists in DOM");
+
+  // Initial passive state
+  isSetInProgress = false;
+  updateSetControlsUI();
+  assert(activeBanner.classList.contains('hidden'), "active-set-timer-banner hidden before set start");
+  assert(!startBtn.classList.contains('hidden'), "startBtn is visible as passive CTA");
+  assert(startLabel.innerText === "Start Set 1", "startBtn displays 'Start Set 1'");
+
+  // Start Set action
+  startSet();
+  assert(isSetInProgress === true, "isSetInProgress is true after startSet");
+  assert(!activeBanner.classList.contains('hidden'), "active-set-timer-banner is conspicuous and visible when set started");
+  assert(activeVal.innerText === "00:00", "active-set-timer-val displays initial 00:00");
+  assert(startLabel.innerText.includes("Timing Set 1"), "startLabel updates to Timing Set 1");
+
+  // Tick active set
+  activeSetStartTime = Date.now() - 15000; // 15 seconds ago
+  tickActiveSet();
+  assert(activeVal.innerText === "00:15", "active-set-timer-val formats 15s to 00:15");
+  assert(startLabel.innerText.includes("15s"), "startLabel reflects 15s elapsed");
+
+  // Cancel active set timer
+  cancelActiveSetTimer();
+  assert(isSetInProgress === false, "isSetInProgress is false after cancelActiveSetTimer");
+  assert(activeBanner.classList.contains('hidden'), "activeBanner hidden after cancellation");
+  assert(startLabel.innerText === "Start Set 1", "startBtn returns to passive Start Set 1");
+
+  // Start set and log set
+  startSet();
+  activeSetStartTime = Date.now() - 25000; // 25s elapsed
+  currentSessionSets = [];
+  const nameInput = getOrCreateElement('exercise-name-input');
+  nameInput.value = "Bench Press";
+  logSet();
+  assert(isSetInProgress === false, "isSetInProgress reset to false after logSet");
+  assert(activeBanner.classList.contains('hidden'), "activeBanner hidden after set logged");
+  assert(currentSessionSets.length === 1, "Set was logged");
+  assert(currentSessionSets[0].setDuration >= 24, "setDuration accurately captured from active set timer");
+
+  // Clean up
+  if (isRestTimerRunning) stopRestTimer();
+  currentSessionSets = [];
 });
 
 print("\n============================================================");

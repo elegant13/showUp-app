@@ -1765,13 +1765,36 @@
       updateSetControlsUI();
     }
 
+    function formatTimerMS(totalSeconds) {
+      const s = Math.max(0, Math.floor(totalSeconds || 0));
+      const mins = String(Math.floor(s / 60)).padStart(2, '0');
+      const secs = String(s % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
     function tickActiveSet() {
       if (!activeSetStartTime || !isSetInProgress) return;
       activeSetElapsedSeconds = Math.max(0, Math.floor((Date.now() - activeSetStartTime) / 1000));
       const nextSetNum = currentSessionSets.length + 1;
       const label = document.getElementById('btn-start-set-label');
       if (label) {
-        label.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
+        label.innerText = `Timing Set ${nextSetNum} (${formatDurationSecs(activeSetElapsedSeconds)})`;
+      }
+      const valEl = document.getElementById('active-set-timer-val');
+      if (valEl) {
+        valEl.innerText = formatTimerMS(activeSetElapsedSeconds);
+      }
+    }
+
+    function cancelActiveSetTimer() {
+      isSetInProgress = false;
+      activeSetStartTime = null;
+      activeSetElapsedSeconds = 0;
+      if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+      activeSetTimerInterval = null;
+      updateSetControlsUI();
+      if (typeof showToast === 'function') {
+        showToast("Active set timer cancelled", "info");
       }
     }
 
@@ -1931,20 +1954,49 @@
         logLabel.innerText = `Log Set ${nextSetNum}`;
       }
 
-      if (startBtn && startLabel && startIcon) {
-        startBtn.className = "hidden";
-        if (startBtn.classList && typeof startBtn.classList.add === 'function') {
-          startBtn.classList.add('hidden');
+      const activeBanner = document.getElementById('active-set-timer-banner');
+      const activeVal = document.getElementById('active-set-timer-val');
+      const activeCaption = document.getElementById('active-set-caption');
+      const activeBadge = document.getElementById('active-set-badge');
+
+      if (isSetInProgress) {
+        if (activeBanner) {
+          activeBanner.className = "bg-gradient-to-r from-amber-950/80 via-slate-900 to-amber-950/80 border-2 border-amber-500/60 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl transition-all";
+          if (activeBanner.classList && typeof activeBanner.classList.remove === 'function') {
+            activeBanner.classList.remove('hidden');
+          }
         }
-        if (isSetInProgress) {
-          startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-lg";
-          startLabel.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
-        } else if (isRestTimerRunning) {
-          startIcon.className = "fa-solid fa-play text-slate-950 text-lg";
-          startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
-        } else {
-          startIcon.className = "fa-solid fa-play text-lg";
-          startLabel.innerText = `Start Set ${nextSetNum}`;
+        if (activeVal) activeVal.innerText = formatTimerMS(activeSetElapsedSeconds);
+        if (activeCaption) activeCaption.innerText = `Set ${nextSetNum} in progress... Tap "Log Set ${nextSetNum}" when finished.`;
+        if (activeBadge) activeBadge.innerText = `Timing Set ${nextSetNum}`;
+
+        if (startBtn && startLabel && startIcon) {
+          startBtn.className = "w-full py-2.5 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2";
+          if (startBtn.classList && typeof startBtn.classList.remove === 'function') {
+            startBtn.classList.remove('hidden');
+          }
+          startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-xs animate-pulse";
+          startLabel.innerText = `Timing Set ${nextSetNum} (${formatDurationSecs(activeSetElapsedSeconds)})`;
+        }
+      } else {
+        if (activeBanner) {
+          activeBanner.className = "hidden";
+          if (activeBanner.classList && typeof activeBanner.classList.add === 'function') {
+            activeBanner.classList.add('hidden');
+          }
+        }
+
+        if (startBtn && startLabel && startIcon) {
+          startBtn.className = "w-full py-2.5 px-4 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2";
+          if (startBtn.classList && typeof startBtn.classList.remove === 'function') {
+            startBtn.classList.remove('hidden');
+          }
+          startIcon.className = "fa-solid fa-stopwatch text-slate-400 text-xs";
+          if (isRestTimerRunning) {
+            startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
+          } else {
+            startLabel.innerText = `Start Set ${nextSetNum}`;
+          }
         }
       }
     }
@@ -3095,6 +3147,8 @@
       window.updateWorkoutSessionHUD = updateWorkoutSessionHUD;
       window.toggleSessionOptionsMenu = toggleSessionOptionsMenu;
       window.resetWorkoutSession = resetWorkoutSession;
+      window.cancelActiveSetTimer = cancelActiveSetTimer;
+      window.formatTimerMS = formatTimerMS;
     }
 
     if (typeof document !== 'undefined') {
