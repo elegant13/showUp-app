@@ -128,6 +128,7 @@
       { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs", "Chest"] },
       { name: "KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "Kickstand KB RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
@@ -145,7 +146,6 @@
       { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
       { name: "SH KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
-      { name: "Single Leg RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Stationary Bike Sprint", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders", "Back", "Core/Abs", "Quads"] },
       { name: "Tricep Bar Dips", implement: "Bodyweight", muscle: "Triceps", secondary: ["Chest", "Shoulders", "Core/Abs"] },
@@ -219,6 +219,12 @@
       if (normKey === 'shbandedkbcarry' || normKey === 'shbandedkbsuitcasecarry' || normKey === 'bandedkbcarry') {
         const carryMatch = defaultCatalog.find(c => c.name === "Banded KB Suitcase Carry");
         if (carryMatch) return carryMatch;
+      }
+
+      // 2e. Alias for single leg rdl -> Kickstand KB RDL
+      if (normKey === 'singlelegrdl' || normKey === 'kbsinglelegrdl' || normKey === 'singlelegkbrdl') {
+        const rdlMatch = defaultCatalog.find(c => c.name === "Kickstand KB RDL");
+        if (rdlMatch) return rdlMatch;
       }
 
       // 3. Partial or substring match if input length >= 3

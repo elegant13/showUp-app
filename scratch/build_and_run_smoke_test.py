@@ -2275,6 +2275,16 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
   assert(woodChops.secondary.includes("Quads"), "Exercise Ball Wood Chops secondary includes Quads");
   assert(inferImplementFromExerciseName("Exercise Ball Wood Chops") === "Exercise Ball", "inferImplementFromExerciseName correctly identifies Exercise Ball");
 
+  // 1b. Replace Single Leg RDL with Kickstand KB RDL
+  assert(defaultCatalog.find(c => c.name === "Single Leg RDL") === undefined, "Single Leg RDL is replaced and absent from defaultCatalog");
+  const kickstandRdl = defaultCatalog.find(c => c.name === "Kickstand KB RDL");
+  assert(kickstandRdl !== undefined, "Kickstand KB RDL exists in defaultCatalog");
+  assert(kickstandRdl.implement === "Kettlebell", "Kickstand KB RDL implement is Kettlebell");
+  assert(kickstandRdl.muscle === "Hamstrings/Glutes", "Kickstand KB RDL primary muscle is Hamstrings/Glutes");
+  assert(kickstandRdl.secondary.includes("Core/Abs"), "Kickstand KB RDL secondary includes Core/Abs");
+  assert(findCatalogExercise("Single Leg RDL").name === "Kickstand KB RDL", "findCatalogExercise alias resolves Single Leg RDL to Kickstand KB RDL");
+  assert(findCatalogExercise("Kickstand KB RDL").name === "Kickstand KB RDL", "findCatalogExercise matches Kickstand KB RDL");
+
   // 2. Single consistent Log Set button
   const logBtn = getOrCreateElement('btn-log-set');
   const startBtn = getOrCreateElement('btn-start-set');

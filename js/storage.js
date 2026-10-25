@@ -324,7 +324,7 @@ const AppStorage = {
       const oct16Workout = {
         date: "2026-10-16",
         workoutName: "Conditioning & Squats",
-        notes: "Jump rope, barbell back squats, kettlebell single leg RDLs, and ring face pulls.",
+        notes: "Jump rope, barbell back squats, kickstand KB RDLs, and ring face pulls.",
         totalSets: 12,
         totalVolume: 6155,
         aerobicTE: "3.8",
@@ -455,7 +455,7 @@ const AppStorage = {
           },
           {
             id: 1729119901007,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -474,7 +474,7 @@ const AppStorage = {
           },
           {
             id: 1729119901008,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -493,7 +493,7 @@ const AppStorage = {
           },
           {
             id: 1729119901009,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -512,7 +512,7 @@ const AppStorage = {
           },
           {
             id: 1729119901010,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -527,7 +527,7 @@ const AppStorage = {
             enduranceTime: "00:00:00",
             hr: 0,
             setDuration: 40,
-            restPeriod: 90
+            restPeriod: 60
           },
           {
             id: 1729119901011,

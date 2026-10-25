@@ -311,6 +311,7 @@ function runSuite(name, fn) {
       { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs", "Chest"] },
       { name: "KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "Kickstand KB RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
@@ -328,7 +329,6 @@ function runSuite(name, fn) {
       { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
       { name: "SH KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
       { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
-      { name: "Single Leg RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Stationary Bike Sprint", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
       { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders", "Back", "Core/Abs", "Quads"] },
       { name: "Tricep Bar Dips", implement: "Bodyweight", muscle: "Triceps", secondary: ["Chest", "Shoulders", "Core/Abs"] },
@@ -402,6 +402,12 @@ function runSuite(name, fn) {
       if (normKey === 'shbandedkbcarry' || normKey === 'shbandedkbsuitcasecarry' || normKey === 'bandedkbcarry') {
         const carryMatch = defaultCatalog.find(c => c.name === "Banded KB Suitcase Carry");
         if (carryMatch) return carryMatch;
+      }
+
+      // 2e. Alias for single leg rdl -> Kickstand KB RDL
+      if (normKey === 'singlelegrdl' || normKey === 'kbsinglelegrdl' || normKey === 'singlelegkbrdl') {
+        const rdlMatch = defaultCatalog.find(c => c.name === "Kickstand KB RDL");
+        if (rdlMatch) return rdlMatch;
       }
 
       // 3. Partial or substring match if input length >= 3
@@ -1019,7 +1025,7 @@ const AppStorage = {
       const oct16Workout = {
         date: "2026-10-16",
         workoutName: "Conditioning & Squats",
-        notes: "Jump rope, barbell back squats, kettlebell single leg RDLs, and ring face pulls.",
+        notes: "Jump rope, barbell back squats, kickstand KB RDLs, and ring face pulls.",
         totalSets: 12,
         totalVolume: 6155,
         aerobicTE: "3.8",
@@ -1150,7 +1156,7 @@ const AppStorage = {
           },
           {
             id: 1729119901007,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -1169,7 +1175,7 @@ const AppStorage = {
           },
           {
             id: 1729119901008,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -1188,7 +1194,7 @@ const AppStorage = {
           },
           {
             id: 1729119901009,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -1207,7 +1213,7 @@ const AppStorage = {
           },
           {
             id: 1729119901010,
-            exerciseName: "Single Leg RDL",
+            exerciseName: "Kickstand KB RDL",
             implement: "Kettlebell",
             muscle: "Hamstrings/Glutes",
             secondaryMuscles: ["Core/Abs"],
@@ -1222,7 +1228,7 @@ const AppStorage = {
             enduranceTime: "00:00:00",
             hr: 0,
             setDuration: 40,
-            restPeriod: 90
+            restPeriod: 60
           },
           {
             id: 1729119901011,
@@ -17876,6 +17882,16 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
   assert(woodChops.secondary.includes("Back"), "Exercise Ball Wood Chops secondary includes Back");
   assert(woodChops.secondary.includes("Quads"), "Exercise Ball Wood Chops secondary includes Quads");
   assert(inferImplementFromExerciseName("Exercise Ball Wood Chops") === "Exercise Ball", "inferImplementFromExerciseName correctly identifies Exercise Ball");
+
+  // 1b. Replace Single Leg RDL with Kickstand KB RDL
+  assert(defaultCatalog.find(c => c.name === "Single Leg RDL") === undefined, "Single Leg RDL is replaced and absent from defaultCatalog");
+  const kickstandRdl = defaultCatalog.find(c => c.name === "Kickstand KB RDL");
+  assert(kickstandRdl !== undefined, "Kickstand KB RDL exists in defaultCatalog");
+  assert(kickstandRdl.implement === "Kettlebell", "Kickstand KB RDL implement is Kettlebell");
+  assert(kickstandRdl.muscle === "Hamstrings/Glutes", "Kickstand KB RDL primary muscle is Hamstrings/Glutes");
+  assert(kickstandRdl.secondary.includes("Core/Abs"), "Kickstand KB RDL secondary includes Core/Abs");
+  assert(findCatalogExercise("Single Leg RDL").name === "Kickstand KB RDL", "findCatalogExercise alias resolves Single Leg RDL to Kickstand KB RDL");
+  assert(findCatalogExercise("Kickstand KB RDL").name === "Kickstand KB RDL", "findCatalogExercise matches Kickstand KB RDL");
 
   // 2. Single consistent Log Set button
   const logBtn = getOrCreateElement('btn-log-set');

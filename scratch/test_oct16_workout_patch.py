@@ -70,9 +70,9 @@ console.assert(squats[2].reps === 10 && squats[2].weight === 85, "Squat 3: 10 re
 console.assert(squats[3].reps === 10 && squats[3].weight === 95, "Squat 4: 10 reps with 95lb");
 console.assert(squats[4].reps === 10 && squats[4].weight === 115, "Squat 5: 10 reps with 115lb");
 
-var rdls = oct16.sets.filter(function(s) {{ return s.exerciseName === "Single Leg RDL"; }});
+var rdls = oct16.sets.filter(function(s) {{ return s.exerciseName === "Kickstand KB RDL"; }});
 console.log("RDL sets count:", rdls.length);
-console.assert(rdls.length === 4, "4 Single Leg RDL sets");
+console.assert(rdls.length === 4, "4 Kickstand KB RDL sets");
 console.assert(rdls[0].weight === 35 && rdls[1].weight === 35, "RDL 35lb sets");
 console.assert(rdls[2].weight === 44 && rdls[3].weight === 44, "RDL 44lb sets");
 
