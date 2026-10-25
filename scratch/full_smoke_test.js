@@ -4848,20 +4848,26 @@ if (typeof window !== 'undefined') {
       const scrollers = [
         {
           containerId: 'scroller-weight-container',
-          dialId: 'touch-dial-weight',
+          drumId: 'roller-drum-weight',
           inputId: 'input-weight',
           badgeId: 'weight-step-badge',
+          prev2Id: 'drum-prev-2-weight',
+          prev1Id: 'drum-prev-1-weight',
+          next1Id: 'drum-next-1-weight',
+          next2Id: 'drum-next-2-weight',
           min: 0,
-          stepDefault: 1,
           type: 'weight'
         },
         {
           containerId: 'scroller-reps-container',
-          dialId: 'touch-dial-reps',
+          drumId: 'roller-drum-reps',
           inputId: 'input-reps',
           badgeId: 'reps-step-badge',
+          prev2Id: 'drum-prev-2-reps',
+          prev1Id: 'drum-prev-1-reps',
+          next1Id: 'drum-next-1-reps',
+          next2Id: 'drum-next-2-reps',
           min: 1,
-          stepDefault: 1,
           type: 'reps'
         }
       ];
@@ -4874,17 +4880,21 @@ if (typeof window !== 'undefined') {
     function setupScrollerController(cfg) {
       if (typeof document === 'undefined') return;
       const container = document.getElementById(cfg.containerId);
-      const dial = document.getElementById(cfg.dialId);
+      const drum = document.getElementById(cfg.drumId);
       const input = document.getElementById(cfg.inputId);
       const badge = document.getElementById(cfg.badgeId);
-      if (!dial || !input) return;
+      if (!drum || !input) return;
 
-      const ticksEl = dial.querySelector('.dial-ticks-tape') || dial.querySelector('.dial-ticks');
+      const barrel = drum.querySelector('.drum-barrel');
+      const prev2 = document.getElementById(cfg.prev2Id);
+      const prev1 = document.getElementById(cfg.prev1Id);
+      const next1 = document.getElementById(cfg.next1Id);
+      const next2 = document.getElementById(cfg.next2Id);
+
       const badgeLabel = badge ? badge.querySelector('.step-label') : null;
       const badgeDot = badge ? badge.querySelector('.step-dot') : null;
 
       let isTracking = false;
-      let startX = 0;
       let startY = 0;
       let accumulatedDistance = 0;
       let isLongPress = false;
@@ -4892,7 +4902,26 @@ if (typeof window !== 'undefined') {
       let progressiveTimer1 = null;
       let progressiveTimer2 = null;
       let currentIncrement = 1;
-      const STEP_PIXELS = 16;
+      const STEP_PIXELS = 12; // High-precision, ultra-responsive 12px notch
+
+      function updateDrumSlots(val) {
+        const curVal = (val !== undefined) ? val : (parseFloat(input.value) || 0);
+        const step = currentIncrement;
+        const p1 = Math.max(cfg.min, curVal - step);
+        const p2 = Math.max(cfg.min, curVal - (step * 2));
+        const n1 = curVal + step;
+        const n2 = curVal + (step * 2);
+
+        const formatVal = (v) => {
+          if (cfg.type === 'reps') return Math.round(v);
+          return (Math.round(v * 10) / 10).toString();
+        };
+
+        if (prev1) prev1.innerText = (curVal > cfg.min) ? formatVal(p1) : '-';
+        if (prev2) prev2.innerText = (curVal > cfg.min + step) ? formatVal(p2) : '-';
+        if (next1) next1.innerText = formatVal(n1);
+        if (next2) next2.innerText = formatVal(n2);
+      }
 
       function updateBadgeUI() {
         if (!badge) return;
@@ -4905,6 +4934,7 @@ if (typeof window !== 'undefined') {
           if (badgeLabel) badgeLabel.innerText = `Turbo ±${currentIncrement}`;
           if (badgeDot) badgeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping step-dot";
         }
+        updateDrumSlots();
       }
 
       function applyDelta(direction) {
@@ -4917,6 +4947,7 @@ if (typeof window !== 'undefined') {
           newVal = Math.max(cfg.min, Math.round(newVal * 10) / 10);
         }
         input.value = newVal;
+        updateDrumSlots(newVal);
 
         if (typeof Event === 'function') {
           input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -4932,64 +4963,60 @@ if (typeof window !== 'undefined') {
         }
       }
 
-      function startTracking(clientX, clientY) {
+      function startTracking(clientY) {
         isTracking = true;
-        startX = clientX;
         startY = clientY;
         accumulatedDistance = 0;
         isLongPress = false;
         currentIncrement = 1;
 
         if (container) container.classList.add('scroller-active');
-        dial.classList.add('dial-dragging');
+        drum.classList.add('drum-active');
         updateBadgeUI();
 
-        // Long press trigger (320ms): switches to 2s
+        // Tier 1 Long-press trigger (280ms): switches to 2s
         longPressTimer = setTimeout(() => {
           if (!isTracking) return;
           isLongPress = true;
           currentIncrement = 2;
           if (container) container.classList.add('scroller-turbo');
-          dial.classList.add('dial-turbo');
+          drum.classList.add('drum-turbo');
           updateBadgeUI();
           if (typeof triggerHaptic === 'function') triggerHaptic('medium');
 
-          // Progressive escalation 1 (770ms total): switches to 5s
+          // Tier 2 Progressive escalation (after 400ms more, total 680ms): switches to 5s
           progressiveTimer1 = setTimeout(() => {
             if (!isTracking || !isLongPress) return;
             currentIncrement = 5;
             updateBadgeUI();
             if (typeof triggerHaptic === 'function') triggerHaptic('light');
 
-            // Progressive escalation 2 (1270ms total): switches to 10s
+            // Tier 3 Progressive escalation (after 450ms more, total 1130ms): switches to 10s
             progressiveTimer2 = setTimeout(() => {
               if (!isTracking || !isLongPress) return;
               currentIncrement = 10;
               updateBadgeUI();
               if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-            }, 500);
-          }, 450);
-        }, 320);
+            }, 450);
+          }, 400);
+        }, 280);
       }
 
-      function moveTracking(clientX, clientY) {
+      function moveTracking(clientY) {
         if (!isTracking) return;
-        const dx = clientX - startX;
-        const dy = startY - clientY; // Moving UP = positive
+        const dy = startY - clientY; // Dragging UP = positive, DOWN = negative
+        accumulatedDistance = dy;
 
-        const dominantDelta = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
-        accumulatedDistance = dominantDelta;
-
-        if (ticksEl && ticksEl.style) {
-          const tapeShift = Math.max(-25, Math.min(25, (dx || dy) * 0.4));
-          ticksEl.style.transform = `translateX(${tapeShift}px)`;
+        // Visual cylindrical 3D barrel translation
+        if (barrel && barrel.style) {
+          const shift = Math.max(-18, Math.min(18, -dy * 0.45));
+          barrel.style.transform = `translateY(${shift}px)`;
         }
 
         if (Math.abs(accumulatedDistance) >= STEP_PIXELS) {
           const direction = accumulatedDistance > 0 ? 1 : -1;
           applyDelta(direction);
 
-          startX = clientX;
           startY = clientY;
           accumulatedDistance = 0;
         }
@@ -5010,68 +5037,68 @@ if (typeof window !== 'undefined') {
         if (container) {
           container.classList.remove('scroller-active', 'scroller-turbo');
         }
-        dial.classList.remove('dial-dragging', 'dial-turbo');
-        if (ticksEl && ticksEl.style) {
-          ticksEl.style.transform = 'translateX(0px)';
+        drum.classList.remove('drum-active', 'drum-turbo');
+        if (barrel && barrel.style) {
+          barrel.style.transform = 'translateY(0px)';
         }
         updateBadgeUI();
       }
 
-      // Touch Events on Dial
-      dial.addEventListener('touchstart', (e) => {
+      // Initial populate
+      updateDrumSlots();
+
+      // Synchronize drum slots if input changes externally (e.g. repeatSet, manual input)
+      input.addEventListener('input', () => {
+        updateDrumSlots();
+      });
+      input.addEventListener('change', () => {
+        updateDrumSlots();
+      });
+
+      // Touch Events on Drum
+      drum.addEventListener('touchstart', (e) => {
         if (e.touches && e.touches.length > 0) {
-          const touch = e.touches[0];
-          startTracking(touch.clientX, touch.clientY);
+          startTracking(e.touches[0].clientY);
         }
       }, { passive: true });
 
-      dial.addEventListener('touchmove', (e) => {
+      drum.addEventListener('touchmove', (e) => {
         if (e.touches && e.touches.length > 0) {
-          const touch = e.touches[0];
-          moveTracking(touch.clientX, touch.clientY);
+          moveTracking(e.touches[0].clientY);
         }
       }, { passive: true });
 
-      dial.addEventListener('touchend', stopTracking, { passive: true });
-      dial.addEventListener('touchcancel', stopTracking, { passive: true });
+      drum.addEventListener('touchend', stopTracking, { passive: true });
+      drum.addEventListener('touchcancel', stopTracking, { passive: true });
 
-      // Pointer / Mouse Drag Events on Dial
-      dial.addEventListener('pointerdown', (e) => {
-        if (dial.setPointerCapture) {
-          try { dial.setPointerCapture(e.pointerId); } catch (_) {}
+      // Pointer / Mouse Drag Events on Drum
+      drum.addEventListener('pointerdown', (e) => {
+        if (drum.setPointerCapture) {
+          try { drum.setPointerCapture(e.pointerId); } catch (_) {}
         }
-        startTracking(e.clientX, e.clientY);
+        startTracking(e.clientY);
       });
 
-      dial.addEventListener('pointermove', (e) => {
-        moveTracking(e.clientX, e.clientY);
+      drum.addEventListener('pointermove', (e) => {
+        moveTracking(e.clientY);
       });
 
-      dial.addEventListener('pointerup', (e) => {
-        if (dial.releasePointerCapture) {
-          try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+      drum.addEventListener('pointerup', (e) => {
+        if (drum.releasePointerCapture) {
+          try { drum.releasePointerCapture(e.pointerId); } catch (_) {}
         }
         stopTracking();
       });
 
-      dial.addEventListener('pointercancel', (e) => {
-        if (dial.releasePointerCapture) {
-          try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+      drum.addEventListener('pointercancel', (e) => {
+        if (drum.releasePointerCapture) {
+          try { drum.releasePointerCapture(e.pointerId); } catch (_) {}
         }
         stopTracking();
       });
 
-      // Mouse Wheel on Dial
-      dial.addEventListener('wheel', (e) => {
-        if (e.preventDefault) e.preventDefault();
-        const dir = e.deltaY < 0 ? 1 : -1;
-        currentIncrement = (e.shiftKey || e.altKey) ? 5 : 1;
-        applyDelta(dir);
-        currentIncrement = 1;
-      }, { passive: false });
-
-      // Mouse Wheel on Input
-      input.addEventListener('wheel', (e) => {
+      // Mouse Wheel on Drum
+      drum.addEventListener('wheel', (e) => {
         if (e.preventDefault) e.preventDefault();
         const dir = e.deltaY < 0 ? 1 : -1;
         currentIncrement = (e.shiftKey || e.altKey) ? 5 : 1;
@@ -17438,13 +17465,13 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
 
-  // Touch-Sensitive Scroller Inputs Tests
+  // Vertical Roller Drum Inputs Tests
   assert(typeof initTouchScrollerInputs === 'function', "initTouchScrollerInputs is a defined function");
   assert(getOrCreateElement('scroller-weight-container') !== null, "Weight touch scroller container exists");
-  assert(getOrCreateElement('touch-dial-weight') !== null, "Weight touch dial exists");
+  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists");
   assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists");
   assert(getOrCreateElement('scroller-reps-container') !== null, "Reps touch scroller container exists");
-  assert(getOrCreateElement('touch-dial-reps') !== null, "Reps touch dial exists");
+  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists");
   assert(getOrCreateElement('quick-plate-chips-wrapper') !== null, "Quick plate chips wrapper exists to retain backward-compatible test hooks");
 
   // Rest Timer LocalStorage Persistence & Restoration Test

@@ -873,4 +873,93 @@ nav {
   opacity: 0.1;
 }
 
+/* ==========================================================================
+   Vertical Roller Drum Wheel Picker (Weight & Reps)
+   Apple Watch Crown & Cylindrical Drum Dial with 3D Depth & Haptics
+   ========================================================================== */
+
+.vertical-roller-drum {
+  perspective: 600px;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vertical-roller-drum.drum-active {
+  border-color: var(--m3-primary) !important;
+  box-shadow: 0 0 20px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.2) !important;
+}
+
+.vertical-roller-drum.drum-turbo {
+  border-color: var(--m3-primary-light, #34d399) !important;
+  box-shadow: 0 0 30px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.4), inset 0 0 15px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.1) !important;
+}
+
+.drum-vignette {
+  z-index: 10;
+  pointer-events: none;
+}
+
+.drum-vignette-top {
+  background: linear-gradient(to bottom, rgba(2, 6, 23, 0.96) 15%, rgba(2, 6, 23, 0.6) 60%, transparent 100%);
+}
+
+.drum-vignette-bottom {
+  background: linear-gradient(to top, rgba(2, 6, 23, 0.96) 15%, rgba(2, 6, 23, 0.6) 60%, transparent 100%);
+}
+
+.drum-center-lens {
+  z-index: 0;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-color: color-mix(in srgb, var(--m3-primary) 35%, transparent);
+  background: color-mix(in srgb, var(--m3-primary) 6%, transparent);
+}
+
+.vertical-roller-drum.drum-turbo .drum-center-lens {
+  border-color: var(--m3-primary) !important;
+  background: color-mix(in srgb, var(--m3-primary) 14%, transparent) !important;
+  box-shadow: 0 0 20px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.35) !important;
+}
+
+.drum-barrel {
+  will-change: transform;
+  transform: translateY(0);
+}
+
+.drum-slot {
+  height: 26px;
+  line-height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.drum-slot-active {
+  height: 48px;
+  line-height: 48px;
+}
+
+.drum-slot-near {
+  opacity: 0.45;
+  transform: scale(0.85);
+}
+
+.drum-slot-far {
+  opacity: 0.2;
+  transform: scale(0.7);
+}
+
+.vertical-roller-drum.drum-turbo .drum-slot-near {
+  opacity: 0.65;
+  color: var(--m3-onPrimaryContainer, #99f6e4);
+}
+
+.vertical-roller-drum.drum-turbo .drum-slot-far {
+  opacity: 0.35;
+}
+
+
 

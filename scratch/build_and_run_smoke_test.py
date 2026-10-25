@@ -2148,13 +2148,13 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
 
-  // Touch-Sensitive Scroller Inputs Tests
+  // Vertical Roller Drum Inputs Tests
   assert(typeof initTouchScrollerInputs === 'function', "initTouchScrollerInputs is a defined function");
   assert(getOrCreateElement('scroller-weight-container') !== null, "Weight touch scroller container exists");
-  assert(getOrCreateElement('touch-dial-weight') !== null, "Weight touch dial exists");
+  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists");
   assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists");
   assert(getOrCreateElement('scroller-reps-container') !== null, "Reps touch scroller container exists");
-  assert(getOrCreateElement('touch-dial-reps') !== null, "Reps touch dial exists");
+  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists");
   assert(getOrCreateElement('quick-plate-chips-wrapper') !== null, "Quick plate chips wrapper exists to retain backward-compatible test hooks");
 
   // Rest Timer LocalStorage Persistence & Restoration Test

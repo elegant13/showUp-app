@@ -2402,48 +2402,67 @@
           </div>
         </div>
 
-        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH TOUCH-SENSITIVE SCROLLER SELECTORS -->
+        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH VERTICAL ROLLER DRUM WHEEL PICKERS -->
         <div id="standard-metrics-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/90 p-4 sm:p-5 rounded-3xl border border-slate-800">
-          <!-- WEIGHT TOUCH SCROLLER -->
-          <div id="scroller-weight-container" class="touch-scroller-card space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-weight" data-type="weight">
-            <div class="flex items-center justify-between">
-              <label for="input-weight" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
+          <!-- WEIGHT ROLLER DRUM -->
+          <div id="scroller-weight-container" class="touch-scroller-card space-y-2 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-weight" data-type="weight">
+            <!-- Header: Label + Step Multiplier Badge -->
+            <div class="flex items-center justify-between pointer-events-none">
+              <label for="input-weight" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fa-solid fa-weight-hanging text-emerald-400 text-[11px]"></i>
                 <span>Weight (lbs / kg)</span>
               </label>
-              <div id="weight-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none">
+              <div id="weight-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all">
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-500 step-dot"></span>
                 <span class="step-label">±1</span>
               </div>
             </div>
 
-            <div class="touch-scroller-display relative flex items-center justify-center">
-              <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+            <!-- Vertical Roller Drum Wheel Window -->
+            <div id="roller-drum-weight" class="vertical-roller-drum relative h-36 w-full rounded-2xl bg-slate-950/90 border border-slate-800/90 overflow-hidden cursor-ns-resize touch-none select-none flex flex-col items-center justify-center">
+              <!-- Top & Bottom Vignettes for Cylindrical 3D Depth -->
+              <div class="drum-vignette drum-vignette-top absolute top-0 left-0 right-0 h-11 pointer-events-none z-10"></div>
+              <div class="drum-vignette drum-vignette-bottom absolute bottom-0 left-0 right-0 h-11 pointer-events-none z-10"></div>
+
+              <!-- Center Focus Highlight Lens -->
+              <div class="drum-center-lens absolute inset-x-2 h-14 rounded-xl border border-emerald-500/30 bg-emerald-500/5 pointer-events-none z-0"></div>
+
+              <!-- Digital Crown Side Notches -->
+              <div class="drum-crown-notches absolute left-2.5 top-0 bottom-0 flex flex-col justify-around py-3 pointer-events-none opacity-40 z-10">
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-4 h-1 bg-emerald-400 rounded-full shadow-sm shadow-emerald-400"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+              </div>
+              <div class="drum-crown-notches absolute right-2.5 top-0 bottom-0 flex flex-col justify-around py-3 pointer-events-none opacity-40 z-10">
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-4 h-1 bg-emerald-400 rounded-full shadow-sm shadow-emerald-400"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+              </div>
+
+              <!-- The Rotating Barrel -->
+              <div class="drum-barrel relative flex flex-col items-center justify-center w-full z-1 transition-transform">
+                <div id="drum-prev-2-weight" class="drum-slot drum-slot-far text-slate-600 text-lg sm:text-xl font-bold font-mono">-</div>
+                <div id="drum-prev-1-weight" class="drum-slot drum-slot-near text-slate-400 text-2xl sm:text-3xl font-extrabold font-mono">-</div>
+                <div class="drum-slot drum-slot-active relative w-full flex items-center justify-center">
+                  <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-transparent text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none cursor-ns-resize">
+                </div>
+                <div id="drum-next-1-weight" class="drum-slot drum-slot-near text-slate-400 text-2xl sm:text-3xl font-extrabold font-mono">1</div>
+                <div id="drum-next-2-weight" class="drum-slot drum-slot-far text-slate-600 text-lg sm:text-xl font-bold font-mono">2</div>
+              </div>
             </div>
 
-            <!-- Touch Sensitive Scroller Dial Track -->
-            <div id="touch-dial-weight" class="touch-dial-track h-12 w-full bg-slate-950/90 rounded-xl border border-slate-800 flex items-center justify-center relative cursor-ns-resize touch-none overflow-hidden group">
-              <!-- Animated Tick Tape -->
-              <div class="dial-ticks-tape flex items-center justify-between w-[140%] px-3 pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity">
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="dial-center-notch h-7 w-1 bg-emerald-400 rounded-full shadow-lg shadow-emerald-500/50 scale-110"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-              </div>
-              <div class="dial-hint-text absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-300 transition-all">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-arrows-up-down text-[9px] text-emerald-400"></i> Scroll / Hold to Turbo</span>
-              </div>
+            <!-- Footer: Gestural Hint -->
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1 pt-0.5 pointer-events-none">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-arrow-up-down text-[9px] text-emerald-400"></i> Roll Drum Wheel</span>
+              <span class="drum-hint text-slate-500">Hold to Turbo</span>
             </div>
 
             <!-- Legacy container retained for programmatic tests / cloud sync -->
@@ -2451,49 +2470,70 @@
               <span id="quick-plate-chips-label">Quick Plate Load</span>
               <div id="quick-plate-chips-container"></div>
             </div>
+            <div id="touch-dial-weight" class="hidden"></div>
           </div>
 
-          <!-- REPS TOUCH SCROLLER -->
-          <div id="scroller-reps-container" class="touch-scroller-card space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-reps" data-type="reps">
-            <div class="flex items-center justify-between">
-              <label for="input-reps" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
+          <!-- REPS ROLLER DRUM -->
+          <div id="scroller-reps-container" class="touch-scroller-card space-y-2 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-reps" data-type="reps">
+            <!-- Header: Label + Step Multiplier Badge -->
+            <div class="flex items-center justify-between pointer-events-none">
+              <label for="input-reps" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <i class="fa-solid fa-rotate text-emerald-400 text-[11px]"></i>
                 <span>Reps</span>
               </label>
-              <div id="reps-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none">
+              <div id="reps-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all">
                 <span class="w-1.5 h-1.5 rounded-full bg-slate-500 step-dot"></span>
                 <span class="step-label">±1</span>
               </div>
             </div>
 
-            <div class="touch-scroller-display relative flex items-center justify-center">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+            <!-- Vertical Roller Drum Wheel Window -->
+            <div id="roller-drum-reps" class="vertical-roller-drum relative h-36 w-full rounded-2xl bg-slate-950/90 border border-slate-800/90 overflow-hidden cursor-ns-resize touch-none select-none flex flex-col items-center justify-center">
+              <!-- Top & Bottom Vignettes for Cylindrical 3D Depth -->
+              <div class="drum-vignette drum-vignette-top absolute top-0 left-0 right-0 h-11 pointer-events-none z-10"></div>
+              <div class="drum-vignette drum-vignette-bottom absolute bottom-0 left-0 right-0 h-11 pointer-events-none z-10"></div>
+
+              <!-- Center Focus Highlight Lens -->
+              <div class="drum-center-lens absolute inset-x-2 h-14 rounded-xl border border-emerald-500/30 bg-emerald-500/5 pointer-events-none z-0"></div>
+
+              <!-- Digital Crown Side Notches -->
+              <div class="drum-crown-notches absolute left-2.5 top-0 bottom-0 flex flex-col justify-around py-3 pointer-events-none opacity-40 z-10">
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-4 h-1 bg-emerald-400 rounded-full shadow-sm shadow-emerald-400"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+              </div>
+              <div class="drum-crown-notches absolute right-2.5 top-0 bottom-0 flex flex-col justify-around py-3 pointer-events-none opacity-40 z-10">
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-4 h-1 bg-emerald-400 rounded-full shadow-sm shadow-emerald-400"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+                <div class="w-3.5 h-0.5 bg-emerald-400 rounded"></div>
+                <div class="w-2 h-0.5 bg-slate-500 rounded"></div>
+              </div>
+
+              <!-- The Rotating Barrel -->
+              <div class="drum-barrel relative flex flex-col items-center justify-center w-full z-1 transition-transform">
+                <div id="drum-prev-2-reps" class="drum-slot drum-slot-far text-slate-600 text-lg sm:text-xl font-bold font-mono">8</div>
+                <div id="drum-prev-1-reps" class="drum-slot drum-slot-near text-slate-400 text-2xl sm:text-3xl font-extrabold font-mono">9</div>
+                <div class="drum-slot drum-slot-active relative w-full flex items-center justify-center">
+                  <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-transparent text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none cursor-ns-resize">
+                </div>
+                <div id="drum-next-1-reps" class="drum-slot drum-slot-near text-slate-400 text-2xl sm:text-3xl font-extrabold font-mono">11</div>
+                <div id="drum-next-2-reps" class="drum-slot drum-slot-far text-slate-600 text-lg sm:text-xl font-bold font-mono">12</div>
+              </div>
             </div>
 
-            <!-- Touch Sensitive Scroller Dial Track -->
-            <div id="touch-dial-reps" class="touch-dial-track h-12 w-full bg-slate-950/90 rounded-xl border border-slate-800 flex items-center justify-center relative cursor-ns-resize touch-none overflow-hidden group">
-              <!-- Animated Tick Tape -->
-              <div class="dial-ticks-tape flex items-center justify-between w-[140%] px-3 pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity">
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="dial-center-notch h-7 w-1 bg-emerald-400 rounded-full shadow-lg shadow-emerald-500/50 scale-110"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
-                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
-              </div>
-              <div class="dial-hint-text absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-300 transition-all">
-                <span class="flex items-center gap-1.5"><i class="fa-solid fa-arrows-up-down text-[9px] text-emerald-400"></i> Scroll / Hold to Turbo</span>
-              </div>
+            <!-- Footer: Gestural Hint -->
+            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1 pt-0.5 pointer-events-none">
+              <span class="flex items-center gap-1"><i class="fa-solid fa-arrow-up-down text-[9px] text-emerald-400"></i> Roll Drum Wheel</span>
+              <span class="drum-hint text-slate-500">Hold to Turbo</span>
             </div>
+            <div id="touch-dial-reps" class="hidden"></div>
           </div>
         </div>
 
