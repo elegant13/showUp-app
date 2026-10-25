@@ -1803,7 +1803,8 @@
         if (isRestTimerRunning && restTimerStartTime) {
           localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
             running: true,
-            startTime: restTimerStartTime
+            startTime: restTimerStartTime,
+            target: currentSessionRestTarget || getDefaultRestTimeSeconds()
           }));
         } else {
           localStorage.removeItem('showUp_rest_timer_data');
@@ -1822,6 +1823,7 @@
           if (elapsed >= 0 && elapsed < 1800) {
             restTimerStartTime = data.startTime;
             restTimerSeconds = elapsed;
+            currentSessionRestTarget = data.target || null;
             isRestTimerRunning = true;
             if (restTimerInterval) clearInterval(restTimerInterval);
             restTimerInterval = setInterval(tickRestTimer, 1000);
@@ -1837,6 +1839,7 @@
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
+      currentSessionRestTarget = getDefaultRestTimeSeconds();
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
       saveRestTimerState();
@@ -1851,6 +1854,7 @@
       isRestTimerRunning = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
+      currentSessionRestTarget = null;
       saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
@@ -1862,12 +1866,20 @@
       updateRestTimerUI();
     }
 
+    function getCurrentRestTarget() {
+      return currentSessionRestTarget || getDefaultRestTimeSeconds();
+    }
+
     function adjustRestTimer(deltaSecs) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
-      if (isRestTimerRunning && restTimerStartTime) {
-        restTimerStartTime -= (deltaSecs * 1000);
+      if (isRestTimerRunning) {
+        const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
+        currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
         saveRestTimerState();
-        tickRestTimer();
+        updateRestTimerUI();
+        if (typeof showToast === 'function') {
+          showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
+        }
       }
     }
 
@@ -1917,7 +1929,7 @@
         if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
-        const targetRest = getDefaultRestTimeSeconds();
+        const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
@@ -3149,6 +3161,7 @@
       window.resetWorkoutSession = resetWorkoutSession;
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
+      window.getCurrentRestTarget = getCurrentRestTarget;
     }
 
     if (typeof document !== 'undefined') {

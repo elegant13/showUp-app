@@ -2478,6 +2478,15 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   assert(currentSessionSets.length === 1, "Set was logged");
   assert(currentSessionSets[0].setDuration >= 24, "setDuration accurately captured from active set timer");
 
+  // Rest target extension via adjustRestTimer(+30)
+  localStorage.removeItem('showUp_default_rest_time');
+  startRestTimer(10); // 10s elapsed
+  assert(getCurrentRestTarget() === 90, "Initial rest target defaults to 90s");
+  assert(restTimerSeconds === 10, "Elapsed rest seconds is 10s");
+  adjustRestTimer(30);
+  assert(getCurrentRestTarget() === 120, "adjustRestTimer(+30) increases rest target to 120s");
+  assert(restTimerSeconds === 10, "Elapsed rest seconds remains intact at 10s without inflation");
+
   // Clean up
   if (isRestTimerRunning) stopRestTimer();
   currentSessionSets = [];

@@ -265,6 +265,7 @@ function runSuite(name, fn) {
     let restTimerStartTime = null;
     let restTimerInterval = null;
     let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
+    let currentSessionRestTarget = null; // Active rest target for current rest period (extendable via +30s)
 
     // --- EXERCISE SHORTHAND ABBREVIATION DICTIONARY ---
     const EXERCISE_ABBREVIATIONS = {
@@ -5842,7 +5843,8 @@ if (typeof window !== 'undefined') {
         if (isRestTimerRunning && restTimerStartTime) {
           localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
             running: true,
-            startTime: restTimerStartTime
+            startTime: restTimerStartTime,
+            target: currentSessionRestTarget || getDefaultRestTimeSeconds()
           }));
         } else {
           localStorage.removeItem('showUp_rest_timer_data');
@@ -5861,6 +5863,7 @@ if (typeof window !== 'undefined') {
           if (elapsed >= 0 && elapsed < 1800) {
             restTimerStartTime = data.startTime;
             restTimerSeconds = elapsed;
+            currentSessionRestTarget = data.target || null;
             isRestTimerRunning = true;
             if (restTimerInterval) clearInterval(restTimerInterval);
             restTimerInterval = setInterval(tickRestTimer, 1000);
@@ -5876,6 +5879,7 @@ if (typeof window !== 'undefined') {
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
+      currentSessionRestTarget = getDefaultRestTimeSeconds();
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
       saveRestTimerState();
@@ -5890,6 +5894,7 @@ if (typeof window !== 'undefined') {
       isRestTimerRunning = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
+      currentSessionRestTarget = null;
       saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
@@ -5901,12 +5906,20 @@ if (typeof window !== 'undefined') {
       updateRestTimerUI();
     }
 
+    function getCurrentRestTarget() {
+      return currentSessionRestTarget || getDefaultRestTimeSeconds();
+    }
+
     function adjustRestTimer(deltaSecs) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
-      if (isRestTimerRunning && restTimerStartTime) {
-        restTimerStartTime -= (deltaSecs * 1000);
+      if (isRestTimerRunning) {
+        const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
+        currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
         saveRestTimerState();
-        tickRestTimer();
+        updateRestTimerUI();
+        if (typeof showToast === 'function') {
+          showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
+        }
       }
     }
 
@@ -5956,7 +5969,7 @@ if (typeof window !== 'undefined') {
         if (valEl) valEl.innerText = formatDurationSecs(restTimerSeconds);
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
-        const targetRest = getDefaultRestTimeSeconds();
+        const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
@@ -7188,6 +7201,7 @@ if (typeof window !== 'undefined') {
       window.resetWorkoutSession = resetWorkoutSession;
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
+      window.getCurrentRestTarget = getCurrentRestTarget;
     }
 
     if (typeof document !== 'undefined') {
@@ -18243,6 +18257,15 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   assert(activeBanner.classList.contains('hidden'), "activeBanner hidden after set logged");
   assert(currentSessionSets.length === 1, "Set was logged");
   assert(currentSessionSets[0].setDuration >= 24, "setDuration accurately captured from active set timer");
+
+  // Rest target extension via adjustRestTimer(+30)
+  localStorage.removeItem('showUp_default_rest_time');
+  startRestTimer(10); // 10s elapsed
+  assert(getCurrentRestTarget() === 90, "Initial rest target defaults to 90s");
+  assert(restTimerSeconds === 10, "Elapsed rest seconds is 10s");
+  adjustRestTimer(30);
+  assert(getCurrentRestTarget() === 120, "adjustRestTimer(+30) increases rest target to 120s");
+  assert(restTimerSeconds === 10, "Elapsed rest seconds remains intact at 10s without inflation");
 
   // Clean up
   if (isRestTimerRunning) stopRestTimer();

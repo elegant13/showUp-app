@@ -82,6 +82,7 @@
     let restTimerStartTime = null;
     let restTimerInterval = null;
     let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
+    let currentSessionRestTarget = null; // Active rest target for current rest period (extendable via +30s)
 
     // --- EXERCISE SHORTHAND ABBREVIATION DICTIONARY ---
     const EXERCISE_ABBREVIATIONS = {
