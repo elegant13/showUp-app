@@ -75,10 +75,15 @@
 
       <!-- Right Header Controls: Settings & Google Profile -->
       <div class="relative flex items-center gap-2 sm:gap-2.5 shrink-0">
-        <button onclick="triggerHaptic('medium'); toggleSettingsModal()" class="flex items-center gap-1.5 px-3 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-200 transition active:scale-95 shrink-0" title="Settings, UI Styling & Physical Profile">
-          <i class="fa-solid fa-sliders text-xs sm:text-sm text-emerald-400"></i>
-          <span class="text-xs font-bold text-slate-200 hidden sm:inline">Settings</span>
-        </button>
+        <div class="relative group">
+          <button id="header-settings-btn" onclick="triggerHaptic('medium'); toggleSettingsModal()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition active:scale-95 shrink-0 shadow-sm" title="Settings" aria-label="Settings">
+            <i class="fa-solid fa-gear text-sm sm:text-base text-slate-300 group-hover:text-emerald-400 transition-colors"></i>
+          </button>
+          <!-- Desktop Hover Tooltip -->
+          <span class="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900/95 border border-slate-700/80 px-2 py-0.5 text-[10px] font-bold text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-xl hidden md:block z-50">
+            Settings
+          </span>
+        </div>
 
         <div id="google-user-profile" class="hidden relative flex items-center gap-1.5 sm:gap-2.5 bg-slate-800/90 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full border border-slate-700 shadow-inner shrink-0">
           <button onclick="triggerHaptic('light'); toggleProfileDropdown(event)" class="flex items-center gap-1.5 sm:gap-2.5 text-left focus:outline-none group" title="Account Menu">
@@ -684,7 +689,7 @@
     <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-sliders text-emerald-400"></i>
+          <i class="fa-solid fa-gear text-emerald-400"></i>
           Settings
         </h2>
         <button onclick="toggleSettingsModal()" class="text-slate-500 hover:text-slate-300 p-1">

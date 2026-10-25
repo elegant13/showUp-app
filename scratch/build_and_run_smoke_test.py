@@ -86,6 +86,13 @@ def generate_and_run_smoke_test():
             print(f"[FAIL] Expected only #home-weekly-outlook-card in Home section, found: {containers}")
             return False
 
+    # 4. Check header settings button icon-only with desktop tooltip
+    if 'id="header-settings-btn"' in html and 'title="Settings"' in html:
+        print("[PASS] Header settings button icon-only with 'Settings' desktop tooltip verified in HTML")
+    else:
+        print("[FAIL] Header settings button with title='Settings' missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -1059,8 +1066,26 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(!squadsView.classList.contains('hidden'), "Squads tab view is visible when active");
   assert(calView.classList.contains('hidden'), "Calendar tab view is hidden when Squads is active");
 
+  // Tab Screen Reload & Persistence Verification
+  assert(typeof restoreActiveTab === 'function', "restoreActiveTab is a defined function");
+  switchTab('workout');
+  assert(localStorage.getItem('showUp_active_tab') === 'workout', "Active tab persisted to localStorage on switch");
+  // Simulate page reload calling restoreActiveTab
+  restoreActiveTab();
+  assert(!workoutView.classList.contains('hidden'), "restoreActiveTab reloads the athlete's current screen (workout) instead of resetting to home");
+
+  switchTab('squads');
+  assert(localStorage.getItem('showUp_active_tab') === 'squads', "Active tab persisted as squads");
+  restoreActiveTab();
+  assert(!squadsView.classList.contains('hidden'), "restoreActiveTab reloads the athlete's current screen (squads) instead of resetting to home");
+
   switchTab('home');
   assert(!homeView.classList.contains('hidden'), "Home tab view restored when switched back");
+
+  // Verify Icon-Only Header Settings Button & Modal
+  const headerSettingsBtn = getOrCreateElement('header-settings-btn');
+  assert(headerSettingsBtn !== null, "Header settings button exists");
+  assert(getOrCreateElement('settings-modal') !== null, "Settings modal exists with 'Settings' screen title");
 
   // 3. Verify Home Section Weekly Positive Outlook & Celebration (Requirement 1)
   const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);

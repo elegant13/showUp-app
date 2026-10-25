@@ -37,7 +37,9 @@
       initUniqueVisitorCounter();
       initGlobalVisitorTelemetry();
       updateGlobalVisitorTelemetryUI();
-      if (typeof renderHomeTab === 'function') {
+      if (typeof restoreActiveTab === 'function') {
+        restoreActiveTab();
+      } else if (typeof renderHomeTab === 'function') {
         renderHomeTab();
       }
     });

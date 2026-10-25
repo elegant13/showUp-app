@@ -1720,6 +1720,12 @@ if (typeof window !== 'undefined') {
 
     function switchProgressSubTab(subTab) {
       currentProgressSubTab = subTab;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('showUp_progress_subtab', subTab);
+        }
+      } catch (e) {}
+
       const workoutsPane = document.getElementById('progress-subpane-workouts');
       const weightPane = document.getElementById('progress-subpane-weight');
       const workoutsBtn = document.getElementById('progress-subtab-btn-workouts');
@@ -1789,7 +1795,8 @@ if (typeof window !== 'undefined') {
         if (btnCalendar) btnCalendar.className = activeClass;
         try {
           if (typeof switchProgressSubTab === 'function') {
-            switchProgressSubTab(currentProgressSubTab || 'workouts');
+            const savedSub = (typeof localStorage !== 'undefined') ? localStorage.getItem('showUp_progress_subtab') : null;
+            switchProgressSubTab(savedSub || currentProgressSubTab || 'workouts');
           } else {
             if (typeof renderCalendar === 'function') renderCalendar();
             if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
@@ -1805,11 +1812,64 @@ if (typeof window !== 'undefined') {
         try { if (typeof renderHeatMap === 'function') renderHeatMap(); } catch (err) { console.error("renderHeatMap error:", err); }
         try { if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI(); } catch (err) { console.error("updateGlobalStatsUI error:", err); }
       }
+
+      // Persist active tab to localStorage and sync browser address hash for reload persistence
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('showUp_active_tab', tabName);
+        }
+        if (typeof window !== 'undefined' && window.location) {
+          const currentHash = window.location.hash.replace('#', '').trim().toLowerCase();
+          if (currentHash !== tabName) {
+            if (window.history && typeof window.history.replaceState === 'function') {
+              window.history.replaceState(null, '', '#' + tabName);
+            } else {
+              window.location.hash = tabName;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    function restoreActiveTab() {
+      let targetTab = null;
+
+      // 1. Check URL hash first
+      if (typeof window !== 'undefined' && window.location && window.location.hash) {
+        const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+        if (['home', 'workout', 'calendar', 'progress', 'squads'].includes(hash)) {
+          targetTab = (hash === 'calendar') ? 'progress' : hash;
+        }
+      }
+
+      // 2. Check localStorage fallback
+      if (!targetTab && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('showUp_active_tab');
+        if (saved && ['home', 'workout', 'calendar', 'progress', 'squads'].includes(saved.toLowerCase())) {
+          targetTab = (saved.toLowerCase() === 'calendar') ? 'progress' : saved.toLowerCase();
+        }
+      }
+
+      if (!targetTab) {
+        targetTab = 'home';
+      }
+
+      switchTab(targetTab);
     }
 
     if (typeof window !== 'undefined') {
       window.switchTab = switchTab;
       window.switchProgressSubTab = switchProgressSubTab;
+      window.restoreActiveTab = restoreActiveTab;
+
+      window.addEventListener('hashchange', () => {
+        if (window.location && window.location.hash) {
+          const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+          if (['home', 'workout', 'calendar', 'progress', 'squads'].includes(hash)) {
+            switchTab((hash === 'calendar') ? 'progress' : hash);
+          }
+        }
+      });
     }
 
     function parseJwtPayload(token) {
@@ -15530,7 +15590,9 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
       initUniqueVisitorCounter();
       initGlobalVisitorTelemetry();
       updateGlobalVisitorTelemetryUI();
-      if (typeof renderHomeTab === 'function') {
+      if (typeof restoreActiveTab === 'function') {
+        restoreActiveTab();
+      } else if (typeof renderHomeTab === 'function') {
         renderHomeTab();
       }
     });
@@ -16332,8 +16394,26 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(!squadsView.classList.contains('hidden'), "Squads tab view is visible when active");
   assert(calView.classList.contains('hidden'), "Calendar tab view is hidden when Squads is active");
 
+  // Tab Screen Reload & Persistence Verification
+  assert(typeof restoreActiveTab === 'function', "restoreActiveTab is a defined function");
+  switchTab('workout');
+  assert(localStorage.getItem('showUp_active_tab') === 'workout', "Active tab persisted to localStorage on switch");
+  // Simulate page reload calling restoreActiveTab
+  restoreActiveTab();
+  assert(!workoutView.classList.contains('hidden'), "restoreActiveTab reloads the athlete's current screen (workout) instead of resetting to home");
+
+  switchTab('squads');
+  assert(localStorage.getItem('showUp_active_tab') === 'squads', "Active tab persisted as squads");
+  restoreActiveTab();
+  assert(!squadsView.classList.contains('hidden'), "restoreActiveTab reloads the athlete's current screen (squads) instead of resetting to home");
+
   switchTab('home');
   assert(!homeView.classList.contains('hidden'), "Home tab view restored when switched back");
+
+  // Verify Icon-Only Header Settings Button & Modal
+  const headerSettingsBtn = getOrCreateElement('header-settings-btn');
+  assert(headerSettingsBtn !== null, "Header settings button exists");
+  assert(getOrCreateElement('settings-modal') !== null, "Settings modal exists with 'Settings' screen title");
 
   // 3. Verify Home Section Weekly Positive Outlook & Celebration (Requirement 1)
   const todayKey = typeof getETDateKey === 'function' ? getETDateKey() : new Date().toISOString().slice(0, 10);

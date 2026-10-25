@@ -132,6 +132,12 @@
 
     function switchProgressSubTab(subTab) {
       currentProgressSubTab = subTab;
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('showUp_progress_subtab', subTab);
+        }
+      } catch (e) {}
+
       const workoutsPane = document.getElementById('progress-subpane-workouts');
       const weightPane = document.getElementById('progress-subpane-weight');
       const workoutsBtn = document.getElementById('progress-subtab-btn-workouts');
@@ -201,7 +207,8 @@
         if (btnCalendar) btnCalendar.className = activeClass;
         try {
           if (typeof switchProgressSubTab === 'function') {
-            switchProgressSubTab(currentProgressSubTab || 'workouts');
+            const savedSub = (typeof localStorage !== 'undefined') ? localStorage.getItem('showUp_progress_subtab') : null;
+            switchProgressSubTab(savedSub || currentProgressSubTab || 'workouts');
           } else {
             if (typeof renderCalendar === 'function') renderCalendar();
             if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
@@ -217,11 +224,64 @@
         try { if (typeof renderHeatMap === 'function') renderHeatMap(); } catch (err) { console.error("renderHeatMap error:", err); }
         try { if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI(); } catch (err) { console.error("updateGlobalStatsUI error:", err); }
       }
+
+      // Persist active tab to localStorage and sync browser address hash for reload persistence
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('showUp_active_tab', tabName);
+        }
+        if (typeof window !== 'undefined' && window.location) {
+          const currentHash = window.location.hash.replace('#', '').trim().toLowerCase();
+          if (currentHash !== tabName) {
+            if (window.history && typeof window.history.replaceState === 'function') {
+              window.history.replaceState(null, '', '#' + tabName);
+            } else {
+              window.location.hash = tabName;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    function restoreActiveTab() {
+      let targetTab = null;
+
+      // 1. Check URL hash first
+      if (typeof window !== 'undefined' && window.location && window.location.hash) {
+        const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+        if (['home', 'workout', 'calendar', 'progress', 'squads'].includes(hash)) {
+          targetTab = (hash === 'calendar') ? 'progress' : hash;
+        }
+      }
+
+      // 2. Check localStorage fallback
+      if (!targetTab && typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('showUp_active_tab');
+        if (saved && ['home', 'workout', 'calendar', 'progress', 'squads'].includes(saved.toLowerCase())) {
+          targetTab = (saved.toLowerCase() === 'calendar') ? 'progress' : saved.toLowerCase();
+        }
+      }
+
+      if (!targetTab) {
+        targetTab = 'home';
+      }
+
+      switchTab(targetTab);
     }
 
     if (typeof window !== 'undefined') {
       window.switchTab = switchTab;
       window.switchProgressSubTab = switchProgressSubTab;
+      window.restoreActiveTab = restoreActiveTab;
+
+      window.addEventListener('hashchange', () => {
+        if (window.location && window.location.hash) {
+          const hash = window.location.hash.replace('#', '').trim().toLowerCase();
+          if (['home', 'workout', 'calendar', 'progress', 'squads'].includes(hash)) {
+            switchTab((hash === 'calendar') ? 'progress' : hash);
+          }
+        }
+      });
     }
 
     function parseJwtPayload(token) {
