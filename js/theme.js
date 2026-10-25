@@ -148,12 +148,18 @@
 
 
 
-    function setFontFamily(fontKey) {
+    function setFontFamily(fontKey = 'jakarta') {
+      const selectedFont = fontKey || 'jakarta';
+      const cleanFont = selectedFont.replace(/^font-/, '');
       const body = document.getElementById('app-body');
-      body.className = body.className.replace(/\bfont-\S+/g, '').trim();
-      body.classList.add(`font-${fontKey}`);
-      localStorage.setItem('showUp_font', fontKey);
-      updateFontUI(fontKey);
+      if (body) {
+        body.className = body.className.replace(/\bfont-\S+/g, '').trim();
+        body.classList.add(`font-${cleanFont}`);
+      }
+      try {
+        localStorage.setItem('showUp_font', selectedFont);
+      } catch (e) {}
+      updateFontUI(cleanFont);
     }
 
     function restoreFontPreferences() {
@@ -161,15 +167,17 @@
       setFontFamily(savedFont);
     }
 
-    function updateFontUI(activeFont) {
+    function updateFontUI(activeFont = 'jakarta') {
       const fonts = ['jakarta', 'outfit', 'space', 'lexend', 'mono'];
       fonts.forEach(f => {
         const btn = document.getElementById(`font-btn-${f}`);
         if (btn) {
-          if (f === activeFont) {
+          if (f === 'jakarta') {
             btn.className = "p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 text-left transition active:scale-95 shadow-md shadow-emerald-500/10";
+            if (btn.classList && typeof btn.classList.remove === 'function') btn.classList.remove('hidden');
           } else {
-            btn.className = "p-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 text-left transition active:scale-95";
+            btn.className = "hidden";
+            if (btn.classList && typeof btn.classList.add === 'function') btn.classList.add('hidden');
           }
         }
       });

@@ -112,6 +112,7 @@
       { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
       { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
       { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "Exercise Ball Wood Chops", implement: "Exercise Ball", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads"] },
       { name: "EZ Bar Bicep Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms", "Chest"] },
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
@@ -260,6 +261,8 @@
       // Requirement: Whenever an exercise starts with Ring or has ring in it, it is Gymnastics Rings
       if (lower.startsWith('ring') || lower.includes('ring') || lower.includes('gymnastic')) {
         return 'Gymnastics Rings';
+      } else if (lower.includes('exercise ball') || lower.includes('stability ball') || lower.includes('swiss ball') || lower.includes('wood chop') || lower.includes('woodchop')) {
+        return 'Exercise Ball';
       } else if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
@@ -342,7 +345,7 @@
       } else if (lower.includes('shoulder press') || lower.includes('overhead press') || lower.includes('lateral raise') || lower.includes('military press') || lower.includes('front raise') || lower.includes('face pull')) {
         primary = 'Shoulders';
         secondary = ['Triceps', 'Core/Abs', 'Chest'];
-      } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
+      } else if (lower.includes('wood chop') || lower.includes('woodchop') || lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
         primary = 'Core/Abs';
         secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
       } else if (lower.includes('glute bridge') || lower.includes('lateral walk') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {

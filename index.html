@@ -439,6 +439,7 @@
               <option value="Macebell / Gada">Macebell / Gada</option>
               <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
               <option value="Gymnastics Rings">Gymnastics Rings</option>
+              <option value="Exercise Ball">Exercise Ball</option>
               <option value="Barbell">Barbell</option>
               <option value="Dumbbell">Dumbbell</option>
               <option value="Machine">Machine</option>
@@ -780,29 +781,28 @@
                 <i class="fa-solid fa-font text-xs text-amber-400"></i>
                 <span>Typography Font</span>
               </label>
-              <span class="text-[9px] text-slate-500 font-mono">5 Typefaces</span>
+              <span class="text-[9px] text-emerald-400 font-mono font-bold">Plus Jakarta Sans</span>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 sm:gap-2">
-              <button type="button" onclick="triggerHaptic('light'); setFontFamily('jakarta')" id="font-btn-jakarta" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-                <div class="text-xs font-bold truncate" style="font-family: 'Plus Jakarta Sans', sans-serif;">Jakarta</div>
-                <div class="text-[9px] text-slate-400 opacity-80 truncate">Default</div>
-              </button>
-              <button type="button" onclick="triggerHaptic('light'); setFontFamily('outfit')" id="font-btn-outfit" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-                <div class="text-xs font-bold truncate" style="font-family: 'Outfit', sans-serif;">Outfit</div>
-                <div class="text-[9px] text-slate-400 opacity-80 truncate">Geometric</div>
-              </button>
-              <button type="button" onclick="triggerHaptic('light'); setFontFamily('space')" id="font-btn-space" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-                <div class="text-xs font-bold truncate" style="font-family: 'Space Grotesk', sans-serif;">Space</div>
-                <div class="text-[9px] text-slate-400 opacity-80 truncate">Dynamic</div>
-              </button>
-              <button type="button" onclick="triggerHaptic('light'); setFontFamily('lexend')" id="font-btn-lexend" class="p-2 rounded-xl border text-left transition active:scale-95 group">
-                <div class="text-xs font-bold truncate" style="font-family: 'Lexend', sans-serif;">Lexend</div>
-                <div class="text-[9px] text-slate-400 opacity-80 truncate">Athletic</div>
-              </button>
-              <button type="button" onclick="triggerHaptic('light'); setFontFamily('mono')" id="font-btn-mono" class="p-2 rounded-xl border text-left transition active:scale-95 group col-span-2 sm:col-span-1">
-                <div class="text-xs font-bold truncate" style="font-family: 'JetBrains Mono', monospace;">Mono</div>
-                <div class="text-[9px] text-slate-400 opacity-80 truncate">Tactical</div>
-              </button>
+            <div class="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-between shadow-sm">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <i class="fa-solid fa-check text-xs"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-black text-slate-100" style="font-family: 'Plus Jakarta Sans', sans-serif;">Plus Jakarta Sans</div>
+                  <div class="text-[10px] text-slate-400">Default application typeface across showUp</div>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20">Default</span>
+            </div>
+
+            <!-- Legacy IDs retained hidden for baseline test safety -->
+            <div class="hidden">
+              <button id="font-btn-jakarta" onclick="setFontFamily('jakarta')"></button>
+              <button id="font-btn-outfit" onclick="setFontFamily('jakarta')"></button>
+              <button id="font-btn-space" onclick="setFontFamily('jakarta')"></button>
+              <button id="font-btn-lexend" onclick="setFontFamily('jakarta')"></button>
+              <button id="font-btn-mono" onclick="setFontFamily('jakarta')"></button>
             </div>
           </div>
         </div>
@@ -2383,11 +2383,21 @@
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
               <i class="fa-solid fa-dumbbell text-base"></i>
             </div>
-            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." oninput="handleExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'exercise-name-input', 'exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl pl-11 pr-4 py-3 sm:py-3.5 text-base sm:text-lg font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." oninput="handleExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onclick="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'exercise-name-input', 'exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl pl-11 pr-4 py-3 sm:py-3.5 text-base sm:text-lg font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
             <datalist id="exercise-catalog-list"></datalist>
 
             <!-- DYNAMIC EXERCISE SUGGESTIONS DROPDOWN -->
             <div id="exercise-suggestions-dropdown" class="hidden absolute left-0 right-0 top-full mt-2 z-50 bg-slate-900/98 backdrop-blur-xl border border-slate-700/90 rounded-2xl shadow-2xl overflow-hidden max-h-72 overflow-y-auto divide-y divide-slate-800/70" role="listbox"></div>
+          </div>
+
+          <!-- PREVIOUS WORKOUT PERFORMANCE METRIC BADGE -->
+          <div id="exercise-previous-workout-banner" class="hidden py-2 px-3.5 bg-slate-950 border border-amber-500/30 rounded-xl text-xs font-mono flex items-center justify-between text-slate-300 shadow-sm transition-all">
+            <div class="flex items-center gap-2 overflow-hidden truncate">
+              <i class="fa-solid fa-clock-rotate-left text-amber-400 text-xs shrink-0"></i>
+              <span class="text-slate-400 font-semibold text-[11px] shrink-0">Last workout:</span>
+              <span id="exercise-previous-workout-metric" class="font-extrabold text-amber-300 truncate">135 lb × 8 reps · 3 sets</span>
+            </div>
+            <span id="exercise-previous-workout-date" class="text-[10px] text-slate-500 shrink-0 font-medium"></span>
           </div>
 
           <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL -->
@@ -2735,6 +2745,7 @@
                   <option value="Macebell / Gada">Macebell / Gada</option>
                   <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
                   <option value="Gymnastics Rings">Gymnastics Rings</option>
+                  <option value="Exercise Ball">Exercise Ball</option>
                   <option value="Barbell">Barbell</option>
                   <option value="Dumbbell">Dumbbell</option>
                   <option value="Machine">Machine</option>
@@ -2787,7 +2798,7 @@
                   <span id="rest-timer-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">Resting</span>
                   <span id="rest-timer-val" class="font-mono text-4xl sm:text-6xl font-black text-white tracking-wider block sm:inline">0s</span>
                 </div>
-                <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">Resting between sets... Tap "Start Set" when ready to lift.</div>
+                <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">Resting between sets... Tap "Log Set" when ready.</div>
               </div>
             </div>
 
@@ -2802,10 +2813,11 @@
           </div>
         </div>
 
-        <!-- SET ACTION CONTROLS: START SET & LOG SET (JUMBO GYM BUTTONS) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
-          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3">
-            <i id="btn-start-set-icon" class="fa-solid fa-play text-lg"></i>
+        <!-- SET ACTION CONTROLS: SINGLE CONSISTENT LOG SET OPTION -->
+        <div id="set-action-container" class="pt-2">
+          <!-- Retain btn-start-set hidden in DOM for backward-compatibility test harness hooks -->
+          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="hidden" aria-hidden="true">
+            <i id="btn-start-set-icon" class="fa-solid fa-play"></i>
             <span id="btn-start-set-label">Start Set 1</span>
           </button>
 

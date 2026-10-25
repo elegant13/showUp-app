@@ -295,6 +295,7 @@ function runSuite(name, fn) {
       { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
       { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
       { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
+      { name: "Exercise Ball Wood Chops", implement: "Exercise Ball", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads"] },
       { name: "EZ Bar Bicep Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms", "Chest"] },
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
@@ -443,6 +444,8 @@ function runSuite(name, fn) {
       // Requirement: Whenever an exercise starts with Ring or has ring in it, it is Gymnastics Rings
       if (lower.startsWith('ring') || lower.includes('ring') || lower.includes('gymnastic')) {
         return 'Gymnastics Rings';
+      } else if (lower.includes('exercise ball') || lower.includes('stability ball') || lower.includes('swiss ball') || lower.includes('wood chop') || lower.includes('woodchop')) {
+        return 'Exercise Ball';
       } else if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
@@ -525,7 +528,7 @@ function runSuite(name, fn) {
       } else if (lower.includes('shoulder press') || lower.includes('overhead press') || lower.includes('lateral raise') || lower.includes('military press') || lower.includes('front raise') || lower.includes('face pull')) {
         primary = 'Shoulders';
         secondary = ['Triceps', 'Core/Abs', 'Chest'];
-      } else if (lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
+      } else if (lower.includes('wood chop') || lower.includes('woodchop') || lower.includes('carry') || lower.includes('suitcase') || lower.includes('plank') || lower.includes('crunch') || lower.includes('hollow') || lower.includes('russian twist') || lower.includes('abs') || lower.includes('core')) {
         primary = 'Core/Abs';
         secondary = ['Shoulders', 'Back', 'Hamstrings/Glutes', 'Quads'];
       } else if (lower.includes('glute bridge') || lower.includes('lateral walk') || lower.includes('hip thrust') || lower.includes('romanian dead') || lower.includes('rdl') || lower.includes('hamstring') || lower.includes('good morning') || lower.includes('leg curl') || (lower.includes('swing') && !lower.includes('gada') && !lower.includes('mace'))) {
@@ -2218,12 +2221,18 @@ if (typeof window !== 'undefined') {
 
 
 
-    function setFontFamily(fontKey) {
+    function setFontFamily(fontKey = 'jakarta') {
+      const selectedFont = fontKey || 'jakarta';
+      const cleanFont = selectedFont.replace(/^font-/, '');
       const body = document.getElementById('app-body');
-      body.className = body.className.replace(/\bfont-\S+/g, '').trim();
-      body.classList.add(`font-${fontKey}`);
-      localStorage.setItem('showUp_font', fontKey);
-      updateFontUI(fontKey);
+      if (body) {
+        body.className = body.className.replace(/\bfont-\S+/g, '').trim();
+        body.classList.add(`font-${cleanFont}`);
+      }
+      try {
+        localStorage.setItem('showUp_font', selectedFont);
+      } catch (e) {}
+      updateFontUI(cleanFont);
     }
 
     function restoreFontPreferences() {
@@ -2231,15 +2240,17 @@ if (typeof window !== 'undefined') {
       setFontFamily(savedFont);
     }
 
-    function updateFontUI(activeFont) {
+    function updateFontUI(activeFont = 'jakarta') {
       const fonts = ['jakarta', 'outfit', 'space', 'lexend', 'mono'];
       fonts.forEach(f => {
         const btn = document.getElementById(`font-btn-${f}`);
         if (btn) {
-          if (f === activeFont) {
+          if (f === 'jakarta') {
             btn.className = "p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 text-left transition active:scale-95 shadow-md shadow-emerald-500/10";
+            if (btn.classList && typeof btn.classList.remove === 'function') btn.classList.remove('hidden');
           } else {
-            btn.className = "p-2.5 rounded-2xl border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 text-left transition active:scale-95";
+            btn.className = "hidden";
+            if (btn.classList && typeof btn.classList.add === 'function') btn.classList.add('hidden');
           }
         }
       });
@@ -4454,25 +4465,225 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function getRecentExercises(limit = 6) {
+      const recents = [];
+      const seen = new Set();
+
+      function addEx(name, implement, muscle) {
+        if (!name || typeof name !== 'string') return;
+        const clean = name.trim();
+        if (!clean) return;
+        const lower = clean.toLowerCase();
+        if (seen.has(lower)) return;
+        seen.add(lower);
+
+        let imp = implement;
+        let mus = muscle;
+        if (typeof defaultCatalog !== 'undefined' && Array.isArray(defaultCatalog)) {
+          const match = defaultCatalog.find(c => c.name.toLowerCase() === lower);
+          if (match) {
+            if (!imp) imp = match.implement;
+            if (!mus) mus = match.muscle;
+          }
+        }
+        recents.push({ name: clean, implement: imp || 'General', muscle: mus || 'Full Body' });
+      }
+
+      // 1. From currentSessionSets (reverse chronological order)
+      if (typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets)) {
+        for (let i = currentSessionSets.length - 1; i >= 0; i--) {
+          const s = currentSessionSets[i];
+          if (s) addEx(s.exerciseName || s.exercise, s.implement, s.muscle);
+          if (recents.length >= limit) return recents;
+        }
+      }
+
+      // 2. From completedWorkoutsHistory (reverse chronological order)
+      const history = (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory))
+        ? completedWorkoutsHistory
+        : (() => {
+            try {
+              return JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+            } catch (e) {
+              return [];
+            }
+          })();
+
+      if (Array.isArray(history)) {
+        for (let i = history.length - 1; i >= 0; i--) {
+          const w = history[i];
+          if (w && Array.isArray(w.sets)) {
+            for (let j = w.sets.length - 1; j >= 0; j--) {
+              const s = w.sets[j];
+              if (s) addEx(s.exerciseName || s.exercise, s.implement, s.muscle);
+              if (recents.length >= limit) return recents;
+            }
+          }
+        }
+      }
+
+      return recents;
+    }
+
+    function formatPreviousWorkoutDate(dateStr) {
+      if (!dateStr) return '';
+      try {
+        const parts = String(dateStr).split('-');
+        if (parts.length === 3) {
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const d = new Date(year, month, day);
+          if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+        }
+        return dateStr;
+      } catch (e) {
+        return dateStr;
+      }
+    }
+
+    function getPreviousWorkoutExerciseMetric(exerciseName) {
+      if (!exerciseName || typeof exerciseName !== 'string') return null;
+      const target = exerciseName.trim().toLowerCase();
+      if (!target) return null;
+
+      const history = (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory))
+        ? completedWorkoutsHistory
+        : (() => {
+            try {
+              return JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+            } catch (e) {
+              return [];
+            }
+          })();
+
+      if (!Array.isArray(history) || history.length === 0) return null;
+
+      for (let i = history.length - 1; i >= 0; i--) {
+        const workout = history[i];
+        if (!workout || !Array.isArray(workout.sets) || workout.sets.length === 0) continue;
+
+        const matchingSets = workout.sets.filter(s => {
+          const name = (s.exerciseName || s.exercise || '').trim().toLowerCase();
+          return name === target;
+        });
+
+        if (matchingSets.length > 0) {
+          const setCount = matchingSets.length;
+          const setWord = setCount === 1 ? '1 set' : `${setCount} sets`;
+          const firstSet = matchingSets[0];
+          const implement = firstSet.implement || '';
+
+          let metricStr = '';
+          if (implement === 'Running' || firstSet.runningDistance) {
+            const totalDist = matchingSets.reduce((sum, s) => sum + (parseFloat(s.runningDistance) || 0), 0);
+            const lastTime = firstSet.runningTime || '';
+            metricStr = `${totalDist ? totalDist.toFixed(1) + ' mi' : ''} ${lastTime ? '· ' + lastTime : ''} · ${setWord}`.trim();
+          } else if (implement === 'Row Erg' || firstSet.ergDistance) {
+            const lastDist = firstSet.ergDistance || 500;
+            const lastTime = firstSet.ergTime || '';
+            metricStr = `${lastDist}m ${lastTime ? '· ' + lastTime : ''} · ${setWord}`;
+          } else if (implement === 'Swimming' || firstSet.swimDistance) {
+            const lastDist = firstSet.swimDistance || 500;
+            const lastTime = firstSet.swimTime || '';
+            metricStr = `${lastDist}m ${lastTime ? '· ' + lastTime : ''} · ${setWord}`;
+          } else if (["Walking", "Hiking", "Biking"].includes(implement) || firstSet.enduranceDistance) {
+            const dist = firstSet.enduranceDistance || 1.0;
+            metricStr = `${dist} mi · ${setWord}`;
+          } else {
+            let topSet = matchingSets[0];
+            for (const s of matchingSets) {
+              if ((parseFloat(s.weight) || 0) > (parseFloat(topSet.weight) || 0)) {
+                topSet = s;
+              }
+            }
+            const w = parseFloat(topSet.weight) || 0;
+            const r = parseInt(topSet.reps) || 0;
+
+            if (w > 0 && r > 0) {
+              metricStr = `${w} lb × ${r} reps · ${setWord}`;
+            } else if (w > 0) {
+              metricStr = `${w} lb · ${setWord}`;
+            } else if (r > 0) {
+              metricStr = `${r} reps · ${setWord}`;
+            } else {
+              metricStr = `${setWord}`;
+            }
+          }
+
+          return {
+            metric: metricStr,
+            date: workout.date || workout.completedDate || '',
+            workoutName: workout.workoutName || ''
+          };
+        }
+      }
+
+      return null;
+    }
+
+    function updateExercisePreviousWorkoutMetric(exerciseName) {
+      const banner = document.getElementById('exercise-previous-workout-banner');
+      const metricEl = document.getElementById('exercise-previous-workout-metric');
+      const dateEl = document.getElementById('exercise-previous-workout-date');
+      if (!banner || !metricEl) return;
+
+      const trimmed = (exerciseName || '').trim();
+      if (!trimmed) {
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const prev = getPreviousWorkoutExerciseMetric(trimmed);
+      if (prev && prev.metric) {
+        metricEl.innerText = prev.metric;
+        if (dateEl) {
+          const formattedDate = formatPreviousWorkoutDate(prev.date);
+          dateEl.innerText = formattedDate || prev.date || '';
+          dateEl.title = prev.workoutName ? `${prev.workoutName} (${prev.date})` : prev.date;
+        }
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
     function updateExerciseSuggestions(query, inputId, dropdownId) {
       const dropdown = document.getElementById(dropdownId);
       const inputEl = document.getElementById(inputId);
       if (!dropdown || !inputEl) return;
 
       const trimmed = (query || '').trim();
-      if (!trimmed && !activeExerciseCatalogFilter) {
-        dropdown.classList.add('hidden');
-        dropdown.innerHTML = '';
-        activeSuggestionIndex = -1;
-        return;
-      }
-
-      const matches = filterExerciseCatalog(trimmed);
       activeSuggestionIndex = -1;
 
       const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
 
-      if (matches.length === 0) {
+      const recents = getRecentExercises(6);
+      let matchingRecents = [];
+      let catalogMatches = [];
+
+      if (trimmed) {
+        matchingRecents = recents.filter(r => r.name.toLowerCase().includes(trimmed.toLowerCase()));
+        catalogMatches = filterExerciseCatalog(trimmed);
+      } else {
+        matchingRecents = recents;
+        catalogMatches = (typeof defaultCatalog !== 'undefined' && Array.isArray(defaultCatalog)) ? [...defaultCatalog] : [];
+        if (activeExerciseCatalogFilter) {
+          catalogMatches = catalogMatches.filter(ex => exerciseMatchesImplementFilter(ex, activeExerciseCatalogFilter));
+        }
+      }
+
+      // Catalog items must always be displayed in alphabetical order
+      catalogMatches.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+      if (matchingRecents.length === 0 && catalogMatches.length === 0) {
+        if (!trimmed && !activeExerciseCatalogFilter) {
+          dropdown.classList.add('hidden');
+          dropdown.innerHTML = '';
+          return;
+        }
         let noMatchHtml = `
           <div class="px-4 py-3.5 text-xs text-slate-400 font-medium flex items-center justify-between">
             <span>No ${activeExerciseCatalogFilter ? `<span class="text-emerald-400 font-semibold">${safe(activeExerciseCatalogFilter)}</span> ` : ''}catalog matches for "<span class="text-slate-200 font-semibold">${safe(trimmed || '(empty)')}</span>"</span>
@@ -4501,36 +4712,87 @@ if (typeof window !== 'undefined') {
           <div class="px-4 py-2 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[11px] font-bold text-slate-400 sticky top-0 backdrop-blur-md z-10">
             <span class="flex items-center gap-1.5 text-emerald-400">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"></span>
-              <span>${safe(activeExerciseCatalogFilter)} Catalog (${matches.length})</span>
+              <span>${safe(activeExerciseCatalogFilter)} Catalog (${catalogMatches.length})</span>
             </span>
             <button type="button" onclick="event.stopPropagation(); toggleExerciseCatalogFilter('${safe(activeExerciseCatalogFilter)}', '${inputId}', '${dropdownId}')" class="text-slate-400 hover:text-slate-200 text-[10px] uppercase tracking-wider font-semibold underline transition">Clear filter</button>
           </div>
         `;
       }
 
-      matches.forEach((ex) => {
-        const displayName = trimmed ? highlightExerciseMatch(ex.name, trimmed) : safe(ex.name);
-        const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
+      // 1. Recent exercises first
+      if (matchingRecents.length > 0) {
         html += `
-          <div class="exercise-suggestion-item px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 active:bg-slate-800 transition select-none group border-b border-slate-800/50 last:border-b-0"
-               role="option"
-               data-exercise-name="${escapedNameAttr}"
-               onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
-            <div class="flex items-center gap-3 min-w-0 pr-2">
-              <div class="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition shrink-0">
-                <i class="fa-solid fa-dumbbell text-xs"></i>
-              </div>
-              <div class="truncate">
-                <span class="text-sm font-semibold text-slate-100 group-hover:text-emerald-300 transition block truncate tracking-tight">${displayName}</span>
-                <span class="text-xs text-slate-400 font-medium">${safe(ex.muscle || 'Full Body')}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 shrink-0">
-              <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700/60">${safe(ex.implement || 'General')}</span>
-            </div>
+          <div class="px-3.5 py-1.5 bg-slate-950/95 border-b border-slate-800/80 flex items-center justify-between text-[10px] font-bold text-amber-400 sticky top-0 backdrop-blur-md z-10 tracking-wider uppercase">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-clock-rotate-left text-[11px]"></i>
+              <span>Recent Exercises</span>
+            </span>
+            <span class="text-[9px] text-slate-500 font-medium">Quick Select</span>
           </div>
         `;
-      });
+
+        matchingRecents.forEach(ex => {
+          const displayName = trimmed ? highlightExerciseMatch(ex.name, trimmed) : safe(ex.name);
+          const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
+          html += `
+            <div class="exercise-suggestion-item px-4 py-2.5 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 active:bg-slate-800 transition select-none group border-b border-slate-800/50"
+                 role="option"
+                 data-exercise-name="${escapedNameAttr}"
+                 onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
+              <div class="flex items-center gap-3 min-w-0 pr-2">
+                <div class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 group-hover:text-amber-300 transition shrink-0">
+                  <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+                </div>
+                <div class="truncate">
+                  <span class="text-sm font-semibold text-slate-100 group-hover:text-amber-300 transition block truncate tracking-tight">${displayName}</span>
+                  <span class="text-xs text-slate-400 font-medium">${safe(ex.muscle || 'Full Body')}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">Recent</span>
+                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700/60">${safe(ex.implement || 'General')}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // 2. Below a separator line: all exercises in the catalog in alphabetical order
+      if (catalogMatches.length > 0) {
+        html += `
+          <div class="px-3.5 py-1.5 bg-slate-950/95 border-y border-slate-700/80 flex items-center justify-between text-[10px] font-bold text-emerald-400 sticky top-0 backdrop-blur-md z-10 tracking-wider uppercase">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-book-open text-[11px]"></i>
+              <span>All Exercises (A–Z)</span>
+            </span>
+            <span class="text-[9px] text-slate-500 font-medium">${catalogMatches.length} in catalog</span>
+          </div>
+        `;
+
+        catalogMatches.forEach(ex => {
+          const displayName = trimmed ? highlightExerciseMatch(ex.name, trimmed) : safe(ex.name);
+          const escapedNameAttr = safe(ex.name).replace(/'/g, "&#39;");
+          html += `
+            <div class="exercise-suggestion-item px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/80 active:bg-slate-800 transition select-none group border-b border-slate-800/50 last:border-b-0"
+                 role="option"
+                 data-exercise-name="${escapedNameAttr}"
+                 onclick="selectExerciseSuggestion('${escapedNameAttr}', '${inputId}', '${dropdownId}')">
+              <div class="flex items-center gap-3 min-w-0 pr-2">
+                <div class="w-8 h-8 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-400 group-hover:text-emerald-400 group-hover:border-emerald-500/30 transition shrink-0">
+                  <i class="fa-solid fa-dumbbell text-xs"></i>
+                </div>
+                <div class="truncate">
+                  <span class="text-sm font-semibold text-slate-100 group-hover:text-emerald-300 transition block truncate tracking-tight">${displayName}</span>
+                  <span class="text-xs text-slate-400 font-medium">${safe(ex.muscle || 'Full Body')}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-800/90 text-slate-300 border border-slate-700/60">${safe(ex.implement || 'General')}</span>
+              </div>
+            </div>
+          `;
+        });
+      }
 
       dropdown.innerHTML = html;
       dropdown.classList.remove('hidden');
@@ -4549,6 +4811,8 @@ if (typeof window !== 'undefined') {
       if (inputId === 'exercise-name-input') {
         if (typeof handleExerciseInput === 'function') {
           handleExerciseInput(cleanName);
+        } else {
+          updateExercisePreviousWorkoutMetric(cleanName);
         }
       } else if (inputId === 'edit-active-set-exercise') {
         if (typeof handleEditActiveSetExerciseInput === 'function') {
@@ -4579,9 +4843,7 @@ if (typeof window !== 'undefined') {
     function handleExerciseInputFocus(inputEl, dropdownId) {
       if (!inputEl) return;
       scrollExerciseInputIntoView(inputEl);
-      if ((inputEl.value && inputEl.value.trim()) || activeExerciseCatalogFilter) {
-        updateExerciseSuggestions(inputEl.value, inputEl.id, dropdownId);
-      }
+      updateExerciseSuggestions(inputEl.value || '', inputEl.id, dropdownId);
     }
 
     function handleExerciseInputKeydown(e, inputId, dropdownId) {
@@ -4669,6 +4931,11 @@ if (typeof window !== 'undefined') {
           }
         });
       }
+
+      const initialEx = document.getElementById('exercise-name-input')?.value;
+      if (initialEx) {
+        updateExercisePreviousWorkoutMetric(initialEx);
+      }
     }
 
     function handleExerciseInput(val) {
@@ -4677,6 +4944,8 @@ if (typeof window !== 'undefined') {
         scrollExerciseInputIntoView(inputEl);
         updateExerciseSuggestions(val, 'exercise-name-input', 'exercise-suggestions-dropdown');
       }
+
+      updateExercisePreviousWorkoutMetric(val);
 
       if (typeof resolveExerciseMuscles === 'function') {
         const profile = resolveExerciseMuscles(val);
@@ -5573,7 +5842,7 @@ if (typeof window !== 'undefined') {
             badgeEl.innerText = "Ready to Lift!";
           }
           if (captionEl) {
-            captionEl.innerHTML = `<span class="text-emerald-300 font-bold">Target recovery reached (${targetRest}s).</span> Tap "Start Set ${nextNum}" to lift!`;
+            captionEl.innerHTML = `<span class="text-emerald-300 font-bold">Target recovery reached (${targetRest}s).</span> Tap "Log Set ${nextNum}" when ready!`;
           }
           banner.classList.add('border-emerald-400', 'shadow-emerald-500/30');
         } else {
@@ -5582,7 +5851,7 @@ if (typeof window !== 'undefined') {
             badgeEl.innerText = `Resting (${targetRest}s target)`;
           }
           if (captionEl) {
-            captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Start Set ${nextNum}" when ready.`;
+            captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Log Set ${nextNum}" when ready.`;
           }
           banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
         }
@@ -5603,16 +5872,17 @@ if (typeof window !== 'undefined') {
       }
 
       if (startBtn && startLabel && startIcon) {
+        startBtn.className = "hidden";
+        if (startBtn.classList && typeof startBtn.classList.add === 'function') {
+          startBtn.classList.add('hidden');
+        }
         if (isSetInProgress) {
-          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-amber-500/50 bg-amber-500/20 text-amber-300 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3 animate-pulse";
           startIcon.className = "fa-solid fa-stopwatch text-amber-400 text-lg";
           startLabel.innerText = `Set ${nextSetNum} in Progress (${formatDurationSecs(activeSetElapsedSeconds)})`;
         } else if (isRestTimerRunning) {
-          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3 shadow-emerald-500/25";
           startIcon.className = "fa-solid fa-play text-slate-950 text-lg";
           startLabel.innerText = `Start Set ${nextSetNum} (End Rest)`;
         } else {
-          startBtn.className = "font-black py-4 px-6 rounded-2xl shadow-xl border-2 border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-base sm:text-lg active:scale-[0.98] transition flex items-center justify-center gap-3";
           startIcon.className = "fa-solid fa-play text-lg";
           startLabel.innerText = `Start Set ${nextSetNum}`;
         }
@@ -5763,6 +6033,7 @@ if (typeof window !== 'undefined') {
       try {
         startRestTimer();
         updateSetControlsUI();
+        updateExercisePreviousWorkoutMetric(exerciseName);
       } catch (err) {
         console.error('Error starting rest timer:', err);
       }
@@ -6733,6 +7004,9 @@ if (typeof window !== 'undefined') {
 
     if (typeof window !== 'undefined') {
       window.filterExerciseCatalog = filterExerciseCatalog;
+      window.getRecentExercises = getRecentExercises;
+      window.getPreviousWorkoutExerciseMetric = getPreviousWorkoutExerciseMetric;
+      window.updateExercisePreviousWorkoutMetric = updateExercisePreviousWorkoutMetric;
       window.updateExerciseSuggestions = updateExerciseSuggestions;
       window.selectExerciseSuggestion = selectExerciseSuggestion;
       window.closeExerciseSuggestions = closeExerciseSuggestions;
@@ -17590,6 +17864,87 @@ runSuite("24. Frictionless Sign-In UX & Decluttered Top Feed", () => {
   // 5. Clean up session sets
   currentSessionSets = [];
   renderLoggedSets();
+});
+
+runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log Set", () => {
+  // 1. Exercise Ball Wood Chops in catalog
+  const woodChops = defaultCatalog.find(c => c.name === "Exercise Ball Wood Chops");
+  assert(woodChops !== undefined, "Exercise Ball Wood Chops exists in defaultCatalog");
+  assert(woodChops.implement === "Exercise Ball", "Exercise Ball Wood Chops implement is Exercise Ball");
+  assert(woodChops.muscle === "Core/Abs", "Exercise Ball Wood Chops primary muscle is Core/Abs");
+  assert(woodChops.secondary.includes("Shoulders"), "Exercise Ball Wood Chops secondary includes Shoulders");
+  assert(woodChops.secondary.includes("Back"), "Exercise Ball Wood Chops secondary includes Back");
+  assert(woodChops.secondary.includes("Quads"), "Exercise Ball Wood Chops secondary includes Quads");
+  assert(inferImplementFromExerciseName("Exercise Ball Wood Chops") === "Exercise Ball", "inferImplementFromExerciseName correctly identifies Exercise Ball");
+
+  // 2. Single consistent Log Set button
+  const logBtn = getOrCreateElement('btn-log-set');
+  const startBtn = getOrCreateElement('btn-start-set');
+  assert(logBtn !== null, "btn-log-set is present in DOM");
+  assert(startBtn !== null, "btn-start-set retained in DOM for backward-compatibility hooks");
+  updateSetControlsUI();
+  assert(startBtn.classList.contains('hidden'), "btn-start-set is hidden in UI favoring single consistent Log Set button");
+
+  // 3. Previous workout metrics
+  completedWorkoutsHistory = [
+    {
+      date: "2026-10-20",
+      workoutName: "Chest & Core Day",
+      sets: [
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Exercise Ball Wood Chops", weight: 0, reps: 15, implement: "Exercise Ball" }
+      ]
+    }
+  ];
+
+  const prevBench = getPreviousWorkoutExerciseMetric("Bench Press");
+  assert(prevBench !== null, "Previous workout metric found for Bench Press");
+  assert(prevBench.metric === "135 lb × 8 reps · 3 sets", "Bench Press metric matches '135 lb × 8 reps · 3 sets'");
+
+  const prevWoodChops = getPreviousWorkoutExerciseMetric("Exercise Ball Wood Chops");
+  assert(prevWoodChops !== null, "Previous workout metric found for Exercise Ball Wood Chops");
+  assert(prevWoodChops.metric === "15 reps · 1 set", "Wood Chops metric accurately formatted");
+
+  const prevNonExistent = getPreviousWorkoutExerciseMetric("Non Existent Lift 999");
+  assert(prevNonExistent === null, "Non-existent exercise returns null previous metric");
+
+  updateExercisePreviousWorkoutMetric("Bench Press");
+  const banner = getOrCreateElement('exercise-previous-workout-banner');
+  const metricSpan = getOrCreateElement('exercise-previous-workout-metric');
+  assert(!banner.classList.contains('hidden'), "Previous workout banner is visible when exercise metric exists");
+  assert(metricSpan.innerText === "135 lb × 8 reps · 3 sets", "Previous workout banner metric element displays correct metric");
+
+  updateExercisePreviousWorkoutMetric("");
+  assert(banner.classList.contains('hidden'), "Previous workout banner is hidden when exercise name is empty");
+
+  // 4. Exercise Suggestions: recents first, separator line, alphabetical catalog
+  currentSessionSets = [
+    { id: 101, exerciseName: "Barbell Squats", weight: 225, reps: 5, implement: "Barbell", muscle: "Quads" }
+  ];
+  const recents = getRecentExercises(6);
+  assert(Array.isArray(recents) && recents.length > 0, "getRecentExercises returns recent exercises");
+  assert(recents[0].name === "Barbell Squats", "Most recent active set is listed first");
+  assert(recents.some(r => r.name === "Bench Press"), "Recents includes Bench Press from completed workout history");
+
+  updateExerciseSuggestions("", "exercise-name-input", "exercise-suggestions-dropdown");
+  const dropdown = getOrCreateElement('exercise-suggestions-dropdown');
+  assert(!dropdown.classList.contains('hidden'), "Dropdown opens on tap/click with empty input");
+  assert(dropdown.innerHTML.includes("Recent Exercises"), "Dropdown includes Recent Exercises header first");
+  assert(dropdown.innerHTML.includes("All Exercises (A–Z)"), "Dropdown includes separator line with All Exercises (A–Z)");
+
+  // 5. Typography defaulted to Jakarta and no other options offered
+  localStorage.removeItem('showUp_font');
+  restoreFontPreferences();
+  assert(localStorage.getItem('showUp_font') === 'jakarta' || localStorage.getItem('showUp_font') === 'font-jakarta', "Default font is Jakarta");
+  updateFontUI('jakarta');
+  const outfitBtn = getOrCreateElement('font-btn-outfit');
+  assert(outfitBtn.classList.contains('hidden'), "Other typography options (Outfit) are hidden in UI");
+
+  // Cleanup
+  completedWorkoutsHistory = [];
+  currentSessionSets = [];
 });
 
 print("\n============================================================");

@@ -2264,6 +2264,87 @@ runSuite("24. Frictionless Sign-In UX & Decluttered Top Feed", () => {
   renderLoggedSets();
 });
 
+runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log Set", () => {
+  // 1. Exercise Ball Wood Chops in catalog
+  const woodChops = defaultCatalog.find(c => c.name === "Exercise Ball Wood Chops");
+  assert(woodChops !== undefined, "Exercise Ball Wood Chops exists in defaultCatalog");
+  assert(woodChops.implement === "Exercise Ball", "Exercise Ball Wood Chops implement is Exercise Ball");
+  assert(woodChops.muscle === "Core/Abs", "Exercise Ball Wood Chops primary muscle is Core/Abs");
+  assert(woodChops.secondary.includes("Shoulders"), "Exercise Ball Wood Chops secondary includes Shoulders");
+  assert(woodChops.secondary.includes("Back"), "Exercise Ball Wood Chops secondary includes Back");
+  assert(woodChops.secondary.includes("Quads"), "Exercise Ball Wood Chops secondary includes Quads");
+  assert(inferImplementFromExerciseName("Exercise Ball Wood Chops") === "Exercise Ball", "inferImplementFromExerciseName correctly identifies Exercise Ball");
+
+  // 2. Single consistent Log Set button
+  const logBtn = getOrCreateElement('btn-log-set');
+  const startBtn = getOrCreateElement('btn-start-set');
+  assert(logBtn !== null, "btn-log-set is present in DOM");
+  assert(startBtn !== null, "btn-start-set retained in DOM for backward-compatibility hooks");
+  updateSetControlsUI();
+  assert(startBtn.classList.contains('hidden'), "btn-start-set is hidden in UI favoring single consistent Log Set button");
+
+  // 3. Previous workout metrics
+  completedWorkoutsHistory = [
+    {
+      date: "2026-10-20",
+      workoutName: "Chest & Core Day",
+      sets: [
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Bench Press", weight: 135, reps: 8, implement: "Barbell" },
+        { exerciseName: "Exercise Ball Wood Chops", weight: 0, reps: 15, implement: "Exercise Ball" }
+      ]
+    }
+  ];
+
+  const prevBench = getPreviousWorkoutExerciseMetric("Bench Press");
+  assert(prevBench !== null, "Previous workout metric found for Bench Press");
+  assert(prevBench.metric === "135 lb × 8 reps · 3 sets", "Bench Press metric matches '135 lb × 8 reps · 3 sets'");
+
+  const prevWoodChops = getPreviousWorkoutExerciseMetric("Exercise Ball Wood Chops");
+  assert(prevWoodChops !== null, "Previous workout metric found for Exercise Ball Wood Chops");
+  assert(prevWoodChops.metric === "15 reps · 1 set", "Wood Chops metric accurately formatted");
+
+  const prevNonExistent = getPreviousWorkoutExerciseMetric("Non Existent Lift 999");
+  assert(prevNonExistent === null, "Non-existent exercise returns null previous metric");
+
+  updateExercisePreviousWorkoutMetric("Bench Press");
+  const banner = getOrCreateElement('exercise-previous-workout-banner');
+  const metricSpan = getOrCreateElement('exercise-previous-workout-metric');
+  assert(!banner.classList.contains('hidden'), "Previous workout banner is visible when exercise metric exists");
+  assert(metricSpan.innerText === "135 lb × 8 reps · 3 sets", "Previous workout banner metric element displays correct metric");
+
+  updateExercisePreviousWorkoutMetric("");
+  assert(banner.classList.contains('hidden'), "Previous workout banner is hidden when exercise name is empty");
+
+  // 4. Exercise Suggestions: recents first, separator line, alphabetical catalog
+  currentSessionSets = [
+    { id: 101, exerciseName: "Barbell Squats", weight: 225, reps: 5, implement: "Barbell", muscle: "Quads" }
+  ];
+  const recents = getRecentExercises(6);
+  assert(Array.isArray(recents) && recents.length > 0, "getRecentExercises returns recent exercises");
+  assert(recents[0].name === "Barbell Squats", "Most recent active set is listed first");
+  assert(recents.some(r => r.name === "Bench Press"), "Recents includes Bench Press from completed workout history");
+
+  updateExerciseSuggestions("", "exercise-name-input", "exercise-suggestions-dropdown");
+  const dropdown = getOrCreateElement('exercise-suggestions-dropdown');
+  assert(!dropdown.classList.contains('hidden'), "Dropdown opens on tap/click with empty input");
+  assert(dropdown.innerHTML.includes("Recent Exercises"), "Dropdown includes Recent Exercises header first");
+  assert(dropdown.innerHTML.includes("All Exercises (A–Z)"), "Dropdown includes separator line with All Exercises (A–Z)");
+
+  // 5. Typography defaulted to Jakarta and no other options offered
+  localStorage.removeItem('showUp_font');
+  restoreFontPreferences();
+  assert(localStorage.getItem('showUp_font') === 'jakarta' || localStorage.getItem('showUp_font') === 'font-jakarta', "Default font is Jakarta");
+  updateFontUI('jakarta');
+  const outfitBtn = getOrCreateElement('font-btn-outfit');
+  assert(outfitBtn.classList.contains('hidden'), "Other typography options (Outfit) are hidden in UI");
+
+  // Cleanup
+  completedWorkoutsHistory = [];
+  currentSessionSets = [];
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");
