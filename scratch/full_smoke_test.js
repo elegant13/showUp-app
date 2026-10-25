@@ -122,8 +122,32 @@ globalThis.sessionStorage = mockLocalStorage;
 globalThis.navigator = {
   userAgent: 'Mozilla/5.0 Mac',
   onLine: true,
-  geolocation: { getCurrentPosition: (success, error) => {} }
+  geolocation: { getCurrentPosition: (success, error) => {} },
+  vibrate: (pattern) => {
+    globalThis.__lastVibrate = pattern;
+    return true;
+  }
 };
+globalThis.AudioContext = function() {
+  return {
+    state: 'running',
+    currentTime: 0,
+    resume: () => {},
+    createOscillator: () => ({
+      type: 'sine',
+      frequency: { setValueAtTime: () => {} },
+      connect: () => {},
+      start: () => {},
+      stop: () => {}
+    }),
+    createGain: () => ({
+      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      connect: () => {}
+    }),
+    destination: {}
+  };
+};
+globalThis.webkitAudioContext = globalThis.AudioContext;
 globalThis.location = { href: 'http://localhost/', reload: () => {} };
 globalThis.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 globalThis.alert = (msg) => {};
@@ -266,6 +290,7 @@ function runSuite(name, fn) {
     let restTimerInterval = null;
     let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
     let currentSessionRestTarget = null; // Active rest target for current rest period (extendable via +30s)
+    let hasTriggeredRestRecoveryAlert = false; // Tracks whether recovery haptic and double bell ring alert has fired for current rest cycle
 
     // --- EXERCISE SHORTHAND ABBREVIATION DICTIONARY ---
     const EXERCISE_ABBREVIATIONS = {
@@ -1674,6 +1699,7 @@ if (typeof window !== 'undefined') {
         case 'light': navigator.vibrate(12); break;
         case 'medium': navigator.vibrate(25); break;
         case 'heavy': navigator.vibrate([35, 50, 35]); break;
+        case 'recovery': navigator.vibrate([60, 90, 80]); break;
       }
     }
 
@@ -2011,6 +2037,128 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    /**
+     * Synthesizes an authentic double bell ring ("ding-ding!") alert
+     * when rest recovery target is reached. Uses Web Audio API with fundamental
+     * bell resonance and acoustic chime overtones.
+     */
+    function playDoubleBellRing() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+
+        function createBellStrike(startTime, duration, gainLevel = 0.22) {
+          // Fundamental bell strike (A5 ~ 880 Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(880, startTime);
+          gain1.gain.setValueAtTime(gainLevel, startTime);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(startTime);
+          osc1.stop(startTime + duration);
+
+          // Octave bell harmonic (1760 Hz)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1760, startTime);
+          gain2.gain.setValueAtTime(gainLevel * 0.45, startTime);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.75));
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(startTime);
+          osc2.stop(startTime + (duration * 0.75));
+
+          // Metallic shimmer chime overtone (2793.8 Hz)
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'triangle';
+          osc3.frequency.setValueAtTime(2793.8, startTime);
+          gain3.gain.setValueAtTime(gainLevel * 0.2, startTime);
+          gain3.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.5));
+          osc3.connect(gain3);
+          gain3.connect(ctx.destination);
+          osc3.start(startTime);
+          osc3.stop(startTime + (duration * 0.5));
+        }
+
+        // Strike 1: "Ding"
+        createBellStrike(now, 0.45, 0.22);
+        // Strike 2: "Ding" (rings out longer to conclude the alert)
+        createBellStrike(now + 0.18, 0.75, 0.25);
+      } catch (e) {
+        console.warn("Rest timer double bell alert warning:", e);
+      }
+    }
+
+    function isRestSoundAlertEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_rest_sound_alert');
+        return val !== 'false';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function setRestSoundAlertEnabled(enabled) {
+      try {
+        localStorage.setItem('showUp_rest_sound_alert', enabled ? 'true' : 'false');
+      } catch (e) {}
+      updateRestSoundAlertUI();
+    }
+
+    function toggleRestSoundAlert() {
+      const next = !isRestSoundAlertEnabled();
+      setRestSoundAlertEnabled(next);
+      if (next && typeof playDoubleBellRing === 'function') {
+        playDoubleBellRing();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(next ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function toggleRestSoundAlertPref(checked) {
+      setRestSoundAlertEnabled(checked);
+      if (checked && typeof playDoubleBellRing === 'function') {
+        playDoubleBellRing();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(checked ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function updateRestSoundAlertUI() {
+      const enabled = isRestSoundAlertEnabled();
+      const bannerBtn = document.getElementById('btn-toggle-rest-sound');
+      const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
+      if (bannerBtn && bannerIcon) {
+        if (enabled) {
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerIcon.className = "fa-solid fa-bell";
+          bannerBtn.title = "Recovery alert sound: On (Click to mute)";
+        } else {
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerIcon.className = "fa-solid fa-bell-slash";
+          bannerBtn.title = "Recovery alert sound: Muted (Click to enable)";
+        }
+      }
+      const prefCheckbox = document.getElementById('pref-rest-sound-alert');
+      if (prefCheckbox) {
+        prefCheckbox.checked = enabled;
+      }
+    }
+
     function triggerSquadHaptic() {
       if (navigator.vibrate) {
         try {
@@ -2075,6 +2223,16 @@ if (typeof window !== 'undefined') {
       // Fresh session fixture without explicit timestamp: stamp with current time so it has a valid window
       m.workoutStartedAt = new Date().toISOString();
       return true;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.triggerHaptic = triggerHaptic;
+      window.playDoubleBellRing = playDoubleBellRing;
+      window.isRestSoundAlertEnabled = isRestSoundAlertEnabled;
+      window.setRestSoundAlertEnabled = setRestSoundAlertEnabled;
+      window.toggleRestSoundAlert = toggleRestSoundAlert;
+      window.toggleRestSoundAlertPref = toggleRestSoundAlertPref;
+      window.updateRestSoundAlertUI = updateRestSoundAlertUI;
     }
 
 
@@ -4165,6 +4323,10 @@ if (typeof window !== 'undefined') {
       const savedRest = localStorage.getItem('showUp_default_rest_time') || '90';
       if (restSelect) restSelect.value = savedRest;
 
+      if (typeof updateRestSoundAlertUI === 'function') {
+        updateRestSoundAlertUI();
+      }
+
       if (typeof renderQuickWeightChips === 'function') {
         const impSelect = document.getElementById('implement-select');
         renderQuickWeightChips(impSelect ? impSelect.value : 'Barbell');
@@ -5844,7 +6006,8 @@ if (typeof window !== 'undefined') {
           localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
             running: true,
             startTime: restTimerStartTime,
-            target: currentSessionRestTarget || getDefaultRestTimeSeconds()
+            target: currentSessionRestTarget || getDefaultRestTimeSeconds(),
+            hasTriggeredRecovery: hasTriggeredRestRecoveryAlert
           }));
         } else {
           localStorage.removeItem('showUp_rest_timer_data');
@@ -5864,9 +6027,11 @@ if (typeof window !== 'undefined') {
             restTimerStartTime = data.startTime;
             restTimerSeconds = elapsed;
             currentSessionRestTarget = data.target || null;
+            hasTriggeredRestRecoveryAlert = !!data.hasTriggeredRecovery;
             isRestTimerRunning = true;
             if (restTimerInterval) clearInterval(restTimerInterval);
             restTimerInterval = setInterval(tickRestTimer, 1000);
+            checkRestRecoveryThreshold();
             updateRestTimerUI();
             updateSetControlsUI();
           } else {
@@ -5879,11 +6044,13 @@ if (typeof window !== 'undefined') {
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
+      hasTriggeredRestRecoveryAlert = false;
       currentSessionRestTarget = getDefaultRestTimeSeconds();
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
       saveRestTimerState();
       restTimerInterval = setInterval(tickRestTimer, 1000);
+      checkRestRecoveryThreshold();
       updateRestTimerUI();
       updateSetControlsUI();
     }
@@ -5892,6 +6059,7 @@ if (typeof window !== 'undefined') {
       if (restTimerInterval) clearInterval(restTimerInterval);
       restTimerInterval = null;
       isRestTimerRunning = false;
+      hasTriggeredRestRecoveryAlert = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
       currentSessionRestTarget = null;
@@ -5900,9 +6068,35 @@ if (typeof window !== 'undefined') {
       updateSetControlsUI();
     }
 
+    function checkRestRecoveryThreshold() {
+      if (!isRestTimerRunning) return;
+      const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
+      if (restTimerSeconds >= targetRest && !hasTriggeredRestRecoveryAlert) {
+        hasTriggeredRestRecoveryAlert = true;
+        saveRestTimerState();
+
+        // 1. Recovery haptic alert (double pulse matching double bell ring)
+        if (typeof triggerHaptic === 'function') {
+          triggerHaptic('recovery');
+        } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try {
+            navigator.vibrate([60, 90, 80]);
+          } catch (e) {}
+        }
+
+        // 2. Optional double bell ring alert sound
+        if (typeof isRestSoundAlertEnabled === 'function' && isRestSoundAlertEnabled()) {
+          if (typeof playDoubleBellRing === 'function') {
+            playDoubleBellRing();
+          }
+        }
+      }
+    }
+
     function tickRestTimer() {
       if (!restTimerStartTime || !isRestTimerRunning) return;
       restTimerSeconds = Math.max(0, Math.floor((Date.now() - restTimerStartTime) / 1000));
+      checkRestRecoveryThreshold();
       updateRestTimerUI();
     }
 
@@ -5915,7 +6109,12 @@ if (typeof window !== 'undefined') {
       if (isRestTimerRunning) {
         const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
         currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
+        // If the new target exceeds current rest seconds, re-arm the alert
+        if (currentSessionRestTarget > restTimerSeconds) {
+          hasTriggeredRestRecoveryAlert = false;
+        }
         saveRestTimerState();
+        checkRestRecoveryThreshold();
         updateRestTimerUI();
         if (typeof showToast === 'function') {
           showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
@@ -5989,6 +6188,10 @@ if (typeof window !== 'undefined') {
             captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Log Set ${nextNum}" when ready.`;
           }
           banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
+        }
+
+        if (typeof updateRestSoundAlertUI === 'function') {
+          updateRestSoundAlertUI();
         }
       } else {
         banner.classList.add('hidden');
@@ -7202,6 +7405,13 @@ if (typeof window !== 'undefined') {
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
       window.getCurrentRestTarget = getCurrentRestTarget;
+      window.checkRestRecoveryThreshold = checkRestRecoveryThreshold;
+      window.startRestTimer = startRestTimer;
+      window.stopRestTimer = stopRestTimer;
+      window.adjustRestTimer = adjustRestTimer;
+      window.skipRestTimer = skipRestTimer;
+      window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
+      window.saveDefaultRestTimePref = saveDefaultRestTimePref;
     }
 
     if (typeof document !== 'undefined') {
@@ -18270,6 +18480,114 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   // Clean up
   if (isRestTimerRunning) stopRestTimer();
   currentSessionSets = [];
+});
+
+runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
+  // 1. Function existence
+  assert(typeof playDoubleBellRing === 'function', "playDoubleBellRing is a defined function");
+  assert(typeof isRestSoundAlertEnabled === 'function', "isRestSoundAlertEnabled is a defined function");
+  assert(typeof setRestSoundAlertEnabled === 'function', "setRestSoundAlertEnabled is a defined function");
+  assert(typeof toggleRestSoundAlert === 'function', "toggleRestSoundAlert is a defined function");
+  assert(typeof toggleRestSoundAlertPref === 'function', "toggleRestSoundAlertPref is a defined function");
+  assert(typeof updateRestSoundAlertUI === 'function', "updateRestSoundAlertUI is a defined function");
+  assert(typeof checkRestRecoveryThreshold === 'function', "checkRestRecoveryThreshold is a defined function");
+
+  // 2. DOM elements
+  const soundBtn = getOrCreateElement('btn-toggle-rest-sound');
+  const soundIcon = getOrCreateElement('btn-toggle-rest-sound-icon');
+  const prefCheckbox = getOrCreateElement('pref-rest-sound-alert');
+  assert(soundBtn !== null, "btn-toggle-rest-sound exists in DOM");
+  assert(soundIcon !== null, "btn-toggle-rest-sound-icon exists in DOM");
+  assert(prefCheckbox !== null, "pref-rest-sound-alert exists in DOM");
+
+  // 3. Preference behavior (defaults to true)
+  localStorage.removeItem('showUp_rest_sound_alert');
+  assert(isRestSoundAlertEnabled() === true, "Rest recovery sound alert is enabled by default");
+
+  setRestSoundAlertEnabled(false);
+  assert(isRestSoundAlertEnabled() === false, "Sound alert can be disabled");
+  assert(localStorage.getItem('showUp_rest_sound_alert') === 'false', "Preference persisted in localStorage as false");
+
+  setRestSoundAlertEnabled(true);
+  assert(isRestSoundAlertEnabled() === true, "Sound alert can be re-enabled");
+  assert(localStorage.getItem('showUp_rest_sound_alert') === 'true', "Preference persisted in localStorage as true");
+
+  // 4. Audio synthesis execution without error
+  let audioPlayed = false;
+  try {
+    playDoubleBellRing();
+    audioPlayed = true;
+  } catch (e) {
+    audioPlayed = false;
+  }
+  assert(audioPlayed === true, "playDoubleBellRing executes cleanly with Web Audio API");
+
+  // 5. Haptic pattern for recovery
+  globalThis.__lastVibrate = null;
+  triggerHaptic('recovery');
+  assert(Array.isArray(globalThis.__lastVibrate) && globalThis.__lastVibrate.length === 3, "triggerHaptic('recovery') fires a 3-part double pulse pattern");
+  assert(globalThis.__lastVibrate[0] === 60 && globalThis.__lastVibrate[1] === 90 && globalThis.__lastVibrate[2] === 80, "Pattern matches [60, 90, 80]");
+
+  // 6. Recovery alert triggers once when target rest is reached
+  globalThis.__lastVibrate = null;
+  let bellRingCalled = false;
+  const originalPlay = playDoubleBellRing;
+  globalThis.playDoubleBellRing = () => { bellRingCalled = true; };
+
+  localStorage.setItem('showUp_default_rest_time', '60');
+  startRestTimer(0);
+  assert(hasTriggeredRestRecoveryAlert === false, "Alert flag is initially false");
+  assert(bellRingCalled === false, "Sound has not fired at 0s");
+  assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
+
+  // Advance to 59s (under target)
+  restTimerSeconds = 59;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === false, "Alert does not fire before target (59s < 60s)");
+  assert(bellRingCalled === false, "Sound has not fired at 59s");
+
+  // Advance to 60s (target reached!)
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
+  assert(bellRingCalled === true, "Double bell ring sound alert triggered at target recovery");
+  assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
+
+  // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
+  bellRingCalled = false;
+  globalThis.__lastVibrate = null;
+  restTimerSeconds = 61;
+  checkRestRecoveryThreshold();
+  assert(bellRingCalled === false, "Alert sound does not re-trigger on subsequent seconds");
+  assert(globalThis.__lastVibrate === null, "Haptic does not re-trigger on subsequent seconds");
+
+  // 7. Extending rest target re-arms alert
+  adjustRestTimer(30); // Target is now 90s, current restTimerSeconds is 61s
+  assert(getCurrentRestTarget() === 90, "New target is 90s");
+  assert(hasTriggeredRestRecoveryAlert === false, "Extending rest target re-arms alert flag");
+
+  // Reaches extended target at 90s
+  restTimerSeconds = 90;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Alert triggers again at new extended target (90s)");
+  assert(bellRingCalled === true, "Double bell sound fired for extended target");
+
+  // 8. Optional alert: when muted, sound is suppressed but haptic still fires
+  bellRingCalled = false;
+  globalThis.__lastVibrate = null;
+  setRestSoundAlertEnabled(false);
+  startRestTimer(0);
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(bellRingCalled === false, "Sound alert is suppressed when disabled/muted");
+  assert(globalThis.__lastVibrate !== null, "Haptic alert still fires when sound is muted");
+
+  // Restore mocks and clean up
+  globalThis.playDoubleBellRing = originalPlay;
+  setRestSoundAlertEnabled(true);
+  stopRestTimer();
+  localStorage.removeItem('showUp_default_rest_time');
+  localStorage.removeItem('showUp_rest_sound_alert');
 });
 
 print("\n============================================================");

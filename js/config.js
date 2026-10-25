@@ -83,6 +83,7 @@
     let restTimerInterval = null;
     let currentPendingRestPeriod = 0; // Recorded rest period between prior set and newly started set
     let currentSessionRestTarget = null; // Active rest target for current rest period (extendable via +30s)
+    let hasTriggeredRestRecoveryAlert = false; // Tracks whether recovery haptic and double bell ring alert has fired for current rest cycle
 
     // --- EXERCISE SHORTHAND ABBREVIATION DICTIONARY ---
     const EXERCISE_ABBREVIATIONS = {

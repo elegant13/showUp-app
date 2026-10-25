@@ -225,8 +225,32 @@ globalThis.sessionStorage = mockLocalStorage;
 globalThis.navigator = {
   userAgent: 'Mozilla/5.0 Mac',
   onLine: true,
-  geolocation: { getCurrentPosition: (success, error) => {} }
+  geolocation: { getCurrentPosition: (success, error) => {} },
+  vibrate: (pattern) => {
+    globalThis.__lastVibrate = pattern;
+    return true;
+  }
 };
+globalThis.AudioContext = function() {
+  return {
+    state: 'running',
+    currentTime: 0,
+    resume: () => {},
+    createOscillator: () => ({
+      type: 'sine',
+      frequency: { setValueAtTime: () => {} },
+      connect: () => {},
+      start: () => {},
+      stop: () => {}
+    }),
+    createGain: () => ({
+      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      connect: () => {}
+    }),
+    destination: {}
+  };
+};
+globalThis.webkitAudioContext = globalThis.AudioContext;
 globalThis.location = { href: 'http://localhost/', reload: () => {} };
 globalThis.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 globalThis.alert = (msg) => {};
@@ -2490,6 +2514,114 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   // Clean up
   if (isRestTimerRunning) stopRestTimer();
   currentSessionSets = [];
+});
+
+runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
+  // 1. Function existence
+  assert(typeof playDoubleBellRing === 'function', "playDoubleBellRing is a defined function");
+  assert(typeof isRestSoundAlertEnabled === 'function', "isRestSoundAlertEnabled is a defined function");
+  assert(typeof setRestSoundAlertEnabled === 'function', "setRestSoundAlertEnabled is a defined function");
+  assert(typeof toggleRestSoundAlert === 'function', "toggleRestSoundAlert is a defined function");
+  assert(typeof toggleRestSoundAlertPref === 'function', "toggleRestSoundAlertPref is a defined function");
+  assert(typeof updateRestSoundAlertUI === 'function', "updateRestSoundAlertUI is a defined function");
+  assert(typeof checkRestRecoveryThreshold === 'function', "checkRestRecoveryThreshold is a defined function");
+
+  // 2. DOM elements
+  const soundBtn = getOrCreateElement('btn-toggle-rest-sound');
+  const soundIcon = getOrCreateElement('btn-toggle-rest-sound-icon');
+  const prefCheckbox = getOrCreateElement('pref-rest-sound-alert');
+  assert(soundBtn !== null, "btn-toggle-rest-sound exists in DOM");
+  assert(soundIcon !== null, "btn-toggle-rest-sound-icon exists in DOM");
+  assert(prefCheckbox !== null, "pref-rest-sound-alert exists in DOM");
+
+  // 3. Preference behavior (defaults to true)
+  localStorage.removeItem('showUp_rest_sound_alert');
+  assert(isRestSoundAlertEnabled() === true, "Rest recovery sound alert is enabled by default");
+
+  setRestSoundAlertEnabled(false);
+  assert(isRestSoundAlertEnabled() === false, "Sound alert can be disabled");
+  assert(localStorage.getItem('showUp_rest_sound_alert') === 'false', "Preference persisted in localStorage as false");
+
+  setRestSoundAlertEnabled(true);
+  assert(isRestSoundAlertEnabled() === true, "Sound alert can be re-enabled");
+  assert(localStorage.getItem('showUp_rest_sound_alert') === 'true', "Preference persisted in localStorage as true");
+
+  // 4. Audio synthesis execution without error
+  let audioPlayed = false;
+  try {
+    playDoubleBellRing();
+    audioPlayed = true;
+  } catch (e) {
+    audioPlayed = false;
+  }
+  assert(audioPlayed === true, "playDoubleBellRing executes cleanly with Web Audio API");
+
+  // 5. Haptic pattern for recovery
+  globalThis.__lastVibrate = null;
+  triggerHaptic('recovery');
+  assert(Array.isArray(globalThis.__lastVibrate) && globalThis.__lastVibrate.length === 3, "triggerHaptic('recovery') fires a 3-part double pulse pattern");
+  assert(globalThis.__lastVibrate[0] === 60 && globalThis.__lastVibrate[1] === 90 && globalThis.__lastVibrate[2] === 80, "Pattern matches [60, 90, 80]");
+
+  // 6. Recovery alert triggers once when target rest is reached
+  globalThis.__lastVibrate = null;
+  let bellRingCalled = false;
+  const originalPlay = playDoubleBellRing;
+  globalThis.playDoubleBellRing = () => { bellRingCalled = true; };
+
+  localStorage.setItem('showUp_default_rest_time', '60');
+  startRestTimer(0);
+  assert(hasTriggeredRestRecoveryAlert === false, "Alert flag is initially false");
+  assert(bellRingCalled === false, "Sound has not fired at 0s");
+  assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
+
+  // Advance to 59s (under target)
+  restTimerSeconds = 59;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === false, "Alert does not fire before target (59s < 60s)");
+  assert(bellRingCalled === false, "Sound has not fired at 59s");
+
+  // Advance to 60s (target reached!)
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
+  assert(bellRingCalled === true, "Double bell ring sound alert triggered at target recovery");
+  assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
+
+  // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
+  bellRingCalled = false;
+  globalThis.__lastVibrate = null;
+  restTimerSeconds = 61;
+  checkRestRecoveryThreshold();
+  assert(bellRingCalled === false, "Alert sound does not re-trigger on subsequent seconds");
+  assert(globalThis.__lastVibrate === null, "Haptic does not re-trigger on subsequent seconds");
+
+  // 7. Extending rest target re-arms alert
+  adjustRestTimer(30); // Target is now 90s, current restTimerSeconds is 61s
+  assert(getCurrentRestTarget() === 90, "New target is 90s");
+  assert(hasTriggeredRestRecoveryAlert === false, "Extending rest target re-arms alert flag");
+
+  // Reaches extended target at 90s
+  restTimerSeconds = 90;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Alert triggers again at new extended target (90s)");
+  assert(bellRingCalled === true, "Double bell sound fired for extended target");
+
+  // 8. Optional alert: when muted, sound is suppressed but haptic still fires
+  bellRingCalled = false;
+  globalThis.__lastVibrate = null;
+  setRestSoundAlertEnabled(false);
+  startRestTimer(0);
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(bellRingCalled === false, "Sound alert is suppressed when disabled/muted");
+  assert(globalThis.__lastVibrate !== null, "Haptic alert still fires when sound is muted");
+
+  // Restore mocks and clean up
+  globalThis.playDoubleBellRing = originalPlay;
+  setRestSoundAlertEnabled(true);
+  stopRestTimer();
+  localStorage.removeItem('showUp_default_rest_time');
+  localStorage.removeItem('showUp_rest_sound_alert');
 });
 
 print("\\n============================================================");

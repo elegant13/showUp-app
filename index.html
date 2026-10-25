@@ -874,6 +874,14 @@
 
             <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
+                <span class="text-xs text-slate-300 block">Rest Recovery Sound</span>
+                <span class="text-[10px] text-slate-500">Double bell ring alert when target is reached</span>
+              </div>
+              <input type="checkbox" id="pref-rest-sound-alert" onchange="toggleRestSoundAlertPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
                 <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
                 <span class="text-[10px] text-slate-500">Keep HR card collapsed by default</span>
               </div>
@@ -2828,6 +2836,9 @@
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
+              <button id="btn-toggle-rest-sound" type="button" onclick="toggleRestSoundAlert()" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center" title="Recovery alert sound: On (Click to mute)">
+                <i id="btn-toggle-rest-sound-icon" class="fa-solid fa-bell"></i>
+              </button>
               <button type="button" onclick="triggerHaptic('light'); adjustRestTimer(30)" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl transition active:scale-95 shadow" title="Add 30 seconds rest">
                 +30s
               </button>

@@ -125,6 +125,10 @@
       const savedRest = localStorage.getItem('showUp_default_rest_time') || '90';
       if (restSelect) restSelect.value = savedRest;
 
+      if (typeof updateRestSoundAlertUI === 'function') {
+        updateRestSoundAlertUI();
+      }
+
       if (typeof renderQuickWeightChips === 'function') {
         const impSelect = document.getElementById('implement-select');
         renderQuickWeightChips(impSelect ? impSelect.value : 'Barbell');
@@ -1804,7 +1808,8 @@
           localStorage.setItem('showUp_rest_timer_data', JSON.stringify({
             running: true,
             startTime: restTimerStartTime,
-            target: currentSessionRestTarget || getDefaultRestTimeSeconds()
+            target: currentSessionRestTarget || getDefaultRestTimeSeconds(),
+            hasTriggeredRecovery: hasTriggeredRestRecoveryAlert
           }));
         } else {
           localStorage.removeItem('showUp_rest_timer_data');
@@ -1824,9 +1829,11 @@
             restTimerStartTime = data.startTime;
             restTimerSeconds = elapsed;
             currentSessionRestTarget = data.target || null;
+            hasTriggeredRestRecoveryAlert = !!data.hasTriggeredRecovery;
             isRestTimerRunning = true;
             if (restTimerInterval) clearInterval(restTimerInterval);
             restTimerInterval = setInterval(tickRestTimer, 1000);
+            checkRestRecoveryThreshold();
             updateRestTimerUI();
             updateSetControlsUI();
           } else {
@@ -1839,11 +1846,13 @@
     function startRestTimer(initialSeconds = 0) {
       if (restTimerInterval) clearInterval(restTimerInterval);
       isRestTimerRunning = true;
+      hasTriggeredRestRecoveryAlert = false;
       currentSessionRestTarget = getDefaultRestTimeSeconds();
       restTimerSeconds = initialSeconds;
       restTimerStartTime = Date.now() - (initialSeconds * 1000);
       saveRestTimerState();
       restTimerInterval = setInterval(tickRestTimer, 1000);
+      checkRestRecoveryThreshold();
       updateRestTimerUI();
       updateSetControlsUI();
     }
@@ -1852,6 +1861,7 @@
       if (restTimerInterval) clearInterval(restTimerInterval);
       restTimerInterval = null;
       isRestTimerRunning = false;
+      hasTriggeredRestRecoveryAlert = false;
       restTimerStartTime = null;
       restTimerSeconds = 0;
       currentSessionRestTarget = null;
@@ -1860,9 +1870,35 @@
       updateSetControlsUI();
     }
 
+    function checkRestRecoveryThreshold() {
+      if (!isRestTimerRunning) return;
+      const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
+      if (restTimerSeconds >= targetRest && !hasTriggeredRestRecoveryAlert) {
+        hasTriggeredRestRecoveryAlert = true;
+        saveRestTimerState();
+
+        // 1. Recovery haptic alert (double pulse matching double bell ring)
+        if (typeof triggerHaptic === 'function') {
+          triggerHaptic('recovery');
+        } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          try {
+            navigator.vibrate([60, 90, 80]);
+          } catch (e) {}
+        }
+
+        // 2. Optional double bell ring alert sound
+        if (typeof isRestSoundAlertEnabled === 'function' && isRestSoundAlertEnabled()) {
+          if (typeof playDoubleBellRing === 'function') {
+            playDoubleBellRing();
+          }
+        }
+      }
+    }
+
     function tickRestTimer() {
       if (!restTimerStartTime || !isRestTimerRunning) return;
       restTimerSeconds = Math.max(0, Math.floor((Date.now() - restTimerStartTime) / 1000));
+      checkRestRecoveryThreshold();
       updateRestTimerUI();
     }
 
@@ -1875,7 +1911,12 @@
       if (isRestTimerRunning) {
         const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
         currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
+        // If the new target exceeds current rest seconds, re-arm the alert
+        if (currentSessionRestTarget > restTimerSeconds) {
+          hasTriggeredRestRecoveryAlert = false;
+        }
         saveRestTimerState();
+        checkRestRecoveryThreshold();
         updateRestTimerUI();
         if (typeof showToast === 'function') {
           showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
@@ -1949,6 +1990,10 @@
             captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Log Set ${nextNum}" when ready.`;
           }
           banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
+        }
+
+        if (typeof updateRestSoundAlertUI === 'function') {
+          updateRestSoundAlertUI();
         }
       } else {
         banner.classList.add('hidden');
@@ -3162,6 +3207,13 @@
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
       window.getCurrentRestTarget = getCurrentRestTarget;
+      window.checkRestRecoveryThreshold = checkRestRecoveryThreshold;
+      window.startRestTimer = startRestTimer;
+      window.stopRestTimer = stopRestTimer;
+      window.adjustRestTimer = adjustRestTimer;
+      window.skipRestTimer = skipRestTimer;
+      window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
+      window.saveDefaultRestTimePref = saveDefaultRestTimePref;
     }
 
     if (typeof document !== 'undefined') {

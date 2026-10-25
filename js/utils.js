@@ -76,6 +76,7 @@
         case 'light': navigator.vibrate(12); break;
         case 'medium': navigator.vibrate(25); break;
         case 'heavy': navigator.vibrate([35, 50, 35]); break;
+        case 'recovery': navigator.vibrate([60, 90, 80]); break;
       }
     }
 
@@ -413,6 +414,128 @@
       }
     }
 
+    /**
+     * Synthesizes an authentic double bell ring ("ding-ding!") alert
+     * when rest recovery target is reached. Uses Web Audio API with fundamental
+     * bell resonance and acoustic chime overtones.
+     */
+    function playDoubleBellRing() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+
+        function createBellStrike(startTime, duration, gainLevel = 0.22) {
+          // Fundamental bell strike (A5 ~ 880 Hz)
+          const osc1 = ctx.createOscillator();
+          const gain1 = ctx.createGain();
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(880, startTime);
+          gain1.gain.setValueAtTime(gainLevel, startTime);
+          gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+          osc1.connect(gain1);
+          gain1.connect(ctx.destination);
+          osc1.start(startTime);
+          osc1.stop(startTime + duration);
+
+          // Octave bell harmonic (1760 Hz)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(1760, startTime);
+          gain2.gain.setValueAtTime(gainLevel * 0.45, startTime);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.75));
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(startTime);
+          osc2.stop(startTime + (duration * 0.75));
+
+          // Metallic shimmer chime overtone (2793.8 Hz)
+          const osc3 = ctx.createOscillator();
+          const gain3 = ctx.createGain();
+          osc3.type = 'triangle';
+          osc3.frequency.setValueAtTime(2793.8, startTime);
+          gain3.gain.setValueAtTime(gainLevel * 0.2, startTime);
+          gain3.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.5));
+          osc3.connect(gain3);
+          gain3.connect(ctx.destination);
+          osc3.start(startTime);
+          osc3.stop(startTime + (duration * 0.5));
+        }
+
+        // Strike 1: "Ding"
+        createBellStrike(now, 0.45, 0.22);
+        // Strike 2: "Ding" (rings out longer to conclude the alert)
+        createBellStrike(now + 0.18, 0.75, 0.25);
+      } catch (e) {
+        console.warn("Rest timer double bell alert warning:", e);
+      }
+    }
+
+    function isRestSoundAlertEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_rest_sound_alert');
+        return val !== 'false';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function setRestSoundAlertEnabled(enabled) {
+      try {
+        localStorage.setItem('showUp_rest_sound_alert', enabled ? 'true' : 'false');
+      } catch (e) {}
+      updateRestSoundAlertUI();
+    }
+
+    function toggleRestSoundAlert() {
+      const next = !isRestSoundAlertEnabled();
+      setRestSoundAlertEnabled(next);
+      if (next && typeof playDoubleBellRing === 'function') {
+        playDoubleBellRing();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(next ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function toggleRestSoundAlertPref(checked) {
+      setRestSoundAlertEnabled(checked);
+      if (checked && typeof playDoubleBellRing === 'function') {
+        playDoubleBellRing();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(checked ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function updateRestSoundAlertUI() {
+      const enabled = isRestSoundAlertEnabled();
+      const bannerBtn = document.getElementById('btn-toggle-rest-sound');
+      const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
+      if (bannerBtn && bannerIcon) {
+        if (enabled) {
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerIcon.className = "fa-solid fa-bell";
+          bannerBtn.title = "Recovery alert sound: On (Click to mute)";
+        } else {
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerIcon.className = "fa-solid fa-bell-slash";
+          bannerBtn.title = "Recovery alert sound: Muted (Click to enable)";
+        }
+      }
+      const prefCheckbox = document.getElementById('pref-rest-sound-alert');
+      if (prefCheckbox) {
+        prefCheckbox.checked = enabled;
+      }
+    }
+
     function triggerSquadHaptic() {
       if (navigator.vibrate) {
         try {
@@ -477,5 +600,15 @@
       // Fresh session fixture without explicit timestamp: stamp with current time so it has a valid window
       m.workoutStartedAt = new Date().toISOString();
       return true;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.triggerHaptic = triggerHaptic;
+      window.playDoubleBellRing = playDoubleBellRing;
+      window.isRestSoundAlertEnabled = isRestSoundAlertEnabled;
+      window.setRestSoundAlertEnabled = setRestSoundAlertEnabled;
+      window.toggleRestSoundAlert = toggleRestSoundAlert;
+      window.toggleRestSoundAlertPref = toggleRestSoundAlertPref;
+      window.updateRestSoundAlertUI = updateRestSoundAlertUI;
     }
 
