@@ -76,7 +76,7 @@
         case 'light': navigator.vibrate(12); break;
         case 'medium': navigator.vibrate(25); break;
         case 'heavy': navigator.vibrate([35, 50, 35]); break;
-        case 'recovery': navigator.vibrate([60, 90, 80]); break;
+        case 'recovery': navigator.vibrate([70, 100, 90]); break;
       }
     }
 
@@ -415,9 +415,10 @@
     }
 
     /**
-     * Synthesizes an authentic double bell ring ("ding-ding!") alert
-     * when rest recovery target is reached. Uses Web Audio API with fundamental
-     * bell resonance and acoustic chime overtones.
+     * Synthesizes an authentic boxing arena end-of-round double bell ("CLANG! ... CLANG!")
+     * alert when rest recovery target is reached. Uses Web Audio API with cast bronze
+     * bell acoustics: deep hum, detuned beating fundamental, tierce, nominal overtones,
+     * and a metallic hammer impact transient.
      */
     function playDoubleBellRing() {
       try {
@@ -429,50 +430,65 @@
         }
         const now = ctx.currentTime;
 
-        function createBellStrike(startTime, duration, gainLevel = 0.22) {
-          // Fundamental bell strike (A5 ~ 880 Hz)
-          const osc1 = ctx.createOscillator();
-          const gain1 = ctx.createGain();
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(880, startTime);
-          gain1.gain.setValueAtTime(gainLevel, startTime);
-          gain1.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-          osc1.connect(gain1);
-          gain1.connect(ctx.destination);
-          osc1.start(startTime);
-          osc1.stop(startTime + duration);
+        function createBoxingBellStrike(startTime, duration, strikeLevel = 0.35) {
+          // Master strike gain envelope
+          const masterGain = ctx.createGain();
+          masterGain.gain.setValueAtTime(strikeLevel, startTime);
+          masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+          masterGain.connect(ctx.destination);
 
-          // Octave bell harmonic (1760 Hz)
-          const osc2 = ctx.createOscillator();
-          const gain2 = ctx.createGain();
-          osc2.type = 'sine';
-          osc2.frequency.setValueAtTime(1760, startTime);
-          gain2.gain.setValueAtTime(gainLevel * 0.45, startTime);
-          gain2.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.75));
-          osc2.connect(gain2);
-          gain2.connect(ctx.destination);
-          osc2.start(startTime);
-          osc2.stop(startTime + (duration * 0.75));
+          // Authentic cast arena bell partials: [multiplier, relativeGain, decayRatio, type]
+          const bellPartials = [
+            { mult: 0.5, gain: 0.40, decay: 0.95, type: 'sine' },      // Deep hum tone (~218 Hz)
+            { mult: 1.0, gain: 0.85, decay: 1.00, type: 'sine' },      // Strike tone fundamental (~436 Hz)
+            { mult: 1.006, gain: 0.70, decay: 0.95, type: 'sine' },    // Detuned beating chorus (vibrating bronze)
+            { mult: 1.21, gain: 0.45, decay: 0.80, type: 'sine' },     // Tierce (minor third ~528 Hz)
+            { mult: 1.52, gain: 0.40, decay: 0.75, type: 'sine' },     // Quint (~662 Hz)
+            { mult: 2.00, gain: 0.55, decay: 0.70, type: 'sine' },     // Nominal octave (~872 Hz)
+            { mult: 2.76, gain: 0.35, decay: 0.50, type: 'triangle' }, // Decime metallic gong ring (~1203 Hz)
+            { mult: 3.92, gain: 0.28, decay: 0.35, type: 'triangle' }, // High arena clang (~1709 Hz)
+            { mult: 5.40, gain: 0.18, decay: 0.20, type: 'triangle' }  // Sharp hammer strike overtone (~2354 Hz)
+          ];
 
-          // Metallic shimmer chime overtone (2793.8 Hz)
-          const osc3 = ctx.createOscillator();
-          const gain3 = ctx.createGain();
-          osc3.type = 'triangle';
-          osc3.frequency.setValueAtTime(2793.8, startTime);
-          gain3.gain.setValueAtTime(gainLevel * 0.2, startTime);
-          gain3.gain.exponentialRampToValueAtTime(0.0001, startTime + (duration * 0.5));
-          osc3.connect(gain3);
-          gain3.connect(ctx.destination);
-          osc3.start(startTime);
-          osc3.stop(startTime + (duration * 0.5));
+          const baseFreq = 436; // A4 standard boxing bout bell pitch
+
+          bellPartials.forEach(p => {
+            const osc = ctx.createOscillator();
+            const partGain = ctx.createGain();
+            osc.type = p.type;
+            osc.frequency.setValueAtTime(baseFreq * p.mult, startTime);
+
+            const partDuration = Math.max(0.08, duration * p.decay);
+            partGain.gain.setValueAtTime(p.gain, startTime);
+            partGain.gain.exponentialRampToValueAtTime(0.0001, startTime + partDuration);
+
+            osc.connect(partGain);
+            partGain.connect(masterGain);
+            osc.start(startTime);
+            osc.stop(startTime + partDuration);
+          });
+
+          // Physical metallic hammer strike impact transient
+          try {
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.type = 'square';
+            clickOsc.frequency.setValueAtTime(1400, startTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(140, startTime + 0.03);
+            clickGain.gain.setValueAtTime(0.35, startTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.03);
+            clickOsc.connect(clickGain);
+            clickGain.connect(masterGain);
+            clickOsc.start(startTime);
+            clickOsc.stop(startTime + 0.035);
+          } catch (e) {}
         }
 
-        // Strike 1: "Ding"
-        createBellStrike(now, 0.45, 0.22);
-        // Strike 2: "Ding" (rings out longer to conclude the alert)
-        createBellStrike(now + 0.18, 0.75, 0.25);
+        // Boxing round end: Rhythmic double strike (CLANG! ... CLANG!)
+        createBoxingBellStrike(now, 1.1, 0.38);
+        createBoxingBellStrike(now + 0.28, 1.8, 0.42);
       } catch (e) {
-        console.warn("Rest timer double bell alert warning:", e);
+        console.warn("Rest timer boxing bell alert warning:", e);
       }
     }
 
@@ -500,7 +516,7 @@
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(next ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+        showToast(next ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
       }
     }
 
@@ -511,7 +527,7 @@
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(checked ? "Rest alert sound: On (Double Bell)" : "Rest alert sound: Muted", "info");
+        showToast(checked ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
       }
     }
 
@@ -523,11 +539,11 @@
         if (enabled) {
           bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
           bannerIcon.className = "fa-solid fa-bell";
-          bannerBtn.title = "Recovery alert sound: On (Click to mute)";
+          bannerBtn.title = "Boxing bell alert: On (Click to mute)";
         } else {
           bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
           bannerIcon.className = "fa-solid fa-bell-slash";
-          bannerBtn.title = "Recovery alert sound: Muted (Click to enable)";
+          bannerBtn.title = "Boxing bell alert: Muted (Click to enable)";
         }
       }
       const prefCheckbox = document.getElementById('pref-rest-sound-alert');

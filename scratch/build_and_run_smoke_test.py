@@ -2560,7 +2560,7 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   globalThis.__lastVibrate = null;
   triggerHaptic('recovery');
   assert(Array.isArray(globalThis.__lastVibrate) && globalThis.__lastVibrate.length === 3, "triggerHaptic('recovery') fires a 3-part double pulse pattern");
-  assert(globalThis.__lastVibrate[0] === 60 && globalThis.__lastVibrate[1] === 90 && globalThis.__lastVibrate[2] === 80, "Pattern matches [60, 90, 80]");
+  assert(globalThis.__lastVibrate[0] === 70 && globalThis.__lastVibrate[1] === 100 && globalThis.__lastVibrate[2] === 90, "Pattern matches [70, 100, 90]");
 
   // 6. Recovery alert triggers once when target rest is reached
   globalThis.__lastVibrate = null;

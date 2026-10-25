@@ -1882,7 +1882,7 @@
           triggerHaptic('recovery');
         } else if (typeof navigator !== 'undefined' && navigator.vibrate) {
           try {
-            navigator.vibrate([60, 90, 80]);
+            navigator.vibrate([70, 100, 90]);
           } catch (e) {}
         }
 
