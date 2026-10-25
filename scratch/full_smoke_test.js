@@ -4835,6 +4835,10 @@ if (typeof window !== 'undefined') {
       let val = parseFloat(input.value) || 0;
       val = Math.max(0, val + delta);
       input.value = val;
+      if (typeof Event === 'function') {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
 
     function adjustReps(delta) {
@@ -4842,269 +4846,218 @@ if (typeof window !== 'undefined') {
       let val = parseInt(input.value) || 0;
       val = Math.max(1, val + delta);
       input.value = val;
+      if (typeof Event === 'function') {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    var scrollerSteps = { weight: 1, reps: 1 };
+    if (typeof window !== 'undefined') {
+      window.scrollerSteps = window.scrollerSteps || scrollerSteps;
+      window.setScrollerStep = setScrollerStep;
+      window.nudgeScroller = nudgeScroller;
+    }
+
+    function setScrollerStep(type, step) {
+      const numStep = Number(step) || 1;
+      if (typeof window !== 'undefined' && window.scrollerSteps) {
+        window.scrollerSteps[type] = numStep;
+      }
+      scrollerSteps[type] = numStep;
+
+      if (typeof document !== 'undefined') {
+        // Update explicit pill styles
+        const pills = document.querySelectorAll(`.step-pill-${type}`);
+        if (pills && pills.length) {
+          pills.forEach(pill => {
+            const pillStep = Number(pill.getAttribute('data-step'));
+            if (pillStep === numStep) {
+              pill.classList.add('active');
+              pill.classList.remove('text-slate-400');
+            } else {
+              pill.classList.remove('active');
+              pill.classList.add('text-slate-400');
+            }
+          });
+        }
+
+        // Update active step indicator
+        const hint = document.getElementById(`${type}-active-step-hint`);
+        if (hint) {
+          hint.innerText = `Step: ±${numStep}`;
+        }
+      }
+
+      if (typeof triggerHaptic === 'function') {
+        triggerHaptic('light');
+      }
+    }
+
+    function nudgeScroller(type, direction) {
+      if (typeof document === 'undefined') return;
+      const input = document.getElementById(`input-${type}`);
+      if (!input) return;
+
+      const currentStep = (typeof window !== 'undefined' && window.scrollerSteps && window.scrollerSteps[type])
+        ? window.scrollerSteps[type]
+        : (scrollerSteps[type] || 1);
+
+      let curVal = parseFloat(input.value) || 0;
+      const minVal = type === 'reps' ? 1 : 0;
+      let newVal = curVal + (direction * currentStep);
+
+      if (type === 'reps') {
+        newVal = Math.max(minVal, Math.round(newVal));
+      } else {
+        newVal = Math.max(minVal, Math.round(newVal * 10) / 10);
+      }
+      input.value = newVal;
+
+      if (typeof Event === 'function') {
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      if (typeof triggerHaptic === 'function') {
+        if (currentStep >= 5) {
+          triggerHaptic('medium');
+        } else {
+          triggerHaptic('light');
+        }
+      }
     }
 
     function initTouchScrollerInputs() {
       const scrollers = [
         {
+          type: 'weight',
           containerId: 'scroller-weight-container',
-          drumId: 'roller-drum-weight',
+          tapeId: 'tape-ruler-weight',
           inputId: 'input-weight',
-          badgeId: 'weight-step-badge',
-          prev2Id: 'drum-prev-2-weight',
-          prev1Id: 'drum-prev-1-weight',
-          next1Id: 'drum-next-1-weight',
-          next2Id: 'drum-next-2-weight',
-          min: 0,
-          type: 'weight'
+          min: 0
         },
         {
+          type: 'reps',
           containerId: 'scroller-reps-container',
-          drumId: 'roller-drum-reps',
+          tapeId: 'tape-ruler-reps',
           inputId: 'input-reps',
-          badgeId: 'reps-step-badge',
-          prev2Id: 'drum-prev-2-reps',
-          prev1Id: 'drum-prev-1-reps',
-          next1Id: 'drum-next-1-reps',
-          next2Id: 'drum-next-2-reps',
-          min: 1,
-          type: 'reps'
+          min: 1
         }
       ];
 
       scrollers.forEach(cfg => {
-        setupScrollerController(cfg);
+        setupTapeRuler(cfg);
       });
     }
 
-    function setupScrollerController(cfg) {
+    function setupTapeRuler(cfg) {
       if (typeof document === 'undefined') return;
-      const container = document.getElementById(cfg.containerId);
-      const drum = document.getElementById(cfg.drumId);
+      const track = document.getElementById(cfg.tapeId);
       const input = document.getElementById(cfg.inputId);
-      const badge = document.getElementById(cfg.badgeId);
-      if (!drum || !input) return;
+      if (!track || !input) return;
 
-      const barrel = drum.querySelector('.drum-barrel');
-      const prev2 = document.getElementById(cfg.prev2Id);
-      const prev1 = document.getElementById(cfg.prev1Id);
-      const next1 = document.getElementById(cfg.next1Id);
-      const next2 = document.getElementById(cfg.next2Id);
-
-      const badgeLabel = badge ? badge.querySelector('.step-label') : null;
-      const badgeDot = badge ? badge.querySelector('.step-dot') : null;
-
-      let isTracking = false;
-      let startY = 0;
-      let accumulatedDistance = 0;
-      let isLongPress = false;
-      let longPressTimer = null;
-      let progressiveTimer1 = null;
-      let progressiveTimer2 = null;
-      let currentIncrement = 1;
-      const STEP_PIXELS = 12; // High-precision, ultra-responsive 12px notch
-
-      function updateDrumSlots(val) {
-        const curVal = (val !== undefined) ? val : (parseFloat(input.value) || 0);
-        const step = currentIncrement;
-        const p1 = Math.max(cfg.min, curVal - step);
-        const p2 = Math.max(cfg.min, curVal - (step * 2));
-        const n1 = curVal + step;
-        const n2 = curVal + (step * 2);
-
-        const formatVal = (v) => {
-          if (cfg.type === 'reps') return Math.round(v);
-          return (Math.round(v * 10) / 10).toString();
-        };
-
-        if (prev1) prev1.innerText = (curVal > cfg.min) ? formatVal(p1) : '-';
-        if (prev2) prev2.innerText = (curVal > cfg.min + step) ? formatVal(p2) : '-';
-        if (next1) next1.innerText = formatVal(n1);
-        if (next2) next2.innerText = formatVal(n2);
-      }
-
-      function updateBadgeUI() {
-        if (!badge) return;
-        if (!isLongPress) {
-          badge.className = "step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none";
-          if (badgeLabel) badgeLabel.innerText = "±1";
-          if (badgeDot) badgeDot.className = "w-1.5 h-1.5 rounded-full bg-slate-500 step-dot";
-        } else {
-          badge.className = `step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border tracking-wider flex items-center gap-1 transition-all pointer-events-none turbo-${currentIncrement}`;
-          if (badgeLabel) badgeLabel.innerText = `Turbo ±${currentIncrement}`;
-          if (badgeDot) badgeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping step-dot";
-        }
-        updateDrumSlots();
-      }
-
-      function applyDelta(direction) {
-        let curVal = parseFloat(input.value) || 0;
-        const delta = direction * currentIncrement;
-        let newVal = curVal + delta;
-        if (cfg.type === 'reps') {
-          newVal = Math.max(cfg.min, Math.round(newVal));
-        } else {
-          newVal = Math.max(cfg.min, Math.round(newVal * 10) / 10);
-        }
-        input.value = newVal;
-        updateDrumSlots(newVal);
-
-        if (typeof Event === 'function') {
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-
-        if (typeof triggerHaptic === 'function') {
-          if (currentIncrement >= 5) {
-            triggerHaptic('medium');
+      const tape = track.querySelector('.tape-ruler-tape');
+      if (tape && tape.children.length === 0) {
+        const fragment = document.createDocumentFragment();
+        for (let i = -15; i <= 15; i++) {
+          const tick = document.createElement('div');
+          if (i % 5 === 0) {
+            tick.className = 'tape-tick-major';
+          } else if (i % 2 === 0) {
+            tick.className = 'tape-tick-minor';
           } else {
-            triggerHaptic('light');
+            tick.className = 'tape-tick-sub';
           }
+          fragment.appendChild(tick);
+        }
+        tape.appendChild(fragment);
+      }
+
+      let isDragging = false;
+      let startX = 0;
+      let currentShiftX = 0;
+      const STEP_PIXELS = 10;
+
+      function onStart(clientX) {
+        isDragging = true;
+        startX = clientX;
+        currentShiftX = 0;
+        track.classList.add('tape-dragging');
+        if (tape) tape.style.transition = 'none';
+      }
+
+      function onMove(clientX) {
+        if (!isDragging) return;
+        const dx = clientX - startX;
+        currentShiftX += dx;
+        startX = clientX;
+
+        if (tape) {
+          const clampedVisualShift = Math.max(-40, Math.min(40, currentShiftX));
+          tape.style.transform = `translateX(${clampedVisualShift}px)`;
+        }
+
+        if (Math.abs(currentShiftX) >= STEP_PIXELS) {
+          const direction = currentShiftX > 0 ? 1 : -1;
+          nudgeScroller(cfg.type, direction);
+          currentShiftX = currentShiftX % STEP_PIXELS;
         }
       }
 
-      function startTracking(clientY) {
-        isTracking = true;
-        startY = clientY;
-        accumulatedDistance = 0;
-        isLongPress = false;
-        currentIncrement = 1;
-
-        if (container) container.classList.add('scroller-active');
-        drum.classList.add('drum-active');
-        updateBadgeUI();
-
-        // Tier 1 Long-press trigger (280ms): switches to 2s
-        longPressTimer = setTimeout(() => {
-          if (!isTracking) return;
-          isLongPress = true;
-          currentIncrement = 2;
-          if (container) container.classList.add('scroller-turbo');
-          drum.classList.add('drum-turbo');
-          updateBadgeUI();
-          if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-
-          // Tier 2 Progressive escalation (after 400ms more, total 680ms): switches to 5s
-          progressiveTimer1 = setTimeout(() => {
-            if (!isTracking || !isLongPress) return;
-            currentIncrement = 5;
-            updateBadgeUI();
-            if (typeof triggerHaptic === 'function') triggerHaptic('light');
-
-            // Tier 3 Progressive escalation (after 450ms more, total 1130ms): switches to 10s
-            progressiveTimer2 = setTimeout(() => {
-              if (!isTracking || !isLongPress) return;
-              currentIncrement = 10;
-              updateBadgeUI();
-              if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-            }, 450);
-          }, 400);
-        }, 280);
-      }
-
-      function moveTracking(clientY) {
-        if (!isTracking) return;
-        const dy = startY - clientY; // Dragging UP = positive, DOWN = negative
-        accumulatedDistance = dy;
-
-        // Visual cylindrical 3D barrel translation
-        if (barrel && barrel.style) {
-          const shift = Math.max(-18, Math.min(18, -dy * 0.45));
-          barrel.style.transform = `translateY(${shift}px)`;
-        }
-
-        if (Math.abs(accumulatedDistance) >= STEP_PIXELS) {
-          const direction = accumulatedDistance > 0 ? 1 : -1;
-          applyDelta(direction);
-
-          startY = clientY;
-          accumulatedDistance = 0;
+      function onEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+        currentShiftX = 0;
+        track.classList.remove('tape-dragging');
+        if (tape) {
+          tape.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
+          tape.style.transform = 'translateX(0px)';
         }
       }
 
-      function stopTracking() {
-        if (!isTracking) return;
-        isTracking = false;
-        clearTimeout(longPressTimer);
-        clearTimeout(progressiveTimer1);
-        clearTimeout(progressiveTimer2);
-        longPressTimer = null;
-        progressiveTimer1 = null;
-        progressiveTimer2 = null;
-
-        isLongPress = false;
-        currentIncrement = 1;
-        if (container) {
-          container.classList.remove('scroller-active', 'scroller-turbo');
+      track.addEventListener('pointerdown', (e) => {
+        if (track.setPointerCapture) {
+          try { track.setPointerCapture(e.pointerId); } catch (_) {}
         }
-        drum.classList.remove('drum-active', 'drum-turbo');
-        if (barrel && barrel.style) {
-          barrel.style.transform = 'translateY(0px)';
-        }
-        updateBadgeUI();
-      }
-
-      // Initial populate
-      updateDrumSlots();
-
-      // Synchronize drum slots if input changes externally (e.g. repeatSet, manual input)
-      input.addEventListener('input', () => {
-        updateDrumSlots();
+        onStart(e.clientX);
       });
-      input.addEventListener('change', () => {
-        updateDrumSlots();
+      track.addEventListener('pointermove', (e) => {
+        onMove(e.clientX);
+      });
+      track.addEventListener('pointerup', (e) => {
+        if (track.releasePointerCapture) {
+          try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        onEnd();
+      });
+      track.addEventListener('pointercancel', (e) => {
+        if (track.releasePointerCapture) {
+          try { track.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        onEnd();
       });
 
-      // Touch Events on Drum
-      drum.addEventListener('touchstart', (e) => {
+      track.addEventListener('touchstart', (e) => {
         if (e.touches && e.touches.length > 0) {
-          startTracking(e.touches[0].clientY);
+          onStart(e.touches[0].clientX);
         }
       }, { passive: true });
-
-      drum.addEventListener('touchmove', (e) => {
+      track.addEventListener('touchmove', (e) => {
         if (e.touches && e.touches.length > 0) {
-          moveTracking(e.touches[0].clientY);
+          onMove(e.touches[0].clientX);
         }
       }, { passive: true });
+      track.addEventListener('touchend', onEnd, { passive: true });
+      track.addEventListener('touchcancel', onEnd, { passive: true });
 
-      drum.addEventListener('touchend', stopTracking, { passive: true });
-      drum.addEventListener('touchcancel', stopTracking, { passive: true });
-
-      // Pointer / Mouse Drag Events on Drum
-      drum.addEventListener('pointerdown', (e) => {
-        if (drum.setPointerCapture) {
-          try { drum.setPointerCapture(e.pointerId); } catch (_) {}
-        }
-        startTracking(e.clientY);
-      });
-
-      drum.addEventListener('pointermove', (e) => {
-        moveTracking(e.clientY);
-      });
-
-      drum.addEventListener('pointerup', (e) => {
-        if (drum.releasePointerCapture) {
-          try { drum.releasePointerCapture(e.pointerId); } catch (_) {}
-        }
-        stopTracking();
-      });
-
-      drum.addEventListener('pointercancel', (e) => {
-        if (drum.releasePointerCapture) {
-          try { drum.releasePointerCapture(e.pointerId); } catch (_) {}
-        }
-        stopTracking();
-      });
-
-      // Mouse Wheel on Drum
-      drum.addEventListener('wheel', (e) => {
+      const handleWheel = (e) => {
         if (e.preventDefault) e.preventDefault();
-        const dir = e.deltaY < 0 ? 1 : -1;
-        currentIncrement = (e.shiftKey || e.altKey) ? 5 : 1;
-        applyDelta(dir);
-        currentIncrement = 1;
-      }, { passive: false });
+        const dir = (e.deltaY < 0 || e.deltaX > 0) ? 1 : -1;
+        nudgeScroller(cfg.type, dir);
+      };
+      track.addEventListener('wheel', handleWheel, { passive: false });
+      input.addEventListener('wheel', handleWheel, { passive: false });
     }
 
     function adjustErgDistance(delta) {
@@ -6737,6 +6690,9 @@ if (typeof window !== 'undefined') {
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
       window.initTouchScrollerInputs = initTouchScrollerInputs;
+      window.setScrollerStep = setScrollerStep;
+      window.nudgeScroller = nudgeScroller;
+      window.scrollerSteps = window.scrollerSteps || scrollerSteps;
     }
 
     if (typeof document !== 'undefined') {
@@ -17465,14 +17421,25 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
 
-  // Vertical Roller Drum Inputs Tests
+  // Horizontal Tape Ruler & Explicit Step Selector Pills Tests
   assert(typeof initTouchScrollerInputs === 'function', "initTouchScrollerInputs is a defined function");
+  assert(typeof setScrollerStep === 'function', "setScrollerStep is a defined function");
+  assert(typeof nudgeScroller === 'function', "nudgeScroller is a defined function");
   assert(getOrCreateElement('scroller-weight-container') !== null, "Weight touch scroller container exists");
-  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists");
-  assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists");
+  assert(getOrCreateElement('tape-ruler-weight') !== null, "Weight tape ruler exists");
+  assert(getOrCreateElement('weight-step-pills') !== null, "Weight explicit step pills exist");
+  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists for backward compatibility");
+  assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists for backward compatibility");
   assert(getOrCreateElement('scroller-reps-container') !== null, "Reps touch scroller container exists");
-  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists");
+  assert(getOrCreateElement('tape-ruler-reps') !== null, "Reps tape ruler exists");
+  assert(getOrCreateElement('reps-step-pills') !== null, "Reps explicit step pills exist");
+  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists for backward compatibility");
   assert(getOrCreateElement('quick-plate-chips-wrapper') !== null, "Quick plate chips wrapper exists to retain backward-compatible test hooks");
+
+  setScrollerStep('weight', 5);
+  assert(window.scrollerSteps.weight === 5, "setScrollerStep correctly configures weight step to 5");
+  setScrollerStep('weight', 1);
+  assert(window.scrollerSteps.weight === 1, "setScrollerStep resets weight step to 1");
 
   // Rest Timer LocalStorage Persistence & Restoration Test
   startRestTimer(10);

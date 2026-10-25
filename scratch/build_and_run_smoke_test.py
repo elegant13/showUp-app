@@ -2148,14 +2148,25 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(Number(getOrCreateElement('input-weight').value) === 225, "repeatSet populates weight from previous set");
   assert(Number(getOrCreateElement('input-reps').value) === 8, "repeatSet populates reps from previous set");
 
-  // Vertical Roller Drum Inputs Tests
+  // Horizontal Tape Ruler & Explicit Step Selector Pills Tests
   assert(typeof initTouchScrollerInputs === 'function', "initTouchScrollerInputs is a defined function");
+  assert(typeof setScrollerStep === 'function', "setScrollerStep is a defined function");
+  assert(typeof nudgeScroller === 'function', "nudgeScroller is a defined function");
   assert(getOrCreateElement('scroller-weight-container') !== null, "Weight touch scroller container exists");
-  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists");
-  assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists");
+  assert(getOrCreateElement('tape-ruler-weight') !== null, "Weight tape ruler exists");
+  assert(getOrCreateElement('weight-step-pills') !== null, "Weight explicit step pills exist");
+  assert(getOrCreateElement('roller-drum-weight') !== null, "Weight roller drum exists for backward compatibility");
+  assert(getOrCreateElement('weight-step-badge') !== null, "Weight step mode badge exists for backward compatibility");
   assert(getOrCreateElement('scroller-reps-container') !== null, "Reps touch scroller container exists");
-  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists");
+  assert(getOrCreateElement('tape-ruler-reps') !== null, "Reps tape ruler exists");
+  assert(getOrCreateElement('reps-step-pills') !== null, "Reps explicit step pills exist");
+  assert(getOrCreateElement('roller-drum-reps') !== null, "Reps roller drum exists for backward compatibility");
   assert(getOrCreateElement('quick-plate-chips-wrapper') !== null, "Quick plate chips wrapper exists to retain backward-compatible test hooks");
+
+  setScrollerStep('weight', 5);
+  assert(window.scrollerSteps.weight === 5, "setScrollerStep correctly configures weight step to 5");
+  setScrollerStep('weight', 1);
+  assert(window.scrollerSteps.weight === 1, "setScrollerStep resets weight step to 1");
 
   // Rest Timer LocalStorage Persistence & Restoration Test
   startRestTimer(10);

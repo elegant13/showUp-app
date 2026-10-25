@@ -961,5 +961,104 @@ nav {
   opacity: 0.35;
 }
 
+/* ==========================================================================
+   Horizontal Tape Ruler & Explicit Increment Gear Selector Pills
+   Tactile Horizontal Scrolling, Calibrated 10px Notches & Direct Step Choice
+   ========================================================================== */
+
+.step-pill {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  transition: all 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.step-pill:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.step-pill.active {
+  background: var(--m3-primaryContainer) !important;
+  color: var(--m3-primary-light, #34d399) !important;
+  border-color: var(--m3-primary) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 10px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.35) !important;
+}
+
+.tape-ruler-track {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tape-ruler-track:active,
+.tape-ruler-track.tape-dragging {
+  border-color: var(--m3-primary) !important;
+  box-shadow: 0 0 16px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.25) !important;
+}
+
+.tape-vignette {
+  z-index: 10;
+  pointer-events: none;
+}
+
+.tape-vignette-left {
+  background: linear-gradient(to right, rgba(2, 6, 23, 0.98) 20%, transparent 100%);
+}
+
+.tape-vignette-right {
+  background: linear-gradient(to left, rgba(2, 6, 23, 0.98) 20%, transparent 100%);
+}
+
+.tape-center-needle {
+  background-color: var(--m3-primary);
+  box-shadow: 0 0 8px var(--m3-primary);
+  z-index: 15;
+}
+
+.tape-ruler-tape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: absolute;
+  width: 240%;
+  left: -70%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.tape-tick-major {
+  height: 22px;
+  width: 2px;
+  background-color: #94a3b8;
+  border-radius: 9999px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.tape-tick-minor {
+  height: 12px;
+  width: 1.5px;
+  background-color: #475569;
+  border-radius: 9999px;
+}
+
+.tape-tick-sub {
+  height: 7px;
+  width: 1px;
+  background-color: #334155;
+  border-radius: 9999px;
+}
+
+
 
 
