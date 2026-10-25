@@ -1642,6 +1642,99 @@
       } catch (e) {}
     }
 
+    // 1b. WORKOUT IN PROGRESS HUD (START TIME, COMPLETED EXERCISES, SETS LOGGED)
+    function getWorkoutSessionStartTime() {
+      try {
+        let stored = localStorage.getItem('showUp_workout_start_time');
+        if (stored) {
+          const ts = parseInt(stored, 10);
+          if (!isNaN(ts) && ts > 0) return ts;
+        }
+        if (typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets) && currentSessionSets.length > 0) {
+          const setTimestamps = currentSessionSets.map(s => s.id).filter(id => typeof id === 'number' && id > 1000000000);
+          if (setTimestamps.length > 0) {
+            const minSetTime = Math.min(...setTimestamps);
+            localStorage.setItem('showUp_workout_start_time', String(minSetTime));
+            return minSetTime;
+          }
+        }
+        const now = Date.now();
+        localStorage.setItem('showUp_workout_start_time', String(now));
+        return now;
+      } catch (e) {
+        return Date.now();
+      }
+    }
+
+    function formatWorkoutStartTime(timestamp) {
+      if (!timestamp) return 'Started --';
+      try {
+        const d = new Date(timestamp);
+        const timeStr = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+        return `Started ${timeStr}`;
+      } catch (e) {
+        return 'Started --';
+      }
+    }
+
+    function updateWorkoutSessionHUD() {
+      const startTimeEl = document.getElementById('workout-session-start-time');
+      const completedEl = document.getElementById('session-completed-exercises-display');
+      const setsLoggedEl = document.getElementById('session-sets-logged-display');
+
+      if (startTimeEl) {
+        const startTimeTs = getWorkoutSessionStartTime();
+        startTimeEl.innerText = formatWorkoutStartTime(startTimeTs);
+      }
+
+      const sets = (typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets)) ? currentSessionSets : [];
+      const setsCount = sets.length;
+
+      if (setsLoggedEl) {
+        setsLoggedEl.innerText = String(setsCount);
+      }
+
+      if (completedEl) {
+        const uniqueExercises = new Set(
+          sets.map(s => (s.exerciseName || '').trim().toLowerCase()).filter(Boolean)
+        );
+        const count = uniqueExercises.size;
+        completedEl.innerText = `${count} ${count === 1 ? 'exercise' : 'exercises'}`;
+      }
+    }
+
+    function toggleSessionOptionsMenu() {
+      const menu = document.getElementById('session-options-menu');
+      if (!menu) return;
+      menu.classList.toggle('hidden');
+    }
+
+    function resetWorkoutSession() {
+      if (typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) {
+        if (typeof confirm === 'function' && !confirm("Are you sure you want to reset this workout session? All logged sets for this session will be cleared.")) {
+          return;
+        }
+      }
+      currentSessionSets = [];
+      try {
+        localStorage.removeItem('showUp_active_workout_sets');
+        localStorage.removeItem('showUp_workout_start_time');
+        localStorage.removeItem('showUp_session_timer');
+      } catch (e) {}
+      if (typeof restartWorkoutTimer === 'function') {
+        workoutTimerSeconds = 0;
+        workoutTimerState = 'stopped';
+        if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+        workoutTimerInterval = null;
+        updateWorkoutTimerUI();
+      }
+      renderLoggedSets();
+      updateWorkoutSessionHUD();
+      if (typeof showToast === 'function') {
+        showToast("Workout session reset", "info");
+      }
+    }
+
     // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
     function startSet() {
       if (typeof triggerHaptic === 'function') triggerHaptic('medium');
@@ -2040,6 +2133,8 @@
       const container = document.getElementById('logged-sets-list');
       const badge = document.getElementById('set-count-badge');
       if (badge) badge.innerText = `${currentSessionSets.length} Sets`;
+
+      updateWorkoutSessionHUD();
 
       if (!container) return;
 
@@ -2771,6 +2866,7 @@
 
       currentSessionSets = [];
       localStorage.removeItem('showUp_active_workout_sets');
+      localStorage.removeItem('showUp_workout_start_time');
       workoutTimerSeconds = 0;
       workoutTimerState = 'stopped';
       saveWorkoutTimerState();
@@ -2994,14 +3090,29 @@
       window.setScrollerStep = setScrollerStep;
       window.nudgeScroller = nudgeScroller;
       window.scrollerSteps = window.scrollerSteps || scrollerSteps;
+      window.getWorkoutSessionStartTime = getWorkoutSessionStartTime;
+      window.formatWorkoutStartTime = formatWorkoutStartTime;
+      window.updateWorkoutSessionHUD = updateWorkoutSessionHUD;
+      window.toggleSessionOptionsMenu = toggleSessionOptionsMenu;
+      window.resetWorkoutSession = resetWorkoutSession;
     }
 
     if (typeof document !== 'undefined') {
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
         initTouchScrollerInputs();
+        updateWorkoutSessionHUD();
       } else {
         document.addEventListener('DOMContentLoaded', () => {
           initTouchScrollerInputs();
+          updateWorkoutSessionHUD();
         });
       }
+
+      document.addEventListener('click', (e) => {
+        const menu = document.getElementById('session-options-menu');
+        const btn = document.getElementById('session-options-btn');
+        if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+          menu.classList.add('hidden');
+        }
+      });
     }

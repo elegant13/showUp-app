@@ -93,6 +93,13 @@ def generate_and_run_smoke_test():
         print("[FAIL] Header settings button with title='Settings' missing in HTML")
         return False
 
+    # 5. Check Workout in Progress HUD in HTML
+    if 'id="workout-session-hud"' in html and 'Workout in progress' in html:
+        print("[PASS] Workout session HUD with 'Workout in progress' verified in HTML")
+    else:
+        print("[FAIL] Workout session HUD missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -2353,6 +2360,75 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
   // Cleanup
   completedWorkoutsHistory = [];
   currentSessionSets = [];
+});
+
+runSuite("26. Workout in Progress HUD Redesign", () => {
+  // 1. Elements exist in DOM
+  const hud = getOrCreateElement('workout-session-hud');
+  assert(hud !== null, "workout-session-hud exists in DOM");
+
+  const statusText = getOrCreateElement('workout-session-status-text');
+  assert(statusText !== null, "workout-session-status-text exists in DOM");
+
+  const startTimeEl = getOrCreateElement('workout-session-start-time');
+  assert(startTimeEl !== null, "workout-session-start-time exists in DOM");
+
+  const completedEl = getOrCreateElement('session-completed-exercises-display');
+  assert(completedEl !== null, "session-completed-exercises-display exists in DOM");
+
+  const setsLoggedEl = getOrCreateElement('session-sets-logged-display');
+  assert(setsLoggedEl !== null, "session-sets-logged-display exists in DOM");
+
+  // 2. Legacy baseline elements preserved in DOM (hidden)
+  const legacyTimer = getOrCreateElement('session-timer');
+  assert(legacyTimer !== null, "session-timer retained in DOM for baseline compatibility");
+  const legacyDatePicker = getOrCreateElement('workout-date-picker');
+  assert(legacyDatePicker !== null, "workout-date-picker retained in DOM for baseline compatibility");
+  const legacyTimezone = getOrCreateElement('user-timezone-display');
+  assert(legacyTimezone !== null, "user-timezone-display retained in DOM for baseline compatibility");
+
+  // 3. Start time formatting
+  assert(typeof formatWorkoutStartTime === 'function', "formatWorkoutStartTime is a defined function");
+  const sampleTime = new Date(2026, 9, 25, 6, 32).getTime();
+  const formattedStart = formatWorkoutStartTime(sampleTime);
+  assert(formattedStart.startsWith("Started "), "formatWorkoutStartTime starts with 'Started '");
+  assert(formattedStart.includes("6:32"), "formatWorkoutStartTime includes '6:32'");
+
+  // 4. Initial HUD state with 0 sets
+  currentSessionSets = [];
+  updateWorkoutSessionHUD();
+  assert(completedEl.innerText === "0 exercises", "completedEl displays '0 exercises' with 0 sets");
+  assert(setsLoggedEl.innerText === "0", "setsLoggedEl displays '0' with 0 sets");
+
+  // 5. Dynamic update matching screenshot: 3 completed exercises, 8 sets logged
+  currentSessionSets = [
+    { id: 1001, exerciseName: "Bench Press", implement: "Barbell", weight: 135, reps: 8, rpe: 8 },
+    { id: 1002, exerciseName: "Bench Press", implement: "Barbell", weight: 135, reps: 8, rpe: 8 },
+    { id: 1003, exerciseName: "Bench Press", implement: "Barbell", weight: 135, reps: 8, rpe: 8 },
+    { id: 1004, exerciseName: "Kickstand KB RDL", implement: "Kettlebell", weight: 53, reps: 10, rpe: 8 },
+    { id: 1005, exerciseName: "Kickstand KB RDL", implement: "Kettlebell", weight: 53, reps: 10, rpe: 8 },
+    { id: 1006, exerciseName: "Exercise Ball Wood Chops", implement: "Exercise Ball", weight: 0, reps: 15, rpe: 7 },
+    { id: 1007, exerciseName: "Exercise Ball Wood Chops", implement: "Exercise Ball", weight: 0, reps: 15, rpe: 7 },
+    { id: 1008, exerciseName: "Exercise Ball Wood Chops", implement: "Exercise Ball", weight: 0, reps: 15, rpe: 7 }
+  ];
+  updateWorkoutSessionHUD();
+  assert(completedEl.innerText === "3 exercises", "completedEl displays '3 exercises'");
+  assert(setsLoggedEl.innerText === "8", "setsLoggedEl displays '8'");
+
+  // 6. Options menu toggle
+  const menu = getOrCreateElement('session-options-menu');
+  menu.classList.add('hidden');
+  assert(menu.classList.contains('hidden'), "session-options-menu is hidden initially");
+  toggleSessionOptionsMenu();
+  assert(!menu.classList.contains('hidden'), "toggleSessionOptionsMenu opens menu");
+  toggleSessionOptionsMenu();
+  assert(menu.classList.contains('hidden'), "toggleSessionOptionsMenu closes menu");
+
+  // 7. Reset workout session clears sets and updates HUD
+  resetWorkoutSession();
+  assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
+  assert(completedEl.innerText === "0 exercises", "HUD completed exercises reset to 0 exercises");
+  assert(setsLoggedEl.innerText === "0", "HUD sets logged reset to 0");
 });
 
 print("\\n============================================================");

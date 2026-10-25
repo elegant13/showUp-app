@@ -2271,40 +2271,65 @@
         </div>
       </section>
 
-      <!-- PROMINENT ACTIVE SESSION TIMER HUD (HIGH-CONTRAST READOUT FOR GYM WORKOUTS) -->
-      <section class="m3-card rounded-3xl p-4 sm:p-5 border border-slate-800/90 shadow-xl bg-gradient-to-r from-slate-900 via-slate-900/95 to-slate-950">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <!-- LARGE TIMER DISPLAY & CONTROLS -->
-          <div class="flex items-center justify-between sm:justify-start gap-4">
-            <div class="flex items-center gap-3">
-              <span class="relative flex h-3.5 w-3.5">
-                <span id="session-timer-pulse" class="w-3.5 h-3.5 rounded-full bg-slate-600 inline-block"></span>
-              </span>
-              <div>
-                <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Workout Session Time</div>
-                <div id="session-timer" class="text-3xl sm:text-4xl font-mono font-black text-emerald-400 tracking-wider">00:00:00</div>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-2 sm:ml-4">
-              <button id="session-timer-toggle-btn" type="button" onclick="triggerHaptic('light'); toggleWorkoutTimer()" class="px-4 py-2.5 sm:px-5 sm:py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center text-xs font-black gap-2 transition active:scale-95 border border-slate-700 shadow" title="Start or Pause Timer">
-                <i id="session-timer-icon" class="fa-solid fa-play text-xs"></i>
-                <span>Timer</span>
-              </button>
-              <button id="session-timer-restart-btn" type="button" onclick="triggerHaptic('light'); restartWorkoutTimer()" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center text-xs transition active:scale-95 border border-slate-700" title="Restart Timer">
-                <i class="fa-solid fa-arrow-rotate-right"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- SESSION DATE & TIMEZONE DISPLAY -->
-          <div class="flex items-center justify-between sm:justify-end gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+      <!-- WORKOUT IN PROGRESS SESSION HUD -->
+      <section id="workout-session-hud" class="m3-card rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-800/90 shadow-xl bg-slate-950/90">
+        <!-- TOP ROW: IN PROGRESS STATUS, START TIME & OPTIONS -->
+        <div class="flex items-center justify-between gap-3">
+          <div>
             <div class="flex items-center gap-2">
-              <span class="text-xs text-slate-400 font-bold uppercase tracking-wider">Date:</span>
-              <input type="date" id="workout-date-picker" onchange="handleDateChange(this.value)" class="bg-slate-950 border border-slate-700 text-xs font-bold text-emerald-400 px-3 py-1.5 rounded-xl focus:outline-none focus:border-emerald-500 transition shadow-inner">
+              <span class="relative flex items-center justify-center w-4 h-4 shrink-0" aria-hidden="true">
+                <span class="w-3.5 h-3.5 rounded-full border-2 border-emerald-500 flex items-center justify-center">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                </span>
+              </span>
+              <span id="workout-session-status-text" class="text-sm sm:text-base font-bold text-slate-100">Workout in progress</span>
             </div>
-            <span id="user-timezone-display" class="text-[10px] text-slate-400 font-mono bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800" title="Local Time Zone"></span>
+            <div id="workout-session-start-time" class="text-xs text-slate-400 font-normal pl-6 mt-0.5">Started --</div>
           </div>
+
+          <!-- SESSION OPTIONS OVERFLOW BUTTON (···) -->
+          <div class="relative">
+            <button id="session-options-btn" type="button" onclick="triggerHaptic('light'); toggleSessionOptionsMenu()" class="w-8 h-8 rounded-full border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition active:scale-95" title="Workout Options" aria-label="Workout Options">
+              <i class="fa-solid fa-ellipsis text-xs"></i>
+            </button>
+            <!-- DROPDOWN OPTIONS MENU -->
+            <div id="session-options-menu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl py-1.5 z-30">
+              <button type="button" onclick="triggerHaptic('heavy'); toggleSessionOptionsMenu(); evaluateAndFinishWorkout();" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-flag-checkered text-emerald-400 w-4 text-center"></i>
+                <span>Finish Workout</span>
+              </button>
+              <button type="button" onclick="triggerHaptic('light'); toggleSessionOptionsMenu(); resetWorkoutSession();" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5 transition">
+                <i class="fa-solid fa-arrow-rotate-left text-rose-400 w-4 text-center"></i>
+                <span>Reset Session</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DIVIDER -->
+        <div class="border-t border-slate-800/80 my-3.5"></div>
+
+        <!-- BOTTOM ROW: COMPLETED EXERCISES & SETS LOGGED -->
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">COMPLETED</div>
+            <div id="session-completed-exercises-display" class="text-base sm:text-lg font-black text-slate-100 mt-0.5">0 exercises</div>
+          </div>
+
+          <div class="text-right">
+            <div class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider">SETS LOGGED</div>
+            <div id="session-sets-logged-display" class="text-base sm:text-lg font-black text-slate-100 mt-0.5">0</div>
+          </div>
+        </div>
+
+        <!-- PRESERVED BASELINE DOM IDS (HIDDEN FOR FULL BACKWARD-COMPATIBILITY) -->
+        <div class="hidden" aria-hidden="true">
+          <span id="session-timer-pulse"></span>
+          <div id="session-timer">00:00:00</div>
+          <button id="session-timer-toggle-btn" type="button"><i id="session-timer-icon"></i></button>
+          <button id="session-timer-restart-btn" type="button"></button>
+          <input type="date" id="workout-date-picker" onchange="handleDateChange(this.value)">
+          <span id="user-timezone-display"></span>
         </div>
       </section>
 
