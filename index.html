@@ -2402,49 +2402,97 @@
           </div>
         </div>
 
-        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH JUMBO NUMBERS & STEPPERS -->
+        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH TOUCH-SENSITIVE SCROLLER SELECTORS -->
         <div id="standard-metrics-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/90 p-4 sm:p-5 rounded-3xl border border-slate-800">
-          <!-- WEIGHT -->
-          <div class="space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80">
+          <!-- WEIGHT TOUCH SCROLLER -->
+          <div id="scroller-weight-container" class="touch-scroller-card space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-weight" data-type="weight">
             <div class="flex items-center justify-between">
-              <label for="input-weight" class="block text-xs font-black text-slate-300 uppercase tracking-wider">Weight (lbs / kg)</label>
-            </div>
-            <div class="flex items-center justify-center">
-              <input type="number" id="input-weight" value="0" min="0" step="0.5" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner">
-            </div>
-            <div class="grid grid-cols-4 gap-1.5 pt-1">
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-5)" class="m3-stepper-btn text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">-5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(-2.5)" class="m3-stepper-btn text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">-2.5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(2.5)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+2.5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustWeight(5)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+5</button>
+              <label for="input-weight" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
+                <i class="fa-solid fa-weight-hanging text-emerald-400 text-[11px]"></i>
+                <span>Weight (lbs / kg)</span>
+              </label>
+              <div id="weight-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500 step-dot"></span>
+                <span class="step-label">±1</span>
+              </div>
             </div>
 
-            <!-- QUICK IMPLEMENT / PLATE LOAD CHIPS -->
-            <div class="pt-2 border-t border-slate-800/80">
-              <div class="flex items-center justify-between pb-1">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                  <i class="fa-solid fa-layer-group text-[10px] text-emerald-400"></i>
-                  <span id="quick-plate-chips-label">Quick Plate Load</span>
-                </span>
-                <span class="text-[9px] font-mono text-slate-500">Tap to load</span>
+            <div class="touch-scroller-display relative flex items-center justify-center">
+              <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+            </div>
+
+            <!-- Touch Sensitive Scroller Dial Track -->
+            <div id="touch-dial-weight" class="touch-dial-track h-12 w-full bg-slate-950/90 rounded-xl border border-slate-800 flex items-center justify-center relative cursor-ns-resize touch-none overflow-hidden group">
+              <!-- Animated Tick Tape -->
+              <div class="dial-ticks-tape flex items-center justify-between w-[140%] px-3 pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity">
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="dial-center-notch h-7 w-1 bg-emerald-400 rounded-full shadow-lg shadow-emerald-500/50 scale-110"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
               </div>
-              <div id="quick-plate-chips-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5"></div>
+              <div class="dial-hint-text absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-300 transition-all">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-arrows-up-down text-[9px] text-emerald-400"></i> Scroll / Hold to Turbo</span>
+              </div>
+            </div>
+
+            <!-- Legacy container retained for programmatic tests / cloud sync -->
+            <div id="quick-plate-chips-wrapper" class="hidden">
+              <span id="quick-plate-chips-label">Quick Plate Load</span>
+              <div id="quick-plate-chips-container"></div>
             </div>
           </div>
 
-          <!-- REPS -->
-          <div class="space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80">
+          <!-- REPS TOUCH SCROLLER -->
+          <div id="scroller-reps-container" class="touch-scroller-card space-y-2.5 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-reps" data-type="reps">
             <div class="flex items-center justify-between">
-              <label for="input-reps" class="block text-xs font-black text-slate-300 uppercase tracking-wider">Reps</label>
+              <label for="input-reps" class="block text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
+                <i class="fa-solid fa-rotate text-emerald-400 text-[11px]"></i>
+                <span>Reps</span>
+              </label>
+              <div id="reps-step-badge" class="step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-500 step-dot"></span>
+                <span class="step-label">±1</span>
+              </div>
             </div>
-            <div class="flex items-center justify-center">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner">
+
+            <div class="touch-scroller-display relative flex items-center justify-center">
+              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
             </div>
-            <div class="grid grid-cols-4 gap-1.5 pt-1">
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(-5)" class="m3-stepper-btn text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">-5</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(-1)" class="m3-stepper-btn text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">-1</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(1)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+1</button>
-              <button type="button" onclick="triggerHaptic('light'); adjustReps(5)" class="m3-stepper-btn m3-stepper-btn-accent text-sm sm:text-base font-black py-2.5 sm:py-3 rounded-xl">+5</button>
+
+            <!-- Touch Sensitive Scroller Dial Track -->
+            <div id="touch-dial-reps" class="touch-dial-track h-12 w-full bg-slate-950/90 rounded-xl border border-slate-800 flex items-center justify-center relative cursor-ns-resize touch-none overflow-hidden group">
+              <!-- Animated Tick Tape -->
+              <div class="dial-ticks-tape flex items-center justify-between w-[140%] px-3 pointer-events-none opacity-40 group-hover:opacity-75 transition-opacity">
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="dial-center-notch h-7 w-1 bg-emerald-400 rounded-full shadow-lg shadow-emerald-500/50 scale-110"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-4 w-0.5 bg-slate-400 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+                <div class="h-3 w-0.5 bg-slate-500 rounded"></div>
+                <div class="h-2 w-0.5 bg-slate-600 rounded"></div>
+              </div>
+              <div class="dial-hint-text absolute inset-0 flex items-center justify-center pointer-events-none text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-emerald-300 transition-all">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-arrows-up-down text-[9px] text-emerald-400"></i> Scroll / Hold to Turbo</span>
+              </div>
             </div>
           </div>
         </div>

@@ -7,6 +7,9 @@
         AppStorage.applyPendingMigrations();
       }
       initCatalog();
+      if (typeof initTouchScrollerInputs === 'function') {
+        initTouchScrollerInputs();
+      }
       initDatePickerConstraints();
       if (typeof updateTimezoneDisplay === 'function') {
         updateTimezoneDisplay();

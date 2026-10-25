@@ -28,6 +28,7 @@ body.font-mono {
 :root,
 .theme-orange {
   --m3-primary: #f97316;
+  --m3-primary-rgb: 249, 115, 22;
   --m3-primary-light: #fb923c;
   --m3-onPrimary: #1e0800;
   --m3-primaryContainer: rgba(249, 115, 22, 0.16);
@@ -45,6 +46,7 @@ body.font-mono {
 .theme-teal,
 .theme-blue {
   --m3-primary: #14b8a6;
+  --m3-primary-rgb: 20, 184, 166;
   --m3-primary-light: #2dd4bf;
   --m3-onPrimary: #00201c;
   --m3-primaryContainer: rgba(20, 184, 166, 0.16);
@@ -62,6 +64,7 @@ body.font-mono {
 .theme-lime,
 .theme-emerald {
   --m3-primary: #84cc16;
+  --m3-primary-rgb: 132, 204, 22;
   --m3-primary-light: #a3e635;
   --m3-onPrimary: #1a2e05;
   --m3-primaryContainer: rgba(132, 204, 22, 0.16);
@@ -80,6 +83,7 @@ body.font-mono {
 .theme-amoled,
 .theme-slate {
   --m3-primary: #ffffff;
+  --m3-primary-rgb: 255, 255, 255;
   --m3-primary-light: #ffffff;
   --m3-onPrimary: #000000;
   --m3-primaryContainer: rgba(255, 255, 255, 0.14);
@@ -772,4 +776,101 @@ nav {
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
   animation: floatUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
+
+/* ==========================================================================
+   Touch-Sensitive Scroller Inputs (Weight & Reps)
+   Tactile Haptic Feedback, Visual Dials & Progressive Acceleration
+   ========================================================================== */
+
+.touch-scroller-card {
+  position: relative;
+  transition: border-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-scroller-card.scroller-active {
+  border-color: var(--m3-primary) !important;
+  box-shadow: 0 0 24px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.25) !important;
+}
+
+.touch-scroller-card.scroller-turbo {
+  border-color: var(--m3-primary-light, #34d399) !important;
+  box-shadow: 0 0 32px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.45), inset 0 0 16px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.08) !important;
+}
+
+.step-mode-badge {
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.step-mode-badge.turbo-2 {
+  background: rgba(var(--m3-primary-rgb, 20, 184, 166), 0.18) !important;
+  border-color: var(--m3-primary) !important;
+  color: var(--m3-primary-light, #34d399) !important;
+}
+
+.step-mode-badge.turbo-5 {
+  background: rgba(var(--m3-primary-rgb, 20, 184, 166), 0.3) !important;
+  border-color: var(--m3-primary-light, #34d399) !important;
+  color: #ffffff !important;
+  transform: scale(1.05);
+}
+
+.step-mode-badge.turbo-10 {
+  background: var(--m3-primary) !important;
+  border-color: var(--m3-primary-light, #34d399) !important;
+  color: var(--m3-onPrimary, #000000) !important;
+  transform: scale(1.1);
+  font-weight: 900 !important;
+  box-shadow: 0 0 14px rgba(var(--m3-primary-rgb, 20, 184, 166), 0.6) !important;
+}
+
+.touch-dial-track {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.touch-dial-track:active,
+.touch-dial-track.dial-dragging {
+  border-color: var(--m3-primary) !important;
+  background-color: rgba(15, 23, 42, 0.98) !important;
+}
+
+.dial-ticks-tape {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 140%;
+  position: absolute;
+  left: -20%;
+  pointer-events: none;
+  transition: transform 0.08s linear;
+}
+
+.dial-center-notch {
+  height: 28px;
+  width: 3px;
+  border-radius: 9999px;
+  background-color: var(--m3-primary);
+  box-shadow: 0 0 10px var(--m3-primary);
+  z-index: 2;
+  transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.touch-dial-track.dial-turbo .dial-center-notch {
+  transform: scaleY(1.25);
+  box-shadow: 0 0 16px var(--m3-primary);
+}
+
+.dial-hint-text {
+  transition: opacity 0.2s ease;
+}
+
+.touch-dial-track.dial-dragging .dial-hint-text {
+  opacity: 0.1;
+}
+
 

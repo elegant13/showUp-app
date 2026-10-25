@@ -882,6 +882,242 @@
       input.value = val;
     }
 
+    function initTouchScrollerInputs() {
+      const scrollers = [
+        {
+          containerId: 'scroller-weight-container',
+          dialId: 'touch-dial-weight',
+          inputId: 'input-weight',
+          badgeId: 'weight-step-badge',
+          min: 0,
+          stepDefault: 1,
+          type: 'weight'
+        },
+        {
+          containerId: 'scroller-reps-container',
+          dialId: 'touch-dial-reps',
+          inputId: 'input-reps',
+          badgeId: 'reps-step-badge',
+          min: 1,
+          stepDefault: 1,
+          type: 'reps'
+        }
+      ];
+
+      scrollers.forEach(cfg => {
+        setupScrollerController(cfg);
+      });
+    }
+
+    function setupScrollerController(cfg) {
+      if (typeof document === 'undefined') return;
+      const container = document.getElementById(cfg.containerId);
+      const dial = document.getElementById(cfg.dialId);
+      const input = document.getElementById(cfg.inputId);
+      const badge = document.getElementById(cfg.badgeId);
+      if (!dial || !input) return;
+
+      const ticksEl = dial.querySelector('.dial-ticks-tape') || dial.querySelector('.dial-ticks');
+      const badgeLabel = badge ? badge.querySelector('.step-label') : null;
+      const badgeDot = badge ? badge.querySelector('.step-dot') : null;
+
+      let isTracking = false;
+      let startX = 0;
+      let startY = 0;
+      let accumulatedDistance = 0;
+      let isLongPress = false;
+      let longPressTimer = null;
+      let progressiveTimer1 = null;
+      let progressiveTimer2 = null;
+      let currentIncrement = 1;
+      const STEP_PIXELS = 16;
+
+      function updateBadgeUI() {
+        if (!badge) return;
+        if (!isLongPress) {
+          badge.className = "step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border border-slate-700 bg-slate-950 text-slate-400 tracking-wider flex items-center gap-1 transition-all pointer-events-none";
+          if (badgeLabel) badgeLabel.innerText = "±1";
+          if (badgeDot) badgeDot.className = "w-1.5 h-1.5 rounded-full bg-slate-500 step-dot";
+        } else {
+          badge.className = `step-mode-badge text-[10px] font-black uppercase px-2 py-0.5 rounded-full border tracking-wider flex items-center gap-1 transition-all pointer-events-none turbo-${currentIncrement}`;
+          if (badgeLabel) badgeLabel.innerText = `Turbo ±${currentIncrement}`;
+          if (badgeDot) badgeDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping step-dot";
+        }
+      }
+
+      function applyDelta(direction) {
+        let curVal = parseFloat(input.value) || 0;
+        const delta = direction * currentIncrement;
+        let newVal = curVal + delta;
+        if (cfg.type === 'reps') {
+          newVal = Math.max(cfg.min, Math.round(newVal));
+        } else {
+          newVal = Math.max(cfg.min, Math.round(newVal * 10) / 10);
+        }
+        input.value = newVal;
+
+        if (typeof Event === 'function') {
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        if (typeof triggerHaptic === 'function') {
+          if (currentIncrement >= 5) {
+            triggerHaptic('medium');
+          } else {
+            triggerHaptic('light');
+          }
+        }
+      }
+
+      function startTracking(clientX, clientY) {
+        isTracking = true;
+        startX = clientX;
+        startY = clientY;
+        accumulatedDistance = 0;
+        isLongPress = false;
+        currentIncrement = 1;
+
+        if (container) container.classList.add('scroller-active');
+        dial.classList.add('dial-dragging');
+        updateBadgeUI();
+
+        // Long press trigger (320ms): switches to 2s
+        longPressTimer = setTimeout(() => {
+          if (!isTracking) return;
+          isLongPress = true;
+          currentIncrement = 2;
+          if (container) container.classList.add('scroller-turbo');
+          dial.classList.add('dial-turbo');
+          updateBadgeUI();
+          if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+
+          // Progressive escalation 1 (770ms total): switches to 5s
+          progressiveTimer1 = setTimeout(() => {
+            if (!isTracking || !isLongPress) return;
+            currentIncrement = 5;
+            updateBadgeUI();
+            if (typeof triggerHaptic === 'function') triggerHaptic('light');
+
+            // Progressive escalation 2 (1270ms total): switches to 10s
+            progressiveTimer2 = setTimeout(() => {
+              if (!isTracking || !isLongPress) return;
+              currentIncrement = 10;
+              updateBadgeUI();
+              if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+            }, 500);
+          }, 450);
+        }, 320);
+      }
+
+      function moveTracking(clientX, clientY) {
+        if (!isTracking) return;
+        const dx = clientX - startX;
+        const dy = startY - clientY; // Moving UP = positive
+
+        const dominantDelta = Math.abs(dy) >= Math.abs(dx) ? dy : dx;
+        accumulatedDistance = dominantDelta;
+
+        if (ticksEl && ticksEl.style) {
+          const tapeShift = Math.max(-25, Math.min(25, (dx || dy) * 0.4));
+          ticksEl.style.transform = `translateX(${tapeShift}px)`;
+        }
+
+        if (Math.abs(accumulatedDistance) >= STEP_PIXELS) {
+          const direction = accumulatedDistance > 0 ? 1 : -1;
+          applyDelta(direction);
+
+          startX = clientX;
+          startY = clientY;
+          accumulatedDistance = 0;
+        }
+      }
+
+      function stopTracking() {
+        if (!isTracking) return;
+        isTracking = false;
+        clearTimeout(longPressTimer);
+        clearTimeout(progressiveTimer1);
+        clearTimeout(progressiveTimer2);
+        longPressTimer = null;
+        progressiveTimer1 = null;
+        progressiveTimer2 = null;
+
+        isLongPress = false;
+        currentIncrement = 1;
+        if (container) {
+          container.classList.remove('scroller-active', 'scroller-turbo');
+        }
+        dial.classList.remove('dial-dragging', 'dial-turbo');
+        if (ticksEl && ticksEl.style) {
+          ticksEl.style.transform = 'translateX(0px)';
+        }
+        updateBadgeUI();
+      }
+
+      // Touch Events on Dial
+      dial.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          const touch = e.touches[0];
+          startTracking(touch.clientX, touch.clientY);
+        }
+      }, { passive: true });
+
+      dial.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches.length > 0) {
+          const touch = e.touches[0];
+          moveTracking(touch.clientX, touch.clientY);
+        }
+      }, { passive: true });
+
+      dial.addEventListener('touchend', stopTracking, { passive: true });
+      dial.addEventListener('touchcancel', stopTracking, { passive: true });
+
+      // Pointer / Mouse Drag Events on Dial
+      dial.addEventListener('pointerdown', (e) => {
+        if (dial.setPointerCapture) {
+          try { dial.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+        startTracking(e.clientX, e.clientY);
+      });
+
+      dial.addEventListener('pointermove', (e) => {
+        moveTracking(e.clientX, e.clientY);
+      });
+
+      dial.addEventListener('pointerup', (e) => {
+        if (dial.releasePointerCapture) {
+          try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        stopTracking();
+      });
+
+      dial.addEventListener('pointercancel', (e) => {
+        if (dial.releasePointerCapture) {
+          try { dial.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        stopTracking();
+      });
+
+      // Mouse Wheel on Dial
+      dial.addEventListener('wheel', (e) => {
+        if (e.preventDefault) e.preventDefault();
+        const dir = e.deltaY < 0 ? 1 : -1;
+        currentIncrement = (e.shiftKey || e.altKey) ? 5 : 1;
+        applyDelta(dir);
+        currentIncrement = 1;
+      }, { passive: false });
+
+      // Mouse Wheel on Input
+      input.addEventListener('wheel', (e) => {
+        if (e.preventDefault) e.preventDefault();
+        const dir = e.deltaY < 0 ? 1 : -1;
+        currentIncrement = (e.shiftKey || e.altKey) ? 5 : 1;
+        applyDelta(dir);
+        currentIncrement = 1;
+      }, { passive: false });
+    }
+
     function adjustErgDistance(delta) {
       const input = document.getElementById('input-erg-distance');
       let val = parseInt(input.value) || 0;
@@ -2511,4 +2747,15 @@
       window.isAthleteAuthenticated = isAthleteAuthenticated;
       window.isFirstSetLoginPromptDismissed = isFirstSetLoginPromptDismissed;
       window.dismissFirstSetLoginPrompt = dismissFirstSetLoginPrompt;
+      window.initTouchScrollerInputs = initTouchScrollerInputs;
+    }
+
+    if (typeof document !== 'undefined') {
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        initTouchScrollerInputs();
+      } else {
+        document.addEventListener('DOMContentLoaded', () => {
+          initTouchScrollerInputs();
+        });
+      }
     }
