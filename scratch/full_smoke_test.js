@@ -2410,13 +2410,8 @@ if (typeof window !== 'undefined') {
       fonts.forEach(f => {
         const btn = document.getElementById(`font-btn-${f}`);
         if (btn) {
-          if (f === 'jakarta') {
-            btn.className = "p-2.5 rounded-2xl border-2 border-emerald-500 bg-emerald-500/10 text-emerald-400 text-left transition active:scale-95 shadow-md shadow-emerald-500/10";
-            if (btn.classList && typeof btn.classList.remove === 'function') btn.classList.remove('hidden');
-          } else {
-            btn.className = "hidden";
-            if (btn.classList && typeof btn.classList.add === 'function') btn.classList.add('hidden');
-          }
+          btn.className = "hidden";
+          if (btn.classList && typeof btn.classList.add === 'function') btn.classList.add('hidden');
         }
       });
     }

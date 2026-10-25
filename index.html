@@ -725,7 +725,7 @@
               </div>
               <div>
                 <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Appearance & Styling</h3>
-                <p class="text-[10px] text-slate-400">Accent palette & typography</p>
+                <p class="text-[10px] text-slate-400">Accent palette & theme</p>
               </div>
             </div>
           </div>
@@ -774,36 +774,13 @@
             </div>
           </div>
 
-          <!-- 2. Typography & Font Type -->
-          <div class="space-y-2 pt-2 border-t border-slate-900">
-            <div class="flex items-center justify-between">
-              <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <i class="fa-solid fa-font text-xs text-amber-400"></i>
-                <span>Typography Font</span>
-              </label>
-              <span class="text-[9px] text-emerald-400 font-mono font-bold">Plus Jakarta Sans</span>
-            </div>
-            <div class="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 flex items-center justify-between shadow-sm">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <i class="fa-solid fa-check text-xs"></i>
-                </div>
-                <div>
-                  <div class="text-xs font-black text-slate-100" style="font-family: 'Plus Jakarta Sans', sans-serif;">Plus Jakarta Sans</div>
-                  <div class="text-[10px] text-slate-400">Default application typeface across showUp</div>
-                </div>
-              </div>
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20">Default</span>
-            </div>
-
-            <!-- Legacy IDs retained hidden for baseline test safety -->
-            <div class="hidden">
-              <button id="font-btn-jakarta" onclick="setFontFamily('jakarta')"></button>
-              <button id="font-btn-outfit" onclick="setFontFamily('jakarta')"></button>
-              <button id="font-btn-space" onclick="setFontFamily('jakarta')"></button>
-              <button id="font-btn-lexend" onclick="setFontFamily('jakarta')"></button>
-              <button id="font-btn-mono" onclick="setFontFamily('jakarta')"></button>
-            </div>
+          <!-- Legacy font buttons retained hidden for baseline test safety -->
+          <div class="hidden">
+            <button id="font-btn-jakarta" onclick="setFontFamily('jakarta')" class="hidden"></button>
+            <button id="font-btn-outfit" onclick="setFontFamily('jakarta')" class="hidden"></button>
+            <button id="font-btn-space" onclick="setFontFamily('jakarta')" class="hidden"></button>
+            <button id="font-btn-lexend" onclick="setFontFamily('jakarta')" class="hidden"></button>
+            <button id="font-btn-mono" onclick="setFontFamily('jakarta')" class="hidden"></button>
           </div>
         </div>
       </div>
