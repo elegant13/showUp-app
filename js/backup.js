@@ -249,19 +249,32 @@
       }
 
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: getGoogleClientId(),
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          prompt: 'consent', // Explicitly trigger Google consent dialog so user grants Drive scopes
+          prompt: '', // Never force re-consent; Google will only show consent dialog if scopes are missing
           callback: async (response) => {
             if (response && response.access_token) {
               googleAccessToken = response.access_token;
               localStorage.setItem('showUp_google_token', googleAccessToken);
               localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
               updateCloudBackupUI();
-              showToast("Google Drive backup permission granted!", "success");
-              if (autoSyncAfter) {
-                await syncToGoogleDrive(false);
+
+              // Verify whether athlete granted Google Drive file permission in Google's granular consent dialog
+              const hasDriveScope = typeof google !== 'undefined' && google.accounts?.oauth2?.hasGrantedAllScopes
+                ? google.accounts.oauth2.hasGrantedAllScopes(response, 'https://www.googleapis.com/auth/drive.file')
+                : true;
+
+              if (hasDriveScope) {
+                showToast("Google Drive backup connected!", "success");
+                if (autoSyncAfter) {
+                  await syncToGoogleDrive(false);
+                }
+              } else {
+                showToast("Drive permission wasn't selected. Please check the Google Drive box to allow cloud backup.", "warning");
               }
             } else if (response && response.error) {
               console.warn("Drive authorization canceled or error:", response);
@@ -280,8 +293,14 @@
               showToast("Google Drive authorization interrupted.", "info");
             }
           }
-        });
-        client.requestAccessToken({ prompt: 'consent' });
+        };
+
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: '' });
       } catch (err) {
         console.error("Failed to request Drive authorization:", err);
         showToast(`Authorization error: ${err.message}`, "error");

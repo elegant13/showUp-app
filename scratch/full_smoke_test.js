@@ -152,8 +152,24 @@ globalThis.location = { href: 'http://localhost/', reload: () => {} };
 globalThis.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 globalThis.alert = (msg) => {};
 globalThis.confirm = (msg) => true;
-globalThis.prompt = (msg, def) => def || '';
-globalThis.google = { accounts: { id: { initialize: () => {}, renderButton: () => {} } } };
+globalThis.lastTokenClientInitConfig = null;
+globalThis.lastTokenClientRequestConfig = null;
+globalThis.google = {
+  accounts: {
+    id: { initialize: () => {}, renderButton: () => {} },
+    oauth2: {
+      initTokenClient: (config) => {
+        globalThis.lastTokenClientInitConfig = config;
+        return {
+          requestAccessToken: (reqConfig) => {
+            globalThis.lastTokenClientRequestConfig = reqConfig;
+          }
+        };
+      },
+      hasGrantedAllScopes: (response, ...scopes) => true
+    }
+  }
+};
 
 // Test Framework in JSC
 let testPassedCount = 0;
@@ -2239,11 +2255,19 @@ if (typeof window !== 'undefined') {
     }
 
     /**
-     * Synthesizes an ethereal, delicate, definitively feminine singing crystal chime.
-     * Uses Web Audio API with higher-octave singing crystal frequencies (880 Hz A5 & 1318.5 Hz E6),
-     * shimmering celestial overtone harmonics, silky soft envelope, and angelic reverberation.
+     * Synthesizes a crisp, double-strike service counter bell ("Ding-Ding").
+     * Faithfully modeled on the classic brass/chrome desk call bell:
+     * - Two strikes spaced ~233ms apart (0.00s and 0.233s).
+     * - Resonant modes matching acoustic analysis of dingdingding.wav:
+     *   • 1286 Hz primary bell bowl resonance (with 1292 Hz chorus warmth)
+     *   • 2252 Hz high-energy bell rim chime mode (with 2258 Hz shimmer)
+     *   • 3324 Hz bright metallic overtone
+     *   • 4520 Hz crystalline harmonic
+     *   • 492 Hz mechanical dome/clapper body thump
+     * - Strike 1 has a rapid initial ring that damps as strike 2 arrives;
+     *   strike 2 rings out freely for 1.3s with natural exponential decay.
      */
-    function playCrystalHarpChime() {
+    function playDoubleDingChime() {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
@@ -2252,60 +2276,164 @@ if (typeof window !== 'undefined') {
           ctx.resume();
         }
         const now = ctx.currentTime;
-        const duration = 2.0;
+        const totalDuration = 1.6;
 
-        // Master gain
         const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.34, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.gain.setValueAtTime(0.38, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + totalDuration);
         masterGain.connect(ctx.destination);
 
-        function strikeCrystalTone(startTime, baseFreq, level = 0.3) {
-          const strikeGain = ctx.createGain();
-          strikeGain.gain.setValueAtTime(0.001, startTime);
-          strikeGain.gain.linearRampToValueAtTime(level, startTime + 0.015); // soft celestial attack
-          strikeGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.8);
-          strikeGain.connect(masterGain);
+        const strikes = [0.0, 0.233];
+        const modes = [
+          { freq: 492,  gain: 0.12, decay: 0.18, type: 'sine' },      // Clapper body thump
+          { freq: 1286, gain: 0.55, decay: 1.25, type: 'sine' },      // Bell bowl fundamental
+          { freq: 1292, gain: 0.25, decay: 1.15, type: 'sine' },      // Acoustic beating / warmth
+          { freq: 2252, gain: 0.70, decay: 1.00, type: 'sine' },      // Ringing rim resonance
+          { freq: 2258, gain: 0.28, decay: 0.90, type: 'sine' },      // Shimmer detune
+          { freq: 3324, gain: 0.26, decay: 0.70, type: 'sine' },      // Metallic overtone
+          { freq: 4520, gain: 0.38, decay: 0.55, type: 'sine' }       // Bright crystalline sparkle
+        ];
 
-          const harmonics = [
-            { mult: 1.0, gain: 0.75, decay: 1.8 },      // Pure soprano fundamental
-            { mult: 1.005, gain: 0.65, decay: 1.7 },    // Shimmering celestial chorus
-            { mult: 2.0, gain: 0.40, decay: 1.4 },      // Bright crystal octave
-            { mult: 2.76, gain: 0.25, decay: 1.0 },     // Silver harmonic
-            { mult: 3.98, gain: 0.18, decay: 0.8 },     // Delicate star sparkle
-            { mult: 5.4, gain: 0.10, decay: 0.5 }       // High crystalline shimmer
-          ];
+        strikes.forEach((strikeOffset, idx) => {
+          const strikeTime = now + strikeOffset;
+          const isFinal = (idx === strikes.length - 1);
+          const strikeDecay = isFinal ? 1.0 : 0.22;
 
-          harmonics.forEach(h => {
+          // Mechanical clapper click transient (sharp 5ms contact tap)
+          try {
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.type = 'triangle';
+            clickOsc.frequency.setValueAtTime(4200, strikeTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(800, strikeTime + 0.006);
+            clickGain.gain.setValueAtTime(0.18, strikeTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, strikeTime + 0.006);
+            clickOsc.connect(clickGain);
+            clickGain.connect(masterGain);
+            clickOsc.start(strikeTime);
+            clickOsc.stop(strikeTime + 0.007);
+          } catch (e) {}
+
+          // Resonant chime modes
+          modes.forEach(m => {
             const osc = ctx.createOscillator();
             const g = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(baseFreq * h.mult, startTime);
-            const partDur = Math.max(0.1, 1.8 * (h.decay / 1.8));
-            g.gain.setValueAtTime(h.gain, startTime + 0.015);
-            g.gain.exponentialRampToValueAtTime(0.0001, startTime + partDur);
-            osc.connect(g);
-            g.connect(strikeGain);
-            osc.start(startTime);
-            osc.stop(startTime + partDur);
-          });
-        }
+            osc.type = m.type;
+            osc.frequency.setValueAtTime(m.freq, strikeTime);
 
-        // Melodic ascending crystal chime doublet (A5 ~880 Hz -> E6 ~1318.5 Hz)
-        strikeCrystalTone(now, 880, 0.28);
-        strikeCrystalTone(now + 0.16, 1318.5, 0.32);
+            const dur = isFinal ? m.decay : Math.min(m.decay, strikeDecay);
+            g.gain.setValueAtTime(0.001, strikeTime);
+            g.gain.linearRampToValueAtTime(m.gain, strikeTime + 0.002);
+            g.gain.exponentialRampToValueAtTime(0.0001, strikeTime + dur);
+
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(strikeTime);
+            osc.stop(strikeTime + dur);
+          });
+        });
       } catch (e) {
-        console.warn("Rest timer crystal chime alert warning:", e);
+        console.warn("Rest timer double ding alert warning:", e);
+      }
+    }
+
+    /**
+     * Synthesizes a crisp, triple-strike service counter bell ("Ding-Ding-Ding").
+     * Faithfully modeled on the classic brass/chrome desk call bell:
+     * - Three strikes spaced ~233ms apart (0.00s, 0.233s, 0.466s).
+     * - Core resonant modes accurately matching acoustic analysis of dingdingding.wav:
+     *   • 1286 Hz primary bell bowl resonance (with slight 1292 Hz chorus beating)
+     *   • 2252 Hz high-energy bell rim chime mode (with 2258 Hz shimmer)
+     *   • 3324 Hz bright metallic overtone
+     *   • 4520 Hz crystalline harmonic
+     *   • 492 Hz mechanical dome/clapper body thump
+     * - Strikes 1 & 2 have a rapid initial ring that is partly damped by the next strike,
+     *   while strike 3 rings out completely for 1.3s with natural exponential decay.
+     */
+    function playTripleDingChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const totalDuration = 1.8;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.38, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + totalDuration);
+        masterGain.connect(ctx.destination);
+
+        const strikes = [0.0, 0.233, 0.466];
+        const modes = [
+          { freq: 492,  gain: 0.12, decay: 0.18, type: 'sine' },      // Clapper body thump
+          { freq: 1286, gain: 0.55, decay: 1.25, type: 'sine' },      // Bell bowl fundamental
+          { freq: 1292, gain: 0.25, decay: 1.15, type: 'sine' },      // Acoustic beating / warmth
+          { freq: 2252, gain: 0.70, decay: 1.00, type: 'sine' },      // Ringing rim resonance
+          { freq: 2258, gain: 0.28, decay: 0.90, type: 'sine' },      // Shimmer detune
+          { freq: 3324, gain: 0.26, decay: 0.70, type: 'sine' },      // Metallic overtone
+          { freq: 4520, gain: 0.38, decay: 0.55, type: 'sine' }       // Bright crystalline sparkle
+        ];
+
+        strikes.forEach((strikeOffset, idx) => {
+          const strikeTime = now + strikeOffset;
+          const isFinal = (idx === strikes.length - 1);
+          const strikeDecay = isFinal ? 1.0 : 0.22; // Ding 1 & 2 damp as next tap arrives
+
+          // Mechanical clapper click transient (sharp 5ms contact tap)
+          try {
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.type = 'triangle';
+            clickOsc.frequency.setValueAtTime(4200, strikeTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(800, strikeTime + 0.006);
+            clickGain.gain.setValueAtTime(0.18, strikeTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, strikeTime + 0.006);
+            clickOsc.connect(clickGain);
+            clickGain.connect(masterGain);
+            clickOsc.start(strikeTime);
+            clickOsc.stop(strikeTime + 0.007);
+          } catch (e) {}
+
+          // Resonant chime modes
+          modes.forEach(m => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = m.type;
+            osc.frequency.setValueAtTime(m.freq, strikeTime);
+
+            const dur = isFinal ? m.decay : Math.min(m.decay, strikeDecay);
+            g.gain.setValueAtTime(0.001, strikeTime);
+            g.gain.linearRampToValueAtTime(m.gain, strikeTime + 0.002); // 2ms attack
+            g.gain.exponentialRampToValueAtTime(0.0001, strikeTime + dur);
+
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(strikeTime);
+            osc.stop(strikeTime + dur);
+          });
+        });
+      } catch (e) {
+        console.warn("Rest timer triple ding alert warning:", e);
       }
     }
 
     const REST_CHIMES = {
-      boxing_bell: {
-        id: 'boxing_bell',
-        name: 'Arena Bell',
-        tag: 'Classic',
-        desc: 'Classic boxing round double strike',
-        icon: 'fa-solid fa-bell'
+      double_ding: {
+        id: 'double_ding',
+        name: 'Desk Bell',
+        tag: 'Double Ding',
+        desc: 'Double strike service counter bell (ding-ding)',
+        icon: 'fa-solid fa-bell-concierge'
+      },
+      triple_ding: {
+        id: 'triple_ding',
+        name: 'Desk Bell',
+        tag: 'Triple Ding',
+        desc: 'Triple strike service counter bell (ding-ding-ding)',
+        icon: 'fa-solid fa-bell-concierge'
       },
       deep_gong: {
         id: 'deep_gong',
@@ -2313,27 +2441,20 @@ if (typeof window !== 'undefined') {
         tag: 'Masculine',
         desc: 'Definitively masculine: deep resonant brass gong',
         icon: 'fa-solid fa-shield-halved'
-      },
-      crystal_harp: {
-        id: 'crystal_harp',
-        name: 'Crystal Chime',
-        tag: 'Feminine',
-        desc: 'Definitively feminine: celestial singing crystal bowl',
-        icon: 'fa-solid fa-wand-magic-sparkles'
       }
     };
 
     function getRestChimeSound() {
       try {
         const val = localStorage.getItem('showUp_rest_chime_sound');
-        return REST_CHIMES[val] ? val : 'boxing_bell';
+        return REST_CHIMES[val] ? val : 'double_ding';
       } catch (e) {
-        return 'boxing_bell';
+        return 'double_ding';
       }
     }
 
     function setRestChimeSound(chimeId, preview = true) {
-      const valid = REST_CHIMES[chimeId] ? chimeId : 'boxing_bell';
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'double_ding';
       try {
         localStorage.setItem('showUp_rest_chime_sound', valid);
       } catch (e) {}
@@ -2345,7 +2466,7 @@ if (typeof window !== 'undefined') {
 
     function cycleRestChimeSound() {
       const current = getRestChimeSound();
-      const keys = ['boxing_bell', 'deep_gong', 'crystal_harp'];
+      const keys = ['double_ding', 'triple_ding', 'deep_gong'];
       const nextIndex = (keys.indexOf(current) + 1) % keys.length;
       const nextChime = keys[nextIndex];
       setRestChimeSound(nextChime, true);
@@ -2360,12 +2481,12 @@ if (typeof window !== 'undefined') {
     function playRestChime(explicitChimeId = null) {
       if (!isRestSoundAlertEnabled()) return;
       const chime = explicitChimeId || getRestChimeSound();
-      if (chime === 'deep_gong') {
+      if (chime === 'triple_ding') {
+        playTripleDingChime();
+      } else if (chime === 'deep_gong') {
         playDeepGongChime();
-      } else if (chime === 'crystal_harp') {
-        playCrystalHarpChime();
       } else {
-        playDoubleBellRing();
+        playDoubleDingChime();
       }
     }
 
@@ -2405,14 +2526,14 @@ if (typeof window !== 'undefined') {
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
         showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function updateRestChimeUI() {
       const chimeId = getRestChimeSound();
-      const meta = REST_CHIMES[chimeId] || REST_CHIMES.boxing_bell;
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.double_ding;
 
       const chimeBtn = document.getElementById('btn-chime-cycle');
       const chimeIcon = document.getElementById('btn-chime-icon');
@@ -2437,7 +2558,7 @@ if (typeof window !== 'undefined') {
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
-      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
 
       if (bannerBtn && bannerIcon) {
         if (enabled) {
@@ -2528,7 +2649,9 @@ if (typeof window !== 'undefined') {
       window.triggerHaptic = triggerHaptic;
       window.playDoubleBellRing = playDoubleBellRing;
       window.playDeepGongChime = playDeepGongChime;
-      window.playCrystalHarpChime = playCrystalHarpChime;
+      window.playDoubleDingChime = playDoubleDingChime;
+      window.playTripleDingChime = playTripleDingChime;
+      window.REST_CHIMES = REST_CHIMES;
       window.playRestChime = playRestChime;
       window.getRestChimeSound = getRestChimeSound;
       window.setRestChimeSound = setRestChimeSound;
@@ -2996,7 +3119,10 @@ if (typeof window !== 'undefined') {
     function requestTokenSilently() {
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: getGoogleClientId(),
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
           prompt: '', // Silent request without popup or re-consent
@@ -3017,8 +3143,14 @@ if (typeof window !== 'undefined') {
           error_callback: (err) => {
             console.log("Silent token refresh info:", err);
           }
-        });
-        client.requestAccessToken({ prompt: '' });
+        };
+
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: '' });
       } catch (err) {
         console.warn("Silent token request skipped:", err);
       }
@@ -4437,10 +4569,13 @@ if (typeof window !== 'undefined') {
       }, 15000);
 
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          prompt: 'select_account',
+          prompt: userEmail ? '' : 'select_account',
           callback: async (response) => {
             clearTimeout(safetyTimer);
             setGoogleLoginLoading(false);
@@ -4468,9 +4603,14 @@ if (typeof window !== 'undefined') {
             console.warn("Google OAuth error callback:", err);
             openAuthLoginModal();
           }
-        });
+        };
 
-        client.requestAccessToken({ prompt: 'select_account' });
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: 'select_account' });
       } catch (err) {
         clearTimeout(safetyTimer);
         setGoogleLoginLoading(false);
@@ -6718,6 +6858,7 @@ if (typeof window !== 'undefined') {
         rpe,
         weight,
         reps,
+        notes: "",
         runningDistance,
         runningTime,
         runningAvgHR,
@@ -6811,6 +6952,7 @@ if (typeof window !== 'undefined') {
     }
 
     function renderLoggedSets() {
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
       const container = document.getElementById('logged-sets-list');
       const badge = document.getElementById('set-count-badge');
       if (badge) badge.innerText = `${currentSessionSets.length} Sets`;
@@ -6850,6 +6992,27 @@ if (typeof window !== 'undefined') {
                 <span class="text-slate-400 font-semibold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">RPE ${s.rpe}</span>
                 ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
                 ${s.restPeriod && s.restPeriod > 0 ? `<span class="bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-400"></i>Rest: ${formatDurationSecs(s.restPeriod)}</span>` : ''}
+              </div>
+
+              <!-- Set Note Section -->
+              <div id="set-note-box-${s.id}" class="mt-2 text-xs">
+                ${s.notes && s.notes.trim() ? `
+                  <div class="inline-flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg max-w-full">
+                    <i class="fa-regular fa-note-sticky text-emerald-400 text-xs shrink-0"></i>
+                    <span class="truncate text-[11px] font-medium text-slate-200">${safe(s.notes)}</span>
+                    <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-slate-500 hover:text-emerald-400 p-0.5 ml-1 transition" title="Edit Note">
+                      <i class="fa-solid fa-pen text-[10px]"></i>
+                    </button>
+                    <button type="button" onclick="triggerHaptic('light'); deleteSetNote(${s.id})" class="text-slate-500 hover:text-rose-400 p-0.5 transition" title="Delete Note">
+                      <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                  </div>
+                ` : `
+                  <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-[11px] font-medium text-slate-500 hover:text-emerald-400 transition inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-slate-900/60 border border-transparent hover:border-slate-800">
+                    <i class="fa-regular fa-note-sticky text-[10px]"></i>
+                    <span>+ Note</span>
+                  </button>
+                `}
               </div>
             </div>
 
@@ -6910,6 +7073,75 @@ if (typeof window !== 'undefined') {
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
+    }
+
+    function openInlineSetNoteInput(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const box = document.getElementById(`set-note-box-${setId}`);
+      if (!box) return;
+
+      const set = currentSessionSets.find(s => s.id === setId);
+      const existingNote = (set && set.notes) ? set.notes : '';
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+
+      box.innerHTML = `
+        <div class="flex items-center gap-1.5 mt-1 max-w-md">
+          <input type="text" id="inline-set-note-input-${setId}" value="${safe(existingNote)}" placeholder="Add quick note (e.g. smooth lockouts, felt light)..." class="flex-1 bg-slate-900 border border-emerald-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-400 font-sans" onkeydown="if(event.key==='Enter') saveInlineSetNote(${setId}); else if(event.key==='Escape') cancelInlineSetNote(${setId});">
+          <button type="button" onclick="triggerHaptic('light'); saveInlineSetNote(${setId})" class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition active:scale-95 shadow-sm">Save</button>
+          <button type="button" onclick="triggerHaptic('light'); cancelInlineSetNote(${setId})" class="p-1 text-slate-400 hover:text-slate-200 text-xs rounded-lg transition" title="Cancel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      `;
+
+      const input = document.getElementById(`inline-set-note-input-${setId}`);
+      if (input) {
+        input.focus();
+        if (typeof input.select === 'function') input.select();
+      }
+    }
+
+    function saveInlineSetNote(setId) {
+      const input = document.getElementById(`inline-set-note-input-${setId}`);
+      const setIdx = currentSessionSets.findIndex(s => s.id === setId);
+      if (setIdx === -1) return;
+
+      const noteText = input ? input.value.trim() : '';
+      currentSessionSets[setIdx].notes = noteText;
+
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
+
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken && typeof syncToGoogleDrive === 'function') {
+        syncToGoogleDrive();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      renderLoggedSets();
+    }
+
+    function cancelInlineSetNote(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      renderLoggedSets();
+    }
+
+    function deleteSetNote(setId) {
+      const setIdx = currentSessionSets.findIndex(s => s.id === setId);
+      if (setIdx === -1) return;
+
+      currentSessionSets[setIdx].notes = '';
+
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
+
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken && typeof syncToGoogleDrive === 'function') {
+        syncToGoogleDrive();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      renderLoggedSets();
     }
 
     function repeatSet(setId) {
@@ -7005,6 +7237,7 @@ if (typeof window !== 'undefined') {
       const runMaxHREl = document.getElementById('edit-active-set-running-max-hr');
       const rpeEl = document.getElementById('edit-active-set-rpe');
       const restEl = document.getElementById('edit-active-set-rest');
+      const notesEl = document.getElementById('edit-active-set-notes');
 
       if (idEl) idEl.value = set.id;
       if (titleEl) titleEl.innerHTML = `<span>Edit Set #${setIndex}</span>`;
@@ -7025,6 +7258,7 @@ if (typeof window !== 'undefined') {
       if (runMaxHREl) runMaxHREl.value = set.runningMaxHR !== null && set.runningMaxHR !== undefined ? set.runningMaxHR : '';
       if (rpeEl) rpeEl.value = set.rpe || 8;
       if (restEl) restEl.value = (typeof set.restPeriod === 'number') ? set.restPeriod : 0;
+      if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
       if (modal) modal.classList.remove('hidden');
@@ -7121,6 +7355,7 @@ if (typeof window !== 'undefined') {
       const muscle = document.getElementById('edit-active-set-muscle')?.value || currentSessionSets[idx].muscle;
       const rpe = parseFloat(document.getElementById('edit-active-set-rpe')?.value) || 8;
       const restPeriod = Math.max(0, parseInt(document.getElementById('edit-active-set-rest')?.value) || 0);
+      const notes = document.getElementById('edit-active-set-notes')?.value.trim() || "";
 
       let weight = 0, reps = 1;
       let ergDistance = 0, ergTime = "";
@@ -7176,7 +7411,8 @@ if (typeof window !== 'undefined') {
         runningAvgHR,
         runningMaxHR,
         rpe,
-        restPeriod
+        restPeriod,
+        notes
       };
 
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
@@ -7654,6 +7890,7 @@ if (typeof window !== 'undefined') {
     }
 
     function renderSummarySetsList() {
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
       const container = document.getElementById('summary-sets-chronology');
       if (!container) return;
       const sets = lastEvaluatedSummary && lastEvaluatedSummary.sets ? lastEvaluatedSummary.sets : currentSessionSets;
@@ -7684,6 +7921,12 @@ if (typeof window !== 'undefined') {
                   <span>•</span>
                   <span class="text-slate-500">RPE ${s.rpe}</span>
                 </div>
+                ${s.notes && s.notes.trim() ? `
+                  <div class="text-[11px] text-slate-300 mt-1 flex items-center gap-1.5">
+                    <i class="fa-regular fa-note-sticky text-emerald-400 text-[10px]"></i>
+                    <span class="italic text-slate-300">${safe(s.notes)}</span>
+                  </div>
+                ` : ''}
               </div>
             </div>
             ${s.restPeriod ? `
@@ -7785,6 +8028,13 @@ if (typeof window !== 'undefined') {
       window.skipRestTimer = skipRestTimer;
       window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
       window.saveDefaultRestTimePref = saveDefaultRestTimePref;
+      window.openInlineSetNoteInput = openInlineSetNoteInput;
+      window.saveInlineSetNote = saveInlineSetNote;
+      window.cancelInlineSetNote = cancelInlineSetNote;
+      window.deleteSetNote = deleteSetNote;
+      window.openEditActiveSetModal = openEditActiveSetModal;
+      window.closeEditActiveSetModal = closeEditActiveSetModal;
+      window.saveActiveSetEdits = saveActiveSetEdits;
     }
 
     if (typeof document !== 'undefined') {
@@ -15706,19 +15956,32 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
       }
 
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: getGoogleClientId(),
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          prompt: 'consent', // Explicitly trigger Google consent dialog so user grants Drive scopes
+          prompt: '', // Never force re-consent; Google will only show consent dialog if scopes are missing
           callback: async (response) => {
             if (response && response.access_token) {
               googleAccessToken = response.access_token;
               localStorage.setItem('showUp_google_token', googleAccessToken);
               localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
               updateCloudBackupUI();
-              showToast("Google Drive backup permission granted!", "success");
-              if (autoSyncAfter) {
-                await syncToGoogleDrive(false);
+
+              // Verify whether athlete granted Google Drive file permission in Google's granular consent dialog
+              const hasDriveScope = typeof google !== 'undefined' && google.accounts?.oauth2?.hasGrantedAllScopes
+                ? google.accounts.oauth2.hasGrantedAllScopes(response, 'https://www.googleapis.com/auth/drive.file')
+                : true;
+
+              if (hasDriveScope) {
+                showToast("Google Drive backup connected!", "success");
+                if (autoSyncAfter) {
+                  await syncToGoogleDrive(false);
+                }
+              } else {
+                showToast("Drive permission wasn't selected. Please check the Google Drive box to allow cloud backup.", "warning");
               }
             } else if (response && response.error) {
               console.warn("Drive authorization canceled or error:", response);
@@ -15737,8 +16000,14 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
               showToast("Google Drive authorization interrupted.", "info");
             }
           }
-        });
-        client.requestAccessToken({ prompt: 'consent' });
+        };
+
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: '' });
       } catch (err) {
         console.error("Failed to request Drive authorization:", err);
         showToast(`Authorization error: ${err.message}`, "error");
@@ -18945,8 +19214,9 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
 runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Muscles Scroll", () => {
   // 1. Function existence
   assert(typeof playDoubleBellRing === 'function', "playDoubleBellRing is a defined function");
+  assert(typeof playDoubleDingChime === 'function', "playDoubleDingChime is a defined function");
+  assert(typeof playTripleDingChime === 'function', "playTripleDingChime is a defined function");
   assert(typeof playDeepGongChime === 'function', "playDeepGongChime is a defined function");
-  assert(typeof playCrystalHarpChime === 'function', "playCrystalHarpChime is a defined function");
   assert(typeof playRestChime === 'function', "playRestChime is a defined function");
   assert(typeof getRestChimeSound === 'function', "getRestChimeSound is a defined function");
   assert(typeof setRestChimeSound === 'function', "setRestChimeSound is a defined function");
@@ -19019,19 +19289,26 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(getCurrentRestTarget() === 60, "adjustRestTarget(-5) steps target back to 60s");
   assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
 
-  // 6. 3 Chimes Definition & Synthesis execution
-  assert(REST_CHIMES.boxing_bell !== undefined, "REST_CHIMES defines boxing_bell (Arena Bell)");
+  // 6. Chimes Definition & Synthesis execution
+  assert(REST_CHIMES.double_ding !== undefined, "REST_CHIMES defines double_ding (Desk Bell Double Ding)");
+  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Desk Bell Triple Ding)");
   assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
-  assert(REST_CHIMES.crystal_harp !== undefined, "REST_CHIMES defines crystal_harp (Definitively Feminine)");
+  assert(REST_CHIMES.crystal_harp === undefined, "Crystal Chime has been cleanly removed");
 
-  let audioClassic = false;
+  let audioDoubleDing = false;
+  let audioTripleDing = false;
   let audioMasculine = false;
-  let audioFeminine = false;
   try {
-    playDoubleBellRing();
-    audioClassic = true;
+    playDoubleDingChime();
+    audioDoubleDing = true;
   } catch (e) {
-    audioClassic = false;
+    audioDoubleDing = false;
+  }
+  try {
+    playTripleDingChime();
+    audioTripleDing = true;
+  } catch (e) {
+    audioTripleDing = false;
   }
   try {
     playDeepGongChime();
@@ -19039,32 +19316,26 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   } catch (e) {
     audioMasculine = false;
   }
-  try {
-    playCrystalHarpChime();
-    audioFeminine = true;
-  } catch (e) {
-    audioFeminine = false;
-  }
 
-  assert(audioClassic === true, "playDoubleBellRing (classic) executes cleanly with Web Audio API");
+  assert(audioDoubleDing === true, "playDoubleDingChime (desk bell double ding) executes cleanly with Web Audio API");
+  assert(audioTripleDing === true, "playTripleDingChime (desk bell triple ding) executes cleanly with Web Audio API");
   assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
-  assert(audioFeminine === true, "playCrystalHarpChime (feminine) executes cleanly with Web Audio API");
 
   // 7. Minimalistic Chime Cycling & Persistence
   localStorage.removeItem('showUp_rest_chime_sound');
-  assert(getRestChimeSound() === 'boxing_bell', "Default chime sound is boxing_bell");
+  assert(getRestChimeSound() === 'double_ding', "Default chime sound is double_ding");
 
   const next1 = cycleRestChimeSound(false);
-  assert(next1 === 'deep_gong', "cycleRestChimeSound transitions boxing_bell -> deep_gong (Masculine)");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+  assert(next1 === 'triple_ding', "cycleRestChimeSound transitions double_ding -> triple_ding");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'triple_ding', "triple_ding persisted to localStorage");
 
   const next2 = cycleRestChimeSound(false);
-  assert(next2 === 'crystal_harp', "cycleRestChimeSound transitions deep_gong -> crystal_harp (Feminine)");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'crystal_harp', "crystal_harp persisted to localStorage");
+  assert(next2 === 'deep_gong', "cycleRestChimeSound transitions triple_ding -> deep_gong");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
 
   const next3 = cycleRestChimeSound(false);
-  assert(next3 === 'boxing_bell', "cycleRestChimeSound transitions crystal_harp -> boxing_bell (Classic)");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'boxing_bell', "boxing_bell persisted to localStorage");
+  assert(next3 === 'double_ding', "cycleRestChimeSound transitions deep_gong -> double_ding");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'double_ding', "double_ding persisted to localStorage");
 
   // 8. Haptic pattern for recovery
   globalThis.__lastVibrate = null;
@@ -19140,6 +19411,143 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   localStorage.removeItem('showUp_default_rest_time');
   localStorage.removeItem('showUp_rest_sound_alert');
   localStorage.removeItem('showUp_rest_chime_sound');
+});
+
+runSuite("Suite 28: Post-Log Set Notes and Modal Note Support", () => {
+  // Clear any existing sets
+  currentSessionSets = [];
+  localStorage.removeItem('showUp_active_workout_sets');
+
+  // 1. Pre-log setup: verify logging a set keeps inputs fast and includes notes: ""
+  document.getElementById('exercise-name-input').value = "Incline Dumbbell Press";
+  document.getElementById('implement-select').value = "Dumbbell";
+  document.getElementById('muscle-group-select').value = "Chest";
+  document.getElementById('input-weight').value = "80";
+  document.getElementById('input-reps').value = "10";
+  document.getElementById('rpe-select').value = "8.5";
+
+  logSet();
+
+  assert(currentSessionSets.length === 1, "Set is successfully logged");
+  const setId = currentSessionSets[0].id;
+  assert(currentSessionSets[0].notes === "", "Set starts with empty notes string");
+  assert(currentSessionSets[0].exerciseName === "Incline Dumbbell Press", "Exercise name correct");
+
+  // 2. Rendered card has the subtle + Note trigger
+  const listEl = document.getElementById('logged-sets-list');
+  assert(listEl.innerHTML.includes(`set-note-box-${setId}`), "Set note box rendered for the set");
+  assert(listEl.innerHTML.includes('+ Note'), "Renders subtle + Note button when note is empty");
+
+  // 3. Opening inline note input
+  openInlineSetNoteInput(setId);
+  const noteBox = document.getElementById(`set-note-box-${setId}`);
+  assert(noteBox.innerHTML.includes(`inline-set-note-input-${setId}`), "Inline note input rendered");
+
+  // 4. Saving inline note
+  const inlineInput = document.getElementById(`inline-set-note-input-${setId}`);
+  inlineInput.value = "Felt smooth, paused at the bottom";
+  saveInlineSetNote(setId);
+
+  assert(currentSessionSets[0].notes === "Felt smooth, paused at the bottom", "Set note updated in memory");
+  const savedLS = JSON.parse(localStorage.getItem('showUp_active_workout_sets'));
+  assert(savedLS[0].notes === "Felt smooth, paused at the bottom", "Set note persisted to localStorage");
+  assert(listEl.innerHTML.includes("Felt smooth, paused at the bottom"), "Set note text rendered on the card");
+  assert(listEl.innerHTML.includes("fa-note-sticky"), "Sticky note icon rendered with note");
+
+  // 5. Cancelling inline note does not overwrite existing note
+  openInlineSetNoteInput(setId);
+  const inlineInput2 = document.getElementById(`inline-set-note-input-${setId}`);
+  inlineInput2.value = "Changed my mind";
+  cancelInlineSetNote(setId);
+  assert(currentSessionSets[0].notes === "Felt smooth, paused at the bottom", "Cancelling leaves note unchanged");
+
+  // 6. Modal note editing
+  openEditActiveSetModal(setId);
+  const modalNotesEl = document.getElementById('edit-active-set-notes');
+  assert(modalNotesEl.value === "Felt smooth, paused at the bottom", "Edit modal loads existing note");
+
+  modalNotesEl.value = "Updated note: pushed to RPE 9 on last rep";
+  saveActiveSetEdits();
+
+  assert(currentSessionSets[0].notes === "Updated note: pushed to RPE 9 on last rep", "Modal update saves note to set object");
+  const updatedLS = JSON.parse(localStorage.getItem('showUp_active_workout_sets'));
+  assert(updatedLS[0].notes === "Updated note: pushed to RPE 9 on last rep", "Modal update persists note to localStorage");
+  assert(listEl.innerHTML.includes("Updated note: pushed to RPE 9 on last rep"), "Updated note rendered on logged sets list");
+
+  // 7. Summary sets breakdown displays note
+  lastEvaluatedSummary = {
+    date: "2026-10-25",
+    workoutName: "Push Day",
+    sets: [...currentSessionSets]
+  };
+  renderSummarySetsList();
+  const summaryChronology = document.getElementById('summary-sets-chronology');
+  assert(summaryChronology.innerHTML.includes("Updated note: pushed to RPE 9 on last rep"), "Summary sets list renders set note");
+
+  // 8. Delete note resets back to empty note with + Note trigger
+  deleteSetNote(setId);
+  assert(currentSessionSets[0].notes === "", "deleteSetNote resets notes to empty string");
+  assert(listEl.innerHTML.includes('+ Note'), "Card returns to subtle + Note trigger after deletion");
+
+  // Clean up
+  currentSessionSets = [];
+  localStorage.removeItem('showUp_active_workout_sets');
+  lastEvaluatedSummary = null;
+});
+
+runSuite("29. Streamlined Google OAuth Permissions & Non-Redundant Consent Flow", () => {
+  // 1. Clear any stored profile
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+
+  // 2. Call requestDriveAuthorization without user profile
+  requestDriveAuthorization(false);
+  assert(lastTokenClientInitConfig !== null, "requestDriveAuthorization calls initTokenClient");
+  assert(lastTokenClientInitConfig.prompt === '', "requestDriveAuthorization uses prompt: '' to avoid forcing consent modal");
+  assert(lastTokenClientRequestConfig.prompt === '', "requestAccessToken requests prompt: '' without forcing consent");
+  assert(!lastTokenClientInitConfig.hint, "hint is omitted when no user profile exists in localStorage");
+
+  // 3. Save athlete user profile
+  const mockProfile = { firstName: "Abhilash", email: "athlete@example.com", picture: "" };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(mockProfile));
+
+  // 4. Call requestDriveAuthorization with saved user profile
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  requestDriveAuthorization(false);
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "requestDriveAuthorization passes hint: email when user profile exists");
+  assert(lastTokenClientRequestConfig.hint === "athlete@example.com", "requestAccessToken passes hint: email to skip account chooser");
+  assert(lastTokenClientInitConfig.prompt === '', "requestDriveAuthorization preserves prompt: '' with user hint");
+
+  // 5. Call handleGoogleSignIn with saved profile
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  handleGoogleSignIn();
+  assert(lastTokenClientInitConfig.prompt === '', "handleGoogleSignIn uses prompt: '' for known users to prevent re-consent screen");
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "handleGoogleSignIn passes hint: email for known users");
+  assert(lastTokenClientRequestConfig.prompt === '', "handleGoogleSignIn requestAccessToken uses prompt: '' for known users");
+
+  // 6. Call handleGoogleSignIn without saved profile (first-time user)
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  handleGoogleSignIn();
+  assert(lastTokenClientInitConfig.prompt === 'select_account', "handleGoogleSignIn uses prompt: 'select_account' for new/unknown users");
+  assert(lastTokenClientRequestConfig.prompt === 'select_account', "requestAccessToken uses prompt: 'select_account' for new/unknown users");
+
+  // 7. Call requestTokenSilently with saved profile
+  localStorage.setItem('showUp_user_profile', JSON.stringify(mockProfile));
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  requestTokenSilently();
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "requestTokenSilently passes hint: email for silent token renewal");
+  assert(lastTokenClientRequestConfig.prompt === '', "requestTokenSilently passes prompt: '' for non-intrusive renewal");
+
+  // Clean up
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
 });
 
 print("\n============================================================");

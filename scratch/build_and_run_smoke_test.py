@@ -269,8 +269,24 @@ globalThis.location = { href: 'http://localhost/', reload: () => {} };
 globalThis.fetch = () => Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
 globalThis.alert = (msg) => {};
 globalThis.confirm = (msg) => true;
-globalThis.prompt = (msg, def) => def || '';
-globalThis.google = { accounts: { id: { initialize: () => {}, renderButton: () => {} } } };
+globalThis.lastTokenClientInitConfig = null;
+globalThis.lastTokenClientRequestConfig = null;
+globalThis.google = {
+  accounts: {
+    id: { initialize: () => {}, renderButton: () => {} },
+    oauth2: {
+      initTokenClient: (config) => {
+        globalThis.lastTokenClientInitConfig = config;
+        return {
+          requestAccessToken: (reqConfig) => {
+            globalThis.lastTokenClientRequestConfig = reqConfig;
+          }
+        };
+      },
+      hasGrantedAllScopes: (response, ...scopes) => true
+    }
+  }
+};
 
 // Test Framework in JSC
 let testPassedCount = 0;
@@ -2899,6 +2915,61 @@ runSuite("Suite 28: Post-Log Set Notes and Modal Note Support", () => {
   currentSessionSets = [];
   localStorage.removeItem('showUp_active_workout_sets');
   lastEvaluatedSummary = null;
+});
+
+runSuite("29. Streamlined Google OAuth Permissions & Non-Redundant Consent Flow", () => {
+  // 1. Clear any stored profile
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+
+  // 2. Call requestDriveAuthorization without user profile
+  requestDriveAuthorization(false);
+  assert(lastTokenClientInitConfig !== null, "requestDriveAuthorization calls initTokenClient");
+  assert(lastTokenClientInitConfig.prompt === '', "requestDriveAuthorization uses prompt: '' to avoid forcing consent modal");
+  assert(lastTokenClientRequestConfig.prompt === '', "requestAccessToken requests prompt: '' without forcing consent");
+  assert(!lastTokenClientInitConfig.hint, "hint is omitted when no user profile exists in localStorage");
+
+  // 3. Save athlete user profile
+  const mockProfile = { firstName: "Abhilash", email: "athlete@example.com", picture: "" };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(mockProfile));
+
+  // 4. Call requestDriveAuthorization with saved user profile
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  requestDriveAuthorization(false);
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "requestDriveAuthorization passes hint: email when user profile exists");
+  assert(lastTokenClientRequestConfig.hint === "athlete@example.com", "requestAccessToken passes hint: email to skip account chooser");
+  assert(lastTokenClientInitConfig.prompt === '', "requestDriveAuthorization preserves prompt: '' with user hint");
+
+  // 5. Call handleGoogleSignIn with saved profile
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  handleGoogleSignIn();
+  assert(lastTokenClientInitConfig.prompt === '', "handleGoogleSignIn uses prompt: '' for known users to prevent re-consent screen");
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "handleGoogleSignIn passes hint: email for known users");
+  assert(lastTokenClientRequestConfig.prompt === '', "handleGoogleSignIn requestAccessToken uses prompt: '' for known users");
+
+  // 6. Call handleGoogleSignIn without saved profile (first-time user)
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  handleGoogleSignIn();
+  assert(lastTokenClientInitConfig.prompt === 'select_account', "handleGoogleSignIn uses prompt: 'select_account' for new/unknown users");
+  assert(lastTokenClientRequestConfig.prompt === 'select_account', "requestAccessToken uses prompt: 'select_account' for new/unknown users");
+
+  // 7. Call requestTokenSilently with saved profile
+  localStorage.setItem('showUp_user_profile', JSON.stringify(mockProfile));
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
+  requestTokenSilently();
+  assert(lastTokenClientInitConfig.hint === "athlete@example.com", "requestTokenSilently passes hint: email for silent token renewal");
+  assert(lastTokenClientRequestConfig.prompt === '', "requestTokenSilently passes prompt: '' for non-intrusive renewal");
+
+  // Clean up
+  localStorage.removeItem('showUp_user_profile');
+  lastTokenClientInitConfig = null;
+  lastTokenClientRequestConfig = null;
 });
 
 print("\\n============================================================");

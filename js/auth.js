@@ -235,7 +235,10 @@
     function requestTokenSilently() {
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: getGoogleClientId(),
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
           prompt: '', // Silent request without popup or re-consent
@@ -256,8 +259,14 @@
           error_callback: (err) => {
             console.log("Silent token refresh info:", err);
           }
-        });
-        client.requestAccessToken({ prompt: '' });
+        };
+
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: '' });
       } catch (err) {
         console.warn("Silent token request skipped:", err);
       }
@@ -1676,10 +1685,13 @@
       }, 15000);
 
       try {
-        const client = google.accounts.oauth2.initTokenClient({
+        const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+        const userEmail = savedProfile?.email || '';
+
+        const clientConfig = {
           client_id: clientId,
           scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-          prompt: 'select_account',
+          prompt: userEmail ? '' : 'select_account',
           callback: async (response) => {
             clearTimeout(safetyTimer);
             setGoogleLoginLoading(false);
@@ -1707,9 +1719,14 @@
             console.warn("Google OAuth error callback:", err);
             openAuthLoginModal();
           }
-        });
+        };
 
-        client.requestAccessToken({ prompt: 'select_account' });
+        if (userEmail) {
+          clientConfig.hint = userEmail;
+        }
+
+        const client = google.accounts.oauth2.initTokenClient(clientConfig);
+        client.requestAccessToken(userEmail ? { prompt: '', hint: userEmail } : { prompt: 'select_account' });
       } catch (err) {
         clearTimeout(safetyTimer);
         setGoogleLoginLoading(false);
