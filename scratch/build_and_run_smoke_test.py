@@ -2760,7 +2760,7 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
 
   const statusBadge = getOrCreateElement('rest-timer-status-badge');
-  assert(statusBadge.innerText === "Resting", "Badge displays clean 'Resting' state before target recovery");
+  assert(statusBadge.classList.contains('hidden') || statusBadge.className === 'hidden' || statusBadge.innerText === '', "Resting badge pill is silenced during rest countdown");
 
   // Advance to 59s (under target)
   restTimerSeconds = 59;

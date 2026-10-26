@@ -2053,8 +2053,8 @@
           banner.classList.add('border-emerald-400', 'shadow-emerald-500/30');
         } else {
           if (badgeEl) {
-            badgeEl.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider";
-            badgeEl.innerText = "Resting";
+            badgeEl.className = "hidden";
+            badgeEl.innerText = "";
           }
           if (captionEl) {
             captionEl.innerText = "";
@@ -2094,8 +2094,11 @@
           }
         }
         if (activeVal) activeVal.innerText = formatTimerMS(activeSetElapsedSeconds);
-        if (activeCaption) activeCaption.innerText = `Set ${nextSetNum} in progress... Tap "Log Set ${nextSetNum}" when finished.`;
-        if (activeBadge) activeBadge.innerText = `Timing Set ${nextSetNum}`;
+        if (activeCaption) activeCaption.innerText = "";
+        if (activeBadge) {
+          activeBadge.className = "hidden";
+          activeBadge.innerText = "";
+        }
 
         if (startBtn && startLabel && startIcon) {
           startBtn.className = "w-full py-2.5 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-2";
@@ -2335,7 +2338,6 @@
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-black uppercase ${isLatest ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-500/40' : 'text-slate-400 bg-slate-900 border border-slate-800'} px-2.5 py-0.5 rounded-lg">Set #${setNumber}</span>
-                ${isLatest ? '<span class="text-[10px] font-black uppercase tracking-wider text-emerald-300 bg-emerald-500/20 border border-emerald-500/40 px-2 py-0.5 rounded">Latest Set</span>' : ''}
                 <div class="text-sm sm:text-base font-black text-slate-100 truncate">${s.exerciseName}</div>
               </div>
 
@@ -2379,7 +2381,6 @@
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs sm:text-sm font-black text-slate-100">First set in the books! 🎉</span>
-                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Auto-Save</span>
                 </div>
                 <p class="text-[11px] sm:text-xs text-slate-300/90 mt-0.5">Sign in to save your workout and sync your streaks to the cloud.</p>
               </div>
