@@ -2694,12 +2694,14 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(getCurrentRestTarget() === 60, "adjustRestTarget(-5) steps target back to 60s");
   assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
 
-  // 6. 3 Chimes Definition & Synthesis execution
+  // 6. Chimes Definition & Synthesis execution
   assert(REST_CHIMES.boxing_bell !== undefined, "REST_CHIMES defines boxing_bell (Arena Bell)");
+  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Desk Bell Ding-Ding-Ding)");
   assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
   assert(REST_CHIMES.crystal_harp !== undefined, "REST_CHIMES defines crystal_harp (Definitively Feminine)");
 
   let audioClassic = false;
+  let audioDeskBell = false;
   let audioMasculine = false;
   let audioFeminine = false;
   try {
@@ -2707,6 +2709,12 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
     audioClassic = true;
   } catch (e) {
     audioClassic = false;
+  }
+  try {
+    playTripleDingChime();
+    audioDeskBell = true;
+  } catch (e) {
+    audioDeskBell = false;
   }
   try {
     playDeepGongChime();
@@ -2722,6 +2730,7 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   }
 
   assert(audioClassic === true, "playDoubleBellRing (classic) executes cleanly with Web Audio API");
+  assert(audioDeskBell === true, "playTripleDingChime (desk bell ding-ding-ding) executes cleanly with Web Audio API");
   assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
   assert(audioFeminine === true, "playCrystalHarpChime (feminine) executes cleanly with Web Audio API");
 
@@ -2730,15 +2739,19 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(getRestChimeSound() === 'boxing_bell', "Default chime sound is boxing_bell");
 
   const next1 = cycleRestChimeSound(false);
-  assert(next1 === 'deep_gong', "cycleRestChimeSound transitions boxing_bell -> deep_gong (Masculine)");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+  assert(next1 === 'triple_ding', "cycleRestChimeSound transitions boxing_bell -> triple_ding (Desk Bell)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'triple_ding', "triple_ding persisted to localStorage");
 
   const next2 = cycleRestChimeSound(false);
-  assert(next2 === 'crystal_harp', "cycleRestChimeSound transitions deep_gong -> crystal_harp (Feminine)");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'crystal_harp', "crystal_harp persisted to localStorage");
+  assert(next2 === 'deep_gong', "cycleRestChimeSound transitions triple_ding -> deep_gong (Masculine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
 
   const next3 = cycleRestChimeSound(false);
-  assert(next3 === 'boxing_bell', "cycleRestChimeSound transitions crystal_harp -> boxing_bell (Classic)");
+  assert(next3 === 'crystal_harp', "cycleRestChimeSound transitions deep_gong -> crystal_harp (Feminine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'crystal_harp', "crystal_harp persisted to localStorage");
+
+  const next4 = cycleRestChimeSound(false);
+  assert(next4 === 'boxing_bell', "cycleRestChimeSound transitions crystal_harp -> boxing_bell (Classic)");
   assert(localStorage.getItem('showUp_rest_chime_sound') === 'boxing_bell', "boxing_bell persisted to localStorage");
 
   // 8. Haptic pattern for recovery

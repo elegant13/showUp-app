@@ -622,6 +622,89 @@
       }
     }
 
+    /**
+     * Synthesizes a crisp, triple-strike service counter bell ("Ding-Ding-Ding").
+     * Faithfully modeled on the classic brass/chrome desk call bell:
+     * - Three strikes spaced ~233ms apart (0.00s, 0.233s, 0.466s).
+     * - Core resonant modes accurately matching acoustic analysis of dingdingding.wav:
+     *   • 1286 Hz primary bell bowl resonance (with slight 1292 Hz chorus beating)
+     *   • 2252 Hz high-energy bell rim chime mode (with 2258 Hz shimmer)
+     *   • 3324 Hz bright metallic overtone
+     *   • 4520 Hz crystalline harmonic
+     *   • 492 Hz mechanical dome/clapper body thump
+     * - Strikes 1 & 2 have a rapid initial ring that is partly damped by the next strike,
+     *   while strike 3 rings out completely for 1.3s with natural exponential decay.
+     */
+    function playTripleDingChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const totalDuration = 1.8;
+
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.38, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + totalDuration);
+        masterGain.connect(ctx.destination);
+
+        const strikes = [0.0, 0.233, 0.466];
+        const modes = [
+          { freq: 492,  gain: 0.12, decay: 0.18, type: 'sine' },      // Clapper body thump
+          { freq: 1286, gain: 0.55, decay: 1.25, type: 'sine' },      // Bell bowl fundamental
+          { freq: 1292, gain: 0.25, decay: 1.15, type: 'sine' },      // Acoustic beating / warmth
+          { freq: 2252, gain: 0.70, decay: 1.00, type: 'sine' },      // Ringing rim resonance
+          { freq: 2258, gain: 0.28, decay: 0.90, type: 'sine' },      // Shimmer detune
+          { freq: 3324, gain: 0.26, decay: 0.70, type: 'sine' },      // Metallic overtone
+          { freq: 4520, gain: 0.38, decay: 0.55, type: 'sine' }       // Bright crystalline sparkle
+        ];
+
+        strikes.forEach((strikeOffset, idx) => {
+          const strikeTime = now + strikeOffset;
+          const isFinal = (idx === strikes.length - 1);
+          const strikeDecay = isFinal ? 1.0 : 0.22; // Ding 1 & 2 damp as next tap arrives
+
+          // Mechanical clapper click transient (sharp 5ms contact tap)
+          try {
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.type = 'triangle';
+            clickOsc.frequency.setValueAtTime(4200, strikeTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(800, strikeTime + 0.006);
+            clickGain.gain.setValueAtTime(0.18, strikeTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, strikeTime + 0.006);
+            clickOsc.connect(clickGain);
+            clickGain.connect(masterGain);
+            clickOsc.start(strikeTime);
+            clickOsc.stop(strikeTime + 0.007);
+          } catch (e) {}
+
+          // Resonant chime modes
+          modes.forEach(m => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = m.type;
+            osc.frequency.setValueAtTime(m.freq, strikeTime);
+
+            const dur = isFinal ? m.decay : Math.min(m.decay, strikeDecay);
+            g.gain.setValueAtTime(0.001, strikeTime);
+            g.gain.linearRampToValueAtTime(m.gain, strikeTime + 0.002); // 2ms attack
+            g.gain.exponentialRampToValueAtTime(0.0001, strikeTime + dur);
+
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(strikeTime);
+            osc.stop(strikeTime + dur);
+          });
+        });
+      } catch (e) {
+        console.warn("Rest timer triple ding alert warning:", e);
+      }
+    }
+
     const REST_CHIMES = {
       boxing_bell: {
         id: 'boxing_bell',
@@ -629,6 +712,13 @@
         tag: 'Classic',
         desc: 'Classic boxing round double strike',
         icon: 'fa-solid fa-bell'
+      },
+      triple_ding: {
+        id: 'triple_ding',
+        name: 'Desk Bell',
+        tag: 'Ding-Ding-Ding',
+        desc: 'Triple strike service counter bell (ding-ding-ding)',
+        icon: 'fa-solid fa-bell-concierge'
       },
       deep_gong: {
         id: 'deep_gong',
@@ -668,7 +758,7 @@
 
     function cycleRestChimeSound() {
       const current = getRestChimeSound();
-      const keys = ['boxing_bell', 'deep_gong', 'crystal_harp'];
+      const keys = ['boxing_bell', 'triple_ding', 'deep_gong', 'crystal_harp'];
       const nextIndex = (keys.indexOf(current) + 1) % keys.length;
       const nextChime = keys[nextIndex];
       setRestChimeSound(nextChime, true);
@@ -687,6 +777,8 @@
         playDeepGongChime();
       } else if (chime === 'crystal_harp') {
         playCrystalHarpChime();
+      } else if (chime === 'triple_ding') {
+        playTripleDingChime();
       } else {
         playDoubleBellRing();
       }
@@ -852,6 +944,8 @@
       window.playDoubleBellRing = playDoubleBellRing;
       window.playDeepGongChime = playDeepGongChime;
       window.playCrystalHarpChime = playCrystalHarpChime;
+      window.playTripleDingChime = playTripleDingChime;
+      window.REST_CHIMES = REST_CHIMES;
       window.playRestChime = playRestChime;
       window.getRestChimeSound = getRestChimeSound;
       window.setRestChimeSound = setRestChimeSound;
