@@ -842,8 +842,8 @@
                 <span class="text-[10px] text-slate-500">Recovery target between sets</span>
               </div>
               <select id="pref-default-rest-time" onchange="saveDefaultRestTimePref(this.value)" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer">
-                <option value="60">60s (Short)</option>
-                <option value="90" selected>90s (Standard)</option>
+                <option value="60" selected>60s (Default)</option>
+                <option value="90">90s (Standard)</option>
                 <option value="120">120s (2 min)</option>
                 <option value="180">180s (3 min)</option>
               </select>
@@ -851,8 +851,20 @@
 
             <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
+                <span class="text-xs text-slate-300 block">Recovery Chime Tone</span>
+                <span class="text-[10px] text-slate-500">Classic Arena, Deep Gong (M), or Crystal (F)</span>
+              </div>
+              <select id="pref-rest-chime-select" onchange="setRestChimeSound(this.value)" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                <option value="boxing_bell" selected>Arena Bell (Classic)</option>
+                <option value="deep_gong">Deep Gong (Masculine)</option>
+                <option value="crystal_harp">Crystal Chime (Feminine)</option>
+              </select>
+            </div>
+
+            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
                 <span class="text-xs text-slate-300 block">Rest Recovery Sound</span>
-                <span class="text-[10px] text-slate-500">Boxing arena round double bell when target is reached</span>
+                <span class="text-[10px] text-slate-500">Sound chime when target rest recovery is reached</span>
               </div>
               <input type="checkbox" id="pref-rest-sound-alert" onchange="toggleRestSoundAlertPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
             </div>
@@ -2418,20 +2430,20 @@
             <span id="exercise-previous-workout-date" class="text-[10px] text-slate-500 shrink-0 font-medium"></span>
           </div>
 
-          <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL -->
-          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-2 px-3.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between shadow-sm">
-            <div class="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
-              <i class="fa-solid fa-bullseye text-emerald-400 text-sm"></i>
-              <span class="text-slate-400 font-bold">Target:</span>
-              <span id="auto-muscle-primary" class="font-black text-emerald-400"></span>
-              <span id="auto-muscle-secondary-wrapper" class="text-slate-500 text-xs hidden min-[400px]:inline">
-                • <span class="text-slate-400">Secondary:</span> <span id="auto-muscle-secondary" class="text-slate-300 font-semibold"></span>
+          <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL (HORIZONTALLY SCROLLABLE FOR TARGET & SECONDARY MUSCLES) -->
+          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-2 px-3.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between shadow-sm gap-2">
+            <div id="auto-muscles-scroll-container" class="flex-1 min-w-0 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 whitespace-nowrap py-0.5">
+              <i class="fa-solid fa-bullseye text-emerald-400 text-sm shrink-0"></i>
+              <span class="text-slate-400 font-bold shrink-0">Target:</span>
+              <span id="auto-muscle-primary" class="font-black text-emerald-400 shrink-0"></span>
+              <span id="auto-muscle-secondary-wrapper" class="text-slate-500 text-xs hidden shrink-0 inline-flex items-center gap-1">
+                • <span class="text-slate-400 font-medium">Secondary:</span> <span id="auto-muscle-secondary" class="text-slate-300 font-semibold"></span>
               </span>
-              <span id="auto-implement-wrapper" class="text-slate-500 text-xs hidden sm:inline">
-                • <span class="text-slate-400">Implement:</span> <span id="auto-implement-val" class="text-emerald-400 font-bold"></span>
+              <span id="auto-implement-wrapper" class="text-slate-500 text-xs hidden shrink-0 sm:inline-flex items-center gap-1">
+                • <span class="text-slate-400 font-medium">Implement:</span> <span id="auto-implement-val" class="text-emerald-400 font-bold"></span>
               </span>
             </div>
-            <span class="text-[10px] uppercase tracking-wider font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded">Auto</span>
+            <span class="shrink-0 text-[10px] uppercase tracking-wider font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded ml-1 select-none">Auto</span>
           </div>
         </div>
 
@@ -2769,34 +2781,64 @@
         </div>
 
         <!-- REST TIMER HUD BANNER (HIGH-CONTRAST, OVERSIZED COUNTDOWN FOR LIFT RECOVERY) -->
-        <div id="rest-timer-banner" class="hidden bg-gradient-to-r from-emerald-950/80 via-slate-900 to-emerald-950/80 border-2 border-emerald-500/50 rounded-3xl p-4 sm:p-5 space-y-3 shadow-2xl transition-all">
-          <div class="flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-              <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-xl sm:text-2xl shadow-lg shadow-emerald-500/20 shrink-0">
+        <div id="rest-timer-banner" class="hidden bg-gradient-to-r from-emerald-950/80 via-slate-900 to-emerald-950/80 border-2 border-emerald-500/50 rounded-3xl p-4 sm:p-5 space-y-3.5 shadow-2xl transition-all">
+          <div class="flex items-center justify-between gap-2.5 flex-wrap">
+            <!-- Header Tag & Status -->
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 text-sm shadow-md shadow-emerald-500/20 shrink-0">
                 <i class="fa-solid fa-hourglass-half animate-pulse"></i>
               </div>
-              <div class="min-w-0">
-                <div class="flex items-baseline gap-2.5 flex-wrap">
-                  <span class="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">Rest Timer</span>
-                  <span id="rest-timer-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">Resting</span>
-                  <span id="rest-timer-val" class="font-mono text-4xl sm:text-6xl font-black text-white tracking-wider block sm:inline">0s</span>
-                </div>
-                <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate mt-0.5">Resting between sets... Tap "Log Set" when ready.</div>
-              </div>
+              <span class="text-xs sm:text-sm font-black text-emerald-400 uppercase tracking-widest">Rest Timer</span>
+              <span id="rest-timer-status-badge" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider">Resting</span>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
-              <button id="btn-toggle-rest-sound" type="button" onclick="toggleRestSoundAlert()" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center" title="Recovery alert sound: On (Click to mute)">
+            <!-- Sound & Skip Action Controls -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <!-- Minimalist Chime Cycle Button (Toggles Arena Bell, Deep Gong [M], Crystal Chime [F]) -->
+              <button id="btn-chime-cycle" type="button" onclick="cycleRestChimeSound()" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-[11px] font-bold px-2.5 py-1.5 rounded-xl transition active:scale-95 shadow flex items-center gap-1.5 select-none cursor-pointer" title="Switch recovery chime tone">
+                <i id="btn-chime-icon" class="fa-solid fa-bell text-emerald-400 text-xs"></i>
+                <span id="btn-chime-label" class="text-[10px] font-bold">Arena Bell</span>
+              </button>
+
+              <!-- Mute / Unmute Bell Button -->
+              <button id="btn-toggle-rest-sound" type="button" onclick="toggleRestSoundAlert()" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs font-black p-2 rounded-xl transition active:scale-95 shadow flex items-center justify-center cursor-pointer" title="Recovery alert sound: On (Click to mute)">
                 <i id="btn-toggle-rest-sound-icon" class="fa-solid fa-bell"></i>
               </button>
-              <button type="button" onclick="triggerHaptic('light'); adjustRestTimer(30)" class="bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl transition active:scale-95 shadow" title="Add 30 seconds rest">
-                +30s
-              </button>
-              <button type="button" onclick="triggerHaptic('light'); skipRestTimer()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-amber-500/40 text-xs sm:text-sm font-black px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl transition active:scale-95 shadow" title="Skip Rest Timer">
+
+              <!-- Skip Button -->
+              <button type="button" onclick="triggerHaptic('light'); skipRestTimer()" class="bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 border border-amber-500/40 text-xs font-black px-3 py-1.5 rounded-xl transition active:scale-95 shadow cursor-pointer" title="Skip Rest Timer">
                 Skip
               </button>
             </div>
           </div>
+
+          <!-- Rest Timer Stepper Display: [-] Number [+] -->
+          <div class="flex items-center justify-between sm:justify-center gap-3 sm:gap-6 w-full pt-1">
+            <!-- Decrement Target Rest Button (-) -->
+            <button type="button" id="btn-rest-decrement" aria-label="Decrease rest target" class="stepper-btn stepper-btn-decrement w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
+              <i class="fa-solid fa-minus pointer-events-none"></i>
+            </button>
+
+            <!-- Center Jumbo Display: Elapsed / Target Number -->
+            <div class="flex-1 max-w-[280px] sm:max-w-[320px] bg-slate-950/80 border border-slate-800/80 rounded-2xl py-2 px-3 flex flex-col items-center justify-center min-w-0 shadow-inner">
+              <div class="flex items-baseline gap-2 justify-center">
+                <span id="rest-timer-val" class="font-mono text-3xl sm:text-5xl font-black text-white tracking-wider">0s</span>
+                <span class="text-slate-500 text-xl sm:text-2xl font-light select-none">/</span>
+                <span id="rest-timer-target-val" class="font-mono text-2xl sm:text-4xl font-extrabold text-emerald-400 tracking-wider">60s</span>
+              </div>
+              <div class="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5 select-none">
+                <span>Target Rest</span>
+                <span class="text-[9px] text-emerald-400/90 bg-emerald-950/70 border border-emerald-500/30 px-1.5 py-0.2 rounded font-mono">Tap ±1 • Hold ±5</span>
+              </div>
+            </div>
+
+            <!-- Increment Target Rest Button (+) -->
+            <button type="button" id="btn-rest-increment" aria-label="Increase rest target" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
+              <i class="fa-solid fa-plus pointer-events-none"></i>
+            </button>
+          </div>
+
+          <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate text-center">Resting between sets... Tap "Log Set" when ready.</div>
         </div>
 
         <!-- ACTIVE SET TIMER HUD BANNER (CONSPICUOUS, HIGH-CONTRAST TIMING FOR ACTIVE SET WORK) -->

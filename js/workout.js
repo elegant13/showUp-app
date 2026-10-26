@@ -122,7 +122,7 @@
       const savedTarget = localStorage.getItem('showUp_user_target_weight');
       if (targetInput && savedTarget) targetInput.value = savedTarget;
 
-      const savedRest = localStorage.getItem('showUp_default_rest_time') || '90';
+      const savedRest = localStorage.getItem('showUp_default_rest_time') || '60';
       if (restSelect) restSelect.value = savedRest;
 
       if (typeof updateRestSoundAlertUI === 'function') {
@@ -1241,8 +1241,10 @@
       function doStep(amount) {
         if (type === 'weight') {
           adjustWeight(amount * deltaSign);
-        } else {
+        } else if (type === 'reps') {
           adjustReps(amount * deltaSign);
+        } else if (type === 'rest') {
+          adjustRestTarget(amount * deltaSign);
         }
       }
 
@@ -1346,11 +1348,15 @@
       const weightInc = document.getElementById('btn-weight-increment');
       const repsDec = document.getElementById('btn-reps-decrement');
       const repsInc = document.getElementById('btn-reps-increment');
+      const restDec = document.getElementById('btn-rest-decrement');
+      const restInc = document.getElementById('btn-rest-increment');
 
       if (weightDec) bindHoldStepper(weightDec, 'weight', -1);
       if (weightInc) bindHoldStepper(weightInc, 'weight', 1);
       if (repsDec) bindHoldStepper(repsDec, 'reps', -1);
       if (repsInc) bindHoldStepper(repsInc, 'reps', 1);
+      if (restDec) bindHoldStepper(restDec, 'rest', -1);
+      if (restInc) bindHoldStepper(restInc, 'rest', 1);
 
       // Support mouse wheel on inputs
       ['weight', 'reps'].forEach(type => {
@@ -1919,9 +1925,11 @@
           } catch (e) {}
         }
 
-        // 2. Optional double bell ring alert sound
+        // 2. Optional rest recovery chime alert sound
         if (typeof isRestSoundAlertEnabled === 'function' && isRestSoundAlertEnabled()) {
-          if (typeof playDoubleBellRing === 'function') {
+          if (typeof playRestChime === 'function') {
+            playRestChime();
+          } else if (typeof playDoubleBellRing === 'function') {
             playDoubleBellRing();
           }
         }
@@ -1939,22 +1947,45 @@
       return currentSessionRestTarget || getDefaultRestTimeSeconds();
     }
 
-    function adjustRestTimer(deltaSecs) {
-      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+    /**
+     * Increments or decrements the target recovery rest time.
+     * Makes the chosen target rest sticky in localStorage so it persists across sets and workouts.
+     * @param {number} deltaSecs - Seconds to adjust (+1, -1, +5, -5, +30, etc.)
+     */
+    function adjustRestTarget(deltaSecs) {
+      const currentTarget = getCurrentRestTarget();
+      const newTarget = Math.max(5, currentTarget + deltaSecs);
+      currentSessionRestTarget = newTarget;
+      localStorage.setItem('showUp_default_rest_time', newTarget); // Sticky preference
+
       if (isRestTimerRunning) {
-        const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
-        currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
         // If the new target exceeds current rest seconds, re-arm the alert
-        if (currentSessionRestTarget > restTimerSeconds) {
+        if (newTarget > restTimerSeconds) {
           hasTriggeredRestRecoveryAlert = false;
         }
         saveRestTimerState();
         checkRestRecoveryThreshold();
-        updateRestTimerUI();
-        if (typeof showToast === 'function') {
-          showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
-        }
       }
+      updateRestTimerUI();
+
+      const prefSelect = document.getElementById('pref-default-rest-time');
+      if (prefSelect) {
+        prefSelect.value = String(newTarget);
+      }
+
+      if (typeof triggerHaptic === 'function') {
+        triggerHaptic(Math.abs(deltaSecs) > 1 ? 'medium' : 'light');
+      }
+      return newTarget;
+    }
+
+    function adjustRestTimer(deltaSecs) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const newTarget = adjustRestTarget(deltaSecs);
+      if (typeof showToast === 'function') {
+        showToast(`Rest target: ${newTarget}s (${deltaSecs >= 0 ? '+' : ''}${deltaSecs}s)`, "info");
+      }
+      return newTarget;
     }
 
     function skipRestTimer() {
@@ -1970,16 +2001,20 @@
 
     function getDefaultRestTimeSeconds() {
       const saved = localStorage.getItem('showUp_default_rest_time');
-      return saved ? parseInt(saved, 10) : 90;
+      return saved ? parseInt(saved, 10) : 60;
     }
 
     function saveDefaultRestTimePref(val) {
-      const seconds = parseInt(val, 10) || 90;
+      const seconds = parseInt(val, 10) || 60;
       localStorage.setItem('showUp_default_rest_time', seconds);
+      currentSessionRestTarget = seconds;
       if (typeof showToast === 'function') {
         showToast(`Default rest target set to ${seconds}s`, "info");
       }
       if (isRestTimerRunning) {
+        if (seconds > restTimerSeconds) {
+          hasTriggeredRestRecoveryAlert = false;
+        }
         updateRestTimerUI();
       }
     }
@@ -1987,6 +2022,7 @@
     function updateRestTimerUI() {
       const banner = document.getElementById('rest-timer-banner');
       const valEl = document.getElementById('rest-timer-val');
+      const targetEl = document.getElementById('rest-timer-target-val');
       const captionEl = document.getElementById('rest-timer-caption');
       const badgeEl = document.getElementById('rest-timer-status-badge');
 
@@ -2004,6 +2040,7 @@
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
         const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
+        if (targetEl) targetEl.innerText = `${targetRest}s`;
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
@@ -3244,6 +3281,7 @@
       window.startRestTimer = startRestTimer;
       window.stopRestTimer = stopRestTimer;
       window.adjustRestTimer = adjustRestTimer;
+      window.adjustRestTarget = adjustRestTarget;
       window.skipRestTimer = skipRestTimer;
       window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
       window.saveDefaultRestTimePref = saveDefaultRestTimePref;

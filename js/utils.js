@@ -492,6 +492,206 @@
       }
     }
 
+    /**
+     * Synthesizes a deep, resonant, definitively masculine acoustic bronze gong strike.
+     * Uses Web Audio API with a powerful 110 Hz (A2) fundamental, sub-bass 55 Hz (A1) resonance,
+     * rich odd/even low bronze partials, a punchy mallet transient, and slow warm reverberation.
+     */
+    function playDeepGongChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const duration = 2.4;
+
+        // Master gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.44, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.connect(ctx.destination);
+
+        // Low masculine gong partials: deep resonant bronze
+        const gongPartials = [
+          { freq: 55, gain: 0.50, decay: 2.2, type: 'sine' },      // Sub-bass undertone (55 Hz A1)
+          { freq: 110, gain: 0.85, decay: 2.4, type: 'sine' },     // Heavy strike fundamental (110 Hz A2)
+          { freq: 110.5, gain: 0.70, decay: 2.3, type: 'sine' },   // Beating resonance chorus (bronze vibration)
+          { freq: 164.8, gain: 0.45, decay: 1.8, type: 'sine' },   // Minor third low warmth (~E3)
+          { freq: 220, gain: 0.55, decay: 1.6, type: 'sine' },     // Baritone octave body (220 Hz A3)
+          { freq: 330, gain: 0.35, decay: 1.2, type: 'triangle' }, // Low metallic quint (330 Hz E4)
+          { freq: 440, gain: 0.28, decay: 0.9, type: 'triangle' }, // Bronze gong rim ring (440 Hz A4)
+          { freq: 659, gain: 0.16, decay: 0.6, type: 'triangle' }  // Upper gong overtone (~659 Hz E5)
+        ];
+
+        gongPartials.forEach(p => {
+          const osc = ctx.createOscillator();
+          const partGain = ctx.createGain();
+          osc.type = p.type;
+          osc.frequency.setValueAtTime(p.freq, now);
+
+          const partDur = Math.max(0.1, Math.min(duration, p.decay));
+          partGain.gain.setValueAtTime(p.gain, now);
+          partGain.gain.exponentialRampToValueAtTime(0.0001, now + partDur);
+
+          osc.connect(partGain);
+          partGain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + partDur);
+        });
+
+        // Heavy felt-covered mallet impact transient (punchy, deep thud)
+        try {
+          const punchOsc = ctx.createOscillator();
+          const punchGain = ctx.createGain();
+          punchOsc.type = 'sine';
+          punchOsc.frequency.setValueAtTime(160, now);
+          punchOsc.frequency.exponentialRampToValueAtTime(45, now + 0.06);
+          punchGain.gain.setValueAtTime(0.42, now);
+          punchGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+          punchOsc.connect(punchGain);
+          punchGain.connect(masterGain);
+          punchOsc.start(now);
+          punchOsc.stop(now + 0.07);
+        } catch (e) {}
+      } catch (e) {
+        console.warn("Rest timer deep gong alert warning:", e);
+      }
+    }
+
+    /**
+     * Synthesizes an ethereal, delicate, definitively feminine singing crystal chime.
+     * Uses Web Audio API with higher-octave singing crystal frequencies (880 Hz A5 & 1318.5 Hz E6),
+     * shimmering celestial overtone harmonics, silky soft envelope, and angelic reverberation.
+     */
+    function playCrystalHarpChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const duration = 2.0;
+
+        // Master gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.34, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.connect(ctx.destination);
+
+        function strikeCrystalTone(startTime, baseFreq, level = 0.3) {
+          const strikeGain = ctx.createGain();
+          strikeGain.gain.setValueAtTime(0.001, startTime);
+          strikeGain.gain.linearRampToValueAtTime(level, startTime + 0.015); // soft celestial attack
+          strikeGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.8);
+          strikeGain.connect(masterGain);
+
+          const harmonics = [
+            { mult: 1.0, gain: 0.75, decay: 1.8 },      // Pure soprano fundamental
+            { mult: 1.005, gain: 0.65, decay: 1.7 },    // Shimmering celestial chorus
+            { mult: 2.0, gain: 0.40, decay: 1.4 },      // Bright crystal octave
+            { mult: 2.76, gain: 0.25, decay: 1.0 },     // Silver harmonic
+            { mult: 3.98, gain: 0.18, decay: 0.8 },     // Delicate star sparkle
+            { mult: 5.4, gain: 0.10, decay: 0.5 }       // High crystalline shimmer
+          ];
+
+          harmonics.forEach(h => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(baseFreq * h.mult, startTime);
+            const partDur = Math.max(0.1, 1.8 * (h.decay / 1.8));
+            g.gain.setValueAtTime(h.gain, startTime + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0001, startTime + partDur);
+            osc.connect(g);
+            g.connect(strikeGain);
+            osc.start(startTime);
+            osc.stop(startTime + partDur);
+          });
+        }
+
+        // Melodic ascending crystal chime doublet (A5 ~880 Hz -> E6 ~1318.5 Hz)
+        strikeCrystalTone(now, 880, 0.28);
+        strikeCrystalTone(now + 0.16, 1318.5, 0.32);
+      } catch (e) {
+        console.warn("Rest timer crystal chime alert warning:", e);
+      }
+    }
+
+    const REST_CHIMES = {
+      boxing_bell: {
+        id: 'boxing_bell',
+        name: 'Arena Bell',
+        tag: 'Classic',
+        desc: 'Classic boxing round double strike',
+        icon: 'fa-solid fa-bell'
+      },
+      deep_gong: {
+        id: 'deep_gong',
+        name: 'Deep Gong',
+        tag: 'Masculine',
+        desc: 'Definitively masculine: deep resonant brass gong',
+        icon: 'fa-solid fa-shield-halved'
+      },
+      crystal_harp: {
+        id: 'crystal_harp',
+        name: 'Crystal Chime',
+        tag: 'Feminine',
+        desc: 'Definitively feminine: celestial singing crystal bowl',
+        icon: 'fa-solid fa-wand-magic-sparkles'
+      }
+    };
+
+    function getRestChimeSound() {
+      try {
+        const val = localStorage.getItem('showUp_rest_chime_sound');
+        return REST_CHIMES[val] ? val : 'boxing_bell';
+      } catch (e) {
+        return 'boxing_bell';
+      }
+    }
+
+    function setRestChimeSound(chimeId, preview = true) {
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'boxing_bell';
+      try {
+        localStorage.setItem('showUp_rest_chime_sound', valid);
+      } catch (e) {}
+      updateRestChimeUI();
+      if (preview && isRestSoundAlertEnabled()) {
+        playRestChime(valid);
+      }
+    }
+
+    function cycleRestChimeSound() {
+      const current = getRestChimeSound();
+      const keys = ['boxing_bell', 'deep_gong', 'crystal_harp'];
+      const nextIndex = (keys.indexOf(current) + 1) % keys.length;
+      const nextChime = keys[nextIndex];
+      setRestChimeSound(nextChime, true);
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const chimeMeta = REST_CHIMES[nextChime];
+      if (typeof showToast === 'function') {
+        showToast(`Recovery Chime: ${chimeMeta.name} (${chimeMeta.tag})`, "info");
+      }
+      return nextChime;
+    }
+
+    function playRestChime(explicitChimeId = null) {
+      if (!isRestSoundAlertEnabled()) return;
+      const chime = explicitChimeId || getRestChimeSound();
+      if (chime === 'deep_gong') {
+        playDeepGongChime();
+      } else if (chime === 'crystal_harp') {
+        playCrystalHarpChime();
+      } else {
+        playDoubleBellRing();
+      }
+    }
+
     function isRestSoundAlertEnabled() {
       try {
         const val = localStorage.getItem('showUp_rest_sound_alert');
@@ -511,23 +711,48 @@
     function toggleRestSoundAlert() {
       const next = !isRestSoundAlertEnabled();
       setRestSoundAlertEnabled(next);
-      if (next && typeof playDoubleBellRing === 'function') {
-        playDoubleBellRing();
+      if (next) {
+        playRestChime();
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(next ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        showToast(next ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function toggleRestSoundAlertPref(checked) {
       setRestSoundAlertEnabled(checked);
-      if (checked && typeof playDoubleBellRing === 'function') {
-        playDoubleBellRing();
+      if (checked) {
+        playRestChime();
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(checked ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function updateRestChimeUI() {
+      const chimeId = getRestChimeSound();
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.boxing_bell;
+
+      const chimeBtn = document.getElementById('btn-chime-cycle');
+      const chimeIcon = document.getElementById('btn-chime-icon');
+      const chimeLabel = document.getElementById('btn-chime-label');
+      if (chimeBtn) {
+        chimeBtn.title = `Current chime: ${meta.name} (${meta.tag}) · Click to switch`;
+      }
+      if (chimeIcon) {
+        chimeIcon.className = `${meta.icon} text-emerald-400 text-xs`;
+      }
+      if (chimeLabel) {
+        chimeLabel.textContent = meta.name;
+      }
+
+      const select = document.getElementById('pref-rest-chime-select');
+      if (select) {
+        select.value = chimeId;
       }
     }
 
@@ -535,21 +760,25 @@
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+
       if (bannerBtn && bannerIcon) {
         if (enabled) {
-          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2 sm:p-2.5 rounded-xl transition active:scale-95 shadow flex items-center justify-center cursor-pointer";
           bannerIcon.className = "fa-solid fa-bell";
-          bannerBtn.title = "Boxing bell alert: On (Click to mute)";
+          bannerBtn.title = `Recovery alert sound: On (${chimeMeta.name}) · Click to mute`;
         } else {
-          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2 sm:p-2.5 rounded-xl transition active:scale-95 shadow flex items-center justify-center cursor-pointer";
           bannerIcon.className = "fa-solid fa-bell-slash";
-          bannerBtn.title = "Boxing bell alert: Muted (Click to enable)";
+          bannerBtn.title = "Recovery alert sound: Muted · Click to enable";
         }
       }
       const prefCheckbox = document.getElementById('pref-rest-sound-alert');
       if (prefCheckbox) {
         prefCheckbox.checked = enabled;
       }
+
+      updateRestChimeUI();
     }
 
     function triggerSquadHaptic() {
@@ -621,6 +850,13 @@
     if (typeof window !== 'undefined') {
       window.triggerHaptic = triggerHaptic;
       window.playDoubleBellRing = playDoubleBellRing;
+      window.playDeepGongChime = playDeepGongChime;
+      window.playCrystalHarpChime = playCrystalHarpChime;
+      window.playRestChime = playRestChime;
+      window.getRestChimeSound = getRestChimeSound;
+      window.setRestChimeSound = setRestChimeSound;
+      window.cycleRestChimeSound = cycleRestChimeSound;
+      window.updateRestChimeUI = updateRestChimeUI;
       window.isRestSoundAlertEnabled = isRestSoundAlertEnabled;
       window.setRestSoundAlertEnabled = setRestSoundAlertEnabled;
       window.toggleRestSoundAlert = toggleRestSoundAlert;

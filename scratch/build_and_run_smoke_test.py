@@ -100,6 +100,13 @@ def generate_and_run_smoke_test():
         print("[FAIL] Workout session HUD missing in HTML")
         return False
 
+    # 6. Check auto-muscles-scroll-container with horizontal scrolling in HTML
+    if 'id="auto-muscles-scroll-container"' in html and 'overflow-x-auto' in html and 'whitespace-nowrap' in html:
+        print("[PASS] auto-muscles-scroll-container with overflow-x-auto and whitespace-nowrap verified in HTML")
+    else:
+        print("[FAIL] auto-muscles-scroll-container with overflow-x-auto missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -238,13 +245,13 @@ globalThis.AudioContext = function() {
     resume: () => {},
     createOscillator: () => ({
       type: 'sine',
-      frequency: { setValueAtTime: () => {} },
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
       connect: () => {},
       start: () => {},
       stop: () => {}
     }),
     createGain: () => ({
-      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
       connect: () => {}
     }),
     destination: {}
@@ -2592,10 +2599,10 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   // Rest target extension via adjustRestTimer(+30)
   localStorage.removeItem('showUp_default_rest_time');
   startRestTimer(10); // 10s elapsed
-  assert(getCurrentRestTarget() === 90, "Initial rest target defaults to 90s");
+  assert(getCurrentRestTarget() === 60, "Initial rest target defaults to 60s");
   assert(restTimerSeconds === 10, "Elapsed rest seconds is 10s");
   adjustRestTimer(30);
-  assert(getCurrentRestTarget() === 120, "adjustRestTimer(+30) increases rest target to 120s");
+  assert(getCurrentRestTarget() === 90, "adjustRestTimer(+30) increases rest target to 90s");
   assert(restTimerSeconds === 10, "Elapsed rest seconds remains intact at 10s without inflation");
 
   // Clean up
@@ -2603,9 +2610,16 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   currentSessionSets = [];
 });
 
-runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
+runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Muscles Scroll", () => {
   // 1. Function existence
   assert(typeof playDoubleBellRing === 'function', "playDoubleBellRing is a defined function");
+  assert(typeof playDeepGongChime === 'function', "playDeepGongChime is a defined function");
+  assert(typeof playCrystalHarpChime === 'function', "playCrystalHarpChime is a defined function");
+  assert(typeof playRestChime === 'function', "playRestChime is a defined function");
+  assert(typeof getRestChimeSound === 'function', "getRestChimeSound is a defined function");
+  assert(typeof setRestChimeSound === 'function', "setRestChimeSound is a defined function");
+  assert(typeof cycleRestChimeSound === 'function', "cycleRestChimeSound is a defined function");
+  assert(typeof adjustRestTarget === 'function', "adjustRestTarget is a defined function");
   assert(typeof isRestSoundAlertEnabled === 'function', "isRestSoundAlertEnabled is a defined function");
   assert(typeof setRestSoundAlertEnabled === 'function', "setRestSoundAlertEnabled is a defined function");
   assert(typeof toggleRestSoundAlert === 'function', "toggleRestSoundAlert is a defined function");
@@ -2617,11 +2631,26 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   const soundBtn = getOrCreateElement('btn-toggle-rest-sound');
   const soundIcon = getOrCreateElement('btn-toggle-rest-sound-icon');
   const prefCheckbox = getOrCreateElement('pref-rest-sound-alert');
+  const chimeCycleBtn = getOrCreateElement('btn-chime-cycle');
+  const chimeSelect = getOrCreateElement('pref-rest-chime-select');
+  const decBtn = getOrCreateElement('btn-rest-decrement');
+  const incBtn = getOrCreateElement('btn-rest-increment');
+  const targetValEl = getOrCreateElement('rest-timer-target-val');
+
   assert(soundBtn !== null, "btn-toggle-rest-sound exists in DOM");
   assert(soundIcon !== null, "btn-toggle-rest-sound-icon exists in DOM");
   assert(prefCheckbox !== null, "pref-rest-sound-alert exists in DOM");
+  assert(chimeCycleBtn !== null, "btn-chime-cycle exists in DOM");
+  assert(chimeSelect !== null, "pref-rest-chime-select exists in DOM");
+  assert(decBtn !== null, "btn-rest-decrement exists in DOM");
+  assert(incBtn !== null, "btn-rest-increment exists in DOM");
+  assert(targetValEl !== null, "rest-timer-target-val exists in DOM");
 
-  // 3. Preference behavior (defaults to true)
+  // 3. Horizontal scroll container for Target and Secondary muscles
+  const scrollContainer = getOrCreateElement('auto-muscles-scroll-container');
+  assert(scrollContainer !== null, "auto-muscles-scroll-container exists in DOM");
+
+  // 4. Preference behavior (defaults to true)
   localStorage.removeItem('showUp_rest_sound_alert');
   assert(isRestSoundAlertEnabled() === true, "Rest recovery sound alert is enabled by default");
 
@@ -2633,57 +2662,119 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   assert(isRestSoundAlertEnabled() === true, "Sound alert can be re-enabled");
   assert(localStorage.getItem('showUp_rest_sound_alert') === 'true', "Preference persisted in localStorage as true");
 
-  // 4. Audio synthesis execution without error
-  let audioPlayed = false;
+  // 5. Rest Timer Steppers & Sticky Target Persistence
+  localStorage.removeItem('showUp_default_rest_time');
+  startRestTimer(0);
+  assert(getCurrentRestTarget() === 60, "Rest timer target defaults to 60s");
+
+  // Single step +1
+  adjustRestTarget(1);
+  assert(getCurrentRestTarget() === 61, "adjustRestTarget(1) steps target to 61s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '61', "Target rest is sticky in localStorage");
+
+  // Step -1
+  adjustRestTarget(-1);
+  assert(getCurrentRestTarget() === 60, "adjustRestTarget(-1) steps target back to 60s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
+
+  // 5x hold step +5
+  adjustRestTarget(5);
+  assert(getCurrentRestTarget() === 65, "adjustRestTarget(5) steps target by 5 to 65s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '65', "Target rest is sticky in localStorage");
+
+  // 5x hold step -5
+  adjustRestTarget(-5);
+  assert(getCurrentRestTarget() === 60, "adjustRestTarget(-5) steps target back to 60s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
+
+  // 6. 3 Chimes Definition & Synthesis execution
+  assert(REST_CHIMES.boxing_bell !== undefined, "REST_CHIMES defines boxing_bell (Arena Bell)");
+  assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
+  assert(REST_CHIMES.crystal_harp !== undefined, "REST_CHIMES defines crystal_harp (Definitively Feminine)");
+
+  let audioClassic = false;
+  let audioMasculine = false;
+  let audioFeminine = false;
   try {
     playDoubleBellRing();
-    audioPlayed = true;
+    audioClassic = true;
   } catch (e) {
-    audioPlayed = false;
+    audioClassic = false;
   }
-  assert(audioPlayed === true, "playDoubleBellRing executes cleanly with Web Audio API");
+  try {
+    playDeepGongChime();
+    audioMasculine = true;
+  } catch (e) {
+    audioMasculine = false;
+  }
+  try {
+    playCrystalHarpChime();
+    audioFeminine = true;
+  } catch (e) {
+    audioFeminine = false;
+  }
 
-  // 5. Haptic pattern for recovery
+  assert(audioClassic === true, "playDoubleBellRing (classic) executes cleanly with Web Audio API");
+  assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
+  assert(audioFeminine === true, "playCrystalHarpChime (feminine) executes cleanly with Web Audio API");
+
+  // 7. Minimalistic Chime Cycling & Persistence
+  localStorage.removeItem('showUp_rest_chime_sound');
+  assert(getRestChimeSound() === 'boxing_bell', "Default chime sound is boxing_bell");
+
+  const next1 = cycleRestChimeSound(false);
+  assert(next1 === 'deep_gong', "cycleRestChimeSound transitions boxing_bell -> deep_gong (Masculine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+
+  const next2 = cycleRestChimeSound(false);
+  assert(next2 === 'crystal_harp', "cycleRestChimeSound transitions deep_gong -> crystal_harp (Feminine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'crystal_harp', "crystal_harp persisted to localStorage");
+
+  const next3 = cycleRestChimeSound(false);
+  assert(next3 === 'boxing_bell', "cycleRestChimeSound transitions crystal_harp -> boxing_bell (Classic)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'boxing_bell', "boxing_bell persisted to localStorage");
+
+  // 8. Haptic pattern for recovery
   globalThis.__lastVibrate = null;
   triggerHaptic('recovery');
   assert(Array.isArray(globalThis.__lastVibrate) && globalThis.__lastVibrate.length === 3, "triggerHaptic('recovery') fires a 3-part double pulse pattern");
   assert(globalThis.__lastVibrate[0] === 70 && globalThis.__lastVibrate[1] === 100 && globalThis.__lastVibrate[2] === 90, "Pattern matches [70, 100, 90]");
 
-  // 6. Recovery alert triggers once when target rest is reached
+  // 9. Recovery alert triggers once when target rest is reached
   globalThis.__lastVibrate = null;
-  let bellRingCalled = false;
-  const originalPlay = playDoubleBellRing;
-  globalThis.playDoubleBellRing = () => { bellRingCalled = true; };
+  let restChimeFired = false;
+  const originalPlayChime = playRestChime;
+  globalThis.playRestChime = () => { restChimeFired = true; };
 
   localStorage.setItem('showUp_default_rest_time', '60');
   startRestTimer(0);
   assert(hasTriggeredRestRecoveryAlert === false, "Alert flag is initially false");
-  assert(bellRingCalled === false, "Sound has not fired at 0s");
+  assert(restChimeFired === false, "Sound has not fired at 0s");
   assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
 
   // Advance to 59s (under target)
   restTimerSeconds = 59;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === false, "Alert does not fire before target (59s < 60s)");
-  assert(bellRingCalled === false, "Sound has not fired at 59s");
+  assert(restChimeFired === false, "Sound has not fired at 59s");
 
   // Advance to 60s (target reached!)
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
-  assert(bellRingCalled === true, "Double bell ring sound alert triggered at target recovery");
+  assert(restChimeFired === true, "Rest chime sound alert triggered at target recovery");
   assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
 
   // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
-  bellRingCalled = false;
+  restChimeFired = false;
   globalThis.__lastVibrate = null;
   restTimerSeconds = 61;
   checkRestRecoveryThreshold();
-  assert(bellRingCalled === false, "Alert sound does not re-trigger on subsequent seconds");
+  assert(restChimeFired === false, "Alert sound does not re-trigger on subsequent seconds");
   assert(globalThis.__lastVibrate === null, "Haptic does not re-trigger on subsequent seconds");
 
-  // 7. Extending rest target re-arms alert
-  adjustRestTimer(30); // Target is now 90s, current restTimerSeconds is 61s
+  // 10. Extending rest target re-arms alert
+  adjustRestTarget(30); // Target is now 90s, current restTimerSeconds is 61s
   assert(getCurrentRestTarget() === 90, "New target is 90s");
   assert(hasTriggeredRestRecoveryAlert === false, "Extending rest target re-arms alert flag");
 
@@ -2691,24 +2782,26 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   restTimerSeconds = 90;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert triggers again at new extended target (90s)");
-  assert(bellRingCalled === true, "Double bell sound fired for extended target");
+  assert(restChimeFired === true, "Chime sound fired for extended target");
 
-  // 8. Optional alert: when muted, sound is suppressed but haptic still fires
-  bellRingCalled = false;
+  // 11. Optional alert: when muted, sound is suppressed but haptic still fires
+  restChimeFired = false;
   globalThis.__lastVibrate = null;
   setRestSoundAlertEnabled(false);
+  localStorage.setItem('showUp_default_rest_time', '60');
   startRestTimer(0);
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
-  assert(bellRingCalled === false, "Sound alert is suppressed when disabled/muted");
+  assert(restChimeFired === false, "Sound alert is suppressed when disabled/muted");
   assert(globalThis.__lastVibrate !== null, "Haptic alert still fires when sound is muted");
 
   // Restore mocks and clean up
-  globalThis.playDoubleBellRing = originalPlay;
+  globalThis.playRestChime = originalPlayChime;
   setRestSoundAlertEnabled(true);
   stopRestTimer();
   localStorage.removeItem('showUp_default_rest_time');
   localStorage.removeItem('showUp_rest_sound_alert');
+  localStorage.removeItem('showUp_rest_chime_sound');
 });
 
 print("\\n============================================================");

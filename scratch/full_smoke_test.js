@@ -135,13 +135,13 @@ globalThis.AudioContext = function() {
     resume: () => {},
     createOscillator: () => ({
       type: 'sine',
-      frequency: { setValueAtTime: () => {} },
+      frequency: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
       connect: () => {},
       start: () => {},
       stop: () => {}
     }),
     createGain: () => ({
-      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {} },
+      gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
       connect: () => {}
     }),
     destination: {}
@@ -2169,6 +2169,206 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    /**
+     * Synthesizes a deep, resonant, definitively masculine acoustic bronze gong strike.
+     * Uses Web Audio API with a powerful 110 Hz (A2) fundamental, sub-bass 55 Hz (A1) resonance,
+     * rich odd/even low bronze partials, a punchy mallet transient, and slow warm reverberation.
+     */
+    function playDeepGongChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const duration = 2.4;
+
+        // Master gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.44, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.connect(ctx.destination);
+
+        // Low masculine gong partials: deep resonant bronze
+        const gongPartials = [
+          { freq: 55, gain: 0.50, decay: 2.2, type: 'sine' },      // Sub-bass undertone (55 Hz A1)
+          { freq: 110, gain: 0.85, decay: 2.4, type: 'sine' },     // Heavy strike fundamental (110 Hz A2)
+          { freq: 110.5, gain: 0.70, decay: 2.3, type: 'sine' },   // Beating resonance chorus (bronze vibration)
+          { freq: 164.8, gain: 0.45, decay: 1.8, type: 'sine' },   // Minor third low warmth (~E3)
+          { freq: 220, gain: 0.55, decay: 1.6, type: 'sine' },     // Baritone octave body (220 Hz A3)
+          { freq: 330, gain: 0.35, decay: 1.2, type: 'triangle' }, // Low metallic quint (330 Hz E4)
+          { freq: 440, gain: 0.28, decay: 0.9, type: 'triangle' }, // Bronze gong rim ring (440 Hz A4)
+          { freq: 659, gain: 0.16, decay: 0.6, type: 'triangle' }  // Upper gong overtone (~659 Hz E5)
+        ];
+
+        gongPartials.forEach(p => {
+          const osc = ctx.createOscillator();
+          const partGain = ctx.createGain();
+          osc.type = p.type;
+          osc.frequency.setValueAtTime(p.freq, now);
+
+          const partDur = Math.max(0.1, Math.min(duration, p.decay));
+          partGain.gain.setValueAtTime(p.gain, now);
+          partGain.gain.exponentialRampToValueAtTime(0.0001, now + partDur);
+
+          osc.connect(partGain);
+          partGain.connect(masterGain);
+          osc.start(now);
+          osc.stop(now + partDur);
+        });
+
+        // Heavy felt-covered mallet impact transient (punchy, deep thud)
+        try {
+          const punchOsc = ctx.createOscillator();
+          const punchGain = ctx.createGain();
+          punchOsc.type = 'sine';
+          punchOsc.frequency.setValueAtTime(160, now);
+          punchOsc.frequency.exponentialRampToValueAtTime(45, now + 0.06);
+          punchGain.gain.setValueAtTime(0.42, now);
+          punchGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+          punchOsc.connect(punchGain);
+          punchGain.connect(masterGain);
+          punchOsc.start(now);
+          punchOsc.stop(now + 0.07);
+        } catch (e) {}
+      } catch (e) {
+        console.warn("Rest timer deep gong alert warning:", e);
+      }
+    }
+
+    /**
+     * Synthesizes an ethereal, delicate, definitively feminine singing crystal chime.
+     * Uses Web Audio API with higher-octave singing crystal frequencies (880 Hz A5 & 1318.5 Hz E6),
+     * shimmering celestial overtone harmonics, silky soft envelope, and angelic reverberation.
+     */
+    function playCrystalHarpChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+        const duration = 2.0;
+
+        // Master gain
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(0.34, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.connect(ctx.destination);
+
+        function strikeCrystalTone(startTime, baseFreq, level = 0.3) {
+          const strikeGain = ctx.createGain();
+          strikeGain.gain.setValueAtTime(0.001, startTime);
+          strikeGain.gain.linearRampToValueAtTime(level, startTime + 0.015); // soft celestial attack
+          strikeGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.8);
+          strikeGain.connect(masterGain);
+
+          const harmonics = [
+            { mult: 1.0, gain: 0.75, decay: 1.8 },      // Pure soprano fundamental
+            { mult: 1.005, gain: 0.65, decay: 1.7 },    // Shimmering celestial chorus
+            { mult: 2.0, gain: 0.40, decay: 1.4 },      // Bright crystal octave
+            { mult: 2.76, gain: 0.25, decay: 1.0 },     // Silver harmonic
+            { mult: 3.98, gain: 0.18, decay: 0.8 },     // Delicate star sparkle
+            { mult: 5.4, gain: 0.10, decay: 0.5 }       // High crystalline shimmer
+          ];
+
+          harmonics.forEach(h => {
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(baseFreq * h.mult, startTime);
+            const partDur = Math.max(0.1, 1.8 * (h.decay / 1.8));
+            g.gain.setValueAtTime(h.gain, startTime + 0.015);
+            g.gain.exponentialRampToValueAtTime(0.0001, startTime + partDur);
+            osc.connect(g);
+            g.connect(strikeGain);
+            osc.start(startTime);
+            osc.stop(startTime + partDur);
+          });
+        }
+
+        // Melodic ascending crystal chime doublet (A5 ~880 Hz -> E6 ~1318.5 Hz)
+        strikeCrystalTone(now, 880, 0.28);
+        strikeCrystalTone(now + 0.16, 1318.5, 0.32);
+      } catch (e) {
+        console.warn("Rest timer crystal chime alert warning:", e);
+      }
+    }
+
+    const REST_CHIMES = {
+      boxing_bell: {
+        id: 'boxing_bell',
+        name: 'Arena Bell',
+        tag: 'Classic',
+        desc: 'Classic boxing round double strike',
+        icon: 'fa-solid fa-bell'
+      },
+      deep_gong: {
+        id: 'deep_gong',
+        name: 'Deep Gong',
+        tag: 'Masculine',
+        desc: 'Definitively masculine: deep resonant brass gong',
+        icon: 'fa-solid fa-shield-halved'
+      },
+      crystal_harp: {
+        id: 'crystal_harp',
+        name: 'Crystal Chime',
+        tag: 'Feminine',
+        desc: 'Definitively feminine: celestial singing crystal bowl',
+        icon: 'fa-solid fa-wand-magic-sparkles'
+      }
+    };
+
+    function getRestChimeSound() {
+      try {
+        const val = localStorage.getItem('showUp_rest_chime_sound');
+        return REST_CHIMES[val] ? val : 'boxing_bell';
+      } catch (e) {
+        return 'boxing_bell';
+      }
+    }
+
+    function setRestChimeSound(chimeId, preview = true) {
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'boxing_bell';
+      try {
+        localStorage.setItem('showUp_rest_chime_sound', valid);
+      } catch (e) {}
+      updateRestChimeUI();
+      if (preview && isRestSoundAlertEnabled()) {
+        playRestChime(valid);
+      }
+    }
+
+    function cycleRestChimeSound() {
+      const current = getRestChimeSound();
+      const keys = ['boxing_bell', 'deep_gong', 'crystal_harp'];
+      const nextIndex = (keys.indexOf(current) + 1) % keys.length;
+      const nextChime = keys[nextIndex];
+      setRestChimeSound(nextChime, true);
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const chimeMeta = REST_CHIMES[nextChime];
+      if (typeof showToast === 'function') {
+        showToast(`Recovery Chime: ${chimeMeta.name} (${chimeMeta.tag})`, "info");
+      }
+      return nextChime;
+    }
+
+    function playRestChime(explicitChimeId = null) {
+      if (!isRestSoundAlertEnabled()) return;
+      const chime = explicitChimeId || getRestChimeSound();
+      if (chime === 'deep_gong') {
+        playDeepGongChime();
+      } else if (chime === 'crystal_harp') {
+        playCrystalHarpChime();
+      } else {
+        playDoubleBellRing();
+      }
+    }
+
     function isRestSoundAlertEnabled() {
       try {
         const val = localStorage.getItem('showUp_rest_sound_alert');
@@ -2188,23 +2388,48 @@ if (typeof window !== 'undefined') {
     function toggleRestSoundAlert() {
       const next = !isRestSoundAlertEnabled();
       setRestSoundAlertEnabled(next);
-      if (next && typeof playDoubleBellRing === 'function') {
-        playDoubleBellRing();
+      if (next) {
+        playRestChime();
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(next ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        showToast(next ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function toggleRestSoundAlertPref(checked) {
       setRestSoundAlertEnabled(checked);
-      if (checked && typeof playDoubleBellRing === 'function') {
-        playDoubleBellRing();
+      if (checked) {
+        playRestChime();
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        showToast(checked ? "Rest alert sound: On (Boxing Bell)" : "Rest alert sound: Muted", "info");
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
+      }
+    }
+
+    function updateRestChimeUI() {
+      const chimeId = getRestChimeSound();
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.boxing_bell;
+
+      const chimeBtn = document.getElementById('btn-chime-cycle');
+      const chimeIcon = document.getElementById('btn-chime-icon');
+      const chimeLabel = document.getElementById('btn-chime-label');
+      if (chimeBtn) {
+        chimeBtn.title = `Current chime: ${meta.name} (${meta.tag}) · Click to switch`;
+      }
+      if (chimeIcon) {
+        chimeIcon.className = `${meta.icon} text-emerald-400 text-xs`;
+      }
+      if (chimeLabel) {
+        chimeLabel.textContent = meta.name;
+      }
+
+      const select = document.getElementById('pref-rest-chime-select');
+      if (select) {
+        select.value = chimeId;
       }
     }
 
@@ -2212,21 +2437,25 @@ if (typeof window !== 'undefined') {
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+
       if (bannerBtn && bannerIcon) {
         if (enabled) {
-          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-emerald-400 border border-emerald-500/40 text-xs sm:text-sm font-black p-2 sm:p-2.5 rounded-xl transition active:scale-95 shadow flex items-center justify-center cursor-pointer";
           bannerIcon.className = "fa-solid fa-bell";
-          bannerBtn.title = "Boxing bell alert: On (Click to mute)";
+          bannerBtn.title = `Recovery alert sound: On (${chimeMeta.name}) · Click to mute`;
         } else {
-          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2.5 sm:px-3 sm:py-3 rounded-xl transition active:scale-95 shadow flex items-center justify-center";
+          bannerBtn.className = "bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700/80 text-xs sm:text-sm font-black p-2 sm:p-2.5 rounded-xl transition active:scale-95 shadow flex items-center justify-center cursor-pointer";
           bannerIcon.className = "fa-solid fa-bell-slash";
-          bannerBtn.title = "Boxing bell alert: Muted (Click to enable)";
+          bannerBtn.title = "Recovery alert sound: Muted · Click to enable";
         }
       }
       const prefCheckbox = document.getElementById('pref-rest-sound-alert');
       if (prefCheckbox) {
         prefCheckbox.checked = enabled;
       }
+
+      updateRestChimeUI();
     }
 
     function triggerSquadHaptic() {
@@ -2298,6 +2527,13 @@ if (typeof window !== 'undefined') {
     if (typeof window !== 'undefined') {
       window.triggerHaptic = triggerHaptic;
       window.playDoubleBellRing = playDoubleBellRing;
+      window.playDeepGongChime = playDeepGongChime;
+      window.playCrystalHarpChime = playCrystalHarpChime;
+      window.playRestChime = playRestChime;
+      window.getRestChimeSound = getRestChimeSound;
+      window.setRestChimeSound = setRestChimeSound;
+      window.cycleRestChimeSound = cycleRestChimeSound;
+      window.updateRestChimeUI = updateRestChimeUI;
       window.isRestSoundAlertEnabled = isRestSoundAlertEnabled;
       window.setRestSoundAlertEnabled = setRestSoundAlertEnabled;
       window.toggleRestSoundAlert = toggleRestSoundAlert;
@@ -4385,7 +4621,7 @@ if (typeof window !== 'undefined') {
       const savedTarget = localStorage.getItem('showUp_user_target_weight');
       if (targetInput && savedTarget) targetInput.value = savedTarget;
 
-      const savedRest = localStorage.getItem('showUp_default_rest_time') || '90';
+      const savedRest = localStorage.getItem('showUp_default_rest_time') || '60';
       if (restSelect) restSelect.value = savedRest;
 
       if (typeof updateRestSoundAlertUI === 'function') {
@@ -5504,8 +5740,10 @@ if (typeof window !== 'undefined') {
       function doStep(amount) {
         if (type === 'weight') {
           adjustWeight(amount * deltaSign);
-        } else {
+        } else if (type === 'reps') {
           adjustReps(amount * deltaSign);
+        } else if (type === 'rest') {
+          adjustRestTarget(amount * deltaSign);
         }
       }
 
@@ -5609,11 +5847,15 @@ if (typeof window !== 'undefined') {
       const weightInc = document.getElementById('btn-weight-increment');
       const repsDec = document.getElementById('btn-reps-decrement');
       const repsInc = document.getElementById('btn-reps-increment');
+      const restDec = document.getElementById('btn-rest-decrement');
+      const restInc = document.getElementById('btn-rest-increment');
 
       if (weightDec) bindHoldStepper(weightDec, 'weight', -1);
       if (weightInc) bindHoldStepper(weightInc, 'weight', 1);
       if (repsDec) bindHoldStepper(repsDec, 'reps', -1);
       if (repsInc) bindHoldStepper(repsInc, 'reps', 1);
+      if (restDec) bindHoldStepper(restDec, 'rest', -1);
+      if (restInc) bindHoldStepper(restInc, 'rest', 1);
 
       // Support mouse wheel on inputs
       ['weight', 'reps'].forEach(type => {
@@ -6182,9 +6424,11 @@ if (typeof window !== 'undefined') {
           } catch (e) {}
         }
 
-        // 2. Optional double bell ring alert sound
+        // 2. Optional rest recovery chime alert sound
         if (typeof isRestSoundAlertEnabled === 'function' && isRestSoundAlertEnabled()) {
-          if (typeof playDoubleBellRing === 'function') {
+          if (typeof playRestChime === 'function') {
+            playRestChime();
+          } else if (typeof playDoubleBellRing === 'function') {
             playDoubleBellRing();
           }
         }
@@ -6202,22 +6446,45 @@ if (typeof window !== 'undefined') {
       return currentSessionRestTarget || getDefaultRestTimeSeconds();
     }
 
-    function adjustRestTimer(deltaSecs) {
-      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+    /**
+     * Increments or decrements the target recovery rest time.
+     * Makes the chosen target rest sticky in localStorage so it persists across sets and workouts.
+     * @param {number} deltaSecs - Seconds to adjust (+1, -1, +5, -5, +30, etc.)
+     */
+    function adjustRestTarget(deltaSecs) {
+      const currentTarget = getCurrentRestTarget();
+      const newTarget = Math.max(5, currentTarget + deltaSecs);
+      currentSessionRestTarget = newTarget;
+      localStorage.setItem('showUp_default_rest_time', newTarget); // Sticky preference
+
       if (isRestTimerRunning) {
-        const currentTarget = currentSessionRestTarget || getDefaultRestTimeSeconds();
-        currentSessionRestTarget = Math.max(10, currentTarget + deltaSecs);
         // If the new target exceeds current rest seconds, re-arm the alert
-        if (currentSessionRestTarget > restTimerSeconds) {
+        if (newTarget > restTimerSeconds) {
           hasTriggeredRestRecoveryAlert = false;
         }
         saveRestTimerState();
         checkRestRecoveryThreshold();
-        updateRestTimerUI();
-        if (typeof showToast === 'function') {
-          showToast(`Rest target extended to ${currentSessionRestTarget}s (+${deltaSecs}s)`, "info");
-        }
       }
+      updateRestTimerUI();
+
+      const prefSelect = document.getElementById('pref-default-rest-time');
+      if (prefSelect) {
+        prefSelect.value = String(newTarget);
+      }
+
+      if (typeof triggerHaptic === 'function') {
+        triggerHaptic(Math.abs(deltaSecs) > 1 ? 'medium' : 'light');
+      }
+      return newTarget;
+    }
+
+    function adjustRestTimer(deltaSecs) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const newTarget = adjustRestTarget(deltaSecs);
+      if (typeof showToast === 'function') {
+        showToast(`Rest target: ${newTarget}s (${deltaSecs >= 0 ? '+' : ''}${deltaSecs}s)`, "info");
+      }
+      return newTarget;
     }
 
     function skipRestTimer() {
@@ -6233,16 +6500,20 @@ if (typeof window !== 'undefined') {
 
     function getDefaultRestTimeSeconds() {
       const saved = localStorage.getItem('showUp_default_rest_time');
-      return saved ? parseInt(saved, 10) : 90;
+      return saved ? parseInt(saved, 10) : 60;
     }
 
     function saveDefaultRestTimePref(val) {
-      const seconds = parseInt(val, 10) || 90;
+      const seconds = parseInt(val, 10) || 60;
       localStorage.setItem('showUp_default_rest_time', seconds);
+      currentSessionRestTarget = seconds;
       if (typeof showToast === 'function') {
         showToast(`Default rest target set to ${seconds}s`, "info");
       }
       if (isRestTimerRunning) {
+        if (seconds > restTimerSeconds) {
+          hasTriggeredRestRecoveryAlert = false;
+        }
         updateRestTimerUI();
       }
     }
@@ -6250,6 +6521,7 @@ if (typeof window !== 'undefined') {
     function updateRestTimerUI() {
       const banner = document.getElementById('rest-timer-banner');
       const valEl = document.getElementById('rest-timer-val');
+      const targetEl = document.getElementById('rest-timer-target-val');
       const captionEl = document.getElementById('rest-timer-caption');
       const badgeEl = document.getElementById('rest-timer-status-badge');
 
@@ -6267,6 +6539,7 @@ if (typeof window !== 'undefined') {
         const setNum = currentSessionSets.length;
         const nextNum = setNum + 1;
         const targetRest = currentSessionRestTarget || getDefaultRestTimeSeconds();
+        if (targetEl) targetEl.innerText = `${targetRest}s`;
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
@@ -7507,6 +7780,7 @@ if (typeof window !== 'undefined') {
       window.startRestTimer = startRestTimer;
       window.stopRestTimer = stopRestTimer;
       window.adjustRestTimer = adjustRestTimer;
+      window.adjustRestTarget = adjustRestTarget;
       window.skipRestTimer = skipRestTimer;
       window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
       window.saveDefaultRestTimePref = saveDefaultRestTimePref;
@@ -18656,10 +18930,10 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   // Rest target extension via adjustRestTimer(+30)
   localStorage.removeItem('showUp_default_rest_time');
   startRestTimer(10); // 10s elapsed
-  assert(getCurrentRestTarget() === 90, "Initial rest target defaults to 90s");
+  assert(getCurrentRestTarget() === 60, "Initial rest target defaults to 60s");
   assert(restTimerSeconds === 10, "Elapsed rest seconds is 10s");
   adjustRestTimer(30);
-  assert(getCurrentRestTarget() === 120, "adjustRestTimer(+30) increases rest target to 120s");
+  assert(getCurrentRestTarget() === 90, "adjustRestTimer(+30) increases rest target to 90s");
   assert(restTimerSeconds === 10, "Elapsed rest seconds remains intact at 10s without inflation");
 
   // Clean up
@@ -18667,9 +18941,16 @@ runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
   currentSessionSets = [];
 });
 
-runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
+runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Muscles Scroll", () => {
   // 1. Function existence
   assert(typeof playDoubleBellRing === 'function', "playDoubleBellRing is a defined function");
+  assert(typeof playDeepGongChime === 'function', "playDeepGongChime is a defined function");
+  assert(typeof playCrystalHarpChime === 'function', "playCrystalHarpChime is a defined function");
+  assert(typeof playRestChime === 'function', "playRestChime is a defined function");
+  assert(typeof getRestChimeSound === 'function', "getRestChimeSound is a defined function");
+  assert(typeof setRestChimeSound === 'function', "setRestChimeSound is a defined function");
+  assert(typeof cycleRestChimeSound === 'function', "cycleRestChimeSound is a defined function");
+  assert(typeof adjustRestTarget === 'function', "adjustRestTarget is a defined function");
   assert(typeof isRestSoundAlertEnabled === 'function', "isRestSoundAlertEnabled is a defined function");
   assert(typeof setRestSoundAlertEnabled === 'function', "setRestSoundAlertEnabled is a defined function");
   assert(typeof toggleRestSoundAlert === 'function', "toggleRestSoundAlert is a defined function");
@@ -18681,11 +18962,26 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   const soundBtn = getOrCreateElement('btn-toggle-rest-sound');
   const soundIcon = getOrCreateElement('btn-toggle-rest-sound-icon');
   const prefCheckbox = getOrCreateElement('pref-rest-sound-alert');
+  const chimeCycleBtn = getOrCreateElement('btn-chime-cycle');
+  const chimeSelect = getOrCreateElement('pref-rest-chime-select');
+  const decBtn = getOrCreateElement('btn-rest-decrement');
+  const incBtn = getOrCreateElement('btn-rest-increment');
+  const targetValEl = getOrCreateElement('rest-timer-target-val');
+
   assert(soundBtn !== null, "btn-toggle-rest-sound exists in DOM");
   assert(soundIcon !== null, "btn-toggle-rest-sound-icon exists in DOM");
   assert(prefCheckbox !== null, "pref-rest-sound-alert exists in DOM");
+  assert(chimeCycleBtn !== null, "btn-chime-cycle exists in DOM");
+  assert(chimeSelect !== null, "pref-rest-chime-select exists in DOM");
+  assert(decBtn !== null, "btn-rest-decrement exists in DOM");
+  assert(incBtn !== null, "btn-rest-increment exists in DOM");
+  assert(targetValEl !== null, "rest-timer-target-val exists in DOM");
 
-  // 3. Preference behavior (defaults to true)
+  // 3. Horizontal scroll container for Target and Secondary muscles
+  const scrollContainer = getOrCreateElement('auto-muscles-scroll-container');
+  assert(scrollContainer !== null, "auto-muscles-scroll-container exists in DOM");
+
+  // 4. Preference behavior (defaults to true)
   localStorage.removeItem('showUp_rest_sound_alert');
   assert(isRestSoundAlertEnabled() === true, "Rest recovery sound alert is enabled by default");
 
@@ -18697,57 +18993,119 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   assert(isRestSoundAlertEnabled() === true, "Sound alert can be re-enabled");
   assert(localStorage.getItem('showUp_rest_sound_alert') === 'true', "Preference persisted in localStorage as true");
 
-  // 4. Audio synthesis execution without error
-  let audioPlayed = false;
+  // 5. Rest Timer Steppers & Sticky Target Persistence
+  localStorage.removeItem('showUp_default_rest_time');
+  startRestTimer(0);
+  assert(getCurrentRestTarget() === 60, "Rest timer target defaults to 60s");
+
+  // Single step +1
+  adjustRestTarget(1);
+  assert(getCurrentRestTarget() === 61, "adjustRestTarget(1) steps target to 61s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '61', "Target rest is sticky in localStorage");
+
+  // Step -1
+  adjustRestTarget(-1);
+  assert(getCurrentRestTarget() === 60, "adjustRestTarget(-1) steps target back to 60s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
+
+  // 5x hold step +5
+  adjustRestTarget(5);
+  assert(getCurrentRestTarget() === 65, "adjustRestTarget(5) steps target by 5 to 65s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '65', "Target rest is sticky in localStorage");
+
+  // 5x hold step -5
+  adjustRestTarget(-5);
+  assert(getCurrentRestTarget() === 60, "adjustRestTarget(-5) steps target back to 60s");
+  assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
+
+  // 6. 3 Chimes Definition & Synthesis execution
+  assert(REST_CHIMES.boxing_bell !== undefined, "REST_CHIMES defines boxing_bell (Arena Bell)");
+  assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
+  assert(REST_CHIMES.crystal_harp !== undefined, "REST_CHIMES defines crystal_harp (Definitively Feminine)");
+
+  let audioClassic = false;
+  let audioMasculine = false;
+  let audioFeminine = false;
   try {
     playDoubleBellRing();
-    audioPlayed = true;
+    audioClassic = true;
   } catch (e) {
-    audioPlayed = false;
+    audioClassic = false;
   }
-  assert(audioPlayed === true, "playDoubleBellRing executes cleanly with Web Audio API");
+  try {
+    playDeepGongChime();
+    audioMasculine = true;
+  } catch (e) {
+    audioMasculine = false;
+  }
+  try {
+    playCrystalHarpChime();
+    audioFeminine = true;
+  } catch (e) {
+    audioFeminine = false;
+  }
 
-  // 5. Haptic pattern for recovery
+  assert(audioClassic === true, "playDoubleBellRing (classic) executes cleanly with Web Audio API");
+  assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
+  assert(audioFeminine === true, "playCrystalHarpChime (feminine) executes cleanly with Web Audio API");
+
+  // 7. Minimalistic Chime Cycling & Persistence
+  localStorage.removeItem('showUp_rest_chime_sound');
+  assert(getRestChimeSound() === 'boxing_bell', "Default chime sound is boxing_bell");
+
+  const next1 = cycleRestChimeSound(false);
+  assert(next1 === 'deep_gong', "cycleRestChimeSound transitions boxing_bell -> deep_gong (Masculine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+
+  const next2 = cycleRestChimeSound(false);
+  assert(next2 === 'crystal_harp', "cycleRestChimeSound transitions deep_gong -> crystal_harp (Feminine)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'crystal_harp', "crystal_harp persisted to localStorage");
+
+  const next3 = cycleRestChimeSound(false);
+  assert(next3 === 'boxing_bell', "cycleRestChimeSound transitions crystal_harp -> boxing_bell (Classic)");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'boxing_bell', "boxing_bell persisted to localStorage");
+
+  // 8. Haptic pattern for recovery
   globalThis.__lastVibrate = null;
   triggerHaptic('recovery');
   assert(Array.isArray(globalThis.__lastVibrate) && globalThis.__lastVibrate.length === 3, "triggerHaptic('recovery') fires a 3-part double pulse pattern");
   assert(globalThis.__lastVibrate[0] === 70 && globalThis.__lastVibrate[1] === 100 && globalThis.__lastVibrate[2] === 90, "Pattern matches [70, 100, 90]");
 
-  // 6. Recovery alert triggers once when target rest is reached
+  // 9. Recovery alert triggers once when target rest is reached
   globalThis.__lastVibrate = null;
-  let bellRingCalled = false;
-  const originalPlay = playDoubleBellRing;
-  globalThis.playDoubleBellRing = () => { bellRingCalled = true; };
+  let restChimeFired = false;
+  const originalPlayChime = playRestChime;
+  globalThis.playRestChime = () => { restChimeFired = true; };
 
   localStorage.setItem('showUp_default_rest_time', '60');
   startRestTimer(0);
   assert(hasTriggeredRestRecoveryAlert === false, "Alert flag is initially false");
-  assert(bellRingCalled === false, "Sound has not fired at 0s");
+  assert(restChimeFired === false, "Sound has not fired at 0s");
   assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
 
   // Advance to 59s (under target)
   restTimerSeconds = 59;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === false, "Alert does not fire before target (59s < 60s)");
-  assert(bellRingCalled === false, "Sound has not fired at 59s");
+  assert(restChimeFired === false, "Sound has not fired at 59s");
 
   // Advance to 60s (target reached!)
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
-  assert(bellRingCalled === true, "Double bell ring sound alert triggered at target recovery");
+  assert(restChimeFired === true, "Rest chime sound alert triggered at target recovery");
   assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
 
   // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
-  bellRingCalled = false;
+  restChimeFired = false;
   globalThis.__lastVibrate = null;
   restTimerSeconds = 61;
   checkRestRecoveryThreshold();
-  assert(bellRingCalled === false, "Alert sound does not re-trigger on subsequent seconds");
+  assert(restChimeFired === false, "Alert sound does not re-trigger on subsequent seconds");
   assert(globalThis.__lastVibrate === null, "Haptic does not re-trigger on subsequent seconds");
 
-  // 7. Extending rest target re-arms alert
-  adjustRestTimer(30); // Target is now 90s, current restTimerSeconds is 61s
+  // 10. Extending rest target re-arms alert
+  adjustRestTarget(30); // Target is now 90s, current restTimerSeconds is 61s
   assert(getCurrentRestTarget() === 90, "New target is 90s");
   assert(hasTriggeredRestRecoveryAlert === false, "Extending rest target re-arms alert flag");
 
@@ -18755,24 +19113,26 @@ runSuite("28. Rest Recovery Haptic & Double Bell Ring Alert", () => {
   restTimerSeconds = 90;
   checkRestRecoveryThreshold();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert triggers again at new extended target (90s)");
-  assert(bellRingCalled === true, "Double bell sound fired for extended target");
+  assert(restChimeFired === true, "Chime sound fired for extended target");
 
-  // 8. Optional alert: when muted, sound is suppressed but haptic still fires
-  bellRingCalled = false;
+  // 11. Optional alert: when muted, sound is suppressed but haptic still fires
+  restChimeFired = false;
   globalThis.__lastVibrate = null;
   setRestSoundAlertEnabled(false);
+  localStorage.setItem('showUp_default_rest_time', '60');
   startRestTimer(0);
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
-  assert(bellRingCalled === false, "Sound alert is suppressed when disabled/muted");
+  assert(restChimeFired === false, "Sound alert is suppressed when disabled/muted");
   assert(globalThis.__lastVibrate !== null, "Haptic alert still fires when sound is muted");
 
   // Restore mocks and clean up
-  globalThis.playDoubleBellRing = originalPlay;
+  globalThis.playRestChime = originalPlayChime;
   setRestSoundAlertEnabled(true);
   stopRestTimer();
   localStorage.removeItem('showUp_default_rest_time');
   localStorage.removeItem('showUp_rest_sound_alert');
+  localStorage.removeItem('showUp_rest_chime_sound');
 });
 
 print("\n============================================================");
