@@ -94,34 +94,35 @@ public class GoogleAuth extends Plugin {
       // The accessToken is retrieved by executing a network request against the Google API, so it needs to run in a thread
       ExecutorService executor = Executors.newSingleThreadExecutor();
       executor.execute(() -> {
+        JSObject authentication = new JSObject();
+        authentication.put("idToken", account.getIdToken());
+
         try {
           JSONObject accessTokenObject = getAuthToken(account.getAccount(), true);
-
-          JSObject authentication = new JSObject();
-          authentication.put("idToken", account.getIdToken());
-          authentication.put(FIELD_ACCESS_TOKEN, accessTokenObject.get(FIELD_ACCESS_TOKEN));
-          authentication.put(FIELD_TOKEN_EXPIRES, accessTokenObject.get(FIELD_TOKEN_EXPIRES));
-          authentication.put(FIELD_TOKEN_EXPIRES_IN, accessTokenObject.get(FIELD_TOKEN_EXPIRES_IN));
-
-          JSObject user = new JSObject();
-          user.put("serverAuthCode", account.getServerAuthCode());
-          user.put("idToken", account.getIdToken());
-          user.put("authentication", authentication);
-
-          user.put("name", account.getDisplayName());
-          // Deprecated: Use `user` instead of `displayName`
-          user.put("displayName", account.getDisplayName());
-          user.put("email", account.getEmail());
-          user.put("familyName", account.getFamilyName());
-          user.put("givenName", account.getGivenName());
-          user.put("id", account.getId());
-          user.put("imageUrl", account.getPhotoUrl());
-
-          call.resolve(user);
+          if (accessTokenObject != null) {
+            authentication.put(FIELD_ACCESS_TOKEN, accessTokenObject.optString(FIELD_ACCESS_TOKEN, ""));
+            authentication.put(FIELD_TOKEN_EXPIRES, accessTokenObject.optLong(FIELD_TOKEN_EXPIRES, 0));
+            authentication.put(FIELD_TOKEN_EXPIRES_IN, accessTokenObject.optInt(FIELD_TOKEN_EXPIRES_IN, 3600));
+          }
         } catch (Exception e) {
-          e.printStackTrace();
-          call.reject("Something went wrong while retrieving access token", e);
+          android.util.Log.w("GoogleAuth", "AccessToken retrieval warning: " + e.getMessage() + ", resolving user with ID token.");
         }
+
+        JSObject user = new JSObject();
+        user.put("serverAuthCode", account.getServerAuthCode());
+        user.put("idToken", account.getIdToken());
+        user.put("authentication", authentication);
+
+        user.put("name", account.getDisplayName());
+        // Deprecated: Use `user` instead of `displayName`
+        user.put("displayName", account.getDisplayName());
+        user.put("email", account.getEmail());
+        user.put("familyName", account.getFamilyName());
+        user.put("givenName", account.getGivenName());
+        user.put("id", account.getId());
+        user.put("imageUrl", account.getPhotoUrl() != null ? account.getPhotoUrl().toString() : null);
+
+        call.resolve(user);
       });
     } catch (ApiException e) {
       android.util.Log.e("GoogleAuth", "Google Sign-In failed with status code " + e.getStatusCode(), e);
@@ -203,22 +204,58 @@ public class GoogleAuth extends Plugin {
     call.resolve();
   }
 
-  // Logic to retrieve accessToken, see https://github.com/EddyVerbruggen/cordova-plugin-googleplus/blob/master/src/android/GooglePlus.java
+  // Logic to retrieve accessToken with Drive scope support
   private JSONObject getAuthToken(Account account, boolean retry) throws Exception {
-    AccountManager manager = AccountManager.get(getContext());
-    AccountManagerFuture<Bundle> future = manager.getAuthToken(account, "oauth2:profile email", null, false, null, null);
-    Bundle bundle = future.getResult();
-    String authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-    try {
-      return verifyToken(authToken);
-    } catch (IOException e) {
-      if (retry) {
-        manager.invalidateAuthToken("com.google", authToken);
-        return getAuthToken(account, false);
-      } else {
-        throw e;
-      }
+    if (account == null) {
+      throw new IllegalArgumentException("Account cannot be null");
     }
+
+    // 1. Primary: Use GoogleAuthUtil with full profile, email, and drive.file scopes
+    try {
+      String scopeStr = "oauth2:profile email https://www.googleapis.com/auth/drive.file";
+      String authToken = com.google.android.gms.auth.GoogleAuthUtil.getToken(getContext(), account, scopeStr);
+      if (authToken != null && !authToken.isEmpty()) {
+        try {
+          return verifyToken(authToken);
+        } catch (Exception ve) {
+          JSONObject fallback = new JSONObject();
+          fallback.put(FIELD_ACCESS_TOKEN, authToken);
+          fallback.put(FIELD_TOKEN_EXPIRES_IN, 3600);
+          fallback.put(FIELD_TOKEN_EXPIRES, (System.currentTimeMillis() / 1000) + 3600);
+          return fallback;
+        }
+      }
+    } catch (Exception gEx) {
+      android.util.Log.w("GoogleAuth", "GoogleAuthUtil.getToken notice: " + gEx.getMessage());
+    }
+
+    // 2. Fallback: Legacy AccountManager
+    try {
+      AccountManager manager = AccountManager.get(getContext());
+      AccountManagerFuture<Bundle> future = manager.getAuthToken(account, "oauth2:profile email https://www.googleapis.com/auth/drive.file", null, false, null, null);
+      Bundle bundle = future.getResult();
+      String authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
+      if (authToken != null && !authToken.isEmpty()) {
+        try {
+          return verifyToken(authToken);
+        } catch (IOException e) {
+          if (retry) {
+            manager.invalidateAuthToken("com.google", authToken);
+            return getAuthToken(account, false);
+          } else {
+            JSONObject fallback = new JSONObject();
+            fallback.put(FIELD_ACCESS_TOKEN, authToken);
+            fallback.put(FIELD_TOKEN_EXPIRES_IN, 3600);
+            fallback.put(FIELD_TOKEN_EXPIRES, (System.currentTimeMillis() / 1000) + 3600);
+            return fallback;
+          }
+        }
+      }
+    } catch (Exception amEx) {
+      android.util.Log.w("GoogleAuth", "AccountManager notice: " + amEx.getMessage());
+    }
+
+    throw new IOException("Unable to retrieve OAuth token from device account.");
   }
 
   private JSONObject verifyToken(String authToken) throws IOException, JSONException {

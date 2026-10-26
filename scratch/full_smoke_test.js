@@ -4674,24 +4674,32 @@ if (typeof window !== 'undefined') {
             const user = await window.NativeBridge.signInNativeGoogle();
             setGoogleLoginLoading(false);
             if (user) {
-              const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'User');
+              const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'Athlete');
               const userEmail = user.email || '';
               const picture = user.imageUrl || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
               const profileObj = { firstName, email: userEmail, picture };
 
-              localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
               if (user.authentication?.accessToken) {
                 googleAccessToken = user.authentication.accessToken;
                 localStorage.setItem('showUp_google_token', googleAccessToken);
               }
 
-              updateProfileUI(firstName, userEmail, picture);
-              const loginBtn = document.getElementById('btn-google-login');
-              if (loginBtn) loginBtn.classList.add('hidden');
-              const userProf = document.getElementById('google-user-profile');
-              if (userProf) userProf.classList.remove('hidden');
+              // Apply profile, sync session, close modal, and refresh UI
+              applyUserProfile(profileObj);
+              closeAuthLoginModal();
               showToast(`Welcome, ${firstName}!`, "success");
+
+              // Immediately pull and restore historic cloud backup from Google Drive
+              setTimeout(async () => {
+                try {
+                  if (typeof restoreFromGoogleDrive === 'function') {
+                    await restoreFromGoogleDrive(false);
+                  }
+                } catch (driveErr) {
+                  console.warn("[NativeAuth] Auto-restore from Drive notice:", driveErr);
+                }
+              }, 300);
+
               return;
             }
           } catch (nativeErr) {
