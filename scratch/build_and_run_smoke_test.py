@@ -2512,6 +2512,18 @@ runSuite("25. Exercise Dropdown Ordering, Previous Workout Metrics & Single Log 
 
   updateExercisePreviousWorkoutMetric("");
   assert(banner.classList.contains('hidden'), "Previous workout banner is hidden when exercise name is empty");
+  assert(metricSpan.innerText === "", "Metric span text is cleared when exercise name is empty");
+
+  updateExercisePreviousWorkoutMetric("Custom Exercise");
+  assert(banner.classList.contains('hidden'), "Previous workout banner is hidden when exercise name is 'Custom Exercise'");
+
+  const exInputEl = getOrCreateElement('exercise-name-input');
+  exInputEl.value = "";
+  handleExerciseInput("");
+  assert(banner.classList.contains('hidden'), "handleExerciseInput with empty input strictly hides previous workout banner");
+
+  handleExerciseInput("Custom Exercise");
+  assert(banner.classList.contains('hidden'), "handleExerciseInput with 'Custom Exercise' strictly hides previous workout banner");
 
   // 4. Exercise Suggestions: recents first, separator line, alphabetical catalog
   currentSessionSets = [
@@ -2753,8 +2765,10 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
 
   // 6. Chimes Definition & Synthesis execution
-  assert(REST_CHIMES.double_ding !== undefined, "REST_CHIMES defines double_ding (Desk Bell Double Ding)");
-  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Desk Bell Triple Ding)");
+  assert(REST_CHIMES.double_ding !== undefined, "REST_CHIMES defines double_ding (Boxing Bell Double Ding)");
+  assert(REST_CHIMES.double_ding.name === "Boxing Bell", "REST_CHIMES.double_ding is Boxing Bell");
+  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Boxing Bell Triple Ding)");
+  assert(REST_CHIMES.triple_ding.name === "Boxing Bell", "REST_CHIMES.triple_ding is Boxing Bell");
   assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
   assert(REST_CHIMES.crystal_harp === undefined, "Crystal Chime has been cleanly removed");
 
@@ -2780,8 +2794,8 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
     audioMasculine = false;
   }
 
-  assert(audioDoubleDing === true, "playDoubleDingChime (desk bell double ding) executes cleanly with Web Audio API");
-  assert(audioTripleDing === true, "playTripleDingChime (desk bell triple ding) executes cleanly with Web Audio API");
+  assert(audioDoubleDing === true, "playDoubleDingChime (boxing bell double ding) executes cleanly with Web Audio API");
+  assert(audioTripleDing === true, "playTripleDingChime (boxing bell triple ding) executes cleanly with Web Audio API");
   assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
 
   // 7. Minimalistic Chime Cycling & Persistence
@@ -3337,6 +3351,98 @@ runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
   // Auto muscles pill displays again on exercise entry
   updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
   assert(!autoPill.classList.contains('hidden'), "Auto muscles pill displays again after re-enabling");
+});
+
+runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Workout Reference Suppression", () => {
+  // 1. Boxing Arena Bell Chime Synthesis and Metadata
+  assert(typeof createBoxingBellStrike === 'function', "createBoxingBellStrike is a defined function");
+  assert(typeof playDoubleDingChime === 'function', "playDoubleDingChime is a defined function");
+  assert(typeof playTripleDingChime === 'function', "playTripleDingChime is a defined function");
+  assert(REST_CHIMES.double_ding.name === 'Boxing Bell', "REST_CHIMES.double_ding name is 'Boxing Bell'");
+  assert(REST_CHIMES.double_ding.tag === 'Double Ding', "REST_CHIMES.double_ding tag is 'Double Ding'");
+  assert(REST_CHIMES.double_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.double_ding icon is bell");
+  assert(REST_CHIMES.double_ding.desc.includes('Boxing arena'), "REST_CHIMES.double_ding description specifies boxing arena ringside bell");
+
+  assert(REST_CHIMES.triple_ding.name === 'Boxing Bell', "REST_CHIMES.triple_ding name is 'Boxing Bell'");
+  assert(REST_CHIMES.triple_ding.tag === 'Triple Ding', "REST_CHIMES.triple_ding tag is 'Triple Ding'");
+  assert(REST_CHIMES.triple_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.triple_ding icon is bell");
+  assert(REST_CHIMES.triple_ding.desc.includes('Boxing arena'), "REST_CHIMES.triple_ding description specifies boxing arena ringside bell");
+
+  // Verify Web Audio execution of double ding & triple ding
+  let doubleDingSuccess = false;
+  try {
+    playDoubleDingChime();
+    doubleDingSuccess = true;
+  } catch (e) {
+    doubleDingSuccess = false;
+  }
+  assert(doubleDingSuccess === true, "playDoubleDingChime ringside bell double strike executes cleanly");
+
+  let tripleDingSuccess = false;
+  try {
+    playTripleDingChime();
+    tripleDingSuccess = true;
+  } catch (e) {
+    tripleDingSuccess = false;
+  }
+  assert(tripleDingSuccess === true, "playTripleDingChime ringside bell triple strike executes cleanly");
+
+  // 2. Last Workout Reference Suppression When Exercise Name Empty or Custom Exercise
+  const banner = getOrCreateElement('exercise-previous-workout-banner');
+  const metricSpan = getOrCreateElement('exercise-previous-workout-metric');
+  const exerciseInput = getOrCreateElement('exercise-name-input');
+
+  // Populate mock workout history that contains 'Custom Exercise' sets
+  completedWorkoutsHistory = [
+    {
+      id: "hist-001",
+      date: "2026-10-24",
+      workoutName: "Push Day",
+      sets: [
+        { exerciseName: "Bench Press", weight: 135, reps: 8 },
+        { exerciseName: "Bench Press", weight: 135, reps: 8 },
+        { exerciseName: "Bench Press", weight: 135, reps: 8 },
+        { exerciseName: "Custom Exercise", weight: 50, reps: 10 }
+      ]
+    }
+  ];
+
+  // A. When exercise name is empty, banner must be hidden
+  exerciseInput.value = "";
+  updateExercisePreviousWorkoutMetric("");
+  assert(banner.classList.contains('hidden'), "Banner strictly hidden when exercise name is empty string");
+  assert(metricSpan.innerText === "", "Metric span text is cleared when exercise name is empty string");
+
+  // B. When exercise name resolves to "Custom Exercise", banner must be hidden
+  updateExercisePreviousWorkoutMetric("Custom Exercise");
+  assert(banner.classList.contains('hidden'), "Banner strictly hidden for 'Custom Exercise'");
+  assert(metricSpan.innerText === "", "Metric span text is cleared for 'Custom Exercise'");
+
+  // Case insensitivity check for custom exercise
+  updateExercisePreviousWorkoutMetric("custom exercise");
+  assert(banner.classList.contains('hidden'), "Banner strictly hidden for lowercase 'custom exercise'");
+
+  // C. When typing into exercise input and clearing it via handleExerciseInput
+  exerciseInput.value = "";
+  handleExerciseInput("");
+  assert(banner.classList.contains('hidden'), "Banner hidden on handleExerciseInput('')");
+
+  // D. When exercise name is a real exercise from history (e.g. Bench Press)
+  exerciseInput.value = "Bench Press";
+  handleExerciseInput("Bench Press");
+  assert(!banner.classList.contains('hidden'), "Banner visible when valid exercise from history is entered");
+  assert(metricSpan.innerText === "135 lb × 8 reps · 3 sets", "Banner displays accurate last workout metric for Bench Press");
+
+  // E. Clearing the input again immediately hides the banner
+  exerciseInput.value = "";
+  handleExerciseInput("");
+  assert(banner.classList.contains('hidden'), "Banner hidden immediately when input is cleared");
+  assert(metricSpan.innerText === "", "Metric span text is cleared when input is cleared");
+
+  // F. Logging a set without an exercise name (fallback to Custom Exercise) does not display last workout reference
+  exerciseInput.value = "";
+  logSet();
+  assert(banner.classList.contains('hidden'), "Banner strictly hidden after logging a set without an exercise name");
 });
 
 print("\\n============================================================");

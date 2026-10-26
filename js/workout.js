@@ -656,13 +656,29 @@
       const dateEl = document.getElementById('exercise-previous-workout-date');
       if (!banner || !metricEl) return;
 
-      const trimmed = (exerciseName || '').trim();
-      if (!trimmed) {
+      const inputEl = document.getElementById('exercise-name-input');
+      const inputVal = inputEl ? (inputEl.value || '').trim() : '';
+
+      // Determine exercise candidate: prioritize explicit exerciseName argument if provided, otherwise check input field
+      const raw = (exerciseName !== undefined && exerciseName !== null) ? String(exerciseName).trim() : inputVal;
+
+      // If exercise name is empty or is the generic "Custom Exercise", do not display last workout reference
+      if (!raw || raw.toLowerCase() === 'custom exercise') {
+        metricEl.innerText = '';
+        if (dateEl) dateEl.innerText = '';
         banner.classList.add('hidden');
         return;
       }
 
-      const prev = getPreviousWorkoutExerciseMetric(trimmed);
+      // If the exercise input element exists in the DOM and is currently empty, do not display last workout reference
+      if (inputEl && !inputVal && (!exerciseName || exerciseName.trim().toLowerCase() === 'custom exercise')) {
+        metricEl.innerText = '';
+        if (dateEl) dateEl.innerText = '';
+        banner.classList.add('hidden');
+        return;
+      }
+
+      const prev = getPreviousWorkoutExerciseMetric(raw);
       if (prev && prev.metric) {
         metricEl.innerText = prev.metric;
         if (dateEl) {
@@ -672,6 +688,8 @@
         }
         banner.classList.remove('hidden');
       } else {
+        metricEl.innerText = '';
+        if (dateEl) dateEl.innerText = '';
         banner.classList.add('hidden');
       }
     }
@@ -959,8 +977,13 @@
       }
 
       const initialEx = document.getElementById('exercise-name-input')?.value;
-      if (initialEx) {
-        updateExercisePreviousWorkoutMetric(initialEx);
+      if (initialEx && initialEx.trim() && initialEx.trim().toLowerCase() !== 'custom exercise') {
+        updateExercisePreviousWorkoutMetric(initialEx.trim());
+      } else {
+        const banner = document.getElementById('exercise-previous-workout-banner');
+        const metricEl = document.getElementById('exercise-previous-workout-metric');
+        if (metricEl) metricEl.innerText = '';
+        if (banner) banner.classList.add('hidden');
       }
     }
 
@@ -971,7 +994,15 @@
         updateExerciseSuggestions(val, 'exercise-name-input', 'exercise-suggestions-dropdown');
       }
 
-      updateExercisePreviousWorkoutMetric(val);
+      const trimmedVal = (val || '').trim();
+      if (!trimmedVal || trimmedVal.toLowerCase() === 'custom exercise') {
+        const banner = document.getElementById('exercise-previous-workout-banner');
+        const metricEl = document.getElementById('exercise-previous-workout-metric');
+        if (metricEl) metricEl.innerText = '';
+        if (banner) banner.classList.add('hidden');
+      } else {
+        updateExercisePreviousWorkoutMetric(trimmedVal);
+      }
 
       if (typeof resolveExerciseMuscles === 'function') {
         const profile = resolveExerciseMuscles(val);
@@ -2440,7 +2471,15 @@
       try {
         startRestTimer();
         updateSetControlsUI();
-        updateExercisePreviousWorkoutMetric(exerciseName);
+        const currentInputVal = document.getElementById('exercise-name-input')?.value?.trim();
+        if (currentInputVal && currentInputVal.toLowerCase() !== 'custom exercise') {
+          updateExercisePreviousWorkoutMetric(currentInputVal);
+        } else {
+          const prevBanner = document.getElementById('exercise-previous-workout-banner');
+          const prevMetric = document.getElementById('exercise-previous-workout-metric');
+          if (prevMetric) prevMetric.innerText = '';
+          if (prevBanner) prevBanner.classList.add('hidden');
+        }
       } catch (err) {
         console.error('Error starting rest timer:', err);
       }
