@@ -2444,20 +2444,27 @@
             <span id="exercise-previous-workout-date" class="text-[10px] text-slate-500 shrink-0 font-medium"></span>
           </div>
 
-          <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL (HORIZONTALLY SCROLLABLE FOR TARGET & SECONDARY MUSCLES) -->
-          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-2 px-3.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between shadow-sm gap-2">
-            <div id="auto-muscles-scroll-container" class="flex-1 min-w-0 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 whitespace-nowrap py-0.5">
+          <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL (Muscles Engaged) -->
+          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-1.5 px-3 bg-slate-900/35 backdrop-blur-md border border-slate-800/60 opacity-80 hover:opacity-100 transition-all rounded-xl flex items-center justify-between shadow-sm gap-2">
+            <div id="auto-muscles-scroll-container" class="flex-1 min-w-0 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 whitespace-nowrap py-0.5 cursor-pointer" onclick="toggleAutoMusclesCollapse(event)">
               <i class="fa-solid fa-bullseye text-emerald-400 text-sm shrink-0"></i>
-              <span class="text-slate-400 font-bold shrink-0">Target:</span>
+              <span class="text-slate-400 font-bold shrink-0">Muscles Engaged:</span>
               <span id="auto-muscle-primary" class="font-black text-emerald-400 shrink-0"></span>
-              <span id="auto-muscle-secondary-wrapper" class="text-slate-500 text-xs hidden shrink-0 inline-flex items-center gap-1">
-                • <span class="text-slate-400 font-medium">Secondary:</span> <span id="auto-muscle-secondary" class="text-slate-300 font-semibold"></span>
-              </span>
-              <span id="auto-implement-wrapper" class="text-slate-500 text-xs hidden shrink-0 sm:inline-flex items-center gap-1">
-                • <span class="text-slate-400 font-medium">Implement:</span> <span id="auto-implement-val" class="text-emerald-400 font-bold"></span>
-              </span>
+              <div id="auto-muscles-expandable-details" class="inline-flex items-center gap-2">
+                <span id="auto-muscle-secondary-wrapper" class="text-slate-500 text-xs hidden shrink-0 inline-flex items-center gap-1">
+                  • <span class="text-slate-400 font-medium">Secondary:</span> <span id="auto-muscle-secondary" class="text-slate-300 font-semibold"></span>
+                </span>
+                <span id="auto-implement-wrapper" class="text-slate-500 text-xs hidden shrink-0 sm:inline-flex items-center gap-1">
+                  • <span class="text-slate-400 font-medium">Implement:</span> <span id="auto-implement-val" class="text-emerald-400 font-bold"></span>
+                </span>
+              </div>
             </div>
-            <span class="shrink-0 text-[10px] uppercase tracking-wider font-extrabold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded ml-1 select-none">Auto</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span class="shrink-0 text-[10px] uppercase tracking-wider font-extrabold text-emerald-400/90 bg-emerald-950/50 border border-emerald-500/30 px-2 py-0.5 rounded select-none">Auto</span>
+              <button type="button" id="btn-toggle-auto-muscles" onclick="toggleAutoMusclesCollapse(event)" class="w-5 h-5 rounded hover:bg-slate-800/60 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors" title="Toggle Muscles Engaged details" aria-label="Toggle Muscles Engaged details">
+                <i id="auto-muscles-chevron" class="fa-solid fa-chevron-up text-[10px] transition-transform duration-200"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -3130,47 +3137,60 @@
 
         <!-- TAB PANE 2: MUSCLE ANATOMY & TONNAGE BREAKDOWN -->
         <div id="tab-pane-summary-muscles" class="hidden space-y-4">
-          <!-- TARGETED MUSCLE MAP SVG CONTAINER -->
-          <div id="muscle-map-container" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-center">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Targeted Muscle Engagement Map</h3>
-            
-            <div class="flex justify-center items-center gap-8 py-2">
-              <div class="w-36 flex flex-col items-center">
-                <svg id="svg-anterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                  <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
-                </svg>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
+          <!-- TARGETED MUSCLE MAP SVG CONTAINER (Muscles Engaged) -->
+          <div id="muscle-map-container" class="bg-slate-900/35 backdrop-blur-md p-4 rounded-2xl border border-slate-800/60 shadow-sm opacity-85 hover:opacity-100 transition-all space-y-3">
+            <div id="muscle-map-header" class="flex items-center justify-between cursor-pointer select-none py-0.5" onclick="toggleMuscleMapCollapse(event)">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-person-running text-teal-400 text-sm"></i>
+                <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Muscles Engaged</h3>
               </div>
-
-              <div class="w-36 flex flex-col items-center">
-                <svg id="svg-posterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
-                  <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
-                  <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
-                </svg>
-                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
+              <div class="flex items-center gap-2">
+                <span id="muscle-map-collapsed-hint" class="hidden text-[10px] font-semibold text-teal-300/90 bg-teal-950/60 border border-teal-500/30 px-2.5 py-0.5 rounded-full shadow-sm"></span>
+                <button type="button" id="btn-toggle-muscle-map" onclick="toggleMuscleMapCollapse(event)" class="w-6 h-6 rounded-lg bg-slate-800/40 hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors" aria-label="Toggle Muscles Engaged">
+                  <i id="muscle-map-chevron" class="fa-solid fa-chevron-up text-xs transition-transform duration-200"></i>
+                </button>
               </div>
             </div>
 
-            <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
-                <span class="text-slate-300 font-semibold">Primary Muscles</span>
+            <div id="muscle-map-content" class="space-y-3 transition-all duration-300">
+              <div class="flex justify-center items-center gap-8 py-2">
+                <div class="w-36 flex flex-col items-center">
+                  <svg id="svg-anterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path id="body-chest" d="M43,48 C51,46 58,52 59,62 C52,65 44,63 41,56 Z M77,48 C69,46 62,52 61,62 C68,65 76,63 79,56 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-shoulders-ant" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-core" d="M51,66 L69,66 L67,108 L53,108 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-biceps" d="M32,60 C36,60 37,74 33,80 C30,78 29,66 32,60 Z M88,60 C84,60 83,74 87,80 C90,78 91,66 88,60 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-quads" d="M46,114 C54,114 57,144 55,160 C48,160 45,140 44,122 Z M74,114 C66,114 63,144 65,160 C72,160 75,140 76,122 Z" fill="#334155" class="transition-colors duration-300"/>
+                  </svg>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Anterior</span>
+                </div>
+
+                <div class="w-36 flex flex-col items-center">
+                  <svg id="svg-posterior" viewBox="0 0 120 240" class="w-full h-auto max-h-60 drop-shadow-lg" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M60,10 C54,10 50,15 50,22 C50,28 54,32 60,32 C66,32 70,28 70,22 C70,15 66,10 60,10 Z M46,40 C38,44 32,54 28,66 C24,78 22,96 20,110 C18,122 17,135 19,140 C21,142 24,140 25,132 C27,118 31,98 34,88 C34,98 33,115 32,130 L37,130 C38,115 40,98 42,82 L42,125 C42,138 38,160 36,180 C34,200 33,222 36,228 C38,230 42,230 44,222 C48,208 50,185 53,165 C55,155 57,145 60,145 C63,145 65,155 67,165 C70,185 72,208 76,222 C78,230 82,230 84,228 C87,222 86,200 84,180 C82,160 78,138 78,125 L78,82 C80,98 82,115 83,130 L88,130 C87,115 86,98 86,88 C89,98 93,118 95,132 C96,140 99,142 101,140 C103,135 102,122 100,110 C98,96 96,78 92,66 C88,54 82,44 74,40 Z" fill="none" stroke="#475569" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path id="body-back" d="M44,46 L76,46 L70,92 L50,92 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-shoulders-post" d="M37,44 C41,43 43,48 40,56 C35,54 34,48 37,44 Z M83,44 C79,43 77,48 80,56 C85,54 86,48 83,44 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-triceps" d="M30,58 C33,58 35,72 32,78 C28,74 27,64 30,58 Z M90,58 C87,58 85,72 88,78 C92,74 93,64 90,58 Z" fill="#334155" class="transition-colors duration-300"/>
+                    <path id="body-hamstrings" d="M45,96 C55,94 58,118 56,162 C48,162 44,136 44,110 Z M75,96 C65,94 62,118 64,162 C72,162 76,136 76,110 Z" fill="#334155" class="transition-colors duration-300"/>
+                  </svg>
+                  <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-1">Posterior</span>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
-                <span class="text-slate-300 font-semibold">Secondary Muscles</span>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
-                <span class="text-slate-500">Untargeted</span>
+
+              <div class="flex items-center justify-center gap-4 text-xs pt-2 border-t border-slate-800/80">
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-red-500 inline-block shadow-sm"></span>
+                  <span class="text-slate-300 font-semibold">Primary Muscles</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-yellow-500 inline-block shadow-sm"></span>
+                  <span class="text-slate-300 font-semibold">Secondary Muscles</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="w-3 h-3 rounded-full bg-slate-700 inline-block"></span>
+                  <span class="text-slate-500">Untargeted</span>
+                </div>
               </div>
             </div>
           </div>

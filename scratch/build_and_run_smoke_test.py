@@ -114,6 +114,13 @@ def generate_and_run_smoke_test():
         print("[FAIL] Target bullseye icon missing in HTML")
         return False
 
+    # 8. Check Muscles Engaged section renaming, passive styling, and toggle in HTML
+    if 'Muscles Engaged' in html and 'id="btn-toggle-muscle-map"' in html and 'id="btn-toggle-auto-muscles"' in html:
+        print("[PASS] Muscles Engaged section renaming and toggle buttons verified in HTML")
+    else:
+        print("[FAIL] Muscles Engaged section renaming or toggle buttons missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -3038,6 +3045,63 @@ runSuite("30. Enable Squads Module Defaults, isMe Safe Resolution & Rogue Squad 
   purgeFriendsSquads();
   const purgedSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
   assert(purgedSquads.length === 0, "purgeFriendsSquads eradicates rogue 'frie nds' squad from localStorage");
+});
+
+runSuite("31. Muscles Engaged Section Renaming, Passive Transparency, Collapsible & Sticky State", () => {
+  assert(typeof isAutoMusclesCollapsed === 'function', "isAutoMusclesCollapsed is a defined function");
+  assert(typeof setAutoMusclesCollapsed === 'function', "setAutoMusclesCollapsed is a defined function");
+  assert(typeof toggleAutoMusclesCollapse === 'function', "toggleAutoMusclesCollapse is a defined function");
+  assert(typeof applyAutoMusclesCollapseUI === 'function', "applyAutoMusclesCollapseUI is a defined function");
+  assert(typeof isMuscleMapCollapsed === 'function', "isMuscleMapCollapsed is a defined function");
+  assert(typeof setMuscleMapCollapsed === 'function', "setMuscleMapCollapsed is a defined function");
+  assert(typeof toggleMuscleMapCollapse === 'function', "toggleMuscleMapCollapse is a defined function");
+  assert(typeof applyMuscleMapCollapseUI === 'function', "applyMuscleMapCollapseUI is a defined function");
+
+  // DOM elements in mock
+  const autoDetails = getOrCreateElement('auto-muscles-expandable-details');
+  const autoChevron = getOrCreateElement('auto-muscles-chevron');
+  const mapContent = getOrCreateElement('muscle-map-content');
+  const mapChevron = getOrCreateElement('muscle-map-chevron');
+  const mapHint = getOrCreateElement('muscle-map-collapsed-hint');
+
+  // Test Auto Muscles Pill (Logger)
+  localStorage.removeItem('showup_auto_muscles_collapsed');
+  assert(isAutoMusclesCollapsed() === false, "Auto muscles pill defaults to expanded");
+  applyAutoMusclesCollapseUI(false);
+  assert(!autoDetails.classList.contains('hidden'), "Expandable details visible when expanded");
+  assert(autoChevron.classList.contains('fa-chevron-up'), "Chevron points up when expanded");
+
+  toggleAutoMusclesCollapse();
+  assert(isAutoMusclesCollapsed() === true, "toggleAutoMusclesCollapse sets state to collapsed");
+  assert(localStorage.getItem('showup_auto_muscles_collapsed') === 'true', "Collapsed state is sticky in localStorage");
+  assert(autoDetails.classList.contains('hidden'), "Expandable details hidden when collapsed");
+  assert(autoChevron.classList.contains('fa-chevron-down'), "Chevron points down when collapsed");
+
+  toggleAutoMusclesCollapse();
+  assert(isAutoMusclesCollapsed() === false, "toggleAutoMusclesCollapse expands again");
+  assert(localStorage.getItem('showup_auto_muscles_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!autoDetails.classList.contains('hidden'), "Expandable details visible after re-expansion");
+
+  // Test Muscles Engaged Map (Summary)
+  localStorage.removeItem('showup_muscles_engaged_collapsed');
+  assert(isMuscleMapCollapsed() === false, "Summary muscle map defaults to expanded");
+  applyMuscleMapCollapseUI(false);
+  assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when expanded");
+  assert(mapChevron.classList.contains('fa-chevron-up'), "Map chevron points up when expanded");
+
+  mapHint.textContent = "Primary: Chest";
+  toggleMuscleMapCollapse();
+  assert(isMuscleMapCollapsed() === true, "toggleMuscleMapCollapse sets state to collapsed");
+  assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'true', "Summary map collapsed state is sticky in localStorage");
+  assert(mapContent.classList.contains('hidden'), "Muscle map content hidden when collapsed");
+  assert(mapChevron.classList.contains('fa-chevron-down'), "Map chevron points down when collapsed");
+  assert(!mapHint.classList.contains('hidden'), "Primary target hint badge is visible when collapsed");
+
+  toggleMuscleMapCollapse();
+  assert(isMuscleMapCollapsed() === false, "toggleMuscleMapCollapse expands again");
+  assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when re-expanded");
+  assert(mapHint.classList.contains('hidden'), "Primary target hint badge hidden when expanded");
 });
 
 print("\\n============================================================");

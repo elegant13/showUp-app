@@ -5762,6 +5762,51 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isAutoMusclesCollapsed() {
+      try {
+        return localStorage.getItem('showup_auto_muscles_collapsed') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setAutoMusclesCollapsed(collapsed) {
+      try {
+        localStorage.setItem('showup_auto_muscles_collapsed', collapsed ? 'true' : 'false');
+      } catch (e) {}
+      applyAutoMusclesCollapseUI(collapsed);
+    }
+
+    function toggleAutoMusclesCollapse(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      setAutoMusclesCollapsed(!isAutoMusclesCollapsed());
+    }
+
+    function applyAutoMusclesCollapseUI(collapsed) {
+      const details = document.getElementById('auto-muscles-expandable-details');
+      const chevron = document.getElementById('auto-muscles-chevron');
+      if (details) {
+        if (collapsed) {
+          details.classList.add('hidden');
+        } else {
+          details.classList.remove('hidden');
+        }
+      }
+      if (chevron) {
+        if (collapsed) {
+          chevron.classList.remove('fa-chevron-up');
+          chevron.classList.add('fa-chevron-down');
+        } else {
+          chevron.classList.remove('fa-chevron-down');
+          chevron.classList.add('fa-chevron-up');
+        }
+      }
+    }
+
     function updateAutoMusclesIndicator(val, profile) {
       const pill = document.getElementById('exercise-auto-muscles-pill');
       if (!pill) return;
@@ -5794,6 +5839,7 @@ if (typeof window !== 'undefined') {
         }
       }
       pill.classList.remove('hidden');
+      applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
     }
 
     function handleImplementChange(implementVal) {
@@ -8031,6 +8077,59 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isMuscleMapCollapsed() {
+      try {
+        return localStorage.getItem('showup_muscles_engaged_collapsed') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setMuscleMapCollapsed(collapsed) {
+      try {
+        localStorage.setItem('showup_muscles_engaged_collapsed', collapsed ? 'true' : 'false');
+      } catch (e) {}
+      applyMuscleMapCollapseUI(collapsed);
+    }
+
+    function toggleMuscleMapCollapse(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      setMuscleMapCollapsed(!isMuscleMapCollapsed());
+    }
+
+    function applyMuscleMapCollapseUI(collapsed) {
+      const content = document.getElementById('muscle-map-content');
+      const chevron = document.getElementById('muscle-map-chevron');
+      const hint = document.getElementById('muscle-map-collapsed-hint');
+      if (content) {
+        if (collapsed) {
+          content.classList.add('hidden');
+        } else {
+          content.classList.remove('hidden');
+        }
+      }
+      if (chevron) {
+        if (collapsed) {
+          chevron.classList.remove('fa-chevron-up');
+          chevron.classList.add('fa-chevron-down');
+        } else {
+          chevron.classList.remove('fa-chevron-down');
+          chevron.classList.add('fa-chevron-up');
+        }
+      }
+      if (hint) {
+        if (collapsed && hint.textContent.trim()) {
+          hint.classList.remove('hidden');
+        } else {
+          hint.classList.add('hidden');
+        }
+      }
+    }
+
     function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
       const muscleSvgMap = {
         'Chest': ['body-chest'],
@@ -8048,10 +8147,19 @@ if (typeof window !== 'undefined') {
         if (el) el.setAttribute('fill', '#334155');
       });
 
-      const sortedMuscles = Object.entries(muscleMap).sort((a, b) => b[1] - a[1]);
-      if (sortedMuscles.length === 0) return;
+      const hint = document.getElementById('muscle-map-collapsed-hint');
+      const sortedMuscles = Object.entries(muscleMap || {}).sort((a, b) => b[1] - a[1]);
+      if (sortedMuscles.length === 0) {
+        if (hint) hint.textContent = '';
+        applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+        return;
+      }
 
       const primaryTarget = sortedMuscles[0][0];
+      if (hint) {
+        hint.textContent = primaryTarget ? `Primary: ${primaryTarget}` : '';
+      }
+      applyMuscleMapCollapseUI(isMuscleMapCollapsed());
 
       if (primaryTarget === "Full Body") {
         ['body-back', 'body-hamstrings', 'body-chest'].forEach(id => {
@@ -8089,8 +8197,6 @@ if (typeof window !== 'undefined') {
       });
     }
 
-
-
     function switchSummaryTab(tabName) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       const tabs = ['overview', 'muscles', 'sets'];
@@ -8113,7 +8219,9 @@ if (typeof window !== 'undefined') {
         }
       });
 
-      if (tabName === 'sets') {
+      if (tabName === 'muscles') {
+        applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+      } else if (tabName === 'sets') {
         renderSummarySetsList();
       }
     }
@@ -8265,16 +8373,28 @@ if (typeof window !== 'undefined') {
       window.openEditActiveSetModal = openEditActiveSetModal;
       window.closeEditActiveSetModal = closeEditActiveSetModal;
       window.saveActiveSetEdits = saveActiveSetEdits;
+      window.isAutoMusclesCollapsed = isAutoMusclesCollapsed;
+      window.setAutoMusclesCollapsed = setAutoMusclesCollapsed;
+      window.toggleAutoMusclesCollapse = toggleAutoMusclesCollapse;
+      window.applyAutoMusclesCollapseUI = applyAutoMusclesCollapseUI;
+      window.isMuscleMapCollapsed = isMuscleMapCollapsed;
+      window.setMuscleMapCollapsed = setMuscleMapCollapsed;
+      window.toggleMuscleMapCollapse = toggleMuscleMapCollapse;
+      window.applyMuscleMapCollapseUI = applyMuscleMapCollapseUI;
     }
 
     if (typeof document !== 'undefined') {
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
         initTouchScrollerInputs();
         updateWorkoutSessionHUD();
+        applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
+        applyMuscleMapCollapseUI(isMuscleMapCollapsed());
       } else {
         document.addEventListener('DOMContentLoaded', () => {
           initTouchScrollerInputs();
           updateWorkoutSessionHUD();
+          applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
+          applyMuscleMapCollapseUI(isMuscleMapCollapsed());
         });
       }
 
@@ -20004,6 +20124,63 @@ runSuite("30. Enable Squads Module Defaults, isMe Safe Resolution & Rogue Squad 
   purgeFriendsSquads();
   const purgedSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
   assert(purgedSquads.length === 0, "purgeFriendsSquads eradicates rogue 'frie nds' squad from localStorage");
+});
+
+runSuite("31. Muscles Engaged Section Renaming, Passive Transparency, Collapsible & Sticky State", () => {
+  assert(typeof isAutoMusclesCollapsed === 'function', "isAutoMusclesCollapsed is a defined function");
+  assert(typeof setAutoMusclesCollapsed === 'function', "setAutoMusclesCollapsed is a defined function");
+  assert(typeof toggleAutoMusclesCollapse === 'function', "toggleAutoMusclesCollapse is a defined function");
+  assert(typeof applyAutoMusclesCollapseUI === 'function', "applyAutoMusclesCollapseUI is a defined function");
+  assert(typeof isMuscleMapCollapsed === 'function', "isMuscleMapCollapsed is a defined function");
+  assert(typeof setMuscleMapCollapsed === 'function', "setMuscleMapCollapsed is a defined function");
+  assert(typeof toggleMuscleMapCollapse === 'function', "toggleMuscleMapCollapse is a defined function");
+  assert(typeof applyMuscleMapCollapseUI === 'function', "applyMuscleMapCollapseUI is a defined function");
+
+  // DOM elements in mock
+  const autoDetails = getOrCreateElement('auto-muscles-expandable-details');
+  const autoChevron = getOrCreateElement('auto-muscles-chevron');
+  const mapContent = getOrCreateElement('muscle-map-content');
+  const mapChevron = getOrCreateElement('muscle-map-chevron');
+  const mapHint = getOrCreateElement('muscle-map-collapsed-hint');
+
+  // Test Auto Muscles Pill (Logger)
+  localStorage.removeItem('showup_auto_muscles_collapsed');
+  assert(isAutoMusclesCollapsed() === false, "Auto muscles pill defaults to expanded");
+  applyAutoMusclesCollapseUI(false);
+  assert(!autoDetails.classList.contains('hidden'), "Expandable details visible when expanded");
+  assert(autoChevron.classList.contains('fa-chevron-up'), "Chevron points up when expanded");
+
+  toggleAutoMusclesCollapse();
+  assert(isAutoMusclesCollapsed() === true, "toggleAutoMusclesCollapse sets state to collapsed");
+  assert(localStorage.getItem('showup_auto_muscles_collapsed') === 'true', "Collapsed state is sticky in localStorage");
+  assert(autoDetails.classList.contains('hidden'), "Expandable details hidden when collapsed");
+  assert(autoChevron.classList.contains('fa-chevron-down'), "Chevron points down when collapsed");
+
+  toggleAutoMusclesCollapse();
+  assert(isAutoMusclesCollapsed() === false, "toggleAutoMusclesCollapse expands again");
+  assert(localStorage.getItem('showup_auto_muscles_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!autoDetails.classList.contains('hidden'), "Expandable details visible after re-expansion");
+
+  // Test Muscles Engaged Map (Summary)
+  localStorage.removeItem('showup_muscles_engaged_collapsed');
+  assert(isMuscleMapCollapsed() === false, "Summary muscle map defaults to expanded");
+  applyMuscleMapCollapseUI(false);
+  assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when expanded");
+  assert(mapChevron.classList.contains('fa-chevron-up'), "Map chevron points up when expanded");
+
+  mapHint.textContent = "Primary: Chest";
+  toggleMuscleMapCollapse();
+  assert(isMuscleMapCollapsed() === true, "toggleMuscleMapCollapse sets state to collapsed");
+  assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'true', "Summary map collapsed state is sticky in localStorage");
+  assert(mapContent.classList.contains('hidden'), "Muscle map content hidden when collapsed");
+  assert(mapChevron.classList.contains('fa-chevron-down'), "Map chevron points down when collapsed");
+  assert(!mapHint.classList.contains('hidden'), "Primary target hint badge is visible when collapsed");
+
+  toggleMuscleMapCollapse();
+  assert(isMuscleMapCollapsed() === false, "toggleMuscleMapCollapse expands again");
+  assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when re-expanded");
+  assert(mapHint.classList.contains('hidden'), "Primary target hint badge hidden when expanded");
 });
 
 print("\n============================================================");
