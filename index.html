@@ -2427,59 +2427,41 @@
           </div>
         </div>
 
-        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH HORIZONTAL TAPE RULERS & EXPLICIT STEP PILLS -->
+        <!-- 1. STANDARD METRICS PANEL (WEIGHT & REPS) WITH STEPPERS -->
         <div id="standard-metrics-panel" class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/90 p-4 sm:p-5 rounded-3xl border border-slate-800">
-          <!-- WEIGHT TAPE RULER -->
+          <!-- WEIGHT STEPPER -->
           <div id="scroller-weight-container" class="touch-scroller-card space-y-3 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-weight" data-type="weight">
-            <!-- Header: Label + Explicit Step Pills -->
+            <!-- Header: Label + Hold Hint Badge -->
             <div class="flex items-center justify-between gap-2">
               <label for="input-weight" class="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
                 <i class="fa-solid fa-weight-hanging text-emerald-400 text-[11px]"></i>
                 <span>Weight (lbs / kg)</span>
               </label>
 
-              <!-- Explicit Increment Selector Pills -->
-              <div id="weight-step-pills" class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <button type="button" onclick="setScrollerStep('weight', 1)" class="step-pill step-pill-weight active px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono transition-all" data-step="1">1x</button>
-                <button type="button" onclick="setScrollerStep('weight', 2)" class="step-pill step-pill-weight px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="2">2x</button>
-                <button type="button" onclick="setScrollerStep('weight', 5)" class="step-pill step-pill-weight px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="5">5x</button>
-                <button type="button" onclick="setScrollerStep('weight', 10)" class="step-pill step-pill-weight px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="10">10x</button>
-              </div>
+              <span class="text-[10px] font-mono text-emerald-400/90 bg-emerald-950/70 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg flex items-center gap-1 font-bold pointer-events-none">
+                <i class="fa-solid fa-hand-pointer text-[9px]"></i> Tap ±1 &nbsp;•&nbsp; <i class="fa-solid fa-stopwatch text-[9px] text-amber-400"></i> Hold ±5
+              </span>
             </div>
 
-            <!-- Center Jumbo Number Display -->
-            <div class="touch-scroller-display relative flex items-center justify-center">
-              <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-2.5 sm:py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
-            </div>
-
-            <!-- Horizontal Tape Ruler Scroller Window with Nudge Buttons -->
-            <div class="relative w-full">
-              <button type="button" onclick="nudgeScroller('weight', -1)" class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-emerald-400 active:scale-95 flex items-center justify-center text-xs z-20 transition shadow">
-                <i class="fa-solid fa-minus"></i>
+            <!-- Stepper Controls (Minus Button, Center Jumbo Number, Plus Button) -->
+            <div class="flex items-center gap-2.5 sm:gap-3 w-full">
+              <button type="button" id="btn-weight-decrement" aria-label="Decrease weight" class="stepper-btn stepper-btn-decrement w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none">
+                <i class="fa-solid fa-minus pointer-events-none"></i>
               </button>
 
-              <div id="tape-ruler-weight" class="tape-ruler-track relative h-12 mx-10 rounded-xl bg-slate-950/90 border border-slate-800 overflow-hidden cursor-ew-resize touch-none select-none flex items-center justify-center">
-                <div class="tape-vignette tape-vignette-left absolute left-0 top-0 bottom-0 w-8 pointer-events-none z-10"></div>
-                <div class="tape-vignette tape-vignette-right absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"></div>
-                <div class="tape-center-needle absolute top-1 bottom-1 w-0.5 bg-emerald-400 rounded-full z-15 shadow-[0_0_8px_rgba(20,184,166,0.8)]"></div>
-
-                <div class="tape-ruler-tape absolute flex items-center justify-center h-full gap-2 pointer-events-none transition-transform will-change-transform">
-                  <!-- Dynamically populated graduation ruler -->
-                </div>
+              <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
+                <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-2.5 sm:py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
               </div>
 
-              <button type="button" onclick="nudgeScroller('weight', 1)" class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-emerald-400 active:scale-95 flex items-center justify-center text-xs z-20 transition shadow">
-                <i class="fa-solid fa-plus"></i>
+              <button type="button" id="btn-weight-increment" aria-label="Increase weight" class="stepper-btn stepper-btn-increment w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none">
+                <i class="fa-solid fa-plus pointer-events-none"></i>
               </button>
             </div>
 
-            <!-- Footer: Gestural Hint + Active Step Indicator -->
-            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1 pointer-events-none">
-              <span class="flex items-center gap-1"><i class="fa-solid fa-arrows-left-right text-[9px] text-emerald-400"></i> Swipe Ruler</span>
-              <span id="weight-active-step-hint" class="text-emerald-400 font-extrabold uppercase">Step: ±1</span>
-            </div>
-
-            <!-- Legacy container retained for programmatic tests / cloud sync -->
+            <!-- Retained hidden elements for backward compatibility -->
+            <div id="tape-ruler-weight" class="hidden"><div class="tape-ruler-tape"></div></div>
+            <div id="weight-step-pills" class="hidden"></div>
+            <div id="weight-active-step-hint" class="hidden"></div>
             <div id="quick-plate-chips-wrapper" class="hidden">
               <span id="quick-plate-chips-label">Quick Plate Load</span>
               <div id="quick-plate-chips-container"></div>
@@ -2489,56 +2471,39 @@
             <div id="weight-step-badge" class="hidden"><span class="step-label">±1</span></div>
           </div>
 
-          <!-- REPS TAPE RULER -->
+          <!-- REPS STEPPER -->
           <div id="scroller-reps-container" class="touch-scroller-card space-y-3 bg-slate-900/60 p-3.5 sm:p-4 rounded-2xl border border-slate-800/80 select-none relative overflow-hidden transition-all duration-200" data-target="input-reps" data-type="reps">
-            <!-- Header: Label + Explicit Step Pills -->
+            <!-- Header: Label + Hold Hint Badge -->
             <div class="flex items-center justify-between gap-2">
               <label for="input-reps" class="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-1.5 pointer-events-none">
                 <i class="fa-solid fa-rotate text-emerald-400 text-[11px]"></i>
                 <span>Reps</span>
               </label>
 
-              <!-- Explicit Increment Selector Pills -->
-              <div id="reps-step-pills" class="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
-                <button type="button" onclick="setScrollerStep('reps', 1)" class="step-pill step-pill-reps active px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono transition-all" data-step="1">1x</button>
-                <button type="button" onclick="setScrollerStep('reps', 2)" class="step-pill step-pill-reps px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="2">2x</button>
-                <button type="button" onclick="setScrollerStep('reps', 5)" class="step-pill step-pill-reps px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="5">5x</button>
-                <button type="button" onclick="setScrollerStep('reps', 10)" class="step-pill step-pill-reps px-2.5 py-0.5 rounded-lg text-[10px] font-black font-mono text-slate-400 hover:text-slate-200 transition-all" data-step="10">10x</button>
-              </div>
+              <span class="text-[10px] font-mono text-emerald-400/90 bg-emerald-950/70 border border-emerald-500/30 px-2.5 py-0.5 rounded-lg flex items-center gap-1 font-bold pointer-events-none">
+                <i class="fa-solid fa-hand-pointer text-[9px]"></i> Tap ±1 &nbsp;•&nbsp; <i class="fa-solid fa-stopwatch text-[9px] text-amber-400"></i> Hold ±5
+              </span>
             </div>
 
-            <!-- Center Jumbo Number Display -->
-            <div class="touch-scroller-display relative flex items-center justify-center">
-              <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-2.5 sm:py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
-            </div>
-
-            <!-- Horizontal Tape Ruler Scroller Window with Nudge Buttons -->
-            <div class="relative w-full">
-              <button type="button" onclick="nudgeScroller('reps', -1)" class="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-emerald-400 active:scale-95 flex items-center justify-center text-xs z-20 transition shadow">
-                <i class="fa-solid fa-minus"></i>
+            <!-- Stepper Controls (Minus Button, Center Jumbo Number, Plus Button) -->
+            <div class="flex items-center gap-2.5 sm:gap-3 w-full">
+              <button type="button" id="btn-reps-decrement" aria-label="Decrease reps" class="stepper-btn stepper-btn-decrement w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none">
+                <i class="fa-solid fa-minus pointer-events-none"></i>
               </button>
 
-              <div id="tape-ruler-reps" class="tape-ruler-track relative h-12 mx-10 rounded-xl bg-slate-950/90 border border-slate-800 overflow-hidden cursor-ew-resize touch-none select-none flex items-center justify-center">
-                <div class="tape-vignette tape-vignette-left absolute left-0 top-0 bottom-0 w-8 pointer-events-none z-10"></div>
-                <div class="tape-vignette tape-vignette-right absolute right-0 top-0 bottom-0 w-8 pointer-events-none z-10"></div>
-                <div class="tape-center-needle absolute top-1 bottom-1 w-0.5 bg-emerald-400 rounded-full z-15 shadow-[0_0_8px_rgba(20,184,166,0.8)]"></div>
-
-                <div class="tape-ruler-tape absolute flex items-center justify-center h-full gap-2 pointer-events-none transition-transform will-change-transform">
-                  <!-- Dynamically populated graduation ruler -->
-                </div>
+              <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
+                <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-2xl py-2.5 sm:py-3 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
               </div>
 
-              <button type="button" onclick="nudgeScroller('reps', 1)" class="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:text-emerald-400 active:scale-95 flex items-center justify-center text-xs z-20 transition shadow">
-                <i class="fa-solid fa-plus"></i>
+              <button type="button" id="btn-reps-increment" aria-label="Increase reps" class="stepper-btn stepper-btn-increment w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none">
+                <i class="fa-solid fa-plus pointer-events-none"></i>
               </button>
             </div>
 
-            <!-- Footer: Gestural Hint + Active Step Indicator -->
-            <div class="flex items-center justify-between text-[10px] font-mono text-slate-500 px-1 pointer-events-none">
-              <span class="flex items-center gap-1"><i class="fa-solid fa-arrows-left-right text-[9px] text-emerald-400"></i> Swipe Ruler</span>
-              <span id="reps-active-step-hint" class="text-emerald-400 font-extrabold uppercase">Step: ±1</span>
-            </div>
-
+            <!-- Retained hidden elements for backward compatibility -->
+            <div id="tape-ruler-reps" class="hidden"><div class="tape-ruler-tape"></div></div>
+            <div id="reps-step-pills" class="hidden"></div>
+            <div id="reps-active-step-hint" class="hidden"></div>
             <div id="touch-dial-reps" class="hidden"></div>
             <div id="roller-drum-reps" class="hidden"></div>
             <div id="reps-step-badge" class="hidden"><span class="step-label">±1</span></div>

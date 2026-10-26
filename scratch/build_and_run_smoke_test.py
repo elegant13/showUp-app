@@ -2224,6 +2224,44 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   setScrollerStep('weight', 1);
   assert(window.scrollerSteps.weight === 1, "setScrollerStep resets weight step to 1");
 
+  // Metric Stepper Buttons (1x Tap & 5x Hold-to-Repeat) Tests
+  assert(typeof bindHoldStepper === 'function', "bindHoldStepper is a defined function");
+  assert(getOrCreateElement('btn-weight-decrement') !== null, "btn-weight-decrement exists in DOM");
+  assert(getOrCreateElement('btn-weight-increment') !== null, "btn-weight-increment exists in DOM");
+  assert(getOrCreateElement('btn-reps-decrement') !== null, "btn-reps-decrement exists in DOM");
+  assert(getOrCreateElement('btn-reps-increment') !== null, "btn-reps-increment exists in DOM");
+
+  const testWeightInput = getOrCreateElement('input-weight');
+  testWeightInput.value = "100";
+  const weightIncBtn = getOrCreateElement('btn-weight-increment');
+  const weightDecBtn = getOrCreateElement('btn-weight-decrement');
+
+  // Test single tap (1x step)
+  weightIncBtn.dispatchEvent({ type: 'click' });
+  assert(Number(testWeightInput.value) === 101, "Single click/tap on weight increment adds 1x");
+  weightDecBtn.dispatchEvent({ type: 'click' });
+  assert(Number(testWeightInput.value) === 100, "Single click/tap on weight decrement subtracts 1x");
+
+  const testRepsInput = getOrCreateElement('input-reps');
+  testRepsInput.value = "10";
+  const repsIncBtn = getOrCreateElement('btn-reps-increment');
+  const repsDecBtn = getOrCreateElement('btn-reps-decrement');
+
+  repsIncBtn.dispatchEvent({ type: 'click' });
+  assert(Number(testRepsInput.value) === 11, "Single click/tap on reps increment adds 1x");
+  repsDecBtn.dispatchEvent({ type: 'click' });
+  assert(Number(testRepsInput.value) === 10, "Single click/tap on reps decrement subtracts 1x");
+
+  // Test 5x nudge compatibility
+  nudgeScroller('weight', 1, 5);
+  assert(Number(testWeightInput.value) === 105, "5x hold step increment adjusts weight by 5");
+  nudgeScroller('weight', -1, 5);
+  assert(Number(testWeightInput.value) === 100, "5x hold step decrement adjusts weight by 5");
+  nudgeScroller('reps', 1, 5);
+  assert(Number(testRepsInput.value) === 15, "5x hold step increment adjusts reps by 5");
+  nudgeScroller('reps', -1, 5);
+  assert(Number(testRepsInput.value) === 10, "5x hold step decrement adjusts reps by 5");
+
   // Rest Timer LocalStorage Persistence & Restoration Test
   startRestTimer(10);
   assert(isRestTimerRunning === true, "startRestTimer sets isRestTimerRunning to true");

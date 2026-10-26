@@ -1132,8 +1132,10 @@
 
     function adjustWeight(delta) {
       const input = document.getElementById('input-weight');
+      if (!input) return;
       let val = parseFloat(input.value) || 0;
       val = Math.max(0, val + delta);
+      val = Math.round(val * 10) / 10;
       input.value = val;
       if (typeof Event === 'function') {
         input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1143,6 +1145,7 @@
 
     function adjustReps(delta) {
       const input = document.getElementById('input-reps');
+      if (!input) return;
       let val = parseInt(input.value) || 0;
       val = Math.max(1, val + delta);
       input.value = val;
@@ -1157,6 +1160,7 @@
       window.scrollerSteps = window.scrollerSteps || scrollerSteps;
       window.setScrollerStep = setScrollerStep;
       window.nudgeScroller = nudgeScroller;
+      window.bindHoldStepper = bindHoldStepper;
     }
 
     function setScrollerStep(type, step) {
@@ -1167,7 +1171,6 @@
       scrollerSteps[type] = numStep;
 
       if (typeof document !== 'undefined') {
-        // Update explicit pill styles
         const pills = document.querySelectorAll(`.step-pill-${type}`);
         if (pills && pills.length) {
           pills.forEach(pill => {
@@ -1182,7 +1185,6 @@
           });
         }
 
-        // Update active step indicator
         const hint = document.getElementById(`${type}-active-step-hint`);
         if (hint) {
           hint.innerText = `Step: ±${numStep}`;
@@ -1194,33 +1196,22 @@
       }
     }
 
-    function nudgeScroller(type, direction) {
+    function nudgeScroller(type, direction, step) {
       if (typeof document === 'undefined') return;
-      const input = document.getElementById(`input-${type}`);
-      if (!input) return;
+      const amount = (typeof step === 'number')
+        ? step
+        : ((typeof window !== 'undefined' && window.scrollerSteps && window.scrollerSteps[type])
+            ? window.scrollerSteps[type]
+            : (scrollerSteps[type] || 1));
 
-      const currentStep = (typeof window !== 'undefined' && window.scrollerSteps && window.scrollerSteps[type])
-        ? window.scrollerSteps[type]
-        : (scrollerSteps[type] || 1);
-
-      let curVal = parseFloat(input.value) || 0;
-      const minVal = type === 'reps' ? 1 : 0;
-      let newVal = curVal + (direction * currentStep);
-
-      if (type === 'reps') {
-        newVal = Math.max(minVal, Math.round(newVal));
+      if (type === 'weight') {
+        adjustWeight(direction * amount);
       } else {
-        newVal = Math.max(minVal, Math.round(newVal * 10) / 10);
-      }
-      input.value = newVal;
-
-      if (typeof Event === 'function') {
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
+        adjustReps(direction * amount);
       }
 
       if (typeof triggerHaptic === 'function') {
-        if (currentStep >= 5) {
+        if (amount >= 5) {
           triggerHaptic('medium');
         } else {
           triggerHaptic('light');
@@ -1228,24 +1219,155 @@
       }
     }
 
-    function initTouchScrollerInputs() {
-      const scrollers = [
-        {
-          type: 'weight',
-          containerId: 'scroller-weight-container',
-          tapeId: 'tape-ruler-weight',
-          inputId: 'input-weight',
-          min: 0
-        },
-        {
-          type: 'reps',
-          containerId: 'scroller-reps-container',
-          tapeId: 'tape-ruler-reps',
-          inputId: 'input-reps',
-          min: 1
-        }
-      ];
+    /**
+     * Bind single tap (1x step) and tap-and-hold (5x continuous steps)
+     * @param {HTMLElement} btn - The stepper button (+ or -)
+     * @param {'weight'|'reps'} type - Metric type
+     * @param {number} deltaSign - +1 for increment, -1 for decrement
+     */
+    function bindHoldStepper(btn, type, deltaSign) {
+      if (!btn || btn.dataset.stepperBound === 'true') return;
+      btn.dataset.stepperBound = 'true';
 
+      let holdTimer = null;
+      let repeatInterval = null;
+      let isHoldActive = false;
+      let handledByPointer = false;
+
+      function doStep(amount) {
+        if (type === 'weight') {
+          adjustWeight(amount * deltaSign);
+        } else {
+          adjustReps(amount * deltaSign);
+        }
+      }
+
+      function startHold() {
+        isHoldActive = true;
+        btn.classList.add('stepper-btn-active');
+        // Initial 5x step when hold threshold reached
+        doStep(5);
+        if (typeof triggerHaptic === 'function') {
+          triggerHaptic('medium');
+        }
+
+        // Repeating 5x steps as long as held
+        repeatInterval = setInterval(() => {
+          doStep(5);
+          if (typeof triggerHaptic === 'function') {
+            triggerHaptic('light');
+          }
+        }, 140);
+      }
+
+      function stopHold() {
+        if (holdTimer) {
+          clearTimeout(holdTimer);
+          holdTimer = null;
+        }
+        if (repeatInterval) {
+          clearInterval(repeatInterval);
+          repeatInterval = null;
+        }
+        btn.classList.remove('stepper-btn-active');
+      }
+
+      btn.addEventListener('pointerdown', (e) => {
+        if (e.button !== undefined && e.button !== 0) return;
+        handledByPointer = true;
+        stopHold();
+        isHoldActive = false;
+
+        if (btn.setPointerCapture && e.pointerId) {
+          try { btn.setPointerCapture(e.pointerId); } catch (_) {}
+        }
+
+        // Initiate hold timer (350ms hold detection)
+        holdTimer = setTimeout(startHold, 350);
+      });
+
+      btn.addEventListener('pointerup', (e) => {
+        if (btn.releasePointerCapture && e.pointerId) {
+          try { btn.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+
+        if (!isHoldActive && holdTimer) {
+          // Single tap: released before hold threshold -> 1x step
+          stopHold();
+          doStep(1);
+          if (typeof triggerHaptic === 'function') {
+            triggerHaptic('light');
+          }
+        } else {
+          // Release after holding
+          stopHold();
+        }
+        isHoldActive = false;
+        setTimeout(() => { handledByPointer = false; }, 120);
+      });
+
+      btn.addEventListener('pointercancel', (e) => {
+        if (btn.releasePointerCapture && e.pointerId) {
+          try { btn.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
+        stopHold();
+        isHoldActive = false;
+        setTimeout(() => { handledByPointer = false; }, 120);
+      });
+
+      btn.addEventListener('pointerleave', () => {
+        if (isHoldActive || holdTimer) {
+          stopHold();
+          isHoldActive = false;
+        }
+      });
+
+      btn.addEventListener('click', () => {
+        if (handledByPointer) return;
+        doStep(1);
+        if (typeof triggerHaptic === 'function') {
+          triggerHaptic('light');
+        }
+      });
+
+      btn.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+      });
+    }
+
+    function initTouchScrollerInputs() {
+      if (typeof document === 'undefined') return;
+
+      const weightDec = document.getElementById('btn-weight-decrement');
+      const weightInc = document.getElementById('btn-weight-increment');
+      const repsDec = document.getElementById('btn-reps-decrement');
+      const repsInc = document.getElementById('btn-reps-increment');
+
+      if (weightDec) bindHoldStepper(weightDec, 'weight', -1);
+      if (weightInc) bindHoldStepper(weightInc, 'weight', 1);
+      if (repsDec) bindHoldStepper(repsDec, 'reps', -1);
+      if (repsInc) bindHoldStepper(repsInc, 'reps', 1);
+
+      // Support mouse wheel on inputs
+      ['weight', 'reps'].forEach(type => {
+        const input = document.getElementById(`input-${type}`);
+        if (input && !input.dataset.wheelBound) {
+          input.dataset.wheelBound = 'true';
+          input.addEventListener('wheel', (e) => {
+            if (e.preventDefault) e.preventDefault();
+            const dir = (e.deltaY < 0 || e.deltaX > 0) ? 1 : -1;
+            if (type === 'weight') adjustWeight(dir);
+            else adjustReps(dir);
+            if (typeof triggerHaptic === 'function') triggerHaptic('light');
+          }, { passive: false });
+        }
+      });
+
+      // Retained backward-compatible setup for tape ruler hooks if present
+      const scrollers = [
+        { type: 'weight', tapeId: 'tape-ruler-weight', inputId: 'input-weight' },
+        { type: 'reps', tapeId: 'tape-ruler-reps', inputId: 'input-reps' }
+      ];
       scrollers.forEach(cfg => {
         setupTapeRuler(cfg);
       });
@@ -1254,110 +1376,17 @@
     function setupTapeRuler(cfg) {
       if (typeof document === 'undefined') return;
       const track = document.getElementById(cfg.tapeId);
-      const input = document.getElementById(cfg.inputId);
-      if (!track || !input) return;
-
+      if (!track) return;
       const tape = track.querySelector('.tape-ruler-tape');
       if (tape && tape.children.length === 0) {
         const fragment = document.createDocumentFragment();
         for (let i = -15; i <= 15; i++) {
           const tick = document.createElement('div');
-          if (i % 5 === 0) {
-            tick.className = 'tape-tick-major';
-          } else if (i % 2 === 0) {
-            tick.className = 'tape-tick-minor';
-          } else {
-            tick.className = 'tape-tick-sub';
-          }
+          tick.className = i % 5 === 0 ? 'tape-tick-major' : (i % 2 === 0 ? 'tape-tick-minor' : 'tape-tick-sub');
           fragment.appendChild(tick);
         }
         tape.appendChild(fragment);
       }
-
-      let isDragging = false;
-      let startX = 0;
-      let currentShiftX = 0;
-      const STEP_PIXELS = 10;
-
-      function onStart(clientX) {
-        isDragging = true;
-        startX = clientX;
-        currentShiftX = 0;
-        track.classList.add('tape-dragging');
-        if (tape) tape.style.transition = 'none';
-      }
-
-      function onMove(clientX) {
-        if (!isDragging) return;
-        const dx = clientX - startX;
-        currentShiftX += dx;
-        startX = clientX;
-
-        if (tape) {
-          const clampedVisualShift = Math.max(-40, Math.min(40, currentShiftX));
-          tape.style.transform = `translateX(${clampedVisualShift}px)`;
-        }
-
-        if (Math.abs(currentShiftX) >= STEP_PIXELS) {
-          const direction = currentShiftX > 0 ? 1 : -1;
-          nudgeScroller(cfg.type, direction);
-          currentShiftX = currentShiftX % STEP_PIXELS;
-        }
-      }
-
-      function onEnd() {
-        if (!isDragging) return;
-        isDragging = false;
-        currentShiftX = 0;
-        track.classList.remove('tape-dragging');
-        if (tape) {
-          tape.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
-          tape.style.transform = 'translateX(0px)';
-        }
-      }
-
-      track.addEventListener('pointerdown', (e) => {
-        if (track.setPointerCapture) {
-          try { track.setPointerCapture(e.pointerId); } catch (_) {}
-        }
-        onStart(e.clientX);
-      });
-      track.addEventListener('pointermove', (e) => {
-        onMove(e.clientX);
-      });
-      track.addEventListener('pointerup', (e) => {
-        if (track.releasePointerCapture) {
-          try { track.releasePointerCapture(e.pointerId); } catch (_) {}
-        }
-        onEnd();
-      });
-      track.addEventListener('pointercancel', (e) => {
-        if (track.releasePointerCapture) {
-          try { track.releasePointerCapture(e.pointerId); } catch (_) {}
-        }
-        onEnd();
-      });
-
-      track.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches.length > 0) {
-          onStart(e.touches[0].clientX);
-        }
-      }, { passive: true });
-      track.addEventListener('touchmove', (e) => {
-        if (e.touches && e.touches.length > 0) {
-          onMove(e.touches[0].clientX);
-        }
-      }, { passive: true });
-      track.addEventListener('touchend', onEnd, { passive: true });
-      track.addEventListener('touchcancel', onEnd, { passive: true });
-
-      const handleWheel = (e) => {
-        if (e.preventDefault) e.preventDefault();
-        const dir = (e.deltaY < 0 || e.deltaX > 0) ? 1 : -1;
-        nudgeScroller(cfg.type, dir);
-      };
-      track.addEventListener('wheel', handleWheel, { passive: false });
-      input.addEventListener('wheel', handleWheel, { passive: false });
     }
 
     function adjustErgDistance(delta) {
