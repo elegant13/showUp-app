@@ -875,7 +875,15 @@
               <input type="checkbox" id="pref-rest-sound-alert" onchange="toggleRestSoundAlertPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
             </div>
 
-            <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+            <div id="pref-hrm-enabled-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-xs text-slate-300 block">Enable Heart Rate Monitor</span>
+                <span class="text-[10px] text-slate-500">Enable Bluetooth HRM connectivity & telemetry card</span>
+              </div>
+              <input type="checkbox" id="pref-hrm-enabled" onchange="toggleHRMEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
+            </div>
+
+            <div id="pref-hr-collapsed-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
                 <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
                 <span class="text-[10px] text-slate-500">Keep HR card collapsed by default</span>
@@ -1633,7 +1641,7 @@
               </span>
               <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">Quiet</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Gentle floating pill slides down at the top of the app for 4 seconds without interrupting your session.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Gentle floating pill slides down at the top of the app for 3 seconds without interrupting your session.</p>
           </div>
         </label>
 
@@ -2464,7 +2472,7 @@
           </div>
 
           <!-- AUTO-ESTABLISHED MUSCLE IMPACT PILL (Muscles Engaged) -->
-          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-1.5 px-3 bg-slate-900/35 backdrop-blur-md border border-slate-800/60 opacity-80 hover:opacity-100 transition-all rounded-xl flex items-center justify-between shadow-sm gap-2">
+          <div id="exercise-auto-muscles-pill" class="hidden text-xs font-medium text-slate-300 py-1.5 px-3 bg-slate-900/55 backdrop-blur-md border border-slate-800/80 opacity-100 transition-all rounded-xl flex items-center justify-between shadow-sm gap-2">
             <div id="auto-muscles-scroll-container" class="flex-1 min-w-0 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 whitespace-nowrap py-0.5 cursor-pointer" onclick="toggleAutoMusclesCollapse(event)">
               <i class="fa-solid fa-bullseye text-emerald-400 text-sm shrink-0"></i>
               <span class="text-slate-400 font-bold shrink-0">Muscles Engaged:</span>
@@ -3164,7 +3172,7 @@
         <!-- TAB PANE 2: MUSCLE ANATOMY & TONNAGE BREAKDOWN -->
         <div id="tab-pane-summary-muscles" class="hidden space-y-4">
           <!-- TARGETED MUSCLE MAP SVG CONTAINER (Muscles Engaged) -->
-          <div id="muscle-map-container" class="bg-slate-900/35 backdrop-blur-md p-4 rounded-2xl border border-slate-800/60 shadow-sm opacity-85 hover:opacity-100 transition-all space-y-3">
+          <div id="muscle-map-container" class="bg-slate-900/55 backdrop-blur-md p-4 rounded-2xl border border-slate-800/80 shadow-sm opacity-100 transition-all space-y-3">
             <div id="muscle-map-header" class="flex items-center justify-between cursor-pointer select-none py-0.5" onclick="toggleMuscleMapCollapse(event)">
               <div class="flex items-center gap-2">
                 <i class="fa-solid fa-person-running text-teal-400 text-sm"></i>

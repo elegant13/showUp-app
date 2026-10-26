@@ -157,6 +157,10 @@
       if (typeof applySquadsEnabledUI === 'function') {
         applySquadsEnabledUI(typeof isSquadsEnabled === 'function' ? isSquadsEnabled() : false);
       }
+
+      if (typeof applyHRMEnabledUI === 'function') {
+        applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : true);
+      }
     }
 
 

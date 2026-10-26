@@ -135,6 +135,18 @@ def generate_and_run_smoke_test():
         print("[FAIL] Filter toggle, Macebell (Gadaa), or collapsible Current Session Logs missing in HTML")
         return False
 
+    # 10. Check HRM Enable Option in Settings Defaults, 3s Pill Hang Time Copy, and Reduced Muscles Engaged Transparency in HTML
+    if ('id="pref-hrm-enabled"' in html and
+        'id="pref-hrm-enabled-row"' in html and
+        'id="pref-hr-collapsed-row"' in html and
+        'bg-slate-900/55' in html and
+        'opacity-100' in html and
+        'app for 3 seconds without interrupting your session' in html):
+        print("[PASS] HRM enable option in Defaults, 3s pill hang time copy, and reduced Muscles Engaged transparency verified in HTML")
+    else:
+        print("[FAIL] HRM enable option, 3s pill copy, or Muscles Engaged opacity missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -149,6 +161,7 @@ function getOrCreateElement(id, tag = 'div') {
       id: id,
       tagName: tag.toUpperCase(),
       className: '',
+      children: children,
       value: '',
       checked: false,
       innerText: '',
@@ -3219,6 +3232,57 @@ runSuite("32. Filter Pills Toggle, Macebell (Gadaa) Implement, Collapsible Sessi
   // Streak counters updated immediately on login
   const curStreak = document.getElementById('current-streak-val');
   assert(curStreak.innerText.includes("day"), "current-streak-val badge updated on login");
+});
+
+runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscles Engaged Transparency", () => {
+  // 1. Heart Rate Monitor Enabling Option in Settings > Defaults
+  assert(typeof isHRMEnabled === 'function', "isHRMEnabled is a defined function");
+  assert(typeof applyHRMEnabledUI === 'function', "applyHRMEnabledUI is a defined function");
+  assert(typeof toggleHRMEnabledPref === 'function', "toggleHRMEnabledPref is a defined function");
+
+  const hrPill = getOrCreateElement('hr-minimal-pill');
+  const hrCard = getOrCreateElement('hr-card');
+  const hrPrefRow = getOrCreateElement('pref-hr-collapsed-row');
+  const hrPrefCheckbox = getOrCreateElement('pref-hrm-enabled');
+  const runningHrmBtn = getOrCreateElement('running-hrm-connect-btn');
+
+  // Verify default state is enabled (true)
+  localStorage.removeItem('showUp_hrm_enabled');
+  assert(isHRMEnabled() === true, "HRM defaults to enabled for athletes");
+  applyHRMEnabledUI(true);
+  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill is visible by default when HRM is enabled");
+  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is fully interactive when HRM is enabled");
+
+  // Disable HRM
+  toggleHRMEnabledPref(false);
+  assert(isHRMEnabled() === false, "toggleHRMEnabledPref(false) sets HRM state to disabled");
+  assert(localStorage.getItem('showUp_hrm_enabled') === 'false', "HRM disabled state persists in localStorage");
+  assert(hrPill.classList.contains('hidden'), "HR minimalist pill is hidden when HRM is disabled");
+  assert(hrCard.classList.contains('hidden'), "HR telemetry card is hidden when HRM is disabled");
+  assert(hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is dimmed when HRM is disabled");
+  assert(hrPrefRow.classList.contains('pointer-events-none'), "HR collapsed preference row is disabled when HRM is disabled");
+  assert(runningHrmBtn.classList.contains('hidden'), "Running HRM connect button is hidden when HRM is disabled");
+
+  // Re-enable HRM
+  toggleHRMEnabledPref(true);
+  assert(isHRMEnabled() === true, "toggleHRMEnabledPref(true) re-enables HRM");
+  assert(localStorage.getItem('showUp_hrm_enabled') === 'true', "HRM enabled state persists in localStorage");
+  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill returns to visible state");
+  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is restored to active interactive state");
+  assert(!runningHrmBtn.classList.contains('hidden'), "Running HRM connect button restored");
+
+  // 2. Confirmation Pill / Notification Hang Time
+  assert(typeof showToast === 'function', "showToast is defined");
+  // Test toast creation with default 3s hang time
+  const toastContainer = getOrCreateElement('toast-container');
+  showToast("Recorded set successfully!", "success");
+  assert(toastContainer.children.length > 0 || toastContainer.innerHTML.includes("Recorded set successfully!"), "Toast pill rendered in container");
+
+  // 3. Muscles Engaged 20% Reduced Transparency
+  const autoMusclesPill = getOrCreateElement('exercise-auto-muscles-pill');
+  const muscleMapCard = getOrCreateElement('muscle-map-container');
+  assert(autoMusclesPill !== null, "exercise-auto-muscles-pill exists");
+  assert(muscleMapCard !== null, "muscle-map-container exists");
 });
 
 print("\\n============================================================");

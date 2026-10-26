@@ -51,6 +51,79 @@
 
 
 
+    function isHRMEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_hrm_enabled');
+        if (val === null) return true; // Enabled by default
+        return val === 'true';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function applyHRMEnabledUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isHRMEnabled();
+      const prefCheckbox = document.getElementById('pref-hrm-enabled');
+      if (prefCheckbox) prefCheckbox.checked = isEnabled;
+
+      const hrPill = document.getElementById('hr-minimal-pill');
+      const hrCard = document.getElementById('hr-card');
+      const hrCollapsedRow = document.getElementById('pref-hr-collapsed-row');
+      const runningHrmBtn = document.getElementById('running-hrm-connect-btn');
+
+      if (hrPill) {
+        if (isEnabled) {
+          hrPill.classList.remove('hidden');
+        } else {
+          hrPill.classList.add('hidden');
+        }
+      }
+
+      if (hrCard) {
+        if (!isEnabled) {
+          hrCard.classList.add('hidden');
+        } else {
+          if (typeof isHRMConnected === 'function' && isHRMConnected()) {
+            hrCard.classList.remove('hidden');
+          }
+        }
+      }
+
+      if (hrCollapsedRow) {
+        if (isEnabled) {
+          hrCollapsedRow.classList.remove('opacity-40', 'pointer-events-none');
+        } else {
+          hrCollapsedRow.classList.add('opacity-40', 'pointer-events-none');
+        }
+      }
+
+      if (runningHrmBtn) {
+        if (isEnabled) {
+          runningHrmBtn.classList.remove('hidden');
+        } else {
+          runningHrmBtn.classList.add('hidden');
+        }
+      }
+
+      if (!isEnabled) {
+        if (typeof disconnectHRM === 'function') {
+          try { disconnectHRM(); } catch (e) {}
+        }
+      }
+    }
+
+    function toggleHRMEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_hrm_enabled', String(checked));
+      } catch (e) {}
+      applyHRMEnabledUI(checked);
+      if (checked) {
+        if (typeof showToast === 'function') showToast("Heart Rate Monitor enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Heart Rate Monitor disabled", "info");
+      }
+    }
+
     function toggleHRCollapsePref(isCollapsed) {
       localStorage.setItem('showUp_hr_collapsed', JSON.stringify(isCollapsed));
       toggleHRCardVisibility(isCollapsed);
@@ -384,7 +457,7 @@
 
 
 
-    function showToast(message, type = 'info') {
+    function showToast(message, type = 'info', duration = 3000) {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
@@ -412,10 +485,11 @@
       `;
 
       container.appendChild(toast);
+      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 3000;
       setTimeout(() => {
         toast.classList.add('opacity-0', '-translate-y-1');
         setTimeout(() => toast.remove(), 350);
-      }, 4000);
+      }, hangDuration);
     }
 
 
@@ -1052,5 +1126,8 @@
       window.toggleRestSoundAlert = toggleRestSoundAlert;
       window.toggleRestSoundAlertPref = toggleRestSoundAlertPref;
       window.updateRestSoundAlertUI = updateRestSoundAlertUI;
+      window.isHRMEnabled = isHRMEnabled;
+      window.applyHRMEnabledUI = applyHRMEnabledUI;
+      window.toggleHRMEnabledPref = toggleHRMEnabledPref;
     }
 

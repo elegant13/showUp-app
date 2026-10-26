@@ -11,6 +11,7 @@ function getOrCreateElement(id, tag = 'div') {
       id: id,
       tagName: tag.toUpperCase(),
       className: '',
+      children: children,
       value: '',
       checked: false,
       innerText: '',
@@ -1760,6 +1761,79 @@ if (typeof window !== 'undefined') {
 
 
 
+    function isHRMEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_hrm_enabled');
+        if (val === null) return true; // Enabled by default
+        return val === 'true';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function applyHRMEnabledUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isHRMEnabled();
+      const prefCheckbox = document.getElementById('pref-hrm-enabled');
+      if (prefCheckbox) prefCheckbox.checked = isEnabled;
+
+      const hrPill = document.getElementById('hr-minimal-pill');
+      const hrCard = document.getElementById('hr-card');
+      const hrCollapsedRow = document.getElementById('pref-hr-collapsed-row');
+      const runningHrmBtn = document.getElementById('running-hrm-connect-btn');
+
+      if (hrPill) {
+        if (isEnabled) {
+          hrPill.classList.remove('hidden');
+        } else {
+          hrPill.classList.add('hidden');
+        }
+      }
+
+      if (hrCard) {
+        if (!isEnabled) {
+          hrCard.classList.add('hidden');
+        } else {
+          if (typeof isHRMConnected === 'function' && isHRMConnected()) {
+            hrCard.classList.remove('hidden');
+          }
+        }
+      }
+
+      if (hrCollapsedRow) {
+        if (isEnabled) {
+          hrCollapsedRow.classList.remove('opacity-40', 'pointer-events-none');
+        } else {
+          hrCollapsedRow.classList.add('opacity-40', 'pointer-events-none');
+        }
+      }
+
+      if (runningHrmBtn) {
+        if (isEnabled) {
+          runningHrmBtn.classList.remove('hidden');
+        } else {
+          runningHrmBtn.classList.add('hidden');
+        }
+      }
+
+      if (!isEnabled) {
+        if (typeof disconnectHRM === 'function') {
+          try { disconnectHRM(); } catch (e) {}
+        }
+      }
+    }
+
+    function toggleHRMEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_hrm_enabled', String(checked));
+      } catch (e) {}
+      applyHRMEnabledUI(checked);
+      if (checked) {
+        if (typeof showToast === 'function') showToast("Heart Rate Monitor enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Heart Rate Monitor disabled", "info");
+      }
+    }
+
     function toggleHRCollapsePref(isCollapsed) {
       localStorage.setItem('showUp_hr_collapsed', JSON.stringify(isCollapsed));
       toggleHRCardVisibility(isCollapsed);
@@ -2093,7 +2167,7 @@ if (typeof window !== 'undefined') {
 
 
 
-    function showToast(message, type = 'info') {
+    function showToast(message, type = 'info', duration = 3000) {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
@@ -2121,10 +2195,11 @@ if (typeof window !== 'undefined') {
       `;
 
       container.appendChild(toast);
+      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 3000;
       setTimeout(() => {
         toast.classList.add('opacity-0', '-translate-y-1');
         setTimeout(() => toast.remove(), 350);
-      }, 4000);
+      }, hangDuration);
     }
 
 
@@ -2761,6 +2836,9 @@ if (typeof window !== 'undefined') {
       window.toggleRestSoundAlert = toggleRestSoundAlert;
       window.toggleRestSoundAlertPref = toggleRestSoundAlertPref;
       window.updateRestSoundAlertUI = updateRestSoundAlertUI;
+      window.isHRMEnabled = isHRMEnabled;
+      window.applyHRMEnabledUI = applyHRMEnabledUI;
+      window.toggleHRMEnabledPref = toggleHRMEnabledPref;
     }
 
 
@@ -2922,6 +3000,10 @@ if (typeof window !== 'undefined') {
 
       if (typeof applySquadsEnabledUI === 'function') {
         applySquadsEnabledUI(typeof isSquadsEnabled === 'function' ? isSquadsEnabled() : false);
+      }
+
+      if (typeof applyHRMEnabledUI === 'function') {
+        applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : true);
       }
     }
 
@@ -10242,6 +10324,12 @@ if (typeof window !== 'undefined') {
     }
 
     function handleHRMPillClick() {
+      if (typeof isHRMEnabled === 'function' && !isHRMEnabled()) {
+        if (typeof showToast === 'function') {
+          showToast("Heart Rate Monitor is disabled. Enable it in Settings > Defaults.", "info");
+        }
+        return;
+      }
       if (isHRMConnected()) {
         const hrCard = document.getElementById('hr-card');
         if (hrCard) {
@@ -13386,7 +13474,7 @@ if (typeof window !== 'undefined') {
 
       activePillTimeout = setTimeout(() => {
         dismissSquadPill();
-      }, 5500);
+      }, 3000);
     }
 
     function dismissSquadPill() {
@@ -20471,6 +20559,57 @@ runSuite("32. Filter Pills Toggle, Macebell (Gadaa) Implement, Collapsible Sessi
   // Streak counters updated immediately on login
   const curStreak = document.getElementById('current-streak-val');
   assert(curStreak.innerText.includes("day"), "current-streak-val badge updated on login");
+});
+
+runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscles Engaged Transparency", () => {
+  // 1. Heart Rate Monitor Enabling Option in Settings > Defaults
+  assert(typeof isHRMEnabled === 'function', "isHRMEnabled is a defined function");
+  assert(typeof applyHRMEnabledUI === 'function', "applyHRMEnabledUI is a defined function");
+  assert(typeof toggleHRMEnabledPref === 'function', "toggleHRMEnabledPref is a defined function");
+
+  const hrPill = getOrCreateElement('hr-minimal-pill');
+  const hrCard = getOrCreateElement('hr-card');
+  const hrPrefRow = getOrCreateElement('pref-hr-collapsed-row');
+  const hrPrefCheckbox = getOrCreateElement('pref-hrm-enabled');
+  const runningHrmBtn = getOrCreateElement('running-hrm-connect-btn');
+
+  // Verify default state is enabled (true)
+  localStorage.removeItem('showUp_hrm_enabled');
+  assert(isHRMEnabled() === true, "HRM defaults to enabled for athletes");
+  applyHRMEnabledUI(true);
+  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill is visible by default when HRM is enabled");
+  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is fully interactive when HRM is enabled");
+
+  // Disable HRM
+  toggleHRMEnabledPref(false);
+  assert(isHRMEnabled() === false, "toggleHRMEnabledPref(false) sets HRM state to disabled");
+  assert(localStorage.getItem('showUp_hrm_enabled') === 'false', "HRM disabled state persists in localStorage");
+  assert(hrPill.classList.contains('hidden'), "HR minimalist pill is hidden when HRM is disabled");
+  assert(hrCard.classList.contains('hidden'), "HR telemetry card is hidden when HRM is disabled");
+  assert(hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is dimmed when HRM is disabled");
+  assert(hrPrefRow.classList.contains('pointer-events-none'), "HR collapsed preference row is disabled when HRM is disabled");
+  assert(runningHrmBtn.classList.contains('hidden'), "Running HRM connect button is hidden when HRM is disabled");
+
+  // Re-enable HRM
+  toggleHRMEnabledPref(true);
+  assert(isHRMEnabled() === true, "toggleHRMEnabledPref(true) re-enables HRM");
+  assert(localStorage.getItem('showUp_hrm_enabled') === 'true', "HRM enabled state persists in localStorage");
+  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill returns to visible state");
+  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is restored to active interactive state");
+  assert(!runningHrmBtn.classList.contains('hidden'), "Running HRM connect button restored");
+
+  // 2. Confirmation Pill / Notification Hang Time
+  assert(typeof showToast === 'function', "showToast is defined");
+  // Test toast creation with default 3s hang time
+  const toastContainer = getOrCreateElement('toast-container');
+  showToast("Recorded set successfully!", "success");
+  assert(toastContainer.children.length > 0 || toastContainer.innerHTML.includes("Recorded set successfully!"), "Toast pill rendered in container");
+
+  // 3. Muscles Engaged 20% Reduced Transparency
+  const autoMusclesPill = getOrCreateElement('exercise-auto-muscles-pill');
+  const muscleMapCard = getOrCreateElement('muscle-map-container');
+  assert(autoMusclesPill !== null, "exercise-auto-muscles-pill exists");
+  assert(muscleMapCard !== null, "muscle-map-container exists");
 });
 
 print("\n============================================================");

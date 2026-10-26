@@ -2736,7 +2736,7 @@
 
       activePillTimeout = setTimeout(() => {
         dismissSquadPill();
-      }, 5500);
+      }, 3000);
     }
 
     function dismissSquadPill() {

@@ -578,6 +578,12 @@
     }
 
     function handleHRMPillClick() {
+      if (typeof isHRMEnabled === 'function' && !isHRMEnabled()) {
+        if (typeof showToast === 'function') {
+          showToast("Heart Rate Monitor is disabled. Enable it in Settings > Defaults.", "info");
+        }
+        return;
+      }
       if (isHRMConnected()) {
         const hrCard = document.getElementById('hr-card');
         if (hrCard) {
