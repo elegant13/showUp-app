@@ -1894,6 +1894,12 @@
       checkRestRecoveryThreshold();
       updateRestTimerUI();
       updateSetControlsUI();
+
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.scheduleRestNotification) {
+        const remaining = Math.max(1, currentSessionRestTarget - initialSeconds);
+        const exerciseName = (document.getElementById('exercise-name-input')?.value || '').trim();
+        NativeBridge.scheduleRestNotification(remaining, exerciseName);
+      }
     }
 
     function stopRestTimer() {
@@ -1907,6 +1913,10 @@
       saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
+
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.cancelRestNotification) {
+        NativeBridge.cancelRestNotification();
+      }
     }
 
     function checkRestRecoveryThreshold() {
@@ -1962,6 +1972,11 @@
         // If the new target exceeds current rest seconds, re-arm the alert
         if (newTarget > restTimerSeconds) {
           hasTriggeredRestRecoveryAlert = false;
+          if (typeof NativeBridge !== 'undefined' && NativeBridge.scheduleRestNotification) {
+            const remaining = newTarget - restTimerSeconds;
+            const exerciseName = (document.getElementById('exercise-name-input')?.value || '').trim();
+            NativeBridge.scheduleRestNotification(remaining, exerciseName);
+          }
         }
         saveRestTimerState();
         checkRestRecoveryThreshold();

@@ -1,0 +1,26 @@
+{
+  "appId": "com.showup.fitness",
+  "appName": "ShowUp",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#10b981"
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": true,
+      "channel": "production",
+      "resetWhenUpdate": false
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#020617",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#020617"
+    }
+  }
+}

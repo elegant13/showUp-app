@@ -71,6 +71,9 @@
     }
 
     function triggerHaptic(type = 'light') {
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.triggerNativeHaptic) {
+        NativeBridge.triggerNativeHaptic(type);
+      }
       if (!('vibrate' in navigator)) return;
       switch (type) {
         case 'light': navigator.vibrate(12); break;

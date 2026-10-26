@@ -1764,6 +1764,9 @@ if (typeof window !== 'undefined') {
     }
 
     function triggerHaptic(type = 'light') {
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.triggerNativeHaptic) {
+        NativeBridge.triggerNativeHaptic(type);
+      }
       if (!('vibrate' in navigator)) return;
       switch (type) {
         case 'light': navigator.vibrate(12); break;
@@ -6533,6 +6536,12 @@ if (typeof window !== 'undefined') {
       checkRestRecoveryThreshold();
       updateRestTimerUI();
       updateSetControlsUI();
+
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.scheduleRestNotification) {
+        const remaining = Math.max(1, currentSessionRestTarget - initialSeconds);
+        const exerciseName = (document.getElementById('exercise-name-input')?.value || '').trim();
+        NativeBridge.scheduleRestNotification(remaining, exerciseName);
+      }
     }
 
     function stopRestTimer() {
@@ -6546,6 +6555,10 @@ if (typeof window !== 'undefined') {
       saveRestTimerState();
       updateRestTimerUI();
       updateSetControlsUI();
+
+      if (typeof NativeBridge !== 'undefined' && NativeBridge.cancelRestNotification) {
+        NativeBridge.cancelRestNotification();
+      }
     }
 
     function checkRestRecoveryThreshold() {
@@ -6601,6 +6614,11 @@ if (typeof window !== 'undefined') {
         // If the new target exceeds current rest seconds, re-arm the alert
         if (newTarget > restTimerSeconds) {
           hasTriggeredRestRecoveryAlert = false;
+          if (typeof NativeBridge !== 'undefined' && NativeBridge.scheduleRestNotification) {
+            const remaining = newTarget - restTimerSeconds;
+            const exerciseName = (document.getElementById('exercise-name-input')?.value || '').trim();
+            NativeBridge.scheduleRestNotification(remaining, exerciseName);
+          }
         }
         saveRestTimerState();
         checkRestRecoveryThreshold();

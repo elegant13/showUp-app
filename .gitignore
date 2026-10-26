@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+www/
+dist/
+
+# macOS
+.DS_Store
+
+# IDE & Logs
+*.log
+.gemini/
