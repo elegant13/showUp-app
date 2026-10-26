@@ -2219,6 +2219,7 @@
         rpe,
         weight,
         reps,
+        notes: "",
         runningDistance,
         runningTime,
         runningAvgHR,
@@ -2312,6 +2313,7 @@
     }
 
     function renderLoggedSets() {
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
       const container = document.getElementById('logged-sets-list');
       const badge = document.getElementById('set-count-badge');
       if (badge) badge.innerText = `${currentSessionSets.length} Sets`;
@@ -2351,6 +2353,27 @@
                 <span class="text-slate-400 font-semibold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">RPE ${s.rpe}</span>
                 ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
                 ${s.restPeriod && s.restPeriod > 0 ? `<span class="bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-400"></i>Rest: ${formatDurationSecs(s.restPeriod)}</span>` : ''}
+              </div>
+
+              <!-- Set Note Section -->
+              <div id="set-note-box-${s.id}" class="mt-2 text-xs">
+                ${s.notes && s.notes.trim() ? `
+                  <div class="inline-flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg max-w-full">
+                    <i class="fa-regular fa-note-sticky text-emerald-400 text-xs shrink-0"></i>
+                    <span class="truncate text-[11px] font-medium text-slate-200">${safe(s.notes)}</span>
+                    <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-slate-500 hover:text-emerald-400 p-0.5 ml-1 transition" title="Edit Note">
+                      <i class="fa-solid fa-pen text-[10px]"></i>
+                    </button>
+                    <button type="button" onclick="triggerHaptic('light'); deleteSetNote(${s.id})" class="text-slate-500 hover:text-rose-400 p-0.5 transition" title="Delete Note">
+                      <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                  </div>
+                ` : `
+                  <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-[11px] font-medium text-slate-500 hover:text-emerald-400 transition inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-slate-900/60 border border-transparent hover:border-slate-800">
+                    <i class="fa-regular fa-note-sticky text-[10px]"></i>
+                    <span>+ Note</span>
+                  </button>
+                `}
               </div>
             </div>
 
@@ -2411,6 +2434,75 @@
       if (googleAccessToken) {
         syncToGoogleDrive();
       }
+    }
+
+    function openInlineSetNoteInput(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const box = document.getElementById(`set-note-box-${setId}`);
+      if (!box) return;
+
+      const set = currentSessionSets.find(s => s.id === setId);
+      const existingNote = (set && set.notes) ? set.notes : '';
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
+
+      box.innerHTML = `
+        <div class="flex items-center gap-1.5 mt-1 max-w-md">
+          <input type="text" id="inline-set-note-input-${setId}" value="${safe(existingNote)}" placeholder="Add quick note (e.g. smooth lockouts, felt light)..." class="flex-1 bg-slate-900 border border-emerald-500/50 rounded-lg px-2.5 py-1 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-400 font-sans" onkeydown="if(event.key==='Enter') saveInlineSetNote(${setId}); else if(event.key==='Escape') cancelInlineSetNote(${setId});">
+          <button type="button" onclick="triggerHaptic('light'); saveInlineSetNote(${setId})" class="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-lg transition active:scale-95 shadow-sm">Save</button>
+          <button type="button" onclick="triggerHaptic('light'); cancelInlineSetNote(${setId})" class="p-1 text-slate-400 hover:text-slate-200 text-xs rounded-lg transition" title="Cancel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      `;
+
+      const input = document.getElementById(`inline-set-note-input-${setId}`);
+      if (input) {
+        input.focus();
+        if (typeof input.select === 'function') input.select();
+      }
+    }
+
+    function saveInlineSetNote(setId) {
+      const input = document.getElementById(`inline-set-note-input-${setId}`);
+      const setIdx = currentSessionSets.findIndex(s => s.id === setId);
+      if (setIdx === -1) return;
+
+      const noteText = input ? input.value.trim() : '';
+      currentSessionSets[setIdx].notes = noteText;
+
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
+
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken && typeof syncToGoogleDrive === 'function') {
+        syncToGoogleDrive();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      renderLoggedSets();
+    }
+
+    function cancelInlineSetNote(setId) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      renderLoggedSets();
+    }
+
+    function deleteSetNote(setId) {
+      const setIdx = currentSessionSets.findIndex(s => s.id === setId);
+      if (setIdx === -1) return;
+
+      currentSessionSets[setIdx].notes = '';
+
+      try {
+        localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
+      } catch (e) {}
+
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken && typeof syncToGoogleDrive === 'function') {
+        syncToGoogleDrive();
+      }
+
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      renderLoggedSets();
     }
 
     function repeatSet(setId) {
@@ -2506,6 +2598,7 @@
       const runMaxHREl = document.getElementById('edit-active-set-running-max-hr');
       const rpeEl = document.getElementById('edit-active-set-rpe');
       const restEl = document.getElementById('edit-active-set-rest');
+      const notesEl = document.getElementById('edit-active-set-notes');
 
       if (idEl) idEl.value = set.id;
       if (titleEl) titleEl.innerHTML = `<span>Edit Set #${setIndex}</span>`;
@@ -2526,6 +2619,7 @@
       if (runMaxHREl) runMaxHREl.value = set.runningMaxHR !== null && set.runningMaxHR !== undefined ? set.runningMaxHR : '';
       if (rpeEl) rpeEl.value = set.rpe || 8;
       if (restEl) restEl.value = (typeof set.restPeriod === 'number') ? set.restPeriod : 0;
+      if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
       if (modal) modal.classList.remove('hidden');
@@ -2622,6 +2716,7 @@
       const muscle = document.getElementById('edit-active-set-muscle')?.value || currentSessionSets[idx].muscle;
       const rpe = parseFloat(document.getElementById('edit-active-set-rpe')?.value) || 8;
       const restPeriod = Math.max(0, parseInt(document.getElementById('edit-active-set-rest')?.value) || 0);
+      const notes = document.getElementById('edit-active-set-notes')?.value.trim() || "";
 
       let weight = 0, reps = 1;
       let ergDistance = 0, ergTime = "";
@@ -2677,7 +2772,8 @@
         runningAvgHR,
         runningMaxHR,
         rpe,
-        restPeriod
+        restPeriod,
+        notes
       };
 
       localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
@@ -3155,6 +3251,7 @@
     }
 
     function renderSummarySetsList() {
+      const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
       const container = document.getElementById('summary-sets-chronology');
       if (!container) return;
       const sets = lastEvaluatedSummary && lastEvaluatedSummary.sets ? lastEvaluatedSummary.sets : currentSessionSets;
@@ -3185,6 +3282,12 @@
                   <span>•</span>
                   <span class="text-slate-500">RPE ${s.rpe}</span>
                 </div>
+                ${s.notes && s.notes.trim() ? `
+                  <div class="text-[11px] text-slate-300 mt-1 flex items-center gap-1.5">
+                    <i class="fa-regular fa-note-sticky text-emerald-400 text-[10px]"></i>
+                    <span class="italic text-slate-300">${safe(s.notes)}</span>
+                  </div>
+                ` : ''}
               </div>
             </div>
             ${s.restPeriod ? `
@@ -3286,6 +3389,13 @@
       window.skipRestTimer = skipRestTimer;
       window.getDefaultRestTimeSeconds = getDefaultRestTimeSeconds;
       window.saveDefaultRestTimePref = saveDefaultRestTimePref;
+      window.openInlineSetNoteInput = openInlineSetNoteInput;
+      window.saveInlineSetNote = saveInlineSetNote;
+      window.cancelInlineSetNote = cancelInlineSetNote;
+      window.deleteSetNote = deleteSetNote;
+      window.openEditActiveSetModal = openEditActiveSetModal;
+      window.closeEditActiveSetModal = closeEditActiveSetModal;
+      window.saveActiveSetEdits = saveActiveSetEdits;
     }
 
     if (typeof document !== 'undefined') {

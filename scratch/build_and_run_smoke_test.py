@@ -2817,6 +2817,88 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   localStorage.removeItem('showUp_rest_chime_sound');
 });
 
+runSuite("Suite 28: Post-Log Set Notes and Modal Note Support", () => {
+  // Clear any existing sets
+  currentSessionSets = [];
+  localStorage.removeItem('showUp_active_workout_sets');
+
+  // 1. Pre-log setup: verify logging a set keeps inputs fast and includes notes: ""
+  document.getElementById('exercise-name-input').value = "Incline Dumbbell Press";
+  document.getElementById('implement-select').value = "Dumbbell";
+  document.getElementById('muscle-group-select').value = "Chest";
+  document.getElementById('input-weight').value = "80";
+  document.getElementById('input-reps').value = "10";
+  document.getElementById('rpe-select').value = "8.5";
+
+  logSet();
+
+  assert(currentSessionSets.length === 1, "Set is successfully logged");
+  const setId = currentSessionSets[0].id;
+  assert(currentSessionSets[0].notes === "", "Set starts with empty notes string");
+  assert(currentSessionSets[0].exerciseName === "Incline Dumbbell Press", "Exercise name correct");
+
+  // 2. Rendered card has the subtle + Note trigger
+  const listEl = document.getElementById('logged-sets-list');
+  assert(listEl.innerHTML.includes(`set-note-box-${setId}`), "Set note box rendered for the set");
+  assert(listEl.innerHTML.includes('+ Note'), "Renders subtle + Note button when note is empty");
+
+  // 3. Opening inline note input
+  openInlineSetNoteInput(setId);
+  const noteBox = document.getElementById(`set-note-box-${setId}`);
+  assert(noteBox.innerHTML.includes(`inline-set-note-input-${setId}`), "Inline note input rendered");
+
+  // 4. Saving inline note
+  const inlineInput = document.getElementById(`inline-set-note-input-${setId}`);
+  inlineInput.value = "Felt smooth, paused at the bottom";
+  saveInlineSetNote(setId);
+
+  assert(currentSessionSets[0].notes === "Felt smooth, paused at the bottom", "Set note updated in memory");
+  const savedLS = JSON.parse(localStorage.getItem('showUp_active_workout_sets'));
+  assert(savedLS[0].notes === "Felt smooth, paused at the bottom", "Set note persisted to localStorage");
+  assert(listEl.innerHTML.includes("Felt smooth, paused at the bottom"), "Set note text rendered on the card");
+  assert(listEl.innerHTML.includes("fa-note-sticky"), "Sticky note icon rendered with note");
+
+  // 5. Cancelling inline note does not overwrite existing note
+  openInlineSetNoteInput(setId);
+  const inlineInput2 = document.getElementById(`inline-set-note-input-${setId}`);
+  inlineInput2.value = "Changed my mind";
+  cancelInlineSetNote(setId);
+  assert(currentSessionSets[0].notes === "Felt smooth, paused at the bottom", "Cancelling leaves note unchanged");
+
+  // 6. Modal note editing
+  openEditActiveSetModal(setId);
+  const modalNotesEl = document.getElementById('edit-active-set-notes');
+  assert(modalNotesEl.value === "Felt smooth, paused at the bottom", "Edit modal loads existing note");
+
+  modalNotesEl.value = "Updated note: pushed to RPE 9 on last rep";
+  saveActiveSetEdits();
+
+  assert(currentSessionSets[0].notes === "Updated note: pushed to RPE 9 on last rep", "Modal update saves note to set object");
+  const updatedLS = JSON.parse(localStorage.getItem('showUp_active_workout_sets'));
+  assert(updatedLS[0].notes === "Updated note: pushed to RPE 9 on last rep", "Modal update persists note to localStorage");
+  assert(listEl.innerHTML.includes("Updated note: pushed to RPE 9 on last rep"), "Updated note rendered on logged sets list");
+
+  // 7. Summary sets breakdown displays note
+  lastEvaluatedSummary = {
+    date: "2026-10-25",
+    workoutName: "Push Day",
+    sets: [...currentSessionSets]
+  };
+  renderSummarySetsList();
+  const summaryChronology = document.getElementById('summary-sets-chronology');
+  assert(summaryChronology.innerHTML.includes("Updated note: pushed to RPE 9 on last rep"), "Summary sets list renders set note");
+
+  // 8. Delete note resets back to empty note with + Note trigger
+  deleteSetNote(setId);
+  assert(currentSessionSets[0].notes === "", "deleteSetNote resets notes to empty string");
+  assert(listEl.innerHTML.includes('+ Note'), "Card returns to subtle + Note trigger after deletion");
+
+  // Clean up
+  currentSessionSets = [];
+  localStorage.removeItem('showUp_active_workout_sets');
+  lastEvaluatedSummary = null;
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");
