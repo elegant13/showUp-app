@@ -198,6 +198,9 @@
       if (fLower === 'machine' || fLower === 'machines' || fLower === 'gym machine' || fLower === 'gym machines' || fLower === 'exercise machine') {
         return implLower === 'machine' || implLower.includes('machine') || implLower.includes('cable') || nameLower.includes('machine') || nameLower.includes('cable');
       }
+      if (fLower === 'macebell (gadaa)' || fLower === 'macebell' || fLower === 'gadaa' || fLower === 'mace' || fLower === 'gada') {
+        return implLower.includes('mace') || implLower.includes('gada') || nameLower.includes('mace') || nameLower.includes('gada');
+      }
       return false;
     }
 
@@ -371,6 +374,7 @@
         { id: 'filter-pill-barbell', name: 'Barbell' },
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
+        { id: 'filter-pill-macebell', name: 'Macebell (Gadaa)' },
         { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
         { id: 'filter-pill-rings', name: 'Gymnastics Rings' },
         { id: 'filter-pill-machine', name: 'Machine' }
@@ -409,6 +413,53 @@
           indicator.classList.remove('hidden');
         } else {
           indicator.classList.add('hidden');
+        }
+      }
+      applyExerciseFilterPillsUI();
+    }
+
+    function isExerciseFilterPillsVisible() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      return container ? !container.classList.contains('hidden') : false;
+    }
+
+    function toggleExerciseFilterPills() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      const btn = document.getElementById('btn-toggle-exercise-filters');
+      const icon = document.getElementById('exercise-filter-toggle-icon');
+      if (!container) return;
+      const isVisible = !container.classList.contains('hidden');
+      if (isVisible) {
+        container.classList.add('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (icon) {
+          icon.classList.remove('text-emerald-400');
+          icon.classList.add('text-slate-400');
+        }
+      } else {
+        container.classList.remove('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (icon) {
+          icon.classList.remove('text-slate-400');
+          icon.classList.add('text-emerald-400');
+        }
+      }
+    }
+
+    function applyExerciseFilterPillsUI() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      const btn = document.getElementById('btn-toggle-exercise-filters');
+      const icon = document.getElementById('exercise-filter-toggle-icon');
+      if (!container) return;
+      const isVisible = !container.classList.contains('hidden');
+      if (btn) btn.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
+      if (icon) {
+        if (isVisible || activeExerciseCatalogFilter) {
+          icon.classList.remove('text-slate-400');
+          icon.classList.add('text-emerald-400');
+        } else {
+          icon.classList.remove('text-emerald-400');
+          icon.classList.add('text-slate-400');
         }
       }
     }
@@ -3325,6 +3376,51 @@
       }
     }
 
+    function isCurrentSessionLogsCollapsed() {
+      try {
+        return localStorage.getItem('showup_session_logs_collapsed') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setCurrentSessionLogsCollapsed(collapsed) {
+      try {
+        localStorage.setItem('showup_session_logs_collapsed', collapsed ? 'true' : 'false');
+      } catch (e) {}
+      applyCurrentSessionLogsCollapseUI(collapsed);
+    }
+
+    function toggleCurrentSessionLogsCollapse(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      setCurrentSessionLogsCollapsed(!isCurrentSessionLogsCollapsed());
+    }
+
+    function applyCurrentSessionLogsCollapseUI(collapsed) {
+      const body = document.getElementById('current-session-logs-body');
+      const chevron = document.getElementById('session-logs-chevron');
+      if (body) {
+        if (collapsed) {
+          body.classList.add('hidden');
+        } else {
+          body.classList.remove('hidden');
+        }
+      }
+      if (chevron) {
+        if (collapsed) {
+          chevron.classList.remove('fa-chevron-up');
+          chevron.classList.add('fa-chevron-down');
+        } else {
+          chevron.classList.remove('fa-chevron-down');
+          chevron.classList.add('fa-chevron-up');
+        }
+      }
+    }
+
     function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
       const muscleSvgMap = {
         'Chest': ['body-chest'],
@@ -3576,6 +3672,13 @@
       window.setMuscleMapCollapsed = setMuscleMapCollapsed;
       window.toggleMuscleMapCollapse = toggleMuscleMapCollapse;
       window.applyMuscleMapCollapseUI = applyMuscleMapCollapseUI;
+      window.isExerciseFilterPillsVisible = isExerciseFilterPillsVisible;
+      window.toggleExerciseFilterPills = toggleExerciseFilterPills;
+      window.applyExerciseFilterPillsUI = applyExerciseFilterPillsUI;
+      window.isCurrentSessionLogsCollapsed = isCurrentSessionLogsCollapsed;
+      window.setCurrentSessionLogsCollapsed = setCurrentSessionLogsCollapsed;
+      window.toggleCurrentSessionLogsCollapse = toggleCurrentSessionLogsCollapse;
+      window.applyCurrentSessionLogsCollapseUI = applyCurrentSessionLogsCollapseUI;
     }
 
     if (typeof document !== 'undefined') {
@@ -3584,12 +3687,16 @@
         updateWorkoutSessionHUD();
         applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
         applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+        applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
+        applyExerciseFilterPillsUI();
       } else {
         document.addEventListener('DOMContentLoaded', () => {
           initTouchScrollerInputs();
           updateWorkoutSessionHUD();
           applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
           applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+          applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
+          applyExerciseFilterPillsUI();
         });
       }
 

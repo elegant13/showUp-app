@@ -69,8 +69,16 @@
 
 
     function renderCalendar() {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+        const fresh = AppStorage.getAthleteWorkouts();
+        if (Array.isArray(fresh)) {
+          completedWorkoutsHistory = fresh;
+        }
+      }
+
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
+      if (!grid || !monthYearLabel) return;
       grid.innerHTML = '';
 
       const year = calendarDate.getFullYear();
@@ -78,6 +86,15 @@
 
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       monthYearLabel.innerText = `${monthNames[month]} ${year}`;
+
+      // Update streak badges in calendar view header
+      if (typeof calcShowUpStreak === 'function') {
+        const streak = calcShowUpStreak();
+        const curStreakEl = document.getElementById('current-streak-val');
+        if (curStreakEl) curStreakEl.innerText = `${streak} day${streak === 1 ? '' : 's'}`;
+        const bestStreakEl = document.getElementById('best-streak-val');
+        if (bestStreakEl) bestStreakEl.innerText = `${streak} days`;
+      }
 
       // Week starts from Monday (M) and ends on Sunday (S)
       const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
@@ -112,7 +129,15 @@
     }
 
     function renderMonthlyHistory() {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+        const fresh = AppStorage.getAthleteWorkouts();
+        if (Array.isArray(fresh)) {
+          completedWorkoutsHistory = fresh;
+        }
+      }
+
       const container = document.getElementById('monthly-history-list');
+      if (!container) return;
       const year = calendarDate.getFullYear();
       const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
       const prefix = `${year}-${monthStr}`;
@@ -122,7 +147,8 @@
         return d && d.startsWith(prefix);
       });
 
-      document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
+      const countBadge = document.getElementById('monthly-count-badge');
+      if (countBadge) countBadge.innerText = `${monthlyEntries.length} Workouts`;
 
       if (monthlyEntries.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;

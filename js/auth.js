@@ -295,12 +295,8 @@
                   const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
                   const profileObj = { firstName, email: userEmail, picture };
 
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-                  localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
-
-                  updateProfileUI(firstName, userEmail, picture);
-                  document.getElementById('btn-google-login').classList.add('hidden');
-                  document.getElementById('google-user-profile').classList.remove('hidden');
+                  applyUserProfile(profileObj);
+                  closeAuthLoginModal();
                   showToast(`Welcome back, ${firstName}!`, "success");
 
                   requestTokenSilently();
@@ -1594,6 +1590,9 @@
       }
       renderCalendar();
       renderMonthlyHistory();
+      if (typeof switchProgressSubTab === 'function') {
+        try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+      }
       updateGlobalVisitorTelemetryUI();
       closeAuthLoginModal();
 
@@ -1602,6 +1601,9 @@
         setTimeout(async () => {
           try {
             await restoreFromGoogleDrive(true);
+            if (typeof switchProgressSubTab === 'function') {
+              try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+            }
           } catch (e) {
             console.debug("Silent auto-restore on login profile notice:", e);
           }
@@ -1617,6 +1619,9 @@
             renderHeatMap();
             renderCalendar();
             renderMonthlyHistory();
+            if (typeof switchProgressSubTab === 'function') {
+              try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+            }
           } catch (e) {
             console.debug("Silent auto-sync/restore on login Firestore notice:", e);
           }
@@ -1661,13 +1666,29 @@
         showToast("Signed in successfully!", "success");
       }
 
-      // 3. Immediately restore cloud backup from Google Drive by default on login!
-      // This ensures squads and activity from Google backup are instantly reflected upon login.
+      // 3. Immediately restore cloud backup from Google Drive and Firestore by default on login!
+      // This ensures squads and activity from Google backup are instantly reflected upon login without tab hopping.
       setTimeout(async () => {
         try {
           await restoreFromGoogleDrive(false);
         } catch (driveErr) {
           console.warn("Auto-restore on login notice:", driveErr);
+        }
+        try {
+          if (typeof syncOrRestoreFirestoreBackup === 'function') {
+            await syncOrRestoreFirestoreBackup(true);
+          }
+        } catch (fErr) {
+          console.warn("Auto-sync/restore Firestore on login notice:", fErr);
+        }
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
         }
       }, 300);
     }
@@ -1696,7 +1717,7 @@
               closeAuthLoginModal();
               showToast(`Welcome, ${firstName}!`, "success");
 
-              // Immediately pull and restore historic cloud backup from Google Drive
+              // Immediately pull and restore historic cloud backup from Google Drive & Firestore
               setTimeout(async () => {
                 try {
                   if (typeof restoreFromGoogleDrive === 'function') {
@@ -1704,6 +1725,22 @@
                   }
                 } catch (driveErr) {
                   console.warn("[NativeAuth] Auto-restore from Drive notice:", driveErr);
+                }
+                try {
+                  if (typeof syncOrRestoreFirestoreBackup === 'function') {
+                    await syncOrRestoreFirestoreBackup(true);
+                  }
+                } catch (fErr) {
+                  console.warn("[NativeAuth] Auto-sync/restore Firestore notice:", fErr);
+                }
+                if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+                  const fresh = AppStorage.getAthleteWorkouts();
+                  if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+                }
+                if (typeof renderCalendar === 'function') renderCalendar();
+                if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+                if (typeof switchProgressSubTab === 'function') {
+                  try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
                 }
               }, 300);
 

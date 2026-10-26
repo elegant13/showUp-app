@@ -728,12 +728,19 @@
           restoredSquadsCount = cleanSquads.length;
         }
 
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
         if (typeof renderHomeTab === 'function') {
           try { renderHomeTab(); } catch (e) { console.error("renderHomeTab error:", e); }
         }
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+        }
         initSquads();
         renderSquadsTab();
         updateSquadBeacon();
@@ -1143,12 +1150,19 @@
           localStorage.setItem('showUp_last_firestore_sync', data.lastSyncedAt);
         }
 
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
         if (typeof renderHomeTab === 'function') {
           try { renderHomeTab(); } catch (e) {}
         }
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+        }
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();

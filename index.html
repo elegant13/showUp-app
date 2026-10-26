@@ -436,7 +436,7 @@
               <option value="Hiking">Hiking</option>
               <option value="Biking">Biking</option>
               <option value="Kettlebell">Kettlebell</option>
-              <option value="Macebell / Gada">Macebell / Gada</option>
+              <option value="Macebell (Gadaa)">Macebell (Gadaa)</option>
               <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
               <option value="Gymnastics Rings">Gymnastics Rings</option>
               <option value="Exercise Ball">Exercise Ball</option>
@@ -2363,7 +2363,18 @@
         <!-- PRIMARY EXERCISE SELECTION -->
         <div class="space-y-2.5">
           <div class="flex items-center justify-between">
-            <label for="exercise-name-input" class="block text-xs font-black text-slate-300 uppercase tracking-wider">Exercise Name</label>
+            <div class="flex items-center gap-2">
+              <label for="exercise-name-input" class="block text-xs font-black text-slate-300 uppercase tracking-wider">Exercise Name</label>
+              <button type="button"
+                      id="btn-toggle-exercise-filters"
+                      onclick="triggerHaptic('light'); toggleExerciseFilterPills()"
+                      title="Filter exercises by implement"
+                      aria-label="Filter exercises by implement"
+                      aria-expanded="false"
+                      class="opacity-60 hover:opacity-100 focus:opacity-100 transition-opacity p-1 text-slate-400 hover:text-emerald-400 cursor-pointer">
+                <i id="exercise-filter-toggle-icon" class="fa-solid fa-filter text-xs"></i>
+              </button>
+            </div>
             <span id="active-exercise-filter-indicator" class="text-[10px] font-bold text-emerald-400 hidden flex items-center gap-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] animate-pulse"></span>
               <span id="active-exercise-filter-name">Kettlebell</span>
@@ -2371,8 +2382,8 @@
             </span>
           </div>
 
-          <!-- MINIMALISTIC IMPLEMENT FILTER PILLS -->
-          <div id="exercise-catalog-filter-container" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <!-- MINIMALISTIC IMPLEMENT FILTER PILLS (CASCADE TOGGLED VIA FILTER ICON) -->
+          <div id="exercise-catalog-filter-container" class="hidden flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 transition-all duration-200">
             <button type="button"
                     id="filter-pill-barbell"
                     onclick="triggerHaptic('light'); toggleExerciseCatalogFilter('Barbell')"
@@ -2396,6 +2407,14 @@
                     class="exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm">
               <i class="fa-solid fa-dumbbell text-[10px] opacity-70"></i>
               <span>Dumbbell</span>
+            </button>
+            <button type="button"
+                    id="filter-pill-macebell"
+                    onclick="triggerHaptic('light'); toggleExerciseCatalogFilter('Macebell (Gadaa)')"
+                    aria-pressed="false"
+                    class="exercise-filter-pill px-3 py-1.5 rounded-full text-xs font-bold text-slate-400 bg-slate-900/90 border border-slate-800 hover:text-slate-200 hover:border-slate-700 transition select-none flex items-center gap-1.5 cursor-pointer shadow-sm">
+              <i class="fa-solid fa-gavel text-[10px] opacity-70"></i>
+              <span>Macebell (Gadaa)</span>
             </button>
             <button type="button"
                     id="filter-pill-bodyweight"
@@ -2758,7 +2777,7 @@
                   <option value="Hiking">Hiking</option>
                   <option value="Biking">Biking</option>
                   <option value="Kettlebell">Kettlebell</option>
-                  <option value="Macebell / Gada">Macebell / Gada</option>
+                  <option value="Macebell (Gadaa)">Macebell (Gadaa)</option>
                   <option value="Jori Clubs / Karlakattai">Jori Clubs / Karlakattai</option>
                   <option value="Gymnastics Rings">Gymnastics Rings</option>
                   <option value="Exercise Ball">Exercise Ball</option>
@@ -2916,24 +2935,31 @@
 
       <!-- CURRENT WORKOUT FEED -->
       <section class="m3-card rounded-3xl p-4 sm:p-5 border shadow-xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div id="current-session-logs-header" class="flex items-center justify-between border-b border-slate-800 pb-3 cursor-pointer select-none" onclick="toggleCurrentSessionLogsCollapse(event)">
           <div class="flex items-center gap-2">
             <h3 class="text-xs sm:text-sm font-black text-slate-300 uppercase tracking-wider">Current Session Logs</h3>
             <span class="text-[10px] text-slate-500 font-semibold">(Newest first)</span>
           </div>
-          <span id="set-count-badge" class="text-xs font-black bg-slate-800 text-emerald-400 px-3 py-1 rounded-full border border-slate-700">0 Sets</span>
-        </div>
-
-        <div id="logged-sets-list" class="space-y-3 max-h-96 overflow-y-auto pr-1">
-          <div class="text-center py-8 text-slate-500 text-xs sm:text-sm italic font-medium">
-            No sets logged for this session yet. Pick an exercise above and hit "Log Set".
+          <div class="flex items-center gap-2">
+            <span id="set-count-badge" class="text-xs font-black bg-slate-800 text-emerald-400 px-3 py-1 rounded-full border border-slate-700">0 Sets</span>
+            <button type="button" id="btn-toggle-session-logs" onclick="toggleCurrentSessionLogsCollapse(event)" class="w-6 h-6 rounded-lg bg-slate-800/40 hover:bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors" aria-label="Toggle Current Session Logs">
+              <i id="session-logs-chevron" class="fa-solid fa-chevron-up text-xs transition-transform duration-200"></i>
+            </button>
           </div>
         </div>
 
-        <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full m3-btn-secondary font-black py-3 px-4 rounded-2xl shadow-lg border active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm sm:text-base mt-2">
-          <i class="fa-solid fa-flag-checkered text-emerald-400"></i>
-          <span>Finish Workout</span>
-        </button>
+        <div id="current-session-logs-body" class="space-y-4">
+          <div id="logged-sets-list" class="space-y-3 max-h-96 overflow-y-auto pr-1">
+            <div class="text-center py-8 text-slate-500 text-xs sm:text-sm italic font-medium">
+              No sets logged for this session yet. Pick an exercise above and hit "Log Set".
+            </div>
+          </div>
+
+          <button onclick="triggerHaptic('heavy'); evaluateAndFinishWorkout()" class="w-full m3-btn-secondary font-black py-3 px-4 rounded-2xl shadow-lg border active:scale-[0.99] transition flex items-center justify-center gap-2 text-sm sm:text-base mt-2">
+            <i class="fa-solid fa-flag-checkered text-emerald-400"></i>
+            <span>Finish Workout</span>
+          </button>
+        </div>
       </section>
 
       <!-- POST-WORKOUT SUMMARY CARD INCLUDING ESTIMATED CALORIES BURNED -->

@@ -121,6 +121,20 @@ def generate_and_run_smoke_test():
         print("[FAIL] Muscles Engaged section renaming or toggle buttons missing in HTML")
         return False
 
+    # 9. Check Exercise Filter Pills toggle, Macebell (Gadaa), and Collapsible Session Logs in HTML
+    if ('id="btn-toggle-exercise-filters"' in html and
+        'id="exercise-catalog-filter-container"' in html and
+        'id="filter-pill-macebell"' in html and
+        'id="current-session-logs-header"' in html and
+        'id="btn-toggle-session-logs"' in html and
+        'id="session-logs-chevron"' in html and
+        'id="current-session-logs-body"' in html and
+        'value="Macebell (Gadaa)"' in html):
+        print("[PASS] Filter toggle, Macebell (Gadaa), and collapsible Current Session Logs verified in HTML")
+    else:
+        print("[FAIL] Filter toggle, Macebell (Gadaa), or collapsible Current Session Logs missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -3102,6 +3116,109 @@ runSuite("31. Muscles Engaged Section Renaming, Passive Transparency, Collapsibl
   assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'false', "Expanded state is sticky in localStorage");
   assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when re-expanded");
   assert(mapHint.classList.contains('hidden'), "Primary target hint badge hidden when expanded");
+});
+
+runSuite("32. Filter Pills Toggle, Macebell (Gadaa) Implement, Collapsible Session Logs, and Instant Login Calendar Sync", () => {
+  // 1. Filter Pills Toggle & Cascading Behavior
+  assert(typeof toggleExerciseFilterPills === 'function', "toggleExerciseFilterPills is defined");
+  assert(typeof isExerciseFilterPillsVisible === 'function', "isExerciseFilterPillsVisible is defined");
+  assert(typeof applyExerciseFilterPillsUI === 'function', "applyExerciseFilterPillsUI is defined");
+
+  const filterContainer = document.getElementById('exercise-catalog-filter-container');
+  const filterBtn = document.getElementById('btn-toggle-exercise-filters');
+  const filterIcon = document.getElementById('exercise-filter-toggle-icon');
+
+  // Verify initial folded state
+  filterContainer.classList.add('hidden');
+  applyExerciseFilterPillsUI();
+  assert(isExerciseFilterPillsVisible() === false, "Filter pills are folded/hidden initially to reduce visual engagement fatigue");
+  assert(filterBtn.getAttribute('aria-expanded') === 'false', "Filter toggle button has aria-expanded false when folded");
+
+  // Tap filter toggle button to cascade open
+  toggleExerciseFilterPills();
+  assert(isExerciseFilterPillsVisible() === true, "toggleExerciseFilterPills cascades open filter pills on tap");
+  assert(!filterContainer.classList.contains('hidden'), "Filter container does not have hidden class when open");
+  assert(filterBtn.getAttribute('aria-expanded') === 'true', "Filter toggle button has aria-expanded true when open");
+  assert(filterIcon.classList.contains('text-emerald-400'), "Filter toggle icon reflects active accent when open");
+
+  // Tap again to fold back
+  toggleExerciseFilterPills();
+  assert(isExerciseFilterPillsVisible() === false, "toggleExerciseFilterPills folds back filter pills on second tap");
+  assert(filterContainer.classList.contains('hidden'), "Filter container hidden class restored when folded back");
+  assert(filterBtn.getAttribute('aria-expanded') === 'false', "Filter toggle button aria-expanded false when folded back");
+
+  // 2. Macebell (Gadaa) Implement Type & Inference
+  assert(inferImplementFromExerciseName("Gadaa 360") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for Gadaa 360");
+  assert(inferImplementFromExerciseName("Macebell 360") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for Macebell 360");
+  assert(inferImplementFromExerciseName("Traditional Mace Swings") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for exercise with Mace");
+  assert(inferImplementFromExerciseName("Heavy Gada Flow") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for exercise with Gada");
+
+  const gadaExercise = { name: "Gadaa 360", implement: "Macebell (Gadaa)" };
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Macebell (Gadaa)") === true, "Matches exact Macebell (Gadaa) filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Macebell") === true, "Matches Macebell filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Gadaa") === true, "Matches Gadaa filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Mace") === true, "Matches Mace filter");
+
+  // 3. Current Session Logs Collapsible & Sticky State
+  assert(typeof isCurrentSessionLogsCollapsed === 'function', "isCurrentSessionLogsCollapsed is defined");
+  assert(typeof setCurrentSessionLogsCollapsed === 'function', "setCurrentSessionLogsCollapsed is defined");
+  assert(typeof toggleCurrentSessionLogsCollapse === 'function', "toggleCurrentSessionLogsCollapse is defined");
+  assert(typeof applyCurrentSessionLogsCollapseUI === 'function', "applyCurrentSessionLogsCollapseUI is defined");
+
+  const sessionLogsBody = document.getElementById('current-session-logs-body');
+  const sessionLogsChevron = document.getElementById('session-logs-chevron');
+
+  // Verify initial expanded state
+  localStorage.removeItem('showup_session_logs_collapsed');
+  assert(isCurrentSessionLogsCollapsed() === false, "Current session logs defaults to expanded");
+  applyCurrentSessionLogsCollapseUI(false);
+  assert(!sessionLogsBody.classList.contains('hidden'), "Current session logs body visible when expanded");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-up'), "Chevron points up when expanded");
+
+  // Toggle to collapsed
+  toggleCurrentSessionLogsCollapse();
+  assert(isCurrentSessionLogsCollapsed() === true, "toggleCurrentSessionLogsCollapse sets collapsed state");
+  assert(localStorage.getItem('showup_session_logs_collapsed') === 'true', "Collapsed state is sticky in localStorage");
+  assert(sessionLogsBody.classList.contains('hidden'), "Current session logs body is hidden when collapsed");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-down'), "Chevron points down when collapsed");
+
+  // Toggle back to expanded
+  toggleCurrentSessionLogsCollapse();
+  assert(isCurrentSessionLogsCollapsed() === false, "toggleCurrentSessionLogsCollapse expands session logs again");
+  assert(localStorage.getItem('showup_session_logs_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!sessionLogsBody.classList.contains('hidden'), "Current session logs body visible after expansion");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-up'), "Chevron points up after expansion");
+
+  // 4. Instant Calendar View / Progress Update on Google Login
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const testHistoricalWorkouts = [
+    {
+      date: todayKey,
+      workoutName: "Macebell Conditioning",
+      sets: [{ exerciseName: "Gadaa 360", implement: "Macebell (Gadaa)", reps: 30, weight: 15 }]
+    }
+  ];
+
+  // Save historical workouts for user to simulate cloud restore
+  const testAthleteEmail = "athlete.gadha@showup.app";
+  localStorage.setItem('showUp_user_workouts_' + testAthleteEmail, JSON.stringify(testHistoricalWorkouts));
+  localStorage.setItem('showUp_synced_workouts', JSON.stringify(testHistoricalWorkouts));
+
+  // Perform login profile application
+  applyUserProfile({
+    firstName: "Gadha",
+    email: testAthleteEmail,
+    picture: "https://lh3.googleusercontent.com/a/gadha=s96-c"
+  });
+
+  // Verify completedWorkoutsHistory and Calendar immediately updated without navigation
+  assert(completedWorkoutsHistory.length > 0, "completedWorkoutsHistory populated immediately on login");
+  const calendarGrid = document.getElementById('calendar-grid');
+  assert(calendarGrid.innerHTML.includes(todayKey), "Calendar grid immediately updated with workout date for timeframe");
+
+  // Streak counters updated immediately on login
+  const curStreak = document.getElementById('current-streak-val');
+  assert(curStreak.innerText.includes("day"), "current-streak-val badge updated on login");
 });
 
 print("\\n============================================================");

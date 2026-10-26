@@ -138,7 +138,8 @@
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back","Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
-      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
+      { name: "Gada Swings (Mace 360)", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
+      { name: "Gadaa 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Quads"] },
       { name: "Glute Kickback (Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
@@ -160,6 +161,8 @@
       { name: "Leg Extension (Machine)", implement: "Machine", muscle: "Quads", secondary: [] },
       { name: "Leg Press (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Macebell 10-to-2", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
+      { name: "Macebell 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
@@ -335,8 +338,8 @@
         return 'Barbell';
       } else if (lower.includes('band')) {
         return 'Resistance Band';
-      } else if (lower.includes('mace') || lower.includes('gada')) {
-        return 'Macebell / Gada';
+      } else if (lower.includes('gadaa') || lower.includes('macebell') || lower.includes('mace') || lower.includes('gada')) {
+        return 'Macebell (Gadaa)';
       } else if (lower.includes('jori') || lower.includes('karlakattai')) {
         return 'Jori Clubs / Karlakattai';
       } else if (lower.includes('run') || lower.includes('sprint') || lower.includes('jog')) {

@@ -362,7 +362,8 @@ function runSuite(name, fn) {
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back","Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
-      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
+      { name: "Gada Swings (Mace 360)", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
+      { name: "Gadaa 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Quads"] },
       { name: "Glute Kickback (Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
       { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
@@ -384,6 +385,8 @@ function runSuite(name, fn) {
       { name: "Leg Extension (Machine)", implement: "Machine", muscle: "Quads", secondary: [] },
       { name: "Leg Press (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
       { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Macebell 10-to-2", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
+      { name: "Macebell 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
@@ -559,8 +562,8 @@ function runSuite(name, fn) {
         return 'Barbell';
       } else if (lower.includes('band')) {
         return 'Resistance Band';
-      } else if (lower.includes('mace') || lower.includes('gada')) {
-        return 'Macebell / Gada';
+      } else if (lower.includes('gadaa') || lower.includes('macebell') || lower.includes('mace') || lower.includes('gada')) {
+        return 'Macebell (Gadaa)';
       } else if (lower.includes('jori') || lower.includes('karlakattai')) {
         return 'Jori Clubs / Karlakattai';
       } else if (lower.includes('run') || lower.includes('sprint') || lower.includes('jog')) {
@@ -3288,12 +3291,8 @@ if (typeof window !== 'undefined') {
                   const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
                   const profileObj = { firstName, email: userEmail, picture };
 
-                  localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
-                  localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
-
-                  updateProfileUI(firstName, userEmail, picture);
-                  document.getElementById('btn-google-login').classList.add('hidden');
-                  document.getElementById('google-user-profile').classList.remove('hidden');
+                  applyUserProfile(profileObj);
+                  closeAuthLoginModal();
                   showToast(`Welcome back, ${firstName}!`, "success");
 
                   requestTokenSilently();
@@ -4587,6 +4586,9 @@ if (typeof window !== 'undefined') {
       }
       renderCalendar();
       renderMonthlyHistory();
+      if (typeof switchProgressSubTab === 'function') {
+        try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+      }
       updateGlobalVisitorTelemetryUI();
       closeAuthLoginModal();
 
@@ -4595,6 +4597,9 @@ if (typeof window !== 'undefined') {
         setTimeout(async () => {
           try {
             await restoreFromGoogleDrive(true);
+            if (typeof switchProgressSubTab === 'function') {
+              try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+            }
           } catch (e) {
             console.debug("Silent auto-restore on login profile notice:", e);
           }
@@ -4610,6 +4615,9 @@ if (typeof window !== 'undefined') {
             renderHeatMap();
             renderCalendar();
             renderMonthlyHistory();
+            if (typeof switchProgressSubTab === 'function') {
+              try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+            }
           } catch (e) {
             console.debug("Silent auto-sync/restore on login Firestore notice:", e);
           }
@@ -4654,13 +4662,29 @@ if (typeof window !== 'undefined') {
         showToast("Signed in successfully!", "success");
       }
 
-      // 3. Immediately restore cloud backup from Google Drive by default on login!
-      // This ensures squads and activity from Google backup are instantly reflected upon login.
+      // 3. Immediately restore cloud backup from Google Drive and Firestore by default on login!
+      // This ensures squads and activity from Google backup are instantly reflected upon login without tab hopping.
       setTimeout(async () => {
         try {
           await restoreFromGoogleDrive(false);
         } catch (driveErr) {
           console.warn("Auto-restore on login notice:", driveErr);
+        }
+        try {
+          if (typeof syncOrRestoreFirestoreBackup === 'function') {
+            await syncOrRestoreFirestoreBackup(true);
+          }
+        } catch (fErr) {
+          console.warn("Auto-sync/restore Firestore on login notice:", fErr);
+        }
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
+        if (typeof renderCalendar === 'function') renderCalendar();
+        if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
         }
       }, 300);
     }
@@ -4689,7 +4713,7 @@ if (typeof window !== 'undefined') {
               closeAuthLoginModal();
               showToast(`Welcome, ${firstName}!`, "success");
 
-              // Immediately pull and restore historic cloud backup from Google Drive
+              // Immediately pull and restore historic cloud backup from Google Drive & Firestore
               setTimeout(async () => {
                 try {
                   if (typeof restoreFromGoogleDrive === 'function') {
@@ -4697,6 +4721,22 @@ if (typeof window !== 'undefined') {
                   }
                 } catch (driveErr) {
                   console.warn("[NativeAuth] Auto-restore from Drive notice:", driveErr);
+                }
+                try {
+                  if (typeof syncOrRestoreFirestoreBackup === 'function') {
+                    await syncOrRestoreFirestoreBackup(true);
+                  }
+                } catch (fErr) {
+                  console.warn("[NativeAuth] Auto-sync/restore Firestore notice:", fErr);
+                }
+                if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+                  const fresh = AppStorage.getAthleteWorkouts();
+                  if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+                }
+                if (typeof renderCalendar === 'function') renderCalendar();
+                if (typeof renderMonthlyHistory === 'function') renderMonthlyHistory();
+                if (typeof switchProgressSubTab === 'function') {
+                  try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
                 }
               }, 300);
 
@@ -5003,6 +5043,9 @@ if (typeof window !== 'undefined') {
       if (fLower === 'machine' || fLower === 'machines' || fLower === 'gym machine' || fLower === 'gym machines' || fLower === 'exercise machine') {
         return implLower === 'machine' || implLower.includes('machine') || implLower.includes('cable') || nameLower.includes('machine') || nameLower.includes('cable');
       }
+      if (fLower === 'macebell (gadaa)' || fLower === 'macebell' || fLower === 'gadaa' || fLower === 'mace' || fLower === 'gada') {
+        return implLower.includes('mace') || implLower.includes('gada') || nameLower.includes('mace') || nameLower.includes('gada');
+      }
       return false;
     }
 
@@ -5176,6 +5219,7 @@ if (typeof window !== 'undefined') {
         { id: 'filter-pill-barbell', name: 'Barbell' },
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
+        { id: 'filter-pill-macebell', name: 'Macebell (Gadaa)' },
         { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
         { id: 'filter-pill-rings', name: 'Gymnastics Rings' },
         { id: 'filter-pill-machine', name: 'Machine' }
@@ -5214,6 +5258,53 @@ if (typeof window !== 'undefined') {
           indicator.classList.remove('hidden');
         } else {
           indicator.classList.add('hidden');
+        }
+      }
+      applyExerciseFilterPillsUI();
+    }
+
+    function isExerciseFilterPillsVisible() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      return container ? !container.classList.contains('hidden') : false;
+    }
+
+    function toggleExerciseFilterPills() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      const btn = document.getElementById('btn-toggle-exercise-filters');
+      const icon = document.getElementById('exercise-filter-toggle-icon');
+      if (!container) return;
+      const isVisible = !container.classList.contains('hidden');
+      if (isVisible) {
+        container.classList.add('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        if (icon) {
+          icon.classList.remove('text-emerald-400');
+          icon.classList.add('text-slate-400');
+        }
+      } else {
+        container.classList.remove('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        if (icon) {
+          icon.classList.remove('text-slate-400');
+          icon.classList.add('text-emerald-400');
+        }
+      }
+    }
+
+    function applyExerciseFilterPillsUI() {
+      const container = document.getElementById('exercise-catalog-filter-container');
+      const btn = document.getElementById('btn-toggle-exercise-filters');
+      const icon = document.getElementById('exercise-filter-toggle-icon');
+      if (!container) return;
+      const isVisible = !container.classList.contains('hidden');
+      if (btn) btn.setAttribute('aria-expanded', isVisible ? 'true' : 'false');
+      if (icon) {
+        if (isVisible || activeExerciseCatalogFilter) {
+          icon.classList.remove('text-slate-400');
+          icon.classList.add('text-emerald-400');
+        } else {
+          icon.classList.remove('text-emerald-400');
+          icon.classList.add('text-slate-400');
         }
       }
     }
@@ -8130,6 +8221,51 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isCurrentSessionLogsCollapsed() {
+      try {
+        return localStorage.getItem('showup_session_logs_collapsed') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setCurrentSessionLogsCollapsed(collapsed) {
+      try {
+        localStorage.setItem('showup_session_logs_collapsed', collapsed ? 'true' : 'false');
+      } catch (e) {}
+      applyCurrentSessionLogsCollapseUI(collapsed);
+    }
+
+    function toggleCurrentSessionLogsCollapse(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      setCurrentSessionLogsCollapsed(!isCurrentSessionLogsCollapsed());
+    }
+
+    function applyCurrentSessionLogsCollapseUI(collapsed) {
+      const body = document.getElementById('current-session-logs-body');
+      const chevron = document.getElementById('session-logs-chevron');
+      if (body) {
+        if (collapsed) {
+          body.classList.add('hidden');
+        } else {
+          body.classList.remove('hidden');
+        }
+      }
+      if (chevron) {
+        if (collapsed) {
+          chevron.classList.remove('fa-chevron-up');
+          chevron.classList.add('fa-chevron-down');
+        } else {
+          chevron.classList.remove('fa-chevron-down');
+          chevron.classList.add('fa-chevron-up');
+        }
+      }
+    }
+
     function updateAnatomicalBodyMap(muscleMap, explicitSecondaries = []) {
       const muscleSvgMap = {
         'Chest': ['body-chest'],
@@ -8381,6 +8517,13 @@ if (typeof window !== 'undefined') {
       window.setMuscleMapCollapsed = setMuscleMapCollapsed;
       window.toggleMuscleMapCollapse = toggleMuscleMapCollapse;
       window.applyMuscleMapCollapseUI = applyMuscleMapCollapseUI;
+      window.isExerciseFilterPillsVisible = isExerciseFilterPillsVisible;
+      window.toggleExerciseFilterPills = toggleExerciseFilterPills;
+      window.applyExerciseFilterPillsUI = applyExerciseFilterPillsUI;
+      window.isCurrentSessionLogsCollapsed = isCurrentSessionLogsCollapsed;
+      window.setCurrentSessionLogsCollapsed = setCurrentSessionLogsCollapsed;
+      window.toggleCurrentSessionLogsCollapse = toggleCurrentSessionLogsCollapse;
+      window.applyCurrentSessionLogsCollapseUI = applyCurrentSessionLogsCollapseUI;
     }
 
     if (typeof document !== 'undefined') {
@@ -8389,12 +8532,16 @@ if (typeof window !== 'undefined') {
         updateWorkoutSessionHUD();
         applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
         applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+        applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
+        applyExerciseFilterPillsUI();
       } else {
         document.addEventListener('DOMContentLoaded', () => {
           initTouchScrollerInputs();
           updateWorkoutSessionHUD();
           applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
           applyMuscleMapCollapseUI(isMuscleMapCollapsed());
+          applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
+          applyExerciseFilterPillsUI();
         });
       }
 
@@ -8478,8 +8625,16 @@ if (typeof window !== 'undefined') {
 
 
     function renderCalendar() {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+        const fresh = AppStorage.getAthleteWorkouts();
+        if (Array.isArray(fresh)) {
+          completedWorkoutsHistory = fresh;
+        }
+      }
+
       const grid = document.getElementById('calendar-grid');
       const monthYearLabel = document.getElementById('calendar-month-year-label');
+      if (!grid || !monthYearLabel) return;
       grid.innerHTML = '';
 
       const year = calendarDate.getFullYear();
@@ -8487,6 +8642,15 @@ if (typeof window !== 'undefined') {
 
       const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       monthYearLabel.innerText = `${monthNames[month]} ${year}`;
+
+      // Update streak badges in calendar view header
+      if (typeof calcShowUpStreak === 'function') {
+        const streak = calcShowUpStreak();
+        const curStreakEl = document.getElementById('current-streak-val');
+        if (curStreakEl) curStreakEl.innerText = `${streak} day${streak === 1 ? '' : 's'}`;
+        const bestStreakEl = document.getElementById('best-streak-val');
+        if (bestStreakEl) bestStreakEl.innerText = `${streak} days`;
+      }
 
       // Week starts from Monday (M) and ends on Sunday (S)
       const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
@@ -8521,7 +8685,15 @@ if (typeof window !== 'undefined') {
     }
 
     function renderMonthlyHistory() {
+      if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+        const fresh = AppStorage.getAthleteWorkouts();
+        if (Array.isArray(fresh)) {
+          completedWorkoutsHistory = fresh;
+        }
+      }
+
       const container = document.getElementById('monthly-history-list');
+      if (!container) return;
       const year = calendarDate.getFullYear();
       const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
       const prefix = `${year}-${monthStr}`;
@@ -8531,7 +8703,8 @@ if (typeof window !== 'undefined') {
         return d && d.startsWith(prefix);
       });
 
-      document.getElementById('monthly-count-badge').innerText = `${monthlyEntries.length} Workouts`;
+      const countBadge = document.getElementById('monthly-count-badge');
+      if (countBadge) countBadge.innerText = `${monthlyEntries.length} Workouts`;
 
       if (monthlyEntries.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-600 text-xs italic">No workout history recorded for this month.</div>`;
@@ -16917,12 +17090,19 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           restoredSquadsCount = cleanSquads.length;
         }
 
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
         if (typeof renderHomeTab === 'function') {
           try { renderHomeTab(); } catch (e) { console.error("renderHomeTab error:", e); }
         }
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+        }
         initSquads();
         renderSquadsTab();
         updateSquadBeacon();
@@ -17332,12 +17512,19 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           localStorage.setItem('showUp_last_firestore_sync', data.lastSyncedAt);
         }
 
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function') {
+          const fresh = AppStorage.getAthleteWorkouts();
+          if (Array.isArray(fresh)) completedWorkoutsHistory = fresh;
+        }
         if (typeof renderHomeTab === 'function') {
           try { renderHomeTab(); } catch (e) {}
         }
         renderCalendar();
         renderMonthlyHistory();
         renderWeightHistory();
+        if (typeof switchProgressSubTab === 'function') {
+          try { switchProgressSubTab(currentProgressSubTab || 'workouts'); } catch (e) {}
+        }
         renderSquadsTab();
         updateSquadBeacon();
         updateGlobalStatsUI();
@@ -20181,6 +20368,109 @@ runSuite("31. Muscles Engaged Section Renaming, Passive Transparency, Collapsibl
   assert(localStorage.getItem('showup_muscles_engaged_collapsed') === 'false', "Expanded state is sticky in localStorage");
   assert(!mapContent.classList.contains('hidden'), "Muscle map content visible when re-expanded");
   assert(mapHint.classList.contains('hidden'), "Primary target hint badge hidden when expanded");
+});
+
+runSuite("32. Filter Pills Toggle, Macebell (Gadaa) Implement, Collapsible Session Logs, and Instant Login Calendar Sync", () => {
+  // 1. Filter Pills Toggle & Cascading Behavior
+  assert(typeof toggleExerciseFilterPills === 'function', "toggleExerciseFilterPills is defined");
+  assert(typeof isExerciseFilterPillsVisible === 'function', "isExerciseFilterPillsVisible is defined");
+  assert(typeof applyExerciseFilterPillsUI === 'function', "applyExerciseFilterPillsUI is defined");
+
+  const filterContainer = document.getElementById('exercise-catalog-filter-container');
+  const filterBtn = document.getElementById('btn-toggle-exercise-filters');
+  const filterIcon = document.getElementById('exercise-filter-toggle-icon');
+
+  // Verify initial folded state
+  filterContainer.classList.add('hidden');
+  applyExerciseFilterPillsUI();
+  assert(isExerciseFilterPillsVisible() === false, "Filter pills are folded/hidden initially to reduce visual engagement fatigue");
+  assert(filterBtn.getAttribute('aria-expanded') === 'false', "Filter toggle button has aria-expanded false when folded");
+
+  // Tap filter toggle button to cascade open
+  toggleExerciseFilterPills();
+  assert(isExerciseFilterPillsVisible() === true, "toggleExerciseFilterPills cascades open filter pills on tap");
+  assert(!filterContainer.classList.contains('hidden'), "Filter container does not have hidden class when open");
+  assert(filterBtn.getAttribute('aria-expanded') === 'true', "Filter toggle button has aria-expanded true when open");
+  assert(filterIcon.classList.contains('text-emerald-400'), "Filter toggle icon reflects active accent when open");
+
+  // Tap again to fold back
+  toggleExerciseFilterPills();
+  assert(isExerciseFilterPillsVisible() === false, "toggleExerciseFilterPills folds back filter pills on second tap");
+  assert(filterContainer.classList.contains('hidden'), "Filter container hidden class restored when folded back");
+  assert(filterBtn.getAttribute('aria-expanded') === 'false', "Filter toggle button aria-expanded false when folded back");
+
+  // 2. Macebell (Gadaa) Implement Type & Inference
+  assert(inferImplementFromExerciseName("Gadaa 360") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for Gadaa 360");
+  assert(inferImplementFromExerciseName("Macebell 360") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for Macebell 360");
+  assert(inferImplementFromExerciseName("Traditional Mace Swings") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for exercise with Mace");
+  assert(inferImplementFromExerciseName("Heavy Gada Flow") === "Macebell (Gadaa)", "Infers Macebell (Gadaa) for exercise with Gada");
+
+  const gadaExercise = { name: "Gadaa 360", implement: "Macebell (Gadaa)" };
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Macebell (Gadaa)") === true, "Matches exact Macebell (Gadaa) filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Macebell") === true, "Matches Macebell filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Gadaa") === true, "Matches Gadaa filter");
+  assert(exerciseMatchesImplementFilter(gadaExercise, "Mace") === true, "Matches Mace filter");
+
+  // 3. Current Session Logs Collapsible & Sticky State
+  assert(typeof isCurrentSessionLogsCollapsed === 'function', "isCurrentSessionLogsCollapsed is defined");
+  assert(typeof setCurrentSessionLogsCollapsed === 'function', "setCurrentSessionLogsCollapsed is defined");
+  assert(typeof toggleCurrentSessionLogsCollapse === 'function', "toggleCurrentSessionLogsCollapse is defined");
+  assert(typeof applyCurrentSessionLogsCollapseUI === 'function', "applyCurrentSessionLogsCollapseUI is defined");
+
+  const sessionLogsBody = document.getElementById('current-session-logs-body');
+  const sessionLogsChevron = document.getElementById('session-logs-chevron');
+
+  // Verify initial expanded state
+  localStorage.removeItem('showup_session_logs_collapsed');
+  assert(isCurrentSessionLogsCollapsed() === false, "Current session logs defaults to expanded");
+  applyCurrentSessionLogsCollapseUI(false);
+  assert(!sessionLogsBody.classList.contains('hidden'), "Current session logs body visible when expanded");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-up'), "Chevron points up when expanded");
+
+  // Toggle to collapsed
+  toggleCurrentSessionLogsCollapse();
+  assert(isCurrentSessionLogsCollapsed() === true, "toggleCurrentSessionLogsCollapse sets collapsed state");
+  assert(localStorage.getItem('showup_session_logs_collapsed') === 'true', "Collapsed state is sticky in localStorage");
+  assert(sessionLogsBody.classList.contains('hidden'), "Current session logs body is hidden when collapsed");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-down'), "Chevron points down when collapsed");
+
+  // Toggle back to expanded
+  toggleCurrentSessionLogsCollapse();
+  assert(isCurrentSessionLogsCollapsed() === false, "toggleCurrentSessionLogsCollapse expands session logs again");
+  assert(localStorage.getItem('showup_session_logs_collapsed') === 'false', "Expanded state is sticky in localStorage");
+  assert(!sessionLogsBody.classList.contains('hidden'), "Current session logs body visible after expansion");
+  assert(sessionLogsChevron.classList.contains('fa-chevron-up'), "Chevron points up after expansion");
+
+  // 4. Instant Calendar View / Progress Update on Google Login
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const testHistoricalWorkouts = [
+    {
+      date: todayKey,
+      workoutName: "Macebell Conditioning",
+      sets: [{ exerciseName: "Gadaa 360", implement: "Macebell (Gadaa)", reps: 30, weight: 15 }]
+    }
+  ];
+
+  // Save historical workouts for user to simulate cloud restore
+  const testAthleteEmail = "athlete.gadha@showup.app";
+  localStorage.setItem('showUp_user_workouts_' + testAthleteEmail, JSON.stringify(testHistoricalWorkouts));
+  localStorage.setItem('showUp_synced_workouts', JSON.stringify(testHistoricalWorkouts));
+
+  // Perform login profile application
+  applyUserProfile({
+    firstName: "Gadha",
+    email: testAthleteEmail,
+    picture: "https://lh3.googleusercontent.com/a/gadha=s96-c"
+  });
+
+  // Verify completedWorkoutsHistory and Calendar immediately updated without navigation
+  assert(completedWorkoutsHistory.length > 0, "completedWorkoutsHistory populated immediately on login");
+  const calendarGrid = document.getElementById('calendar-grid');
+  assert(calendarGrid.innerHTML.includes(todayKey), "Calendar grid immediately updated with workout date for timeframe");
+
+  // Streak counters updated immediately on login
+  const curStreak = document.getElementById('current-streak-val');
+  assert(curStreak.innerText.includes("day"), "current-streak-val badge updated on login");
 });
 
 print("\n============================================================");
