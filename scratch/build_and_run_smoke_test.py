@@ -107,6 +107,13 @@ def generate_and_run_smoke_test():
         print("[FAIL] auto-muscles-scroll-container with overflow-x-auto missing in HTML")
         return False
 
+    # 7. Check target bullseye icon under target rest in HTML
+    if 'fa-bullseye' in html and 'id="rest-timer-target-val"' in html:
+        print("[PASS] Target bullseye icon under rest-timer-target-val verified in HTML")
+    else:
+        print("[FAIL] Target bullseye icon missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -2752,6 +2759,9 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(restChimeFired === false, "Sound has not fired at 0s");
   assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
 
+  const statusBadge = getOrCreateElement('rest-timer-status-badge');
+  assert(statusBadge.innerText === "Resting", "Badge displays clean 'Resting' state before target recovery");
+
   // Advance to 59s (under target)
   restTimerSeconds = 59;
   checkRestRecoveryThreshold();
@@ -2761,9 +2771,12 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   // Advance to 60s (target reached!)
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
+  updateRestTimerUI();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
   assert(restChimeFired === true, "Rest chime sound alert triggered at target recovery");
   assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
+  assert(statusBadge.innerText === "Ready to Lift!", "Status badge switches to 'Ready to Lift!' upon reaching target recovery");
+  assert(statusBadge.className.includes('animate-bounce'), "Ready to Lift pill has animate-bounce class");
 
   // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
   restChimeFired = false;

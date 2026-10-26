@@ -2044,20 +2044,20 @@
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
-            badgeEl.className = "text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider animate-bounce";
+            badgeEl.className = "text-[9px] font-black px-2.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider animate-bounce shadow-lg shadow-emerald-400/30";
             badgeEl.innerText = "Ready to Lift!";
           }
           if (captionEl) {
-            captionEl.innerHTML = `<span class="text-emerald-300 font-bold">Target recovery reached (${targetRest}s).</span> Tap "Log Set ${nextNum}" when ready!`;
+            captionEl.innerText = "";
           }
           banner.classList.add('border-emerald-400', 'shadow-emerald-500/30');
         } else {
           if (badgeEl) {
             badgeEl.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider";
-            badgeEl.innerText = `Resting (${targetRest}s target)`;
+            badgeEl.innerText = "Resting";
           }
           if (captionEl) {
-            captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Log Set ${nextNum}" when ready.`;
+            captionEl.innerText = "";
           }
           banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
         }

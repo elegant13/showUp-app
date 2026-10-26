@@ -6543,20 +6543,20 @@ if (typeof window !== 'undefined') {
 
         if (restTimerSeconds >= targetRest) {
           if (badgeEl) {
-            badgeEl.className = "text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider animate-bounce";
+            badgeEl.className = "text-[9px] font-black px-2.5 py-0.5 rounded-full bg-emerald-400 text-slate-950 uppercase tracking-wider animate-bounce shadow-lg shadow-emerald-400/30";
             badgeEl.innerText = "Ready to Lift!";
           }
           if (captionEl) {
-            captionEl.innerHTML = `<span class="text-emerald-300 font-bold">Target recovery reached (${targetRest}s).</span> Tap "Log Set ${nextNum}" when ready!`;
+            captionEl.innerText = "";
           }
           banner.classList.add('border-emerald-400', 'shadow-emerald-500/30');
         } else {
           if (badgeEl) {
             badgeEl.className = "text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase tracking-wider";
-            badgeEl.innerText = `Resting (${targetRest}s target)`;
+            badgeEl.innerText = "Resting";
           }
           if (captionEl) {
-            captionEl.innerText = `Resting after Set ${setNum}... (${restTimerSeconds}s / ${targetRest}s target) Tap "Log Set ${nextNum}" when ready.`;
+            captionEl.innerText = "";
           }
           banner.classList.remove('border-emerald-400', 'shadow-emerald-500/30');
         }
@@ -19083,6 +19083,9 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(restChimeFired === false, "Sound has not fired at 0s");
   assert(globalThis.__lastVibrate === null, "Haptic has not fired at 0s");
 
+  const statusBadge = getOrCreateElement('rest-timer-status-badge');
+  assert(statusBadge.innerText === "Resting", "Badge displays clean 'Resting' state before target recovery");
+
   // Advance to 59s (under target)
   restTimerSeconds = 59;
   checkRestRecoveryThreshold();
@@ -19092,9 +19095,12 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   // Advance to 60s (target reached!)
   restTimerSeconds = 60;
   checkRestRecoveryThreshold();
+  updateRestTimerUI();
   assert(hasTriggeredRestRecoveryAlert === true, "Alert flag set to true when target reached (60s >= 60s)");
   assert(restChimeFired === true, "Rest chime sound alert triggered at target recovery");
   assert(globalThis.__lastVibrate !== null, "Haptic alert triggered at target recovery");
+  assert(statusBadge.innerText === "Ready to Lift!", "Status badge switches to 'Ready to Lift!' upon reaching target recovery");
+  assert(statusBadge.className.includes('animate-bounce'), "Ready to Lift pill has animate-bounce class");
 
   // Verify single-fire behavior (does not re-fire on next ticks at 61s, 62s)
   restChimeFired = false;

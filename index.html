@@ -2819,16 +2819,27 @@
               <i class="fa-solid fa-minus pointer-events-none"></i>
             </button>
 
-            <!-- Center Jumbo Display: Elapsed / Target Number -->
+            <!-- Center Jumbo Display: Elapsed / Target Number with Target Icon -->
             <div class="flex-1 max-w-[280px] sm:max-w-[320px] bg-slate-950/80 border border-slate-800/80 rounded-2xl py-2 px-3 flex flex-col items-center justify-center min-w-0 shadow-inner">
-              <div class="flex items-baseline gap-2 justify-center">
-                <span id="rest-timer-val" class="font-mono text-3xl sm:text-5xl font-black text-white tracking-wider">0s</span>
-                <span class="text-slate-500 text-xl sm:text-2xl font-light select-none">/</span>
-                <span id="rest-timer-target-val" class="font-mono text-2xl sm:text-4xl font-extrabold text-emerald-400 tracking-wider">60s</span>
-              </div>
-              <div class="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5 mt-0.5 select-none">
-                <span>Target Rest</span>
-                <span class="text-[9px] text-emerald-400/90 bg-emerald-950/70 border border-emerald-500/30 px-1.5 py-0.2 rounded font-mono">Tap ±1 • Hold ±5</span>
+              <div class="flex items-center justify-center gap-2 sm:gap-3 w-full">
+                <!-- Elapsed column -->
+                <div class="flex flex-col items-center">
+                  <span id="rest-timer-val" class="font-mono text-3xl sm:text-5xl font-black text-white tracking-wider leading-none">0s</span>
+                  <div class="flex items-center justify-center mt-1 text-slate-500" title="Elapsed Time">
+                    <i class="fa-solid fa-stopwatch text-[11px]"></i>
+                  </div>
+                </div>
+
+                <!-- Divider -->
+                <span class="text-slate-600 text-2xl sm:text-4xl font-light select-none pb-2">/</span>
+
+                <!-- Target column with actual target icon -->
+                <div class="flex flex-col items-center">
+                  <span id="rest-timer-target-val" class="font-mono text-2xl sm:text-4xl font-extrabold text-emerald-400 tracking-wider leading-none">60s</span>
+                  <div class="flex items-center justify-center mt-1 text-emerald-400" title="Target Rest">
+                    <i class="fa-solid fa-bullseye text-[12px] sm:text-[13px]"></i>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2838,7 +2849,7 @@
             </button>
           </div>
 
-          <div id="rest-timer-caption" class="text-xs sm:text-sm text-slate-300 font-medium truncate text-center">Resting between sets... Tap "Log Set" when ready.</div>
+          <div id="rest-timer-caption" class="hidden"></div>
         </div>
 
         <!-- ACTIVE SET TIMER HUD BANNER (CONSPICUOUS, HIGH-CONTRAST TIMING FOR ACTIVE SET WORK) -->
