@@ -195,6 +195,9 @@
       if (fLower === 'gymnastics rings' || fLower === 'rings' || fLower === 'ring') {
         return implLower.includes('ring') || nameLower.startsWith('ring') || nameLower.includes('ring') || nameLower.includes('gymnastic');
       }
+      if (fLower === 'machine' || fLower === 'machines' || fLower === 'gym machine' || fLower === 'gym machines' || fLower === 'exercise machine') {
+        return implLower === 'machine' || implLower.includes('machine') || implLower.includes('cable') || nameLower.includes('machine') || nameLower.includes('cable');
+      }
       return false;
     }
 
@@ -369,7 +372,8 @@
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
         { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
-        { id: 'filter-pill-rings', name: 'Gymnastics Rings' }
+        { id: 'filter-pill-rings', name: 'Gymnastics Rings' },
+        { id: 'filter-pill-machine', name: 'Machine' }
       ];
 
       pills.forEach(pill => {

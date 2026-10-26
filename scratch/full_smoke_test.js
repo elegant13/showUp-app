@@ -302,63 +302,109 @@ function runSuite(name, fn) {
     };
 
     const defaultCatalog = [
-      { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
-      { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads", "Core/Abs"] },
-      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
-      { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps", "Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Core/Abs"] },
-      { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
-      { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Biceps", "Core/Abs"] },
-      { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
+{ name: "Abdominal Crunch (Machine)", implement: "Machine", muscle: "Core/Abs", secondary: [] },
+      { name: "Assisted Dip Machine", implement: "Machine", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
+      { name: "Assisted Pull-Up Machine", implement: "Machine", muscle: "Back", secondary: ["Biceps","Forearms"] },
+      { name: "Back Extension (Machine)", implement: "Machine", muscle: "Back", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
+      { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads","Core/Abs"] },
+      { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
+      { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps","Hamstrings/Glutes","Core/Abs"] },
+      { name: "Barbell Deadlift", implement: "Barbell", muscle: "Full Body", secondary: ["Hamstrings/Glutes","Back","Core/Abs"] },
+      { name: "Barbell Overhead Press", implement: "Barbell", muscle: "Shoulders", secondary: ["Triceps","Core/Abs"] },
+      { name: "Bent Arm Cross Over", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders","Biceps","Core/Abs"] },
+      { name: "Bethak (Hindu Squats)", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Bicep Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
-      { name: "Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
-      { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders", "Triceps", "Core/Abs", "Back"] },
-      { name: "DB Bench Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Triceps", "Shoulders"] },
+      { name: "Cable Bicep Curl", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "Cable Chest Fly", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
+      { name: "Cable Crossover", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
+      { name: "Cable Crunch", implement: "Machine", muscle: "Core/Abs", secondary: [] },
+      { name: "Cable Face Pull", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
+      { name: "Cable Lateral Raise", implement: "Machine", muscle: "Shoulders", secondary: ["Forearms"] },
+      { name: "Cable Overhead Tricep Extension", implement: "Machine", muscle: "Triceps", secondary: ["Forearms"] },
+      { name: "Cable Tricep Pushdown", implement: "Machine", muscle: "Triceps", secondary: ["Forearms"] },
+      { name: "Cable Woodchopper", implement: "Machine", muscle: "Core/Abs", secondary: ["Shoulders","Back"] },
+      { name: "Calf Raise (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Chest Press (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
+      { name: "Chest-Supported Row (Machine)", implement: "Machine", muscle: "Back", secondary: ["Biceps","Forearms"] },
+      { name: "Dand (Hindu Push-Ups)", implement: "Bodyweight", muscle: "Chest", secondary: ["Shoulders","Triceps","Core/Abs","Back"] },
+      { name: "DB Bench Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
       { name: "DB Bicep Curl", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "DB Hammer Curls", implement: "Dumbbell", muscle: "Biceps", secondary: ["Forearms"] },
-      { name: "DB Incline Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Shoulders", "Triceps"] },
-      { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs"] },
-      { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs"] },
-      { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps", "Core/Abs"] },
-      { name: "Exercise Ball Wood Chops", implement: "Exercise Ball", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads"] },
+      { name: "DB Incline Press", implement: "Dumbbell", muscle: "Chest", secondary: ["Shoulders","Triceps"] },
+      { name: "DB Overhead Press", implement: "Dumbbell", muscle: "Shoulders", secondary: ["Triceps","Core/Abs"] },
+      { name: "DB Romanian Deadlift", implement: "Dumbbell", muscle: "Hamstrings/Glutes", secondary: ["Back","Core/Abs"] },
+      { name: "DB Row", implement: "Dumbbell", muscle: "Back", secondary: ["Biceps","Core/Abs"] },
+      { name: "Exercise Ball Wood Chops", implement: "Exercise Ball", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads"] },
       { name: "EZ Bar Bicep Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
-      { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms", "Chest"] },
+      { name: "EZ Bar Lying Down Tricep Extensions", implement: "Barbell", muscle: "Triceps", secondary: ["Forearms","Chest"] },
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
-      { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back", "Chest"] },
+      { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back","Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
-      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back", "Core/Abs", "Biceps"] },
-      { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Quads"] },
-      { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back", "Shoulders"] },
-      { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads", "Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads", "Core/Abs"] },
-      { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs", "Back", "Shoulders", "Quads", "Hamstrings/Glutes"] },
-      { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps", "Core/Abs", "Chest"] },
-      { name: "KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
-      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Back", "Hamstrings/Glutes", "Quads"] },
+      { name: "Gada Swings (Mace 360)", implement: "Macebell / Gada", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
+      { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Quads"] },
+      { name: "Glute Kickback (Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
+      { name: "Goblet Squat (Dumbbell)", implement: "Dumbbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Hack Squat (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Hanging Knee Tucks", implement: "Bodyweight", muscle: "Core/Abs", secondary: ["Back","Shoulders"] },
+      { name: "Hiking", implement: "Hiking", muscle: "Full Body", secondary: ["Quads","Hamstrings/Glutes","Core/Abs"] },
+      { name: "Hip Abductor (Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: [] },
+      { name: "Hip Adductor (Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: ["Quads"] },
+      { name: "Incline Chest Press (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders","Triceps"] },
+      { name: "Jump Rope", implement: "Bodyweight", muscle: "Full Body", secondary: ["Quads","Core/Abs"] },
+      { name: "KB Farmers Walk", implement: "Kettlebell", muscle: "Full Body", secondary: ["Core/Abs","Back","Shoulders","Quads","Hamstrings/Glutes"] },
+      { name: "KB Shoulder Press", implement: "Kettlebell", muscle: "Shoulders", secondary: ["Triceps","Core/Abs","Chest"] },
+      { name: "KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Back","Shoulders","Quads"] },
+      { name: "Kettlebell Clean & Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders","Back","Hamstrings/Glutes","Quads"] },
       { name: "Kickstand KB RDL", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs"] },
-      { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
-      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps", "Shoulders", "Core/Abs"] },
-      { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Shoulders"] },
-      { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest", "Shoulders", "Triceps", "Back"] },
-      { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps", "Core/Abs", "Hamstrings/Glutes", "Quads"] },
-      { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Full Body"] },
-      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest", "Quads", "Shoulders", "Core/Abs", "Hamstrings/Glutes", "Triceps"] },
-      { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders", "Hamstrings/Glutes", "Back", "Triceps", "Core/Abs"] },
-      { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes", "Shoulders", "Biceps", "Core/Abs"] },
-      { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back", "Core/Abs", "Shoulders"] },
-      { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes", "Back", "Shoulders", "Core/Abs"] },
-      { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
-      { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders", "Back", "Quads", "Hamstrings/Glutes"] },
-      { name: "SH KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs", "Back", "Shoulders", "Quads"] },
-      { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
-      { name: "Stationary Bike Sprint", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] },
-      { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders", "Back", "Core/Abs", "Quads"] },
-      { name: "Tricep Bar Dips", implement: "Bodyweight", muscle: "Triceps", secondary: ["Chest", "Shoulders", "Core/Abs"] },
-      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes", "Core/Abs"] }
+      { name: "Lat Pulldown (Cable)", implement: "Machine", muscle: "Back", secondary: ["Biceps","Forearms"] },
+      { name: "Leg Curl (Lying / Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: [] },
+      { name: "Leg Curl (Seated / Machine)", implement: "Machine", muscle: "Hamstrings/Glutes", secondary: [] },
+      { name: "Leg Extension (Machine)", implement: "Machine", muscle: "Quads", secondary: [] },
+      { name: "Leg Press (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Lunges", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
+      { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
+      { name: "Ring Archer Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Ring Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
+      { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Ring H_V Raises", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back","Core/Abs"] },
+      { name: "Ring Pelican Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Chest","Shoulders","Forearms"] },
+      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps","Core/Abs","Shoulders"] },
+      { name: "Ring SH Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
+      { name: "Ring Tricep Extensions", implement: "Gymnastics Rings", muscle: "Triceps", secondary: ["Shoulders","Core/Abs"] },
+      { name: "Ring Walk Out", implement: "Gymnastics Rings", muscle: "Core/Abs", secondary: ["Chest","Shoulders","Triceps","Back"] },
+      { name: "Rotary Torso (Machine)", implement: "Machine", muscle: "Core/Abs", secondary: [] },
+      { name: "Rowing (Concept2 / Erg)", implement: "Row Erg", muscle: "Back", secondary: ["Biceps","Core/Abs","Hamstrings/Glutes","Quads"] },
+      { name: "Running", implement: "Running", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs","Full Body"] },
+      { name: "Sapaate (Indian Burpees)", implement: "Bodyweight", muscle: "Full Body", secondary: ["Chest","Quads","Shoulders","Core/Abs","Hamstrings/Glutes","Triceps"] },
+      { name: "Seated Cable Row", implement: "Machine", muscle: "Back", secondary: ["Biceps","Forearms"] },
+      { name: "Seated Calf Raise (Machine)", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders","Hamstrings/Glutes","Back","Triceps","Core/Abs"] },
+      { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes","Shoulders","Biceps","Core/Abs"] },
+      { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back","Core/Abs","Shoulders"] },
+      { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes","Back","Shoulders","Core/Abs"] },
+      { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs","Shoulders"] },
+      { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
+      { name: "SH KB Swings", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Back","Shoulders","Quads"] },
+      { name: "SH KB Thruster", implement: "Kettlebell", muscle: "Full Body", secondary: ["Quads","Shoulders","Hamstrings/Glutes","Triceps","Core/Abs"] },
+      { name: "Shoulder Press (Machine)", implement: "Machine", muscle: "Shoulders", secondary: ["Triceps"] },
+      { name: "Smith Machine Bench Press", implement: "Machine", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
+      { name: "Smith Machine Incline Press", implement: "Machine", muscle: "Chest", secondary: ["Shoulders","Triceps"] },
+      { name: "Smith Machine Overhead Press", implement: "Machine", muscle: "Shoulders", secondary: ["Triceps"] },
+      { name: "Smith Machine Squat", implement: "Machine", muscle: "Quads", secondary: ["Hamstrings/Glutes"] },
+      { name: "Stationary Bike Sprint", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Straight Arm Lat Pulldown", implement: "Machine", muscle: "Back", secondary: ["Triceps","Core/Abs"] },
+      { name: "Swimming (Laps / Open Water)", implement: "Swimming", muscle: "Full Body", secondary: ["Shoulders","Back","Core/Abs","Quads"] },
+      { name: "T-Bar Row (Machine)", implement: "Machine", muscle: "Back", secondary: ["Biceps","Hamstrings/Glutes"] },
+      { name: "Tricep Bar Dips", implement: "Bodyweight", muscle: "Triceps", secondary: ["Chest","Shoulders","Core/Abs"] },
+      { name: "Tricep Extension (Machine)", implement: "Machine", muscle: "Triceps", secondary: ["Forearms"] },
+      { name: "Walking", implement: "Walking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] }
     ];
 
     // Expose globally for browser console / cross-module access
@@ -436,6 +482,12 @@ function runSuite(name, fn) {
         if (rdlMatch) return rdlMatch;
       }
 
+      // 2f. Alias for Ring H_V Raises (ringhvraises, ringh_vraises, ringh-vraises)
+      if (normKey === 'ringhvraises' || normKey === 'ringh_vraises' || normKey === 'ringh-vraises') {
+        const hvMatch = defaultCatalog.find(c => c.name === "Ring H_V Raises");
+        if (hvMatch) return hvMatch;
+      }
+
       // 3. Partial or substring match if input length >= 3
       if (clean.length >= 3) {
         match = defaultCatalog.find(c => {
@@ -476,6 +528,8 @@ function runSuite(name, fn) {
       // Requirement: Whenever an exercise starts with Ring or has ring in it, it is Gymnastics Rings
       if (lower.startsWith('ring') || lower.includes('ring') || lower.includes('gymnastic')) {
         return 'Gymnastics Rings';
+      } else if (lower.includes('machine') || lower.includes('cable') || lower.includes('pulldown') || lower.includes('pec deck') || lower.includes('leg press') || lower.includes('hack squat') || lower.includes('smith machine')) {
+        return 'Machine';
       } else if (lower.includes('exercise ball') || lower.includes('stability ball') || lower.includes('swiss ball') || lower.includes('wood chop') || lower.includes('woodchop')) {
         return 'Exercise Ball';
       } else if (lower.includes('kettle bell') || lower.includes('kettlebell') || /\bkb\b/i.test(trimmed)) {
@@ -4404,6 +4458,9 @@ if (typeof window !== 'undefined') {
       if (fLower === 'gymnastics rings' || fLower === 'rings' || fLower === 'ring') {
         return implLower.includes('ring') || nameLower.startsWith('ring') || nameLower.includes('ring') || nameLower.includes('gymnastic');
       }
+      if (fLower === 'machine' || fLower === 'machines' || fLower === 'gym machine' || fLower === 'gym machines' || fLower === 'exercise machine') {
+        return implLower === 'machine' || implLower.includes('machine') || implLower.includes('cable') || nameLower.includes('machine') || nameLower.includes('cable');
+      }
       return false;
     }
 
@@ -4578,7 +4635,8 @@ if (typeof window !== 'undefined') {
         { id: 'filter-pill-kettlebell', name: 'Kettlebell' },
         { id: 'filter-pill-dumbbell', name: 'Dumbbell' },
         { id: 'filter-pill-bodyweight', name: 'Bodyweight' },
-        { id: 'filter-pill-rings', name: 'Gymnastics Rings' }
+        { id: 'filter-pill-rings', name: 'Gymnastics Rings' },
+        { id: 'filter-pill-machine', name: 'Machine' }
       ];
 
       pills.forEach(pill => {
@@ -18015,16 +18073,31 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
 
   const ringsCatalog = filterExerciseCatalog("", "Gymnastics Rings");
-  assert(ringsCatalog.length >= 4, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
+  assert(ringsCatalog.length >= 9, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
   assert(ringsCatalog.every(e => e.implement === "Gymnastics Rings" || e.name.toLowerCase().includes("ring")), "All filtered rings items belong to Gymnastics Rings");
+
+  const machineCatalog = filterExerciseCatalog("", "Machine");
+  assert(machineCatalog.length >= 35, "filterExerciseCatalog('', 'Machine') returns gym machine exercises (" + machineCatalog.length + " found)");
+  assert(machineCatalog.every(e => e.implement === "Machine" || e.name.toLowerCase().includes("machine") || e.name.toLowerCase().includes("cable")), "All filtered machine items belong to Machine");
 
   assert(inferImplementFromExerciseName("Ring Dips") === "Gymnastics Rings", "Ring Dips infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Ring Rows") === "Gymnastics Rings", "Ring Rows infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Gymnastic Ring Pullups") === "Gymnastics Rings", "Gymnastic Ring Pullups infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Ring Inverted Row") === "Gymnastics Rings", "Ring Inverted Row infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Bicep Curls") === "Gymnastics Rings", "Ring Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Tricep Extensions") === "Gymnastics Rings", "Ring Tricep Extensions infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring H_V Raises") === "Gymnastics Rings", "Ring H_V Raises infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Archer Push-Ups") === "Gymnastics Rings", "Ring Archer Push-Ups infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Pelican Bicep Curls") === "Gymnastics Rings", "Ring Pelican Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring SH Bicep Curls") === "Gymnastics Rings", "Ring SH Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Chest Press (Machine)") === "Machine", "Chest Press (Machine) infers Machine");
+  assert(inferImplementFromExerciseName("Lat Pulldown (Cable)") === "Machine", "Lat Pulldown (Cable) infers Machine");
+  assert(inferImplementFromExerciseName("Leg Press (Machine)") === "Machine", "Leg Press (Machine) infers Machine");
+  assert(inferImplementFromExerciseName("Smith Machine Squat") === "Machine", "Smith Machine Squat infers Machine");
 
   // 2. Interactive toggle on Kettlebell pill
   const pillKb = getOrCreateElement('filter-pill-kettlebell');
+  const pillMach = getOrCreateElement('filter-pill-machine');
   const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
   const filterNameLabel = getOrCreateElement('active-exercise-filter-name');
 
@@ -18049,6 +18122,21 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(!pillKb.className.includes("font-black text-emerald-400"), "Kettlebell pill returns to unselected resting styling");
   assert(filterIndicator.classList.contains('hidden'), "Active filter indicator is hidden when filter is removed");
 
+  // 4b. Interactive toggle on Machine pill
+  exInput.value = "";
+  toggleExerciseCatalogFilter("Machine", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === "Machine", "activeExerciseCatalogFilter is set to Machine");
+  assert(pillMach.getAttribute('aria-pressed') === 'true', "Machine pill aria-pressed is true (engaged)");
+  assert(pillMach.className.includes("text-emerald-400"), "Machine pill displays depressed and engaged emerald styling");
+  assert(!filterIndicator.classList.contains('hidden'), "Active filter indicator is visible for Machine");
+  assert(filterNameLabel.textContent === "Machine", "Active filter indicator name is Machine");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Dropdown opens automatically showing Machine catalog");
+  assert(suggestionsDropdown.innerHTML.includes("Machine Catalog"), "Dropdown shows Machine Catalog header");
+
+  toggleExerciseCatalogFilter("Machine", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === null, "Tapping Machine filter again removes filter");
+  assert(pillMach.getAttribute('aria-pressed') === 'false', "Machine pill disengaged");
+
   // 5. Test newly added exercises in defaultCatalog
   const newExercises = [
     { name: "DB Hammer Curls", imp: "Dumbbell", mus: "Biceps" },
@@ -18057,7 +18145,21 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "EZ Bar Lying Down Tricep Extensions", imp: "Barbell", mus: "Triceps" },
     { name: "EZ Bar Tricep Pull Overs", imp: "Barbell", mus: "Triceps" },
     { name: "Bicep Curls", imp: "Dumbbell", mus: "Biceps" },
-    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" }
+    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" },
+    { name: "Ring Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Ring Tricep Extensions", imp: "Gymnastics Rings", mus: "Triceps" },
+    { name: "Ring H_V Raises", imp: "Gymnastics Rings", mus: "Shoulders" },
+    { name: "Ring Archer Push-Ups", imp: "Gymnastics Rings", mus: "Chest" },
+    { name: "Ring Pelican Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Ring SH Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Chest Press (Machine)", imp: "Machine", mus: "Chest" },
+    { name: "Lat Pulldown (Cable)", imp: "Machine", mus: "Back" },
+    { name: "Leg Press (Machine)", imp: "Machine", mus: "Quads" },
+    { name: "Hack Squat (Machine)", imp: "Machine", mus: "Quads" },
+    { name: "Pec Deck Fly (Machine)", imp: "Machine", mus: "Chest" },
+    { name: "Seated Cable Row", imp: "Machine", mus: "Back" },
+    { name: "Cable Bicep Curl", imp: "Machine", mus: "Biceps" },
+    { name: "Cable Tricep Pushdown", imp: "Machine", mus: "Triceps" }
   ];
 
   newExercises.forEach(item => {
@@ -18066,6 +18168,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     assert(found.implement === item.imp, item.name + " implement matches " + item.imp);
     assert(found.muscle === item.mus, item.name + " muscle target matches " + item.mus);
   });
+
+  // Verify Ring H_V Raises aliases
+  assert(findCatalogExercise("ringh_vraises") !== null && findCatalogExercise("ringh_vraises").name === "Ring H_V Raises", "Alias ringh_vraises resolves to Ring H_V Raises");
+  assert(findCatalogExercise("ringh-vraises") !== null && findCatalogExercise("ringh-vraises").name === "Ring H_V Raises", "Alias ringh-vraises resolves to Ring H_V Raises");
+  assert(findCatalogExercise("ringhvraises") !== null && findCatalogExercise("ringhvraises").name === "Ring H_V Raises", "Alias ringhvraises resolves to Ring H_V Raises");
 
   // 6. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];

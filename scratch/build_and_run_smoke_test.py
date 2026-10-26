@@ -2009,16 +2009,31 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(bwCatalog.every(e => e.implement === "Bodyweight"), "All filtered bodyweight items belong to Bodyweight");
 
   const ringsCatalog = filterExerciseCatalog("", "Gymnastics Rings");
-  assert(ringsCatalog.length >= 4, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
+  assert(ringsCatalog.length >= 9, "filterExerciseCatalog('', 'Gymnastics Rings') returns rings exercises (" + ringsCatalog.length + " found)");
   assert(ringsCatalog.every(e => e.implement === "Gymnastics Rings" || e.name.toLowerCase().includes("ring")), "All filtered rings items belong to Gymnastics Rings");
+
+  const machineCatalog = filterExerciseCatalog("", "Machine");
+  assert(machineCatalog.length >= 35, "filterExerciseCatalog('', 'Machine') returns gym machine exercises (" + machineCatalog.length + " found)");
+  assert(machineCatalog.every(e => e.implement === "Machine" || e.name.toLowerCase().includes("machine") || e.name.toLowerCase().includes("cable")), "All filtered machine items belong to Machine");
 
   assert(inferImplementFromExerciseName("Ring Dips") === "Gymnastics Rings", "Ring Dips infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Ring Rows") === "Gymnastics Rings", "Ring Rows infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Gymnastic Ring Pullups") === "Gymnastics Rings", "Gymnastic Ring Pullups infers Gymnastics Rings");
   assert(inferImplementFromExerciseName("Ring Inverted Row") === "Gymnastics Rings", "Ring Inverted Row infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Bicep Curls") === "Gymnastics Rings", "Ring Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Tricep Extensions") === "Gymnastics Rings", "Ring Tricep Extensions infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring H_V Raises") === "Gymnastics Rings", "Ring H_V Raises infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Archer Push-Ups") === "Gymnastics Rings", "Ring Archer Push-Ups infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring Pelican Bicep Curls") === "Gymnastics Rings", "Ring Pelican Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Ring SH Bicep Curls") === "Gymnastics Rings", "Ring SH Bicep Curls infers Gymnastics Rings");
+  assert(inferImplementFromExerciseName("Chest Press (Machine)") === "Machine", "Chest Press (Machine) infers Machine");
+  assert(inferImplementFromExerciseName("Lat Pulldown (Cable)") === "Machine", "Lat Pulldown (Cable) infers Machine");
+  assert(inferImplementFromExerciseName("Leg Press (Machine)") === "Machine", "Leg Press (Machine) infers Machine");
+  assert(inferImplementFromExerciseName("Smith Machine Squat") === "Machine", "Smith Machine Squat infers Machine");
 
   // 2. Interactive toggle on Kettlebell pill
   const pillKb = getOrCreateElement('filter-pill-kettlebell');
+  const pillMach = getOrCreateElement('filter-pill-machine');
   const filterIndicator = getOrCreateElement('active-exercise-filter-indicator');
   const filterNameLabel = getOrCreateElement('active-exercise-filter-name');
 
@@ -2043,6 +2058,21 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(!pillKb.className.includes("font-black text-emerald-400"), "Kettlebell pill returns to unselected resting styling");
   assert(filterIndicator.classList.contains('hidden'), "Active filter indicator is hidden when filter is removed");
 
+  // 4b. Interactive toggle on Machine pill
+  exInput.value = "";
+  toggleExerciseCatalogFilter("Machine", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === "Machine", "activeExerciseCatalogFilter is set to Machine");
+  assert(pillMach.getAttribute('aria-pressed') === 'true', "Machine pill aria-pressed is true (engaged)");
+  assert(pillMach.className.includes("text-emerald-400"), "Machine pill displays depressed and engaged emerald styling");
+  assert(!filterIndicator.classList.contains('hidden'), "Active filter indicator is visible for Machine");
+  assert(filterNameLabel.textContent === "Machine", "Active filter indicator name is Machine");
+  assert(!suggestionsDropdown.classList.contains('hidden'), "Dropdown opens automatically showing Machine catalog");
+  assert(suggestionsDropdown.innerHTML.includes("Machine Catalog"), "Dropdown shows Machine Catalog header");
+
+  toggleExerciseCatalogFilter("Machine", "exercise-name-input", "exercise-suggestions-dropdown");
+  assert(getActiveExerciseCatalogFilter() === null, "Tapping Machine filter again removes filter");
+  assert(pillMach.getAttribute('aria-pressed') === 'false', "Machine pill disengaged");
+
   // 5. Test newly added exercises in defaultCatalog
   const newExercises = [
     { name: "DB Hammer Curls", imp: "Dumbbell", mus: "Biceps" },
@@ -2051,7 +2081,21 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "EZ Bar Lying Down Tricep Extensions", imp: "Barbell", mus: "Triceps" },
     { name: "EZ Bar Tricep Pull Overs", imp: "Barbell", mus: "Triceps" },
     { name: "Bicep Curls", imp: "Dumbbell", mus: "Biceps" },
-    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" }
+    { name: "Banded Lateral Walk", imp: "Bodyweight", mus: "Hamstrings/Glutes" },
+    { name: "Ring Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Ring Tricep Extensions", imp: "Gymnastics Rings", mus: "Triceps" },
+    { name: "Ring H_V Raises", imp: "Gymnastics Rings", mus: "Shoulders" },
+    { name: "Ring Archer Push-Ups", imp: "Gymnastics Rings", mus: "Chest" },
+    { name: "Ring Pelican Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Ring SH Bicep Curls", imp: "Gymnastics Rings", mus: "Biceps" },
+    { name: "Chest Press (Machine)", imp: "Machine", mus: "Chest" },
+    { name: "Lat Pulldown (Cable)", imp: "Machine", mus: "Back" },
+    { name: "Leg Press (Machine)", imp: "Machine", mus: "Quads" },
+    { name: "Hack Squat (Machine)", imp: "Machine", mus: "Quads" },
+    { name: "Pec Deck Fly (Machine)", imp: "Machine", mus: "Chest" },
+    { name: "Seated Cable Row", imp: "Machine", mus: "Back" },
+    { name: "Cable Bicep Curl", imp: "Machine", mus: "Biceps" },
+    { name: "Cable Tricep Pushdown", imp: "Machine", mus: "Triceps" }
   ];
 
   newExercises.forEach(item => {
@@ -2060,6 +2104,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     assert(found.implement === item.imp, item.name + " implement matches " + item.imp);
     assert(found.muscle === item.mus, item.name + " muscle target matches " + item.mus);
   });
+
+  // Verify Ring H_V Raises aliases
+  assert(findCatalogExercise("ringh_vraises") !== null && findCatalogExercise("ringh_vraises").name === "Ring H_V Raises", "Alias ringh_vraises resolves to Ring H_V Raises");
+  assert(findCatalogExercise("ringh-vraises") !== null && findCatalogExercise("ringh-vraises").name === "Ring H_V Raises", "Alias ringh-vraises resolves to Ring H_V Raises");
+  assert(findCatalogExercise("ringhvraises") !== null && findCatalogExercise("ringhvraises").name === "Ring H_V Raises", "Alias ringhvraises resolves to Ring H_V Raises");
 
   // 6. Test logSet automatic muscle identification without manual input
   currentSessionSets = [];
