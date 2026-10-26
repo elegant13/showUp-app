@@ -562,11 +562,19 @@
     }
 
     /**
-     * Synthesizes an ethereal, delicate, definitively feminine singing crystal chime.
-     * Uses Web Audio API with higher-octave singing crystal frequencies (880 Hz A5 & 1318.5 Hz E6),
-     * shimmering celestial overtone harmonics, silky soft envelope, and angelic reverberation.
+     * Synthesizes a crisp, double-strike service counter bell ("Ding-Ding").
+     * Faithfully modeled on the classic brass/chrome desk call bell:
+     * - Two strikes spaced ~233ms apart (0.00s and 0.233s).
+     * - Resonant modes matching acoustic analysis of dingdingding.wav:
+     *   • 1286 Hz primary bell bowl resonance (with 1292 Hz chorus warmth)
+     *   • 2252 Hz high-energy bell rim chime mode (with 2258 Hz shimmer)
+     *   • 3324 Hz bright metallic overtone
+     *   • 4520 Hz crystalline harmonic
+     *   • 492 Hz mechanical dome/clapper body thump
+     * - Strike 1 has a rapid initial ring that damps as strike 2 arrives;
+     *   strike 2 rings out freely for 1.3s with natural exponential decay.
      */
-    function playCrystalHarpChime() {
+    function playDoubleDingChime() {
       try {
         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
         if (!AudioContextClass) return;
@@ -575,50 +583,64 @@
           ctx.resume();
         }
         const now = ctx.currentTime;
-        const duration = 2.0;
+        const totalDuration = 1.6;
 
-        // Master gain
         const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.34, now);
-        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        masterGain.gain.setValueAtTime(0.38, now);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, now + totalDuration);
         masterGain.connect(ctx.destination);
 
-        function strikeCrystalTone(startTime, baseFreq, level = 0.3) {
-          const strikeGain = ctx.createGain();
-          strikeGain.gain.setValueAtTime(0.001, startTime);
-          strikeGain.gain.linearRampToValueAtTime(level, startTime + 0.015); // soft celestial attack
-          strikeGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 1.8);
-          strikeGain.connect(masterGain);
+        const strikes = [0.0, 0.233];
+        const modes = [
+          { freq: 492,  gain: 0.12, decay: 0.18, type: 'sine' },      // Clapper body thump
+          { freq: 1286, gain: 0.55, decay: 1.25, type: 'sine' },      // Bell bowl fundamental
+          { freq: 1292, gain: 0.25, decay: 1.15, type: 'sine' },      // Acoustic beating / warmth
+          { freq: 2252, gain: 0.70, decay: 1.00, type: 'sine' },      // Ringing rim resonance
+          { freq: 2258, gain: 0.28, decay: 0.90, type: 'sine' },      // Shimmer detune
+          { freq: 3324, gain: 0.26, decay: 0.70, type: 'sine' },      // Metallic overtone
+          { freq: 4520, gain: 0.38, decay: 0.55, type: 'sine' }       // Bright crystalline sparkle
+        ];
 
-          const harmonics = [
-            { mult: 1.0, gain: 0.75, decay: 1.8 },      // Pure soprano fundamental
-            { mult: 1.005, gain: 0.65, decay: 1.7 },    // Shimmering celestial chorus
-            { mult: 2.0, gain: 0.40, decay: 1.4 },      // Bright crystal octave
-            { mult: 2.76, gain: 0.25, decay: 1.0 },     // Silver harmonic
-            { mult: 3.98, gain: 0.18, decay: 0.8 },     // Delicate star sparkle
-            { mult: 5.4, gain: 0.10, decay: 0.5 }       // High crystalline shimmer
-          ];
+        strikes.forEach((strikeOffset, idx) => {
+          const strikeTime = now + strikeOffset;
+          const isFinal = (idx === strikes.length - 1);
+          const strikeDecay = isFinal ? 1.0 : 0.22;
 
-          harmonics.forEach(h => {
+          // Mechanical clapper click transient (sharp 5ms contact tap)
+          try {
+            const clickOsc = ctx.createOscillator();
+            const clickGain = ctx.createGain();
+            clickOsc.type = 'triangle';
+            clickOsc.frequency.setValueAtTime(4200, strikeTime);
+            clickOsc.frequency.exponentialRampToValueAtTime(800, strikeTime + 0.006);
+            clickGain.gain.setValueAtTime(0.18, strikeTime);
+            clickGain.gain.exponentialRampToValueAtTime(0.0001, strikeTime + 0.006);
+            clickOsc.connect(clickGain);
+            clickGain.connect(masterGain);
+            clickOsc.start(strikeTime);
+            clickOsc.stop(strikeTime + 0.007);
+          } catch (e) {}
+
+          // Resonant chime modes
+          modes.forEach(m => {
             const osc = ctx.createOscillator();
             const g = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(baseFreq * h.mult, startTime);
-            const partDur = Math.max(0.1, 1.8 * (h.decay / 1.8));
-            g.gain.setValueAtTime(h.gain, startTime + 0.015);
-            g.gain.exponentialRampToValueAtTime(0.0001, startTime + partDur);
-            osc.connect(g);
-            g.connect(strikeGain);
-            osc.start(startTime);
-            osc.stop(startTime + partDur);
-          });
-        }
+            osc.type = m.type;
+            osc.frequency.setValueAtTime(m.freq, strikeTime);
 
-        // Melodic ascending crystal chime doublet (A5 ~880 Hz -> E6 ~1318.5 Hz)
-        strikeCrystalTone(now, 880, 0.28);
-        strikeCrystalTone(now + 0.16, 1318.5, 0.32);
+            const dur = isFinal ? m.decay : Math.min(m.decay, strikeDecay);
+            g.gain.setValueAtTime(0.001, strikeTime);
+            g.gain.linearRampToValueAtTime(m.gain, strikeTime + 0.002);
+            g.gain.exponentialRampToValueAtTime(0.0001, strikeTime + dur);
+
+            osc.connect(g);
+            g.connect(masterGain);
+            osc.start(strikeTime);
+            osc.stop(strikeTime + dur);
+          });
+        });
       } catch (e) {
-        console.warn("Rest timer crystal chime alert warning:", e);
+        console.warn("Rest timer double ding alert warning:", e);
       }
     }
 
@@ -706,17 +728,17 @@
     }
 
     const REST_CHIMES = {
-      boxing_bell: {
-        id: 'boxing_bell',
-        name: 'Arena Bell',
-        tag: 'Classic',
-        desc: 'Classic boxing round double strike',
-        icon: 'fa-solid fa-bell'
+      double_ding: {
+        id: 'double_ding',
+        name: 'Desk Bell',
+        tag: 'Double Ding',
+        desc: 'Double strike service counter bell (ding-ding)',
+        icon: 'fa-solid fa-bell-concierge'
       },
       triple_ding: {
         id: 'triple_ding',
         name: 'Desk Bell',
-        tag: 'Ding-Ding-Ding',
+        tag: 'Triple Ding',
         desc: 'Triple strike service counter bell (ding-ding-ding)',
         icon: 'fa-solid fa-bell-concierge'
       },
@@ -726,27 +748,20 @@
         tag: 'Masculine',
         desc: 'Definitively masculine: deep resonant brass gong',
         icon: 'fa-solid fa-shield-halved'
-      },
-      crystal_harp: {
-        id: 'crystal_harp',
-        name: 'Crystal Chime',
-        tag: 'Feminine',
-        desc: 'Definitively feminine: celestial singing crystal bowl',
-        icon: 'fa-solid fa-wand-magic-sparkles'
       }
     };
 
     function getRestChimeSound() {
       try {
         const val = localStorage.getItem('showUp_rest_chime_sound');
-        return REST_CHIMES[val] ? val : 'boxing_bell';
+        return REST_CHIMES[val] ? val : 'double_ding';
       } catch (e) {
-        return 'boxing_bell';
+        return 'double_ding';
       }
     }
 
     function setRestChimeSound(chimeId, preview = true) {
-      const valid = REST_CHIMES[chimeId] ? chimeId : 'boxing_bell';
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'double_ding';
       try {
         localStorage.setItem('showUp_rest_chime_sound', valid);
       } catch (e) {}
@@ -758,7 +773,7 @@
 
     function cycleRestChimeSound() {
       const current = getRestChimeSound();
-      const keys = ['boxing_bell', 'triple_ding', 'deep_gong', 'crystal_harp'];
+      const keys = ['double_ding', 'triple_ding', 'deep_gong'];
       const nextIndex = (keys.indexOf(current) + 1) % keys.length;
       const nextChime = keys[nextIndex];
       setRestChimeSound(nextChime, true);
@@ -773,14 +788,12 @@
     function playRestChime(explicitChimeId = null) {
       if (!isRestSoundAlertEnabled()) return;
       const chime = explicitChimeId || getRestChimeSound();
-      if (chime === 'deep_gong') {
-        playDeepGongChime();
-      } else if (chime === 'crystal_harp') {
-        playCrystalHarpChime();
-      } else if (chime === 'triple_ding') {
+      if (chime === 'triple_ding') {
         playTripleDingChime();
+      } else if (chime === 'deep_gong') {
+        playDeepGongChime();
       } else {
-        playDoubleBellRing();
+        playDoubleDingChime();
       }
     }
 
@@ -820,14 +833,14 @@
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
         showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function updateRestChimeUI() {
       const chimeId = getRestChimeSound();
-      const meta = REST_CHIMES[chimeId] || REST_CHIMES.boxing_bell;
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.double_ding;
 
       const chimeBtn = document.getElementById('btn-chime-cycle');
       const chimeIcon = document.getElementById('btn-chime-icon');
@@ -852,7 +865,7 @@
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
-      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
 
       if (bannerBtn && bannerIcon) {
         if (enabled) {
@@ -943,7 +956,7 @@
       window.triggerHaptic = triggerHaptic;
       window.playDoubleBellRing = playDoubleBellRing;
       window.playDeepGongChime = playDeepGongChime;
-      window.playCrystalHarpChime = playCrystalHarpChime;
+      window.playDoubleDingChime = playDoubleDingChime;
       window.playTripleDingChime = playTripleDingChime;
       window.REST_CHIMES = REST_CHIMES;
       window.playRestChime = playRestChime;
