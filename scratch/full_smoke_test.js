@@ -1839,6 +1839,61 @@ if (typeof window !== 'undefined') {
       toggleHRCardVisibility(isCollapsed);
     }
 
+    function isMusclesEngagedEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_muscles_engaged_enabled');
+        if (val === null) return true; // Enabled by default
+        return val === 'true';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function applyMusclesEngagedEnabledUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isMusclesEngagedEnabled();
+      const prefCheckbox = document.getElementById('pref-muscles-engaged-enabled');
+      if (prefCheckbox) prefCheckbox.checked = isEnabled;
+
+      const autoPill = document.getElementById('exercise-auto-muscles-pill');
+      const summaryMusclesBtn = document.getElementById('tab-btn-summary-muscles');
+      const summaryMusclesPane = document.getElementById('tab-pane-summary-muscles');
+      const muscleMapContainer = document.getElementById('muscle-map-container');
+
+      if (!isEnabled) {
+        if (autoPill) autoPill.classList.add('hidden');
+        if (summaryMusclesBtn) summaryMusclesBtn.classList.add('hidden');
+        if (summaryMusclesPane) summaryMusclesPane.classList.add('hidden');
+        if (muscleMapContainer) muscleMapContainer.classList.add('hidden');
+
+        // If currently on summary muscles tab, switch to overview
+        if (summaryMusclesBtn && summaryMusclesBtn.className && summaryMusclesBtn.className.includes('bg-emerald-500/20')) {
+          if (typeof switchSummaryTab === 'function') {
+            try { switchSummaryTab('overview'); } catch (e) {}
+          }
+        }
+      } else {
+        if (summaryMusclesBtn) summaryMusclesBtn.classList.remove('hidden');
+        if (muscleMapContainer) muscleMapContainer.classList.remove('hidden');
+
+        const exInput = document.getElementById('exercise-name-input');
+        if (exInput && exInput.value && exInput.value.trim() && typeof handleExerciseInput === 'function') {
+          try { handleExerciseInput(exInput.value); } catch (e) {}
+        }
+      }
+    }
+
+    function toggleMusclesEngagedEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_muscles_engaged_enabled', String(checked));
+      } catch (e) {}
+      applyMusclesEngagedEnabledUI(checked);
+      if (checked) {
+        if (typeof showToast === 'function') showToast("Muscles Engaged enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Muscles Engaged disabled", "info");
+      }
+    }
+
     function toggleHRCardVisibility(forceCollapse = null) {
       const hrBody = document.getElementById('hr-card-body');
       const icon = document.getElementById('hr-collapse-icon');
@@ -2839,6 +2894,9 @@ if (typeof window !== 'undefined') {
       window.isHRMEnabled = isHRMEnabled;
       window.applyHRMEnabledUI = applyHRMEnabledUI;
       window.toggleHRMEnabledPref = toggleHRMEnabledPref;
+      window.isMusclesEngagedEnabled = isMusclesEngagedEnabled;
+      window.applyMusclesEngagedEnabledUI = applyMusclesEngagedEnabledUI;
+      window.toggleMusclesEngagedEnabledPref = toggleMusclesEngagedEnabledPref;
     }
 
 
@@ -3004,6 +3062,10 @@ if (typeof window !== 'undefined') {
 
       if (typeof applyHRMEnabledUI === 'function') {
         applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : true);
+      }
+
+      if (typeof applyMusclesEngagedEnabledUI === 'function') {
+        applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : true);
       }
     }
 
@@ -5983,6 +6045,10 @@ if (typeof window !== 'undefined') {
     function updateAutoMusclesIndicator(val, profile) {
       const pill = document.getElementById('exercise-auto-muscles-pill');
       if (!pill) return;
+      if (typeof isMusclesEngagedEnabled === 'function' && !isMusclesEngagedEnabled()) {
+        pill.classList.add('hidden');
+        return;
+      }
       const trimmed = (val || '').trim();
       if (!trimmed || !profile) {
         pill.classList.add('hidden');
@@ -8417,6 +8483,9 @@ if (typeof window !== 'undefined') {
 
     function switchSummaryTab(tabName) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (tabName === 'muscles' && typeof isMusclesEngagedEnabled === 'function' && !isMusclesEngagedEnabled()) {
+        tabName = 'overview';
+      }
       const tabs = ['overview', 'muscles', 'sets'];
       tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-summary-${t}`);
@@ -20610,6 +20679,58 @@ runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscl
   const muscleMapCard = getOrCreateElement('muscle-map-container');
   assert(autoMusclesPill !== null, "exercise-auto-muscles-pill exists");
   assert(muscleMapCard !== null, "muscle-map-container exists");
+});
+
+runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
+  assert(typeof isMusclesEngagedEnabled === 'function', "isMusclesEngagedEnabled is a defined function");
+  assert(typeof applyMusclesEngagedEnabledUI === 'function', "applyMusclesEngagedEnabledUI is a defined function");
+  assert(typeof toggleMusclesEngagedEnabledPref === 'function', "toggleMusclesEngagedEnabledPref is a defined function");
+
+  const autoPill = getOrCreateElement('exercise-auto-muscles-pill');
+  const summaryMusclesBtn = getOrCreateElement('tab-btn-summary-muscles');
+  const summaryMusclesPane = getOrCreateElement('tab-pane-summary-muscles');
+  const muscleMapCard = getOrCreateElement('muscle-map-container');
+  const prefCheckbox = getOrCreateElement('pref-muscles-engaged-enabled');
+
+  // Verify default state is enabled (true)
+  localStorage.removeItem('showUp_muscles_engaged_enabled');
+  assert(isMusclesEngagedEnabled() === true, "Muscles Engaged defaults to enabled");
+  applyMusclesEngagedEnabledUI(true);
+  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button visible by default");
+  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container visible by default");
+
+  // Exercise indicator updates normally when enabled
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps", "Shoulders"] });
+  assert(!autoPill.classList.contains('hidden'), "Auto muscles pill is displayed when enabled and exercise entered");
+
+  // Disable Muscles Engaged
+  toggleMusclesEngagedEnabledPref(false);
+  assert(isMusclesEngagedEnabled() === false, "toggleMusclesEngagedEnabledPref(false) sets state to disabled");
+  assert(localStorage.getItem('showUp_muscles_engaged_enabled') === 'false', "Disabled state persists in localStorage");
+  assert(autoPill.classList.contains('hidden'), "Auto muscles pill is hidden when disabled");
+  assert(summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button is hidden when disabled");
+  assert(summaryMusclesPane.classList.contains('hidden'), "Summary Muscles pane is hidden when disabled");
+  assert(muscleMapCard.classList.contains('hidden'), "Muscle Map card container is hidden when disabled");
+
+  // Typing an exercise keeps auto muscles pill hidden when disabled
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
+  assert(autoPill.classList.contains('hidden'), "Auto muscles pill remains hidden on exercise input when disabled");
+
+  // Switching to 'muscles' summary tab redirects to 'overview' when disabled
+  switchSummaryTab('muscles');
+  const summaryOverviewPane = getOrCreateElement('tab-pane-summary-overview');
+  assert(!summaryOverviewPane.classList.contains('hidden'), "switchSummaryTab('muscles') redirects to overview when Muscles Engaged disabled");
+
+  // Re-enable Muscles Engaged
+  toggleMusclesEngagedEnabledPref(true);
+  assert(isMusclesEngagedEnabled() === true, "toggleMusclesEngagedEnabledPref(true) re-enables Muscles Engaged");
+  assert(localStorage.getItem('showUp_muscles_engaged_enabled') === 'true', "Enabled state persists in localStorage");
+  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button restored");
+  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container restored");
+
+  // Auto muscles pill displays again on exercise entry
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
+  assert(!autoPill.classList.contains('hidden'), "Auto muscles pill displays again after re-enabling");
 });
 
 print("\n============================================================");

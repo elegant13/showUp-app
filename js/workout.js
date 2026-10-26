@@ -1056,6 +1056,10 @@
     function updateAutoMusclesIndicator(val, profile) {
       const pill = document.getElementById('exercise-auto-muscles-pill');
       if (!pill) return;
+      if (typeof isMusclesEngagedEnabled === 'function' && !isMusclesEngagedEnabled()) {
+        pill.classList.add('hidden');
+        return;
+      }
       const trimmed = (val || '').trim();
       if (!trimmed || !profile) {
         pill.classList.add('hidden');
@@ -3490,6 +3494,9 @@
 
     function switchSummaryTab(tabName) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (tabName === 'muscles' && typeof isMusclesEngagedEnabled === 'function' && !isMusclesEngagedEnabled()) {
+        tabName = 'overview';
+      }
       const tabs = ['overview', 'muscles', 'sets'];
       tabs.forEach(t => {
         const btn = document.getElementById(`tab-btn-summary-${t}`);

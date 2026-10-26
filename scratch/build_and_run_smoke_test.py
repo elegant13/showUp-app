@@ -135,16 +135,18 @@ def generate_and_run_smoke_test():
         print("[FAIL] Filter toggle, Macebell (Gadaa), or collapsible Current Session Logs missing in HTML")
         return False
 
-    # 10. Check HRM Enable Option in Settings Defaults, 3s Pill Hang Time Copy, and Reduced Muscles Engaged Transparency in HTML
+    # 10. Check HRM & Muscles Engaged Enable Options in Settings Defaults, 3s Pill Hang Time Copy, and Reduced Muscles Engaged Transparency in HTML
     if ('id="pref-hrm-enabled"' in html and
         'id="pref-hrm-enabled-row"' in html and
         'id="pref-hr-collapsed-row"' in html and
+        'id="pref-muscles-engaged-enabled"' in html and
+        'id="pref-muscles-engaged-enabled-row"' in html and
         'bg-slate-900/55' in html and
         'opacity-100' in html and
         'app for 3 seconds without interrupting your session' in html):
-        print("[PASS] HRM enable option in Defaults, 3s pill hang time copy, and reduced Muscles Engaged transparency verified in HTML")
+        print("[PASS] HRM & Muscles Engaged enable options in Defaults, 3s pill hang time copy, and reduced Muscles Engaged transparency verified in HTML")
     else:
-        print("[FAIL] HRM enable option, 3s pill copy, or Muscles Engaged opacity missing in HTML")
+        print("[FAIL] HRM/Muscles Engaged enable option, 3s pill copy, or Muscles Engaged opacity missing in HTML")
         return False
 
     # Build the JSC Smoke Test JS File
@@ -3283,6 +3285,58 @@ runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscl
   const muscleMapCard = getOrCreateElement('muscle-map-container');
   assert(autoMusclesPill !== null, "exercise-auto-muscles-pill exists");
   assert(muscleMapCard !== null, "muscle-map-container exists");
+});
+
+runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
+  assert(typeof isMusclesEngagedEnabled === 'function', "isMusclesEngagedEnabled is a defined function");
+  assert(typeof applyMusclesEngagedEnabledUI === 'function', "applyMusclesEngagedEnabledUI is a defined function");
+  assert(typeof toggleMusclesEngagedEnabledPref === 'function', "toggleMusclesEngagedEnabledPref is a defined function");
+
+  const autoPill = getOrCreateElement('exercise-auto-muscles-pill');
+  const summaryMusclesBtn = getOrCreateElement('tab-btn-summary-muscles');
+  const summaryMusclesPane = getOrCreateElement('tab-pane-summary-muscles');
+  const muscleMapCard = getOrCreateElement('muscle-map-container');
+  const prefCheckbox = getOrCreateElement('pref-muscles-engaged-enabled');
+
+  // Verify default state is enabled (true)
+  localStorage.removeItem('showUp_muscles_engaged_enabled');
+  assert(isMusclesEngagedEnabled() === true, "Muscles Engaged defaults to enabled");
+  applyMusclesEngagedEnabledUI(true);
+  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button visible by default");
+  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container visible by default");
+
+  // Exercise indicator updates normally when enabled
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps", "Shoulders"] });
+  assert(!autoPill.classList.contains('hidden'), "Auto muscles pill is displayed when enabled and exercise entered");
+
+  // Disable Muscles Engaged
+  toggleMusclesEngagedEnabledPref(false);
+  assert(isMusclesEngagedEnabled() === false, "toggleMusclesEngagedEnabledPref(false) sets state to disabled");
+  assert(localStorage.getItem('showUp_muscles_engaged_enabled') === 'false', "Disabled state persists in localStorage");
+  assert(autoPill.classList.contains('hidden'), "Auto muscles pill is hidden when disabled");
+  assert(summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button is hidden when disabled");
+  assert(summaryMusclesPane.classList.contains('hidden'), "Summary Muscles pane is hidden when disabled");
+  assert(muscleMapCard.classList.contains('hidden'), "Muscle Map card container is hidden when disabled");
+
+  // Typing an exercise keeps auto muscles pill hidden when disabled
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
+  assert(autoPill.classList.contains('hidden'), "Auto muscles pill remains hidden on exercise input when disabled");
+
+  // Switching to 'muscles' summary tab redirects to 'overview' when disabled
+  switchSummaryTab('muscles');
+  const summaryOverviewPane = getOrCreateElement('tab-pane-summary-overview');
+  assert(!summaryOverviewPane.classList.contains('hidden'), "switchSummaryTab('muscles') redirects to overview when Muscles Engaged disabled");
+
+  // Re-enable Muscles Engaged
+  toggleMusclesEngagedEnabledPref(true);
+  assert(isMusclesEngagedEnabled() === true, "toggleMusclesEngagedEnabledPref(true) re-enables Muscles Engaged");
+  assert(localStorage.getItem('showUp_muscles_engaged_enabled') === 'true', "Enabled state persists in localStorage");
+  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button restored");
+  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container restored");
+
+  // Auto muscles pill displays again on exercise entry
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
+  assert(!autoPill.classList.contains('hidden'), "Auto muscles pill displays again after re-enabling");
 });
 
 print("\\n============================================================");

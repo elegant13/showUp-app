@@ -161,6 +161,10 @@
       if (typeof applyHRMEnabledUI === 'function') {
         applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : true);
       }
+
+      if (typeof applyMusclesEngagedEnabledUI === 'function') {
+        applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : true);
+      }
     }
 
 

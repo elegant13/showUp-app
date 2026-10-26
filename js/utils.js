@@ -129,6 +129,61 @@
       toggleHRCardVisibility(isCollapsed);
     }
 
+    function isMusclesEngagedEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_muscles_engaged_enabled');
+        if (val === null) return true; // Enabled by default
+        return val === 'true';
+      } catch (e) {
+        return true;
+      }
+    }
+
+    function applyMusclesEngagedEnabledUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isMusclesEngagedEnabled();
+      const prefCheckbox = document.getElementById('pref-muscles-engaged-enabled');
+      if (prefCheckbox) prefCheckbox.checked = isEnabled;
+
+      const autoPill = document.getElementById('exercise-auto-muscles-pill');
+      const summaryMusclesBtn = document.getElementById('tab-btn-summary-muscles');
+      const summaryMusclesPane = document.getElementById('tab-pane-summary-muscles');
+      const muscleMapContainer = document.getElementById('muscle-map-container');
+
+      if (!isEnabled) {
+        if (autoPill) autoPill.classList.add('hidden');
+        if (summaryMusclesBtn) summaryMusclesBtn.classList.add('hidden');
+        if (summaryMusclesPane) summaryMusclesPane.classList.add('hidden');
+        if (muscleMapContainer) muscleMapContainer.classList.add('hidden');
+
+        // If currently on summary muscles tab, switch to overview
+        if (summaryMusclesBtn && summaryMusclesBtn.className && summaryMusclesBtn.className.includes('bg-emerald-500/20')) {
+          if (typeof switchSummaryTab === 'function') {
+            try { switchSummaryTab('overview'); } catch (e) {}
+          }
+        }
+      } else {
+        if (summaryMusclesBtn) summaryMusclesBtn.classList.remove('hidden');
+        if (muscleMapContainer) muscleMapContainer.classList.remove('hidden');
+
+        const exInput = document.getElementById('exercise-name-input');
+        if (exInput && exInput.value && exInput.value.trim() && typeof handleExerciseInput === 'function') {
+          try { handleExerciseInput(exInput.value); } catch (e) {}
+        }
+      }
+    }
+
+    function toggleMusclesEngagedEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_muscles_engaged_enabled', String(checked));
+      } catch (e) {}
+      applyMusclesEngagedEnabledUI(checked);
+      if (checked) {
+        if (typeof showToast === 'function') showToast("Muscles Engaged enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Muscles Engaged disabled", "info");
+      }
+    }
+
     function toggleHRCardVisibility(forceCollapse = null) {
       const hrBody = document.getElementById('hr-card-body');
       const icon = document.getElementById('hr-collapse-icon');
@@ -1129,5 +1184,8 @@
       window.isHRMEnabled = isHRMEnabled;
       window.applyHRMEnabledUI = applyHRMEnabledUI;
       window.toggleHRMEnabledPref = toggleHRMEnabledPref;
+      window.isMusclesEngagedEnabled = isMusclesEngagedEnabled;
+      window.applyMusclesEngagedEnabledUI = applyMusclesEngagedEnabledUI;
+      window.toggleMusclesEngagedEnabledPref = toggleMusclesEngagedEnabledPref;
     }
 
