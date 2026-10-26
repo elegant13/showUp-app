@@ -197,7 +197,8 @@ globalThis.console = {
   log: () => {},
   warn: () => {},
   error: () => {},
-  info: () => {}
+  info: () => {},
+  debug: () => {}
 };
 
 globalThis.window = globalThis;
@@ -348,7 +349,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
 });
 
 runSuite("2. Theme Palette & Typography Engine", () => {
-  const palettes = ['orange', 'teal', 'lime', 'obsidian'];
+  const palettes = ['orange', 'teal', 'lime', 'india', 'obsidian'];
   palettes.forEach(p => {
     setThemePalette(p);
     assert(localStorage.getItem('showUp_theme_accent') === p, "Palette persistence for: " + p);
@@ -1100,6 +1101,7 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(weekBounds.endDateKey === "2026-10-18", "Week end key is Sunday Oct 18, 2026");
 
   // 2. Verify Tab Switching Across All Sections (Home, Workout, Calendar, Squads)
+  toggleSquadsEnabledPref(true);
   const homeView = getOrCreateElement('tab-home-view');
   const workoutView = getOrCreateElement('tab-workout-view');
   const calView = getOrCreateElement('tab-calendar-view');
@@ -2565,11 +2567,14 @@ runSuite("26. Workout in Progress HUD Redesign", () => {
   toggleSessionOptionsMenu();
   assert(menu.classList.contains('hidden'), "toggleSessionOptionsMenu closes menu");
 
-  // 7. Reset workout session clears sets and updates HUD
-  resetWorkoutSession();
-  assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
+  // 7. Cancel workout session clears sets and updates HUD
+  assert(typeof cancelWorkoutSession === 'function', "cancelWorkoutSession is defined");
+  cancelWorkoutSession(true);
+  assert(currentSessionSets.length === 0, "cancelWorkoutSession clears active sets");
   assert(completedEl.innerText === "0 exercises", "HUD completed exercises reset to 0 exercises");
   assert(setsLoggedEl.innerText === "0", "HUD sets logged reset to 0");
+  resetWorkoutSession();
+  assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
 });
 
 runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
@@ -2970,6 +2975,69 @@ runSuite("29. Streamlined Google OAuth Permissions & Non-Redundant Consent Flow"
   localStorage.removeItem('showUp_user_profile');
   lastTokenClientInitConfig = null;
   lastTokenClientRequestConfig = null;
+});
+
+runSuite("30. Enable Squads Module Defaults, isMe Safe Resolution & Rogue Squad Purge", function() {
+  const prefCheckbox = getOrCreateElement('pref-squads-enabled');
+  const navBtnSquads = getOrCreateElement('nav-btn-squads');
+  const bottomNavGrid = getOrCreateElement('bottom-nav-grid');
+  const squadsView = getOrCreateElement('tab-squads-view');
+
+  // 1. Verify Enable Squads Module Defaults Toggle
+  assert(typeof isSquadsEnabled === "function", "isSquadsEnabled is a defined function");
+  assert(typeof toggleSquadsEnabledPref === "function", "toggleSquadsEnabledPref is a defined function");
+  assert(typeof applySquadsEnabledUI === "function", "applySquadsEnabledUI is a defined function");
+
+  // Disable squads
+  toggleSquadsEnabledPref(false);
+  assert(isSquadsEnabled() === false, "isSquadsEnabled returns false when disabled");
+  assert(prefCheckbox.checked === false, "pref-squads-enabled checkbox is unchecked");
+  assert(navBtnSquads.classList.contains('hidden'), "nav-btn-squads is hidden when squads module disabled");
+  assert(bottomNavGrid.classList.contains('grid-cols-3'), "bottom-nav-grid adapts to grid-cols-3 when squads disabled");
+
+  // Attempt to switch to squads tab while disabled
+  switchTab('squads');
+  assert(squadsView.classList.contains('hidden'), "Squads view remains hidden when navigating to squads while disabled");
+
+  // Re-enable squads
+  toggleSquadsEnabledPref(true);
+  assert(isSquadsEnabled() === true, "isSquadsEnabled returns true when enabled");
+  assert(prefCheckbox.checked === true, "pref-squads-enabled checkbox is checked");
+  assert(!navBtnSquads.classList.contains('hidden'), "nav-btn-squads is visible when squads module enabled");
+  assert(bottomNavGrid.classList.contains('grid-cols-4'), "bottom-nav-grid returns to grid-cols-4 when squads enabled");
+
+  // 2. Verify getGlobalActiveAthletesCount resolves isMe cleanly without ReferenceError
+  assert(typeof getGlobalActiveAthletesCount === "function", "getGlobalActiveAthletesCount is a defined function");
+  let activeCount = null;
+  try {
+    activeCount = getGlobalActiveAthletesCount();
+  } catch (err) {
+    assert(false, "getGlobalActiveAthletesCount threw error: " + err.message);
+  }
+  assert(typeof activeCount === "number", "getGlobalActiveAthletesCount returns number without isMe reference error");
+
+  // 3. Verify Rogue Squad ('frie nds') Detection and Purge
+  assert(typeof isRogueFriendsSquad === "function", "isRogueFriendsSquad is a defined function");
+  assert(isRogueFriendsSquad("frie nds") === true, "isRogueFriendsSquad identifies 'frie nds'");
+  assert(isRogueFriendsSquad("friends") === true, "isRogueFriendsSquad identifies 'friends'");
+  assert(isRogueFriendsSquad("Friends") === true, "isRogueFriendsSquad is case-insensitive");
+  assert(isRogueFriendsSquad("Iron Collective") === false, "isRogueFriendsSquad does not match legitimate squads");
+  assert(isRogueFriendsSquad("Morning Crew") === false, "isRogueFriendsSquad does not match Morning Crew");
+
+  // Simulate injection of rogue squad
+  const rogueSquad = {
+    id: "squad_rogue_friends_test",
+    name: "frie nds",
+    createdAt: "2026-10-20T12:00:00.000Z",
+    creatorId: "unknown_user",
+    creatorName: "Unknown User",
+    creatorEmail: "unknown@example.com",
+    members: []
+  };
+  localStorage.setItem('showUp_squads', JSON.stringify([rogueSquad]));
+  purgeFriendsSquads();
+  const purgedSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+  assert(purgedSquads.length === 0, "purgeFriendsSquads eradicates rogue 'frie nds' squad from localStorage");
 });
 
 print("\\n============================================================");

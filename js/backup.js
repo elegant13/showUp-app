@@ -239,6 +239,32 @@
 
 
     function requestDriveAuthorization(autoSyncAfter = true) {
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+        if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
+          (async () => {
+            try {
+              const user = await window.NativeBridge.signInNativeGoogle();
+              if (user && user.authentication?.accessToken) {
+                googleAccessToken = user.authentication.accessToken;
+                localStorage.setItem('showUp_google_token', googleAccessToken);
+                updateCloudBackupUI();
+                showToast("Google Drive backup connected!", "success");
+                if (autoSyncAfter) {
+                  await syncToGoogleDrive(false);
+                }
+                return;
+              }
+            } catch (e) {
+              console.warn("Native drive auth notice:", e);
+            }
+            showToast("Cloud backup is available via athlete account sync.", "info");
+          })();
+        } else {
+          showToast("Cloud backup is available via athlete account sync.", "info");
+        }
+        return;
+      }
+
       if (window.location.protocol === 'file:') {
         alert("Google Drive authorization requires running showUp via HTTP or HTTPS (e.g. http://localhost:3000 or GitHub Pages).");
         return;
@@ -666,7 +692,8 @@
         }
 
         if (backupData.squads && Array.isArray(backupData.squads)) {
-          const rawSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+          const isFriendMatch = (s) => s && s.name && typeof s.name === 'string' && s.name.toLowerCase().replace(/\s+/g, '') === 'friends';
+          const rawSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective' && !isFriendMatch(s));
           // Only restore squads where athlete is creator or legitimately in members
           const cleanSquads = rawSquads.filter(sq => isAthleteMemberOrCreator(sq, user));
           cleanSquads.forEach(sq => {

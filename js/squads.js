@@ -350,6 +350,10 @@
         snapshot.forEach(doc => {
           const data = doc.data();
           if (data && data.id) {
+            if (typeof isRogueFriendsSquad === 'function' && isRogueFriendsSquad(data.name)) {
+              deleteSquadFromFirestore(data.id);
+              return;
+            }
             remoteSquadIds.add(data.id);
             if (isAthleteMemberOrCreator(data, user)) {
               remoteSquads.push(data);
@@ -531,7 +535,116 @@
       }
     }
 
+    function isRogueFriendsSquad(name) {
+      if (!name || typeof name !== 'string') return false;
+      const clean = name.toLowerCase().replace(/\s+/g, '');
+      return clean === 'friends' || clean === 'friendsquad' || clean === 'friend';
+    }
+
+    function purgeFriendsSquads() {
+      try {
+        let deletedAny = false;
+        const user = typeof getAppUser === 'function' ? getAppUser() : null;
+        const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
+
+        // 1. Check active squads in showUp_squads
+        let currentSquads = [];
+        try {
+          currentSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+        } catch (e) { currentSquads = []; }
+
+        const matched = currentSquads.filter(s => s && isRogueFriendsSquad(s.name));
+        if (matched.length > 0) {
+          matched.forEach(sq => {
+            console.info(`[Squad Purge] Found rogue squad "${sq.name}" (ID: ${sq.id}, Creator: ${sq.creatorName || sq.creatorId} <${sq.creatorEmail || 'no-email'}>, CreatedAt: ${sq.createdAt || 'unknown'})`);
+            deleteSquadFromFirestore(sq.id);
+            removeSquadFromGlobalRegistry(sq.id);
+          });
+          const remaining = currentSquads.filter(s => !s || !isRogueFriendsSquad(s.name));
+          localStorage.setItem('showUp_squads', JSON.stringify(remaining));
+          deletedAny = true;
+        }
+
+        // 2. Check per-user cached squads
+        if (userEmail) {
+          const userKey = 'showUp_user_squads_' + userEmail;
+          try {
+            const uSquads = JSON.parse(localStorage.getItem(userKey) || '[]');
+            const filtered = uSquads.filter(s => {
+              if (s && isRogueFriendsSquad(s.name)) {
+                console.info(`[Squad Purge] Purging rogue squad "${s.name}" from ${userKey}`);
+                deleteSquadFromFirestore(s.id);
+                removeSquadFromGlobalRegistry(s.id);
+                deletedAny = true;
+                return false;
+              }
+              return true;
+            });
+            localStorage.setItem(userKey, JSON.stringify(filtered));
+          } catch (e) {}
+        }
+
+        // 3. Check all localStorage keys starting with showUp_user_squads_
+        try {
+          if (typeof localStorage.key === 'function' && typeof localStorage.length === 'number') {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.startsWith('showUp_user_squads_')) {
+                const list = JSON.parse(localStorage.getItem(k) || '[]');
+                if (Array.isArray(list) && list.some(s => s && isRogueFriendsSquad(s.name))) {
+                  const cleanList = list.filter(s => !s || !isRogueFriendsSquad(s.name));
+                  localStorage.setItem(k, JSON.stringify(cleanList));
+                  deletedAny = true;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+
+        // 4. Check global squad registry
+        try {
+          const reg = JSON.parse(localStorage.getItem('showUp_global_squad_registry') || '[]');
+          if (Array.isArray(reg) && reg.some(s => s && isRogueFriendsSquad(s.name))) {
+            const filteredReg = reg.filter(s => {
+              if (s && isRogueFriendsSquad(s.name)) {
+                deleteSquadFromFirestore(s.id);
+                deletedAny = true;
+                return false;
+              }
+              return true;
+            });
+            localStorage.setItem('showUp_global_squad_registry', JSON.stringify(filteredReg));
+          }
+        } catch (e) {}
+
+        // 5. Check squad archive
+        try {
+          const arch = JSON.parse(localStorage.getItem('showUp_squad_archive') || '[]');
+          if (Array.isArray(arch) && arch.some(s => s && isRogueFriendsSquad(s.name))) {
+            const filteredArch = arch.filter(s => !s || !isRogueFriendsSquad(s.name));
+            localStorage.setItem('showUp_squad_archive', JSON.stringify(filteredArch));
+            deletedAny = true;
+          }
+        } catch (e) {}
+
+        if (deletedAny) {
+          if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+            try { syncToGoogleDrive(true); } catch (e) {}
+          }
+          if (typeof updateSquadBeacon === 'function') updateSquadBeacon();
+          if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI();
+        }
+      } catch (err) {
+        if (typeof console !== 'undefined' && console.debug) {
+          console.debug("purgeFriendsSquads notice:", err);
+        }
+      }
+    }
+
     function initSquads() {
+      // Purge any rogue 'frie nds' or 'friends' squads
+      purgeFriendsSquads();
+
       const isLoggedIn = isCustomerLoggedIn();
       if (!isLoggedIn) {
         // Logged-out athlete: zero squads or personal data loaded
@@ -578,7 +691,7 @@
       const squadMap = new Map();
 
       candidates.forEach(sq => {
-        if (!sq || !sq.name) return;
+        if (!sq || !sq.name || isRogueFriendsSquad(sq.name)) return;
         const key = sq.id || (sq.inviteCode ? `code_${sq.inviteCode}` : null);
         if (!key) return;
 
@@ -630,7 +743,7 @@
 
       // Filter out auto-fabricated squads or squads with dummy creators
       squads = squads.filter(sq => {
-        if (!sq || !sq.name) return false;
+        if (!sq || !sq.name || isRogueFriendsSquad(sq.name)) return false;
         if (sq.creatorName === 'Squad Leader' || (sq.creatorId && String(sq.creatorId).startsWith('creator_SHOWUP'))) return false;
         return isAthleteMemberOrCreator(sq, user);
       });
@@ -835,6 +948,16 @@
 
 
     function updateSquadBeacon() {
+      if (typeof isSquadsEnabled === 'function' && !isSquadsEnabled()) {
+        const navBeaconPing = document.getElementById('squad-nav-beacon');
+        const navBeaconDot = document.getElementById('squad-nav-beacon-dot');
+        const banner = document.getElementById('squad-active-beacon-banner');
+        if (navBeaconPing) navBeaconPing.classList.add('hidden');
+        if (navBeaconDot) navBeaconDot.classList.add('hidden');
+        if (banner) banner.classList.add('hidden');
+        return;
+      }
+
       const squads = getSquads();
       const user = getAppUser();
       let activeMemberCount = 0;

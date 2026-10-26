@@ -166,7 +166,82 @@
       }
     }
 
+    function isSquadsEnabled() {
+      try {
+        return localStorage.getItem('showUp_squads_enabled') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function applySquadsEnabledUI(enabled) {
+      const prefCheckbox = document.getElementById('pref-squads-enabled');
+      if (prefCheckbox) prefCheckbox.checked = !!enabled;
+
+      const navBtnSquads = document.getElementById('nav-btn-squads');
+      const bottomNavGrid = document.getElementById('bottom-nav-grid') || (navBtnSquads ? navBtnSquads.parentElement : null);
+      const squadsCardsRow = document.getElementById('pref-squads-collapsed-row');
+
+      if (navBtnSquads) {
+        if (enabled) {
+          navBtnSquads.classList.remove('hidden');
+        } else {
+          navBtnSquads.classList.add('hidden');
+        }
+      }
+
+      if (bottomNavGrid) {
+        if (enabled) {
+          bottomNavGrid.classList.remove('grid-cols-3');
+          bottomNavGrid.classList.add('grid-cols-4');
+        } else {
+          bottomNavGrid.classList.remove('grid-cols-4');
+          bottomNavGrid.classList.add('grid-cols-3');
+        }
+      }
+
+      if (squadsCardsRow) {
+        if (enabled) {
+          squadsCardsRow.classList.remove('opacity-40', 'pointer-events-none');
+        } else {
+          squadsCardsRow.classList.add('opacity-40', 'pointer-events-none');
+        }
+      }
+
+      // If squads view is currently visible and squads was disabled, switch back to home
+      const squadsView = document.getElementById('tab-squads-view');
+      if (!enabled && squadsView && !squadsView.classList.contains('hidden')) {
+        switchTab('home');
+      }
+
+      // Update beacon if defined
+      if (typeof updateSquadBeacon === 'function') {
+        try { updateSquadBeacon(); } catch (e) {}
+      }
+    }
+
+    function toggleSquadsEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_squads_enabled', String(checked));
+      } catch (e) {}
+      applySquadsEnabledUI(checked);
+      if (checked) {
+        if (typeof initSquads === 'function') {
+          try { initSquads(); } catch (e) {}
+        }
+        if (typeof renderSquadsTab === 'function') {
+          try { renderSquadsTab(); } catch (e) {}
+        }
+        if (typeof showToast === 'function') showToast("Squads module enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Squads module disabled", "info");
+      }
+    }
+
     function switchTab(tabName) {
+      if (tabName === 'squads' && !isSquadsEnabled()) {
+        tabName = 'home';
+      }
       try {
         if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
           window.scrollTo({ top: 0, behavior: 'instant' });
@@ -193,7 +268,12 @@
       if (btnHome) btnHome.className = inactiveClass;
       if (btnWorkout) btnWorkout.className = inactiveClass;
       if (btnCalendar) btnCalendar.className = inactiveClass;
-      if (btnSquads) btnSquads.className = inactiveClass;
+      if (btnSquads) {
+        btnSquads.className = inactiveClass;
+        if (typeof isSquadsEnabled === 'function' && !isSquadsEnabled()) {
+          btnSquads.classList.add('hidden');
+        }
+      }
 
       if (tabName === 'home') {
         if (homeView) homeView.classList.remove('hidden');

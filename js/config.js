@@ -3,6 +3,8 @@
    ========================================================================== */
 
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    const GOOGLE_IOS_CLIENT_ID = "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com";
+    const GOOGLE_ANDROID_CLIENT_ID = "115199141886-tj9e2vh8a8re1tga9vd3ddjnjoj0f3lv.apps.googleusercontent.com";
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     /**
@@ -440,6 +442,15 @@
 
     function getGoogleClientId() {
       return GOOGLE_CLIENT_ID;
+    }
+
+    function getNativeGoogleClientId() {
+      if (typeof window !== 'undefined' && window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+        const platform = window.Capacitor.getPlatform();
+        if (platform === 'ios') return GOOGLE_IOS_CLIENT_ID;
+        if (platform === 'android') return GOOGLE_ANDROID_CLIENT_ID;
+      }
+      return GOOGLE_IOS_CLIENT_ID;
     }
 
 

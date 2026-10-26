@@ -4,4 +4,5 @@
     <string name="title_activity_main">ShowUp</string>
     <string name="package_name">com.showup.fitness</string>
     <string name="custom_url_scheme">com.showup.fitness</string>
+    <string name="server_client_id">115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com</string>
 </resources>

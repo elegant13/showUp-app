@@ -61,17 +61,19 @@ body.font-mono {
   --m3-outline: #334155;
 }
 
+.theme-india,
+.theme-blue-india,
 .theme-lime,
 .theme-emerald {
-  --m3-primary: #84cc16;
-  --m3-primary-rgb: 132, 204, 22;
-  --m3-primary-light: #a3e635;
-  --m3-onPrimary: #1a2e05;
-  --m3-primaryContainer: rgba(132, 204, 22, 0.16);
-  --m3-onPrimaryContainer: #d9f99d;
-  --m3-secondary: #10b981;
-  --m3-secondaryContainer: #064e3b;
-  --m3-onSecondaryContainer: #a7f3d0;
+  --m3-primary: #1e90ff;
+  --m3-primary-rgb: 30, 144, 255;
+  --m3-primary-light: #60a5fa;
+  --m3-onPrimary: #ffffff;
+  --m3-primaryContainer: rgba(30, 144, 255, 0.18);
+  --m3-onPrimaryContainer: #dbeafe;
+  --m3-secondary: #0284c7;
+  --m3-secondaryContainer: #1e3a8a;
+  --m3-onSecondaryContainer: #eff6ff;
   --m3-surface: #0f172a;
   --m3-surfaceVariant: #1e293b;
   --m3-onSurface: #f8fafc;
@@ -310,6 +312,10 @@ input[type="range"] {
    Layout, Scrollbars & Mobile Safe Areas
    ========================================================================== */
 
+.header-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
 .bottom-nav-safe {
   position: fixed;
   bottom: 0;
@@ -327,6 +333,7 @@ input[type="range"] {
 }
 
 /* Bottom Navigation Buttons & Active States */
+#nav-btn-home,
 #nav-btn-workout,
 #nav-btn-calendar,
 #nav-btn-squads {
@@ -336,6 +343,7 @@ input[type="range"] {
   min-height: 48px;
 }
 
+#nav-btn-home.text-emerald-400,
 #nav-btn-workout.text-emerald-400,
 #nav-btn-calendar.text-emerald-400,
 #nav-btn-squads.text-emerald-400 {
@@ -345,16 +353,26 @@ input[type="range"] {
   font-weight: 700;
 }
 
+#nav-btn-home:hover:not(.text-emerald-400),
 #nav-btn-workout:hover:not(.text-emerald-400),
 #nav-btn-calendar:hover:not(.text-emerald-400),
 #nav-btn-squads:hover:not(.text-emerald-400) {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.ui-mode-light #nav-btn-home:hover:not(.text-emerald-400),
 .ui-mode-light #nav-btn-workout:hover:not(.text-emerald-400),
 .ui-mode-light #nav-btn-calendar:hover:not(.text-emerald-400),
 .ui-mode-light #nav-btn-squads:hover:not(.text-emerald-400) {
   background: #f1f5f9;
+}
+
+/* Rest Timer Numerals: Strictly Single-Line */
+#rest-timer-val,
+#rest-timer-target-val {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
+  display: inline-block;
 }
 
 @media (min-width: 640px) {

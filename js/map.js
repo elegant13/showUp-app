@@ -429,23 +429,32 @@
 
     function getGlobalActiveAthletesCount() {
       const user = getAppUser();
+      const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
       const isUserLifting = (
         Array.isArray(currentSessionSets) && 
         currentSessionSets.length > 0 && 
         currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
       );
       const squads = getSquads();
-      let squadActive = 0;
+      const activeTeammates = new Set();
       squads.forEach(sq => {
         if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
           if (!m) return;
+          const isMe = (
+            (user && m.id === user.id) || 
+            (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) || 
+            m.id === 'local_user'
+          );
           const isAct = m.isWorkingOut === true && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m));
-          if (isAct && !isMe) squadActive++;
+          if (isAct && !isMe) {
+            const key = m.id || m.email || (m.rawName || m.name);
+            if (key) activeTeammates.add(key);
+          }
         });
       });
 
-      return (isUserLifting ? 1 : 0) + squadActive;
+      return (isUserLifting ? 1 : 0) + activeTeammates.size;
     }
 
     function updateGlobalStatsUI() {

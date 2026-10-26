@@ -9,18 +9,27 @@
       "iconColor": "#10b981"
     },
     "CapacitorUpdater": {
-      "autoUpdate": true,
+      "autoUpdate": false,
       "channel": "production",
       "resetWhenUpdate": false
     },
     "SplashScreen": {
-      "launchShowDuration": 1200,
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
       "backgroundColor": "#020617",
       "showSpinner": false
     },
     "StatusBar": {
       "style": "DARK",
       "backgroundColor": "#020617"
+    },
+    "GoogleAuth": {
+      "scopes": ["profile", "email", "https://www.googleapis.com/auth/drive.file"],
+      "serverClientId": "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com",
+      "iosClientId": "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com",
+      "clientId": "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com",
+      "androidClientId": "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": false
     }
   }
 }

@@ -274,6 +274,9 @@
 
     function tryGoogleOneTap() {
       if (window.location.protocol === 'file:') return;
+      if (typeof window !== 'undefined' && ((window.NativeBridge && window.NativeBridge.isNative()) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()))) {
+        return;
+      }
       const checkAndRun = () => {
         if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
         const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
@@ -1669,8 +1672,54 @@
       }, 300);
     }
 
-    function handleGoogleSignIn() {
-      // If on file:// protocol or google SDK not loaded, open the resilient Auth Modal directly
+    async function handleGoogleSignIn() {
+      // 1. Native Capacitor GoogleAuth support
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+        if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
+          setGoogleLoginLoading(true);
+          try {
+            const user = await window.NativeBridge.signInNativeGoogle();
+            setGoogleLoginLoading(false);
+            if (user) {
+              const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'User');
+              const userEmail = user.email || '';
+              const picture = user.imageUrl || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+              const profileObj = { firstName, email: userEmail, picture };
+
+              localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+              if (user.authentication?.accessToken) {
+                googleAccessToken = user.authentication.accessToken;
+                localStorage.setItem('showUp_google_token', googleAccessToken);
+              }
+
+              updateProfileUI(firstName, userEmail, picture);
+              const loginBtn = document.getElementById('btn-google-login');
+              if (loginBtn) loginBtn.classList.add('hidden');
+              const userProf = document.getElementById('google-user-profile');
+              if (userProf) userProf.classList.remove('hidden');
+              showToast(`Welcome, ${firstName}!`, "success");
+              return;
+            }
+          } catch (nativeErr) {
+            setGoogleLoginLoading(false);
+            console.warn("Native GoogleAuth sign-in notice:", nativeErr);
+            if (nativeErr?.message && !nativeErr.message.includes('cancel') && !nativeErr.message.includes('12501')) {
+              showToast(`Google Sign-In: ${nativeErr.message || "Interrupted"}`, "warning");
+            }
+            openAuthLoginModal('signin');
+            return;
+          }
+        }
+
+        // On native platforms, NEVER execute web GSI popup (always blocked by Google in WebViews)
+        setGoogleLoginLoading(false);
+        showToast("Please sign in or register with your email & password below.", "info");
+        openAuthLoginModal('signin');
+        return;
+      }
+
+      // 3. Web flow (Google Identity Services)
       if (window.location.protocol === 'file:' || typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
         openAuthLoginModal();
         return;

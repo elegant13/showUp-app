@@ -1752,30 +1752,78 @@
       menu.classList.toggle('hidden');
     }
 
-    function resetWorkoutSession() {
-      if (typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) {
-        if (typeof confirm === 'function' && !confirm("Are you sure you want to reset this workout session? All logged sets for this session will be cleared.")) {
+    function cancelWorkoutSession(forceWithoutConfirm = false) {
+      if (!forceWithoutConfirm && ((typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) || (typeof workoutTimerSeconds !== 'undefined' && workoutTimerSeconds > 0) || isSetInProgress || isRestTimerRunning)) {
+        if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
           return;
         }
       }
+
+      // 1. Clear in-memory sets
       currentSessionSets = [];
+
+      // 2. Clear persistence storage for active workout
       try {
         localStorage.removeItem('showUp_active_workout_sets');
         localStorage.removeItem('showUp_workout_start_time');
         localStorage.removeItem('showUp_session_timer');
+        localStorage.removeItem('showUp_rest_timer_data');
       } catch (e) {}
-      if (typeof restartWorkoutTimer === 'function') {
-        workoutTimerSeconds = 0;
-        workoutTimerState = 'stopped';
-        if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+
+      // 3. Stop and reset workout session timer
+      workoutTimerSeconds = 0;
+      workoutTimerState = 'stopped';
+      if (workoutTimerInterval) {
+        clearInterval(workoutTimerInterval);
         workoutTimerInterval = null;
+      }
+      if (typeof updateWorkoutTimerUI === 'function') {
         updateWorkoutTimerUI();
+      }
+
+      // 4. Cancel active set in progress
+      if (isSetInProgress || activeSetTimerInterval) {
+        isSetInProgress = false;
+        activeSetStartTime = null;
+        activeSetElapsedSeconds = 0;
+        if (activeSetTimerInterval) {
+          clearInterval(activeSetTimerInterval);
+          activeSetTimerInterval = null;
+        }
+      }
+
+      // 5. Stop and reset rest timer
+      if (typeof stopRestTimer === 'function') {
+        stopRestTimer();
+      }
+      isRestTimerRunning = false;
+      restTimerStartTime = null;
+      restTimerSeconds = 0;
+      currentPendingRestPeriod = 0;
+      hasTriggeredRestRecoveryAlert = false;
+      currentSessionRestTarget = null;
+      if (typeof updateRestTimerUI === 'function') {
+        updateRestTimerUI();
+      }
+
+      // 6. Restore set entry controls and HUD to default state
+      if (typeof updateSetControlsUI === 'function') {
+        updateSetControlsUI();
       }
       renderLoggedSets();
       updateWorkoutSessionHUD();
+
+      // 7. Hide session options dropdown menu
+      const menu = document.getElementById('session-options-menu');
+      if (menu) menu.classList.add('hidden');
+
       if (typeof showToast === 'function') {
-        showToast("Workout session reset", "info");
+        showToast("Workout session cancelled", "info");
       }
+    }
+
+    function resetWorkoutSession() {
+      cancelWorkoutSession(true);
     }
 
     // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
@@ -3393,6 +3441,7 @@
       window.updateWorkoutSessionHUD = updateWorkoutSessionHUD;
       window.toggleSessionOptionsMenu = toggleSessionOptionsMenu;
       window.resetWorkoutSession = resetWorkoutSession;
+      window.cancelWorkoutSession = cancelWorkoutSession;
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
       window.getCurrentRestTarget = getCurrentRestTarget;

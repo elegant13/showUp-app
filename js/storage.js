@@ -42,6 +42,7 @@ const STORAGE_KEYS = {
   FONT: 'showUp_font',
   HR_COLLAPSED: 'showUp_hr_collapsed',
   SQUADS_DEFAULT_COLLAPSED: 'showUp_squads_default_collapsed',
+  SQUADS_ENABLED: 'showUp_squads_enabled',
 
   // Global Telemetry & Visitor Tracking
   GLOBAL_COUNTER_COUNT: 'showUp_global_counter_count',

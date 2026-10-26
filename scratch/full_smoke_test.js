@@ -80,7 +80,8 @@ globalThis.console = {
   log: () => {},
   warn: () => {},
   error: () => {},
-  info: () => {}
+  info: () => {},
+  debug: () => {}
 };
 
 globalThis.window = globalThis;
@@ -226,6 +227,8 @@ function runSuite(name, fn) {
    ========================================================================== */
 
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    const GOOGLE_IOS_CLIENT_ID = "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com";
+    const GOOGLE_ANDROID_CLIENT_ID = "115199141886-tj9e2vh8a8re1tga9vd3ddjnjoj0f3lv.apps.googleusercontent.com";
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     /**
@@ -665,6 +668,15 @@ function runSuite(name, fn) {
       return GOOGLE_CLIENT_ID;
     }
 
+    function getNativeGoogleClientId() {
+      if (typeof window !== 'undefined' && window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+        const platform = window.Capacitor.getPlatform();
+        if (platform === 'ios') return GOOGLE_IOS_CLIENT_ID;
+        if (platform === 'android') return GOOGLE_ANDROID_CLIENT_ID;
+      }
+      return GOOGLE_IOS_CLIENT_ID;
+    }
+
 
 
     let squadCreateSelectedIcon = 'dumbbell';
@@ -839,6 +851,7 @@ const STORAGE_KEYS = {
   FONT: 'showUp_font',
   HR_COLLAPSED: 'showUp_hr_collapsed',
   SQUADS_DEFAULT_COLLAPSED: 'showUp_squads_default_collapsed',
+  SQUADS_ENABLED: 'showUp_squads_enabled',
 
   // Global Telemetry & Visitor Tracking
   GLOBAL_COUNTER_COUNT: 'showUp_global_counter_count',
@@ -1859,7 +1872,82 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isSquadsEnabled() {
+      try {
+        return localStorage.getItem('showUp_squads_enabled') === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function applySquadsEnabledUI(enabled) {
+      const prefCheckbox = document.getElementById('pref-squads-enabled');
+      if (prefCheckbox) prefCheckbox.checked = !!enabled;
+
+      const navBtnSquads = document.getElementById('nav-btn-squads');
+      const bottomNavGrid = document.getElementById('bottom-nav-grid') || (navBtnSquads ? navBtnSquads.parentElement : null);
+      const squadsCardsRow = document.getElementById('pref-squads-collapsed-row');
+
+      if (navBtnSquads) {
+        if (enabled) {
+          navBtnSquads.classList.remove('hidden');
+        } else {
+          navBtnSquads.classList.add('hidden');
+        }
+      }
+
+      if (bottomNavGrid) {
+        if (enabled) {
+          bottomNavGrid.classList.remove('grid-cols-3');
+          bottomNavGrid.classList.add('grid-cols-4');
+        } else {
+          bottomNavGrid.classList.remove('grid-cols-4');
+          bottomNavGrid.classList.add('grid-cols-3');
+        }
+      }
+
+      if (squadsCardsRow) {
+        if (enabled) {
+          squadsCardsRow.classList.remove('opacity-40', 'pointer-events-none');
+        } else {
+          squadsCardsRow.classList.add('opacity-40', 'pointer-events-none');
+        }
+      }
+
+      // If squads view is currently visible and squads was disabled, switch back to home
+      const squadsView = document.getElementById('tab-squads-view');
+      if (!enabled && squadsView && !squadsView.classList.contains('hidden')) {
+        switchTab('home');
+      }
+
+      // Update beacon if defined
+      if (typeof updateSquadBeacon === 'function') {
+        try { updateSquadBeacon(); } catch (e) {}
+      }
+    }
+
+    function toggleSquadsEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_squads_enabled', String(checked));
+      } catch (e) {}
+      applySquadsEnabledUI(checked);
+      if (checked) {
+        if (typeof initSquads === 'function') {
+          try { initSquads(); } catch (e) {}
+        }
+        if (typeof renderSquadsTab === 'function') {
+          try { renderSquadsTab(); } catch (e) {}
+        }
+        if (typeof showToast === 'function') showToast("Squads module enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Squads module disabled", "info");
+      }
+    }
+
     function switchTab(tabName) {
+      if (tabName === 'squads' && !isSquadsEnabled()) {
+        tabName = 'home';
+      }
       try {
         if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
           window.scrollTo({ top: 0, behavior: 'instant' });
@@ -1886,7 +1974,12 @@ if (typeof window !== 'undefined') {
       if (btnHome) btnHome.className = inactiveClass;
       if (btnWorkout) btnWorkout.className = inactiveClass;
       if (btnCalendar) btnCalendar.className = inactiveClass;
-      if (btnSquads) btnSquads.className = inactiveClass;
+      if (btnSquads) {
+        btnSquads.className = inactiveClass;
+        if (typeof isSquadsEnabled === 'function' && !isSquadsEnabled()) {
+          btnSquads.classList.add('hidden');
+        }
+      }
 
       if (tabName === 'home') {
         if (homeView) homeView.classList.remove('hidden');
@@ -2735,7 +2828,9 @@ if (typeof window !== 'undefined') {
     });
 
     const THEME_ALIASES = {
-      'emerald': 'lime',
+      'lime': 'india',
+      'emerald': 'india',
+      'blue-india': 'india',
       'amoled': 'obsidian',
       'slate': 'obsidian',
       'blue': 'teal',
@@ -2744,13 +2839,20 @@ if (typeof window !== 'undefined') {
 
     function setThemePalette(themeKey) {
       if (!themeKey) themeKey = 'orange';
+      const canonical = THEME_ALIASES[themeKey] || themeKey;
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\btheme-\S+/g, '').trim();
-        body.classList.add(`theme-${themeKey}`);
+        body.classList.add(`theme-${canonical}`);
+        if (canonical !== themeKey) {
+          body.classList.add(`theme-${themeKey}`);
+        }
       }
       if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+        let base = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim();
+        base += ` theme-${canonical}`;
+        if (canonical !== themeKey) base += ` theme-${themeKey}`;
+        document.documentElement.className = base;
       }
       
       localStorage.setItem('showUp_theme', themeKey);
@@ -2814,6 +2916,10 @@ if (typeof window !== 'undefined') {
       const savedSquadsCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
       const prefSquadsEl = document.getElementById('pref-squads-collapsed');
       if (prefSquadsEl) prefSquadsEl.checked = savedSquadsCollapsed;
+
+      if (typeof applySquadsEnabledUI === 'function') {
+        applySquadsEnabledUI(typeof isSquadsEnabled === 'function' ? isSquadsEnabled() : false);
+      }
     }
 
 
@@ -3161,6 +3267,9 @@ if (typeof window !== 'undefined') {
 
     function tryGoogleOneTap() {
       if (window.location.protocol === 'file:') return;
+      if (typeof window !== 'undefined' && ((window.NativeBridge && window.NativeBridge.isNative()) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()))) {
+        return;
+      }
       const checkAndRun = () => {
         if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
         const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
@@ -4556,8 +4665,54 @@ if (typeof window !== 'undefined') {
       }, 300);
     }
 
-    function handleGoogleSignIn() {
-      // If on file:// protocol or google SDK not loaded, open the resilient Auth Modal directly
+    async function handleGoogleSignIn() {
+      // 1. Native Capacitor GoogleAuth support
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+        if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
+          setGoogleLoginLoading(true);
+          try {
+            const user = await window.NativeBridge.signInNativeGoogle();
+            setGoogleLoginLoading(false);
+            if (user) {
+              const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'User');
+              const userEmail = user.email || '';
+              const picture = user.imageUrl || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+              const profileObj = { firstName, email: userEmail, picture };
+
+              localStorage.setItem('showUp_user_profile', JSON.stringify(profileObj));
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+              if (user.authentication?.accessToken) {
+                googleAccessToken = user.authentication.accessToken;
+                localStorage.setItem('showUp_google_token', googleAccessToken);
+              }
+
+              updateProfileUI(firstName, userEmail, picture);
+              const loginBtn = document.getElementById('btn-google-login');
+              if (loginBtn) loginBtn.classList.add('hidden');
+              const userProf = document.getElementById('google-user-profile');
+              if (userProf) userProf.classList.remove('hidden');
+              showToast(`Welcome, ${firstName}!`, "success");
+              return;
+            }
+          } catch (nativeErr) {
+            setGoogleLoginLoading(false);
+            console.warn("Native GoogleAuth sign-in notice:", nativeErr);
+            if (nativeErr?.message && !nativeErr.message.includes('cancel') && !nativeErr.message.includes('12501')) {
+              showToast(`Google Sign-In: ${nativeErr.message || "Interrupted"}`, "warning");
+            }
+            openAuthLoginModal('signin');
+            return;
+          }
+        }
+
+        // On native platforms, NEVER execute web GSI popup (always blocked by Google in WebViews)
+        setGoogleLoginLoading(false);
+        showToast("Please sign in or register with your email & password below.", "info");
+        openAuthLoginModal('signin');
+        return;
+      }
+
+      // 3. Web flow (Google Identity Services)
       if (window.location.protocol === 'file:' || typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
         openAuthLoginModal();
         return;
@@ -6394,30 +6549,78 @@ if (typeof window !== 'undefined') {
       menu.classList.toggle('hidden');
     }
 
-    function resetWorkoutSession() {
-      if (typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) {
-        if (typeof confirm === 'function' && !confirm("Are you sure you want to reset this workout session? All logged sets for this session will be cleared.")) {
+    function cancelWorkoutSession(forceWithoutConfirm = false) {
+      if (!forceWithoutConfirm && ((typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) || (typeof workoutTimerSeconds !== 'undefined' && workoutTimerSeconds > 0) || isSetInProgress || isRestTimerRunning)) {
+        if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
           return;
         }
       }
+
+      // 1. Clear in-memory sets
       currentSessionSets = [];
+
+      // 2. Clear persistence storage for active workout
       try {
         localStorage.removeItem('showUp_active_workout_sets');
         localStorage.removeItem('showUp_workout_start_time');
         localStorage.removeItem('showUp_session_timer');
+        localStorage.removeItem('showUp_rest_timer_data');
       } catch (e) {}
-      if (typeof restartWorkoutTimer === 'function') {
-        workoutTimerSeconds = 0;
-        workoutTimerState = 'stopped';
-        if (workoutTimerInterval) clearInterval(workoutTimerInterval);
+
+      // 3. Stop and reset workout session timer
+      workoutTimerSeconds = 0;
+      workoutTimerState = 'stopped';
+      if (workoutTimerInterval) {
+        clearInterval(workoutTimerInterval);
         workoutTimerInterval = null;
+      }
+      if (typeof updateWorkoutTimerUI === 'function') {
         updateWorkoutTimerUI();
+      }
+
+      // 4. Cancel active set in progress
+      if (isSetInProgress || activeSetTimerInterval) {
+        isSetInProgress = false;
+        activeSetStartTime = null;
+        activeSetElapsedSeconds = 0;
+        if (activeSetTimerInterval) {
+          clearInterval(activeSetTimerInterval);
+          activeSetTimerInterval = null;
+        }
+      }
+
+      // 5. Stop and reset rest timer
+      if (typeof stopRestTimer === 'function') {
+        stopRestTimer();
+      }
+      isRestTimerRunning = false;
+      restTimerStartTime = null;
+      restTimerSeconds = 0;
+      currentPendingRestPeriod = 0;
+      hasTriggeredRestRecoveryAlert = false;
+      currentSessionRestTarget = null;
+      if (typeof updateRestTimerUI === 'function') {
+        updateRestTimerUI();
+      }
+
+      // 6. Restore set entry controls and HUD to default state
+      if (typeof updateSetControlsUI === 'function') {
+        updateSetControlsUI();
       }
       renderLoggedSets();
       updateWorkoutSessionHUD();
+
+      // 7. Hide session options dropdown menu
+      const menu = document.getElementById('session-options-menu');
+      if (menu) menu.classList.add('hidden');
+
       if (typeof showToast === 'function') {
-        showToast("Workout session reset", "info");
+        showToast("Workout session cancelled", "info");
       }
+    }
+
+    function resetWorkoutSession() {
+      cancelWorkoutSession(true);
     }
 
     // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
@@ -8035,6 +8238,7 @@ if (typeof window !== 'undefined') {
       window.updateWorkoutSessionHUD = updateWorkoutSessionHUD;
       window.toggleSessionOptionsMenu = toggleSessionOptionsMenu;
       window.resetWorkoutSession = resetWorkoutSession;
+      window.cancelWorkoutSession = cancelWorkoutSession;
       window.cancelActiveSetTimer = cancelActiveSetTimer;
       window.formatTimerMS = formatTimerMS;
       window.getCurrentRestTarget = getCurrentRestTarget;
@@ -10495,6 +10699,10 @@ if (typeof window !== 'undefined') {
         snapshot.forEach(doc => {
           const data = doc.data();
           if (data && data.id) {
+            if (typeof isRogueFriendsSquad === 'function' && isRogueFriendsSquad(data.name)) {
+              deleteSquadFromFirestore(data.id);
+              return;
+            }
             remoteSquadIds.add(data.id);
             if (isAthleteMemberOrCreator(data, user)) {
               remoteSquads.push(data);
@@ -10676,7 +10884,116 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isRogueFriendsSquad(name) {
+      if (!name || typeof name !== 'string') return false;
+      const clean = name.toLowerCase().replace(/\s+/g, '');
+      return clean === 'friends' || clean === 'friendsquad' || clean === 'friend';
+    }
+
+    function purgeFriendsSquads() {
+      try {
+        let deletedAny = false;
+        const user = typeof getAppUser === 'function' ? getAppUser() : null;
+        const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
+
+        // 1. Check active squads in showUp_squads
+        let currentSquads = [];
+        try {
+          currentSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+        } catch (e) { currentSquads = []; }
+
+        const matched = currentSquads.filter(s => s && isRogueFriendsSquad(s.name));
+        if (matched.length > 0) {
+          matched.forEach(sq => {
+            console.info(`[Squad Purge] Found rogue squad "${sq.name}" (ID: ${sq.id}, Creator: ${sq.creatorName || sq.creatorId} <${sq.creatorEmail || 'no-email'}>, CreatedAt: ${sq.createdAt || 'unknown'})`);
+            deleteSquadFromFirestore(sq.id);
+            removeSquadFromGlobalRegistry(sq.id);
+          });
+          const remaining = currentSquads.filter(s => !s || !isRogueFriendsSquad(s.name));
+          localStorage.setItem('showUp_squads', JSON.stringify(remaining));
+          deletedAny = true;
+        }
+
+        // 2. Check per-user cached squads
+        if (userEmail) {
+          const userKey = 'showUp_user_squads_' + userEmail;
+          try {
+            const uSquads = JSON.parse(localStorage.getItem(userKey) || '[]');
+            const filtered = uSquads.filter(s => {
+              if (s && isRogueFriendsSquad(s.name)) {
+                console.info(`[Squad Purge] Purging rogue squad "${s.name}" from ${userKey}`);
+                deleteSquadFromFirestore(s.id);
+                removeSquadFromGlobalRegistry(s.id);
+                deletedAny = true;
+                return false;
+              }
+              return true;
+            });
+            localStorage.setItem(userKey, JSON.stringify(filtered));
+          } catch (e) {}
+        }
+
+        // 3. Check all localStorage keys starting with showUp_user_squads_
+        try {
+          if (typeof localStorage.key === 'function' && typeof localStorage.length === 'number') {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.startsWith('showUp_user_squads_')) {
+                const list = JSON.parse(localStorage.getItem(k) || '[]');
+                if (Array.isArray(list) && list.some(s => s && isRogueFriendsSquad(s.name))) {
+                  const cleanList = list.filter(s => !s || !isRogueFriendsSquad(s.name));
+                  localStorage.setItem(k, JSON.stringify(cleanList));
+                  deletedAny = true;
+                }
+              }
+            }
+          }
+        } catch (e) {}
+
+        // 4. Check global squad registry
+        try {
+          const reg = JSON.parse(localStorage.getItem('showUp_global_squad_registry') || '[]');
+          if (Array.isArray(reg) && reg.some(s => s && isRogueFriendsSquad(s.name))) {
+            const filteredReg = reg.filter(s => {
+              if (s && isRogueFriendsSquad(s.name)) {
+                deleteSquadFromFirestore(s.id);
+                deletedAny = true;
+                return false;
+              }
+              return true;
+            });
+            localStorage.setItem('showUp_global_squad_registry', JSON.stringify(filteredReg));
+          }
+        } catch (e) {}
+
+        // 5. Check squad archive
+        try {
+          const arch = JSON.parse(localStorage.getItem('showUp_squad_archive') || '[]');
+          if (Array.isArray(arch) && arch.some(s => s && isRogueFriendsSquad(s.name))) {
+            const filteredArch = arch.filter(s => !s || !isRogueFriendsSquad(s.name));
+            localStorage.setItem('showUp_squad_archive', JSON.stringify(filteredArch));
+            deletedAny = true;
+          }
+        } catch (e) {}
+
+        if (deletedAny) {
+          if (typeof syncToGoogleDrive === 'function' && localStorage.getItem('showUp_google_token')) {
+            try { syncToGoogleDrive(true); } catch (e) {}
+          }
+          if (typeof updateSquadBeacon === 'function') updateSquadBeacon();
+          if (typeof updateGlobalStatsUI === 'function') updateGlobalStatsUI();
+        }
+      } catch (err) {
+        if (typeof console !== 'undefined' && console.debug) {
+          console.debug("purgeFriendsSquads notice:", err);
+        }
+      }
+    }
+
     function initSquads() {
+      // Purge any rogue 'frie nds' or 'friends' squads
+      purgeFriendsSquads();
+
       const isLoggedIn = isCustomerLoggedIn();
       if (!isLoggedIn) {
         // Logged-out athlete: zero squads or personal data loaded
@@ -10723,7 +11040,7 @@ if (typeof window !== 'undefined') {
       const squadMap = new Map();
 
       candidates.forEach(sq => {
-        if (!sq || !sq.name) return;
+        if (!sq || !sq.name || isRogueFriendsSquad(sq.name)) return;
         const key = sq.id || (sq.inviteCode ? `code_${sq.inviteCode}` : null);
         if (!key) return;
 
@@ -10775,7 +11092,7 @@ if (typeof window !== 'undefined') {
 
       // Filter out auto-fabricated squads or squads with dummy creators
       squads = squads.filter(sq => {
-        if (!sq || !sq.name) return false;
+        if (!sq || !sq.name || isRogueFriendsSquad(sq.name)) return false;
         if (sq.creatorName === 'Squad Leader' || (sq.creatorId && String(sq.creatorId).startsWith('creator_SHOWUP'))) return false;
         return isAthleteMemberOrCreator(sq, user);
       });
@@ -10980,6 +11297,16 @@ if (typeof window !== 'undefined') {
 
 
     function updateSquadBeacon() {
+      if (typeof isSquadsEnabled === 'function' && !isSquadsEnabled()) {
+        const navBeaconPing = document.getElementById('squad-nav-beacon');
+        const navBeaconDot = document.getElementById('squad-nav-beacon-dot');
+        const banner = document.getElementById('squad-active-beacon-banner');
+        if (navBeaconPing) navBeaconPing.classList.add('hidden');
+        if (navBeaconDot) navBeaconDot.classList.add('hidden');
+        if (banner) banner.classList.add('hidden');
+        return;
+      }
+
       const squads = getSquads();
       const user = getAppUser();
       let activeMemberCount = 0;
@@ -13776,23 +14103,32 @@ if (typeof window !== 'undefined') {
 
     function getGlobalActiveAthletesCount() {
       const user = getAppUser();
+      const userEmail = (user && user.email) ? user.email.toLowerCase().trim() : '';
       const isUserLifting = (
         Array.isArray(currentSessionSets) && 
         currentSessionSets.length > 0 && 
         currentSessionSets.some(s => s && (Number(s.reps) > 0 || Number(s.weight) > 0 || Number(s.duration) > 0))
       );
       const squads = getSquads();
-      let squadActive = 0;
+      const activeTeammates = new Set();
       squads.forEach(sq => {
         if (!sq || !Array.isArray(sq.members)) return;
         sq.members.forEach(m => {
           if (!m) return;
+          const isMe = (
+            (user && m.id === user.id) || 
+            (userEmail && m.email && m.email.toLowerCase().trim() === userEmail) || 
+            m.id === 'local_user'
+          );
           const isAct = m.isWorkingOut === true && (typeof isMemberWorkoutActive !== 'function' || isMemberWorkoutActive(m));
-          if (isAct && !isMe) squadActive++;
+          if (isAct && !isMe) {
+            const key = m.id || m.email || (m.rawName || m.name);
+            if (key) activeTeammates.add(key);
+          }
         });
       });
 
-      return (isUserLifting ? 1 : 0) + squadActive;
+      return (isUserLifting ? 1 : 0) + activeTeammates.size;
     }
 
     function updateGlobalStatsUI() {
@@ -15964,6 +16300,32 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
 
 
     function requestDriveAuthorization(autoSyncAfter = true) {
+      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+        if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
+          (async () => {
+            try {
+              const user = await window.NativeBridge.signInNativeGoogle();
+              if (user && user.authentication?.accessToken) {
+                googleAccessToken = user.authentication.accessToken;
+                localStorage.setItem('showUp_google_token', googleAccessToken);
+                updateCloudBackupUI();
+                showToast("Google Drive backup connected!", "success");
+                if (autoSyncAfter) {
+                  await syncToGoogleDrive(false);
+                }
+                return;
+              }
+            } catch (e) {
+              console.warn("Native drive auth notice:", e);
+            }
+            showToast("Cloud backup is available via athlete account sync.", "info");
+          })();
+        } else {
+          showToast("Cloud backup is available via athlete account sync.", "info");
+        }
+        return;
+      }
+
       if (window.location.protocol === 'file:') {
         alert("Google Drive authorization requires running showUp via HTTP or HTTPS (e.g. http://localhost:3000 or GitHub Pages).");
         return;
@@ -16391,7 +16753,8 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         }
 
         if (backupData.squads && Array.isArray(backupData.squads)) {
-          const rawSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective');
+          const isFriendMatch = (s) => s && s.name && typeof s.name === 'string' && s.name.toLowerCase().replace(/\s+/g, '') === 'friends';
+          const rawSquads = backupData.squads.filter(s => s && s.id !== 'squad_iron_collective' && s.name !== 'Iron Collective' && !isFriendMatch(s));
           // Only restore squads where athlete is creator or legitimately in members
           const cleanSquads = rawSquads.filter(sq => isAthleteMemberOrCreator(sq, user));
           cleanSquads.forEach(sq => {
@@ -16944,7 +17307,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
 });
 
 runSuite("2. Theme Palette & Typography Engine", () => {
-  const palettes = ['orange', 'teal', 'lime', 'obsidian'];
+  const palettes = ['orange', 'teal', 'lime', 'india', 'obsidian'];
   palettes.forEach(p => {
     setThemePalette(p);
     assert(localStorage.getItem('showUp_theme_accent') === p, "Palette persistence for: " + p);
@@ -17696,6 +18059,7 @@ runSuite("14. Calendar Monday Start & Home Section Weekly Outlook / Celebration"
   assert(weekBounds.endDateKey === "2026-10-18", "Week end key is Sunday Oct 18, 2026");
 
   // 2. Verify Tab Switching Across All Sections (Home, Workout, Calendar, Squads)
+  toggleSquadsEnabledPref(true);
   const homeView = getOrCreateElement('tab-home-view');
   const workoutView = getOrCreateElement('tab-workout-view');
   const calView = getOrCreateElement('tab-calendar-view');
@@ -19161,11 +19525,14 @@ runSuite("26. Workout in Progress HUD Redesign", () => {
   toggleSessionOptionsMenu();
   assert(menu.classList.contains('hidden'), "toggleSessionOptionsMenu closes menu");
 
-  // 7. Reset workout session clears sets and updates HUD
-  resetWorkoutSession();
-  assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
+  // 7. Cancel workout session clears sets and updates HUD
+  assert(typeof cancelWorkoutSession === 'function', "cancelWorkoutSession is defined");
+  cancelWorkoutSession(true);
+  assert(currentSessionSets.length === 0, "cancelWorkoutSession clears active sets");
   assert(completedEl.innerText === "0 exercises", "HUD completed exercises reset to 0 exercises");
   assert(setsLoggedEl.innerText === "0", "HUD sets logged reset to 0");
+  resetWorkoutSession();
+  assert(currentSessionSets.length === 0, "resetWorkoutSession clears active sets");
 });
 
 runSuite("27. Start Set Passive CTA & Conspicuous Active Timer", () => {
@@ -19566,6 +19933,69 @@ runSuite("29. Streamlined Google OAuth Permissions & Non-Redundant Consent Flow"
   localStorage.removeItem('showUp_user_profile');
   lastTokenClientInitConfig = null;
   lastTokenClientRequestConfig = null;
+});
+
+runSuite("30. Enable Squads Module Defaults, isMe Safe Resolution & Rogue Squad Purge", function() {
+  const prefCheckbox = getOrCreateElement('pref-squads-enabled');
+  const navBtnSquads = getOrCreateElement('nav-btn-squads');
+  const bottomNavGrid = getOrCreateElement('bottom-nav-grid');
+  const squadsView = getOrCreateElement('tab-squads-view');
+
+  // 1. Verify Enable Squads Module Defaults Toggle
+  assert(typeof isSquadsEnabled === "function", "isSquadsEnabled is a defined function");
+  assert(typeof toggleSquadsEnabledPref === "function", "toggleSquadsEnabledPref is a defined function");
+  assert(typeof applySquadsEnabledUI === "function", "applySquadsEnabledUI is a defined function");
+
+  // Disable squads
+  toggleSquadsEnabledPref(false);
+  assert(isSquadsEnabled() === false, "isSquadsEnabled returns false when disabled");
+  assert(prefCheckbox.checked === false, "pref-squads-enabled checkbox is unchecked");
+  assert(navBtnSquads.classList.contains('hidden'), "nav-btn-squads is hidden when squads module disabled");
+  assert(bottomNavGrid.classList.contains('grid-cols-3'), "bottom-nav-grid adapts to grid-cols-3 when squads disabled");
+
+  // Attempt to switch to squads tab while disabled
+  switchTab('squads');
+  assert(squadsView.classList.contains('hidden'), "Squads view remains hidden when navigating to squads while disabled");
+
+  // Re-enable squads
+  toggleSquadsEnabledPref(true);
+  assert(isSquadsEnabled() === true, "isSquadsEnabled returns true when enabled");
+  assert(prefCheckbox.checked === true, "pref-squads-enabled checkbox is checked");
+  assert(!navBtnSquads.classList.contains('hidden'), "nav-btn-squads is visible when squads module enabled");
+  assert(bottomNavGrid.classList.contains('grid-cols-4'), "bottom-nav-grid returns to grid-cols-4 when squads enabled");
+
+  // 2. Verify getGlobalActiveAthletesCount resolves isMe cleanly without ReferenceError
+  assert(typeof getGlobalActiveAthletesCount === "function", "getGlobalActiveAthletesCount is a defined function");
+  let activeCount = null;
+  try {
+    activeCount = getGlobalActiveAthletesCount();
+  } catch (err) {
+    assert(false, "getGlobalActiveAthletesCount threw error: " + err.message);
+  }
+  assert(typeof activeCount === "number", "getGlobalActiveAthletesCount returns number without isMe reference error");
+
+  // 3. Verify Rogue Squad ('frie nds') Detection and Purge
+  assert(typeof isRogueFriendsSquad === "function", "isRogueFriendsSquad is a defined function");
+  assert(isRogueFriendsSquad("frie nds") === true, "isRogueFriendsSquad identifies 'frie nds'");
+  assert(isRogueFriendsSquad("friends") === true, "isRogueFriendsSquad identifies 'friends'");
+  assert(isRogueFriendsSquad("Friends") === true, "isRogueFriendsSquad is case-insensitive");
+  assert(isRogueFriendsSquad("Iron Collective") === false, "isRogueFriendsSquad does not match legitimate squads");
+  assert(isRogueFriendsSquad("Morning Crew") === false, "isRogueFriendsSquad does not match Morning Crew");
+
+  // Simulate injection of rogue squad
+  const rogueSquad = {
+    id: "squad_rogue_friends_test",
+    name: "frie nds",
+    createdAt: "2026-10-20T12:00:00.000Z",
+    creatorId: "unknown_user",
+    creatorName: "Unknown User",
+    creatorEmail: "unknown@example.com",
+    members: []
+  };
+  localStorage.setItem('showUp_squads', JSON.stringify([rogueSquad]));
+  purgeFriendsSquads();
+  const purgedSquads = JSON.parse(localStorage.getItem('showUp_squads') || '[]');
+  assert(purgedSquads.length === 0, "purgeFriendsSquads eradicates rogue 'frie nds' squad from localStorage");
 });
 
 print("\n============================================================");

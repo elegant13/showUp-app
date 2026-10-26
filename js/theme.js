@@ -65,7 +65,9 @@
     });
 
     const THEME_ALIASES = {
-      'emerald': 'lime',
+      'lime': 'india',
+      'emerald': 'india',
+      'blue-india': 'india',
       'amoled': 'obsidian',
       'slate': 'obsidian',
       'blue': 'teal',
@@ -74,13 +76,20 @@
 
     function setThemePalette(themeKey) {
       if (!themeKey) themeKey = 'orange';
+      const canonical = THEME_ALIASES[themeKey] || themeKey;
       const body = document.getElementById('app-body');
       if (body) {
         body.className = body.className.replace(/\btheme-\S+/g, '').trim();
-        body.classList.add(`theme-${themeKey}`);
+        body.classList.add(`theme-${canonical}`);
+        if (canonical !== themeKey) {
+          body.classList.add(`theme-${themeKey}`);
+        }
       }
       if (typeof document !== 'undefined' && document.documentElement) {
-        document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ` theme-${themeKey}`;
+        let base = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim();
+        base += ` theme-${canonical}`;
+        if (canonical !== themeKey) base += ` theme-${themeKey}`;
+        document.documentElement.className = base;
       }
       
       localStorage.setItem('showUp_theme', themeKey);
@@ -144,6 +153,10 @@
       const savedSquadsCollapsed = localStorage.getItem('showUp_squads_default_collapsed') === 'true';
       const prefSquadsEl = document.getElementById('pref-squads-collapsed');
       if (prefSquadsEl) prefSquadsEl.checked = savedSquadsCollapsed;
+
+      if (typeof applySquadsEnabledUI === 'function') {
+        applySquadsEnabledUI(typeof isSquadsEnabled === 'function' ? isSquadsEnabled() : false);
+      }
     }
 
 

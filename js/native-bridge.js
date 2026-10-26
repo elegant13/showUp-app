@@ -12,43 +12,88 @@
            Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   }
 
+  function hideNativeSplash() {
+    if (typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen) {
+      try {
+        window.Capacitor.Plugins.SplashScreen.hide({ fadeOutDuration: 200 });
+      } catch (e) {}
+    }
+  }
+
   // 1. Initialize Native Plugins on device ready
   async function initNativeBridge() {
     if (!isNative()) return;
 
+    // 1a. Immediately dismiss splash screen
+    hideNativeSplash();
+
+    // 1b. Configure Status Bar style
     try {
-      // Notify Capgo / OTA updater that web bundle is loaded & healthy
-      if (window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
-        await window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady();
-        console.log("[NativeBridge] Capgo OTA App Ready confirmed.");
-      }
-
-      // Configure Status Bar style
       if (window.Capacitor.Plugins && window.Capacitor.Plugins.StatusBar) {
-        await window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' });
-        await window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#020617' });
+        window.Capacitor.Plugins.StatusBar.setStyle({ style: 'DARK' }).catch(() => {});
+        window.Capacitor.Plugins.StatusBar.setBackgroundColor({ color: '#020617' }).catch(() => {});
       }
+    } catch (e) {}
 
-      // Hide Splash Screen smoothly once UI is painted
-      if (window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen) {
-        setTimeout(async () => {
-          try {
-            await window.Capacitor.Plugins.SplashScreen.hide({ fadeOutDuration: 300 });
-          } catch (e) {}
-        }, 300);
+    // 1c. Notify Capgo / OTA updater if present
+    try {
+      if (window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
+        window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady().catch(() => {});
       }
+    } catch (e) {}
 
-      // Request notification permissions gracefully on native
+    // 1d. Request notification permissions gracefully on native
+    try {
       if (window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
         const perm = await window.Capacitor.Plugins.LocalNotifications.checkPermissions();
-        if (perm.display !== 'granted') {
-          // Ask for permission on native
-          window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+        if (perm && perm.display !== 'granted') {
+          window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => {});
         }
       }
-    } catch (err) {
-      console.warn("[NativeBridge] Initialization notice:", err);
+    } catch (e) {}
+
+    // 1e. Initialize native GoogleAuth plugin if present
+    try {
+      const googleAuth = window.Capacitor.Plugins?.GoogleAuth || (typeof window.Capacitor.registerPlugin === 'function' ? window.Capacitor.registerPlugin('GoogleAuth') : null);
+      if (googleAuth && typeof googleAuth.initialize === 'function') {
+        const isIos = window.Capacitor.getPlatform?.() === 'ios';
+        const clientId = isIos
+          ? '115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com'
+          : '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com';
+
+        googleAuth.initialize({
+          clientId: clientId,
+          serverClientId: '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com',
+          scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
+          grantOfflineAccess: false
+        }).catch(() => {});
+      }
+    } catch (gErr) {
+      console.warn("[NativeBridge] GoogleAuth setup notice:", gErr);
     }
+  }
+
+  // 1f. Perform Native Google Sign-In via ASWebAuthenticationSession / GIDSignIn / GoogleSignInClient
+  async function signInNativeGoogle() {
+    if (!isNative()) return null;
+    const googleAuth = window.Capacitor.Plugins?.GoogleAuth || (typeof window.Capacitor.registerPlugin === 'function' ? window.Capacitor.registerPlugin('GoogleAuth') : null);
+    if (!googleAuth || typeof googleAuth.signIn !== 'function') return null;
+
+    const isIos = window.Capacitor.getPlatform?.() === 'ios';
+    const clientId = isIos
+      ? '115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com'
+      : '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com';
+
+    try {
+      await googleAuth.initialize({
+        clientId: clientId,
+        serverClientId: '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com',
+        scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
+        grantOfflineAccess: false
+      });
+    } catch (e) {}
+
+    return await googleAuth.signIn();
   }
 
   // 2. Schedule Local Notification for Target Rest Recovery
@@ -134,14 +179,31 @@
     isNative: isNative,
     scheduleRestNotification: scheduleRestNotification,
     cancelRestNotification: cancelRestNotification,
-    triggerNativeHaptic: triggerNativeHaptic
+    triggerNativeHaptic: triggerNativeHaptic,
+    signInNativeGoogle: signInNativeGoogle
   };
 
-  // Run on DOM loaded
+  // Run on DOM ready, window load, deviceready, and short retry loop
+  let initialized = false;
+  function triggerInit() {
+    if (initialized) return;
+    if (isNative()) {
+      initialized = true;
+      initNativeBridge();
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initNativeBridge);
+    document.addEventListener('DOMContentLoaded', triggerInit);
   } else {
-    initNativeBridge();
+    triggerInit();
+  }
+  window.addEventListener('load', triggerInit);
+  document.addEventListener('deviceready', triggerInit);
+
+  // Short retry loop to catch asynchronous Capacitor script injection
+  for (const delay of [60, 150, 300, 600, 1200]) {
+    setTimeout(triggerInit, delay);
   }
 
 })(window);
