@@ -139,7 +139,7 @@
       let savedTheme = localStorage.getItem('showUp_theme') || 
                        localStorage.getItem('showUp_theme_accent') || 
                        (savedProfile && savedProfile.theme) || 
-                       'orange';
+                       'emerald';
       if (THEME_ALIASES[savedTheme]) savedTheme = THEME_ALIASES[savedTheme];
       setThemePalette(savedTheme);
 
