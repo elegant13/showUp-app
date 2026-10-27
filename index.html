@@ -2045,10 +2045,10 @@
   </div>
 
   <!-- ================= MAIN CONTENT CONTAINER ================= -->
-  <main class="max-w-3xl mx-auto px-4 pt-4 pb-28 space-y-6">
+  <main class="max-w-3xl mx-auto px-3 sm:px-4 pt-1 sm:pt-2 pb-24 sm:pb-28">
 
     <!-- CLOUD AUTO-BACKUP & DATA PRESERVATION BANNER (PRESERVED FOR DOM REFS, RESTORE/BACKUP ACCESSIBLE VIA SETTINGS) -->
-    <section id="cloud-backup-reminder-banner" class="hidden m3-card rounded-3xl p-4 sm:p-5 border border-[var(--m3-primary)]/25 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-xl relative overflow-hidden transition-all" style="display: none !important;">
+    <section id="cloud-backup-reminder-banner" hidden class="hidden m3-card rounded-3xl p-4 sm:p-5 border border-[var(--m3-primary)]/25 bg-gradient-to-br from-slate-900 via-slate-900/95 to-slate-950 shadow-xl relative overflow-hidden transition-all" style="display: none !important;">
       <!-- Background Ambient Glow Accent -->
       <div class="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
@@ -2227,10 +2227,10 @@
     </div>
 
     <!-- VIEW TAB 1: ACTIVE WORKOUT TRACKING -->
-    <div id="tab-workout-view" class="hidden space-y-2.5 sm:space-y-3.5">
+    <div id="tab-workout-view" class="hidden space-y-2 sm:space-y-2.5">
 
       <!-- MINIMALIST HEART RATE MONITOR STATUS STRIP -->
-      <div id="hr-minimal-pill" onclick="triggerHaptic('light'); handleHRMPillClick()" class="flex items-center justify-between px-3 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/80 hover:border-rose-500/40 rounded-xl cursor-pointer transition shadow-md group">
+      <div id="hr-minimal-pill" hidden onclick="triggerHaptic('light'); handleHRMPillClick()" class="hidden flex items-center justify-between px-3 py-1.5 bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800/80 hover:border-rose-500/40 rounded-xl cursor-pointer transition shadow-md group">
         <div class="flex items-center gap-2">
           <span class="relative flex h-2 w-2">
             <span id="hr-pill-pulse-ping" class="hidden animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
@@ -2249,7 +2249,7 @@
       </div>
 
       <!-- HEART RATE TELEMETRY CARD (AUTO-EXPANDS UPON CONNECTION) -->
-      <section id="hr-card" class="hidden m3-card rounded-2xl p-3 border shadow-xl relative overflow-hidden transition-all">
+      <section id="hr-card" hidden class="hidden m3-card rounded-2xl p-3 border shadow-xl relative overflow-hidden transition-all">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <span class="relative flex h-2.5 w-2.5">
@@ -2350,13 +2350,13 @@
       </section>
 
       <!-- LOG SET ENTRY CARD -->
-      <section class="m3-card rounded-2xl sm:rounded-3xl p-3 sm:p-4 border shadow-xl space-y-2.5 sm:space-y-3">
+      <section class="m3-card rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border shadow-xl space-y-3 sm:space-y-3.5">
         <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
           <div class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <i class="fa-solid fa-dumbbell text-xs"></i>
             </div>
-            <h2 class="text-sm font-black text-slate-100">Log Exercise Set</h2>
+            <h2 class="text-sm sm:text-base font-black text-slate-100">Log Exercise Set</h2>
           </div>
         </div>
 
@@ -2369,7 +2369,7 @@
         <div class="space-y-1.5">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <label for="exercise-name-input" class="block text-[11px] font-black text-slate-300 uppercase tracking-wider">Exercise Name</label>
+              <label for="exercise-name-input" class="block text-xs font-black text-slate-300 uppercase tracking-wider">Exercise Name</label>
               <button type="button"
                       id="btn-toggle-exercise-filters"
                       onclick="triggerHaptic('light'); toggleExerciseFilterPills()"
@@ -2451,7 +2451,7 @@
             <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
               <i class="fa-solid fa-dumbbell text-sm"></i>
             </div>
-            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." oninput="handleExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onclick="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'exercise-name-input', 'exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-xl pl-9 pr-3.5 py-2 sm:py-2.5 text-sm sm:text-base font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
+            <input type="text" id="exercise-name-input" placeholder="e.g. Bench Press, Squats, Pullups, Running..." oninput="handleExerciseInput(this.value)" onfocus="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onclick="handleExerciseInputFocus(this, 'exercise-suggestions-dropdown')" onkeydown="handleExerciseInputKeydown(event, 'exercise-name-input', 'exercise-suggestions-dropdown')" autocomplete="off" class="w-full bg-slate-950 border-2 border-slate-700/80 rounded-xl pl-9 pr-3.5 py-2.5 sm:py-3 text-base sm:text-lg font-bold text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition shadow-inner">
             <datalist id="exercise-catalog-list"></datalist>
 
             <!-- DYNAMIC EXERCISE SUGGESTIONS DROPDOWN -->
@@ -2510,15 +2510,15 @@
 
             <!-- Stepper Controls (Minus Button, Center Jumbo Number, Plus Button) -->
             <div class="flex items-center gap-2 sm:gap-2.5 w-full">
-              <button type="button" id="btn-weight-decrement" aria-label="Decrease weight" class="stepper-btn stepper-btn-decrement w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
+              <button type="button" id="btn-weight-decrement" aria-label="Decrease weight" class="stepper-btn stepper-btn-decrement w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
                 <i class="fa-solid fa-minus pointer-events-none"></i>
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1 sm:py-1.5 text-center text-3xl sm:text-4xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+                <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
               </div>
 
-              <button type="button" id="btn-weight-increment" aria-label="Increase weight" class="stepper-btn stepper-btn-increment w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
+              <button type="button" id="btn-weight-increment" aria-label="Increase weight" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
                 <i class="fa-solid fa-plus pointer-events-none"></i>
               </button>
             </div>
@@ -2552,15 +2552,15 @@
 
             <!-- Stepper Controls (Minus Button, Center Jumbo Number, Plus Button) -->
             <div class="flex items-center gap-2 sm:gap-2.5 w-full">
-              <button type="button" id="btn-reps-decrement" aria-label="Decrease reps" class="stepper-btn stepper-btn-decrement w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
+              <button type="button" id="btn-reps-decrement" aria-label="Decrease reps" class="stepper-btn stepper-btn-decrement w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
                 <i class="fa-solid fa-minus pointer-events-none"></i>
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1 sm:py-1.5 text-center text-3xl sm:text-4xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+                <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
               </div>
 
-              <button type="button" id="btn-reps-increment" aria-label="Increase reps" class="stepper-btn stepper-btn-increment w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
+              <button type="button" id="btn-reps-increment" aria-label="Increase reps" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
                 <i class="fa-solid fa-plus pointer-events-none"></i>
               </button>
             </div>
@@ -2773,16 +2773,16 @@
           <!-- Rest Timer Stepper Display: [-] Number [+] -->
           <div class="flex items-center justify-between sm:justify-center gap-2 sm:gap-4 w-full">
             <!-- Decrement Target Rest Button (-) -->
-            <button type="button" id="btn-rest-decrement" aria-label="Decrease rest target" class="stepper-btn stepper-btn-decrement w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-sm sm:text-base z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
+            <button type="button" id="btn-rest-decrement" aria-label="Decrease rest target" class="stepper-btn stepper-btn-decrement w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-base sm:text-lg z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
               <i class="fa-solid fa-minus pointer-events-none"></i>
             </button>
 
             <!-- Center Jumbo Display: Elapsed / Target Number with Target Icon -->
-            <div class="flex-1 max-w-[240px] sm:max-w-[280px] bg-slate-950/80 border border-slate-800/80 rounded-xl py-0.5 px-2.5 flex flex-col items-center justify-center min-w-0 shadow-inner">
+            <div class="flex-1 max-w-[260px] sm:max-w-[300px] bg-slate-950/80 border border-slate-800/80 rounded-xl py-1 px-3 sm:py-1.5 sm:px-4 flex flex-col items-center justify-center min-w-0 shadow-inner">
               <div class="flex items-center justify-center gap-2 sm:gap-3 w-full">
                 <!-- Elapsed column -->
                 <div class="flex flex-col items-center min-w-0">
-                  <span id="rest-timer-val" class="font-mono text-xl sm:text-3xl font-black text-white tracking-normal leading-none whitespace-nowrap">0s</span>
+                  <span id="rest-timer-val" class="font-mono text-2xl sm:text-3xl font-black text-white tracking-normal leading-none whitespace-nowrap">0s</span>
                   <div class="flex items-center justify-center mt-0.5 text-slate-500" title="Elapsed Time">
                     <i class="fa-solid fa-stopwatch text-[9px]"></i>
                   </div>
@@ -2793,7 +2793,7 @@
 
                 <!-- Target column with actual target icon -->
                 <div class="flex flex-col items-center min-w-0 shrink-0">
-                  <span id="rest-timer-target-val" class="font-mono text-base sm:text-2xl font-extrabold text-emerald-400 tracking-normal leading-none whitespace-nowrap">60s</span>
+                  <span id="rest-timer-target-val" class="font-mono text-xl sm:text-2xl font-extrabold text-emerald-400 tracking-normal leading-none whitespace-nowrap">60s</span>
                   <div class="flex items-center justify-center mt-0.5 text-emerald-400" title="Target Rest">
                     <i class="fa-solid fa-bullseye text-[10px]"></i>
                   </div>
@@ -2802,7 +2802,7 @@
             </div>
 
             <!-- Increment Target Rest Button (+) -->
-            <button type="button" id="btn-rest-increment" aria-label="Increase rest target" class="stepper-btn stepper-btn-increment w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-sm sm:text-base z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
+            <button type="button" id="btn-rest-increment" aria-label="Increase rest target" class="stepper-btn stepper-btn-increment w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-base sm:text-lg z-20 transition-all shadow-md select-none touch-none cursor-pointer shrink-0">
               <i class="fa-solid fa-plus pointer-events-none"></i>
             </button>
           </div>
@@ -2836,16 +2836,16 @@
         </div>
 
         <!-- SET ACTION CONTROLS: PRIMARY LOG SET & PASSIVE START SET OPTION -->
-        <div id="set-action-container" class="space-y-1.5 pt-1">
+        <div id="set-action-container" class="space-y-2 pt-1.5">
           <!-- PRIMARY CTA: LOG SET -->
-          <button id="btn-log-set" type="button" onclick="triggerHaptic('heavy'); logSet()" class="w-full font-black py-2.5 sm:py-3 px-4 rounded-xl shadow-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm sm:text-base shadow-emerald-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
-            <i class="fa-solid fa-check text-base"></i>
+          <button id="btn-log-set" type="button" onclick="triggerHaptic('heavy'); logSet()" class="w-full font-black py-3 sm:py-3.5 px-4 rounded-xl shadow-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-base sm:text-lg shadow-emerald-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check text-base sm:text-lg"></i>
             <span id="btn-log-set-label">Log Set 1</span>
           </button>
 
           <!-- PASSIVE CTA: START SET (FOR ATHLETES TIMING ACTIVE SET) -->
-          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="w-full py-2 px-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs font-semibold transition active:scale-[0.99] flex items-center justify-center gap-1.5" title="Time Active Set">
-            <i id="btn-start-set-icon" class="fa-solid fa-stopwatch text-slate-400 text-[11px]"></i>
+          <button id="btn-start-set" type="button" onclick="triggerHaptic('medium'); startSet()" class="w-full py-2.5 px-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 text-xs sm:text-sm font-semibold transition active:scale-[0.99] flex items-center justify-center gap-1.5" title="Time Active Set">
+            <i id="btn-start-set-icon" class="fa-solid fa-stopwatch text-slate-400 text-xs"></i>
             <span id="btn-start-set-label">Start Set 1</span>
           </button>
         </div>

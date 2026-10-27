@@ -1784,17 +1784,24 @@ if (typeof window !== 'undefined') {
       if (hrPill) {
         if (isEnabled) {
           hrPill.classList.remove('hidden');
+          hrPill.removeAttribute('hidden');
         } else {
           hrPill.classList.add('hidden');
+          hrPill.setAttribute('hidden', '');
         }
       }
 
       if (hrCard) {
         if (!isEnabled) {
           hrCard.classList.add('hidden');
+          hrCard.setAttribute('hidden', '');
         } else {
           if (typeof isHRMConnected === 'function' && isHRMConnected()) {
             hrCard.classList.remove('hidden');
+            hrCard.removeAttribute('hidden');
+          } else {
+            hrCard.classList.add('hidden');
+            hrCard.setAttribute('hidden', '');
           }
         }
       }
