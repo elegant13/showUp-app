@@ -993,6 +993,40 @@
       }
 
       updateRestChimeUI();
+      applyAutoStartSetUI();
+    }
+
+    function isAutoStartSetEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_auto_start_set');
+        if (val === null) return false; // Default: disabled (opt-in)
+        return val === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setAutoStartSetEnabled(enabled) {
+      try {
+        localStorage.setItem('showUp_auto_start_set', enabled ? 'true' : 'false');
+      } catch (e) {}
+      applyAutoStartSetUI(enabled);
+    }
+
+    function applyAutoStartSetUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isAutoStartSetEnabled();
+      const prefCheckbox = document.getElementById('pref-auto-start-set');
+      if (prefCheckbox) {
+        prefCheckbox.checked = isEnabled;
+      }
+    }
+
+    function toggleAutoStartSetPref(checked) {
+      setAutoStartSetEnabled(checked);
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(checked ? "Auto-Start Set on Rest Target: Enabled" : "Auto-Start Set on Rest Target: Disabled", "info");
+      }
     }
 
     function triggerSquadHaptic() {
@@ -1085,5 +1119,9 @@
       window.isMusclesEngagedEnabled = isMusclesEngagedEnabled;
       window.applyMusclesEngagedEnabledUI = applyMusclesEngagedEnabledUI;
       window.toggleMusclesEngagedEnabledPref = toggleMusclesEngagedEnabledPref;
+      window.isAutoStartSetEnabled = isAutoStartSetEnabled;
+      window.setAutoStartSetEnabled = setAutoStartSetEnabled;
+      window.applyAutoStartSetUI = applyAutoStartSetUI;
+      window.toggleAutoStartSetPref = toggleAutoStartSetPref;
     }
 

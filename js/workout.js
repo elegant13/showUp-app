@@ -129,6 +129,10 @@
         updateRestSoundAlertUI();
       }
 
+      if (typeof applyAutoStartSetUI === 'function') {
+        applyAutoStartSetUI();
+      }
+
       if (typeof renderQuickWeightChips === 'function') {
         const impSelect = document.getElementById('implement-select');
         renderQuickWeightChips(impSelect ? impSelect.value : 'Barbell');
@@ -2406,7 +2410,7 @@
     }
 
     // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
-    function startSet() {
+    function startSet(isAuto = false) {
       if (typeof triggerHaptic === 'function') triggerHaptic('medium');
 
       // Requirement 3: When a second set is started the rest timer shall stop and get recorded
@@ -2416,7 +2420,12 @@
         currentPendingRestPeriod = elapsedRest;
         stopRestTimer();
         if (typeof showToast === 'function') {
-          showToast(`Rest recorded: ${formatDurationSecs(currentPendingRestPeriod)}. Starting set!`, "info");
+          if (isAuto) {
+            const nextSetNum = currentSessionSets.length + 1;
+            showToast(`Rest target reached (${formatDurationSecs(currentPendingRestPeriod)})! Set ${nextSetNum} timer auto-started.`, "success", 3000);
+          } else {
+            showToast(`Rest recorded: ${formatDurationSecs(currentPendingRestPeriod)}. Starting set!`, "info");
+          }
         }
       }
 
@@ -2569,6 +2578,11 @@
           } else if (typeof playDoubleBellRing === 'function') {
             playDoubleBellRing();
           }
+        }
+
+        // 3. Optional auto-start set timer if athlete enabled "Auto-Start Set on Rest Target"
+        if (typeof isAutoStartSetEnabled === 'function' && isAutoStartSetEnabled()) {
+          startSet(true);
         }
       }
     }

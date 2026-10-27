@@ -2714,6 +2714,40 @@ if (typeof window !== 'undefined') {
       }
 
       updateRestChimeUI();
+      applyAutoStartSetUI();
+    }
+
+    function isAutoStartSetEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_auto_start_set');
+        if (val === null) return false; // Default: disabled (opt-in)
+        return val === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function setAutoStartSetEnabled(enabled) {
+      try {
+        localStorage.setItem('showUp_auto_start_set', enabled ? 'true' : 'false');
+      } catch (e) {}
+      applyAutoStartSetUI(enabled);
+    }
+
+    function applyAutoStartSetUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isAutoStartSetEnabled();
+      const prefCheckbox = document.getElementById('pref-auto-start-set');
+      if (prefCheckbox) {
+        prefCheckbox.checked = isEnabled;
+      }
+    }
+
+    function toggleAutoStartSetPref(checked) {
+      setAutoStartSetEnabled(checked);
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      if (typeof showToast === 'function') {
+        showToast(checked ? "Auto-Start Set on Rest Target: Enabled" : "Auto-Start Set on Rest Target: Disabled", "info");
+      }
     }
 
     function triggerSquadHaptic() {
@@ -2806,6 +2840,10 @@ if (typeof window !== 'undefined') {
       window.isMusclesEngagedEnabled = isMusclesEngagedEnabled;
       window.applyMusclesEngagedEnabledUI = applyMusclesEngagedEnabledUI;
       window.toggleMusclesEngagedEnabledPref = toggleMusclesEngagedEnabledPref;
+      window.isAutoStartSetEnabled = isAutoStartSetEnabled;
+      window.setAutoStartSetEnabled = setAutoStartSetEnabled;
+      window.applyAutoStartSetUI = applyAutoStartSetUI;
+      window.toggleAutoStartSetPref = toggleAutoStartSetPref;
     }
 
 
@@ -2950,7 +2988,7 @@ if (typeof window !== 'undefined') {
       let savedTheme = localStorage.getItem('showUp_theme') || 
                        localStorage.getItem('showUp_theme_accent') || 
                        (savedProfile && savedProfile.theme) || 
-                       'orange';
+                       'emerald';
       if (THEME_ALIASES[savedTheme]) savedTheme = THEME_ALIASES[savedTheme];
       setThemePalette(savedTheme);
 
@@ -2975,6 +3013,10 @@ if (typeof window !== 'undefined') {
 
       if (typeof applyMusclesEngagedEnabledUI === 'function') {
         applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : true);
+      }
+
+      if (typeof applyAutoStartSetUI === 'function') {
+        applyAutoStartSetUI(typeof isAutoStartSetEnabled === 'function' ? isAutoStartSetEnabled() : false);
       }
     }
 
@@ -5025,6 +5067,10 @@ if (typeof window !== 'undefined') {
 
       if (typeof updateRestSoundAlertUI === 'function') {
         updateRestSoundAlertUI();
+      }
+
+      if (typeof applyAutoStartSetUI === 'function') {
+        applyAutoStartSetUI();
       }
 
       if (typeof renderQuickWeightChips === 'function') {
@@ -7304,7 +7350,7 @@ if (typeof window !== 'undefined') {
     }
 
     // 2. SET & REST TIMERS: START SET, LOG SET, REST TRACKING
-    function startSet() {
+    function startSet(isAuto = false) {
       if (typeof triggerHaptic === 'function') triggerHaptic('medium');
 
       // Requirement 3: When a second set is started the rest timer shall stop and get recorded
@@ -7314,7 +7360,12 @@ if (typeof window !== 'undefined') {
         currentPendingRestPeriod = elapsedRest;
         stopRestTimer();
         if (typeof showToast === 'function') {
-          showToast(`Rest recorded: ${formatDurationSecs(currentPendingRestPeriod)}. Starting set!`, "info");
+          if (isAuto) {
+            const nextSetNum = currentSessionSets.length + 1;
+            showToast(`Rest target reached (${formatDurationSecs(currentPendingRestPeriod)})! Set ${nextSetNum} timer auto-started.`, "success", 3000);
+          } else {
+            showToast(`Rest recorded: ${formatDurationSecs(currentPendingRestPeriod)}. Starting set!`, "info");
+          }
         }
       }
 
@@ -7467,6 +7518,11 @@ if (typeof window !== 'undefined') {
           } else if (typeof playDoubleBellRing === 'function') {
             playDoubleBellRing();
           }
+        }
+
+        // 3. Optional auto-start set timer if athlete enabled "Auto-Start Set on Rest Target"
+        if (typeof isAutoStartSetEnabled === 'function' && isAutoStartSetEnabled()) {
+          startSet(true);
         }
       }
     }
@@ -21428,6 +21484,62 @@ runSuite("38. Personal Record (PR) Recognition Engine & Celebration", () => {
 
   const listContainer = document.getElementById('logged-sets-list');
   assert(listContainer.innerHTML.includes('fa-trophy') || listContainer.innerHTML.includes('PR'), "Renders PR trophy badge in logged sets list");
+});
+
+// === SUITE: 39. Auto-Start Set on Rest Target Preference & Auto-Trigger ===
+runSuite("39. Auto-Start Set on Rest Target Preference & Auto-Trigger", () => {
+  assert(typeof isAutoStartSetEnabled === 'function', "isAutoStartSetEnabled is a defined function");
+  assert(typeof setAutoStartSetEnabled === 'function', "setAutoStartSetEnabled is a defined function");
+  assert(typeof applyAutoStartSetUI === 'function', "applyAutoStartSetUI is a defined function");
+  assert(typeof toggleAutoStartSetPref === 'function', "toggleAutoStartSetPref is a defined function");
+
+  // 1. Defaults to false (opt-in)
+  localStorage.removeItem('showUp_auto_start_set');
+  assert(isAutoStartSetEnabled() === false, "Defaults to false when not set");
+  applyAutoStartSetUI();
+  const prefBox = document.getElementById('pref-auto-start-set');
+  assert(prefBox.checked === false, "Checkbox is unchecked by default");
+
+  // 2. Toggle to true persists and updates UI
+  toggleAutoStartSetPref(true);
+  assert(isAutoStartSetEnabled() === true, "isAutoStartSetEnabled is true after toggle");
+  assert(localStorage.getItem('showUp_auto_start_set') === 'true', "Persisted as 'true' in localStorage");
+  assert(prefBox.checked === true, "Checkbox is checked");
+
+  // 3. Toggle to false persists and updates UI
+  toggleAutoStartSetPref(false);
+  assert(isAutoStartSetEnabled() === false, "isAutoStartSetEnabled is false after toggle");
+  assert(localStorage.getItem('showUp_auto_start_set') === 'false', "Persisted as 'false' in localStorage");
+  assert(prefBox.checked === false, "Checkbox is unchecked");
+
+  // 4. Test rest recovery auto-trigger:
+  // When disabled (default): rest timer reaches target, recovery alert triggers but startSet is NOT called
+  currentSessionSets.length = 0;
+  isSetInProgress = false;
+  isRestTimerRunning = true;
+  hasTriggeredRestRecoveryAlert = false;
+  currentSessionRestTarget = 60;
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Recovery alert triggered");
+  assert(isSetInProgress === false, "Active set is NOT auto-started when preference is disabled");
+
+  // When enabled: rest timer reaches target, recovery alert triggers AND startSet IS auto-called
+  setAutoStartSetEnabled(true);
+  isSetInProgress = false;
+  isRestTimerRunning = true;
+  hasTriggeredRestRecoveryAlert = false;
+  currentSessionRestTarget = 60;
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(isSetInProgress === true, "Active set timer auto-started when preference is enabled");
+  assert(isRestTimerRunning === false, "Rest timer stopped upon auto-starting set");
+  assert(currentPendingRestPeriod >= 1, "Rest duration was cleanly recorded into currentPendingRestPeriod");
+
+  // Clean up
+  if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+  isSetInProgress = false;
+  setAutoStartSetEnabled(false);
 });
 
 print("\n============================================================");

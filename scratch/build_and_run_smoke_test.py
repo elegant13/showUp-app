@@ -165,6 +165,15 @@ def generate_and_run_smoke_test():
         print("[FAIL] PR banner, Set Classification chips, Direct Numpad, or Hyper-Emerald missing in HTML")
         return False
 
+    # 12. Check Auto-Start Set on Rest Target preference toggle in HTML
+    if ('id="pref-auto-start-set"' in html and
+        'id="pref-auto-start-set-row"' in html and
+        'Auto-Start Set on Rest Target' in html):
+        print("[PASS] Auto-Start Set on Rest Target preference toggle verified in HTML")
+    else:
+        print("[FAIL] Auto-Start Set on Rest Target preference toggle missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -3619,6 +3628,62 @@ runSuite("38. Personal Record (PR) Recognition Engine & Celebration", () => {
 
   const listContainer = document.getElementById('logged-sets-list');
   assert(listContainer.innerHTML.includes('fa-trophy') || listContainer.innerHTML.includes('PR'), "Renders PR trophy badge in logged sets list");
+});
+
+// === SUITE: 39. Auto-Start Set on Rest Target Preference & Auto-Trigger ===
+runSuite("39. Auto-Start Set on Rest Target Preference & Auto-Trigger", () => {
+  assert(typeof isAutoStartSetEnabled === 'function', "isAutoStartSetEnabled is a defined function");
+  assert(typeof setAutoStartSetEnabled === 'function', "setAutoStartSetEnabled is a defined function");
+  assert(typeof applyAutoStartSetUI === 'function', "applyAutoStartSetUI is a defined function");
+  assert(typeof toggleAutoStartSetPref === 'function', "toggleAutoStartSetPref is a defined function");
+
+  // 1. Defaults to false (opt-in)
+  localStorage.removeItem('showUp_auto_start_set');
+  assert(isAutoStartSetEnabled() === false, "Defaults to false when not set");
+  applyAutoStartSetUI();
+  const prefBox = document.getElementById('pref-auto-start-set');
+  assert(prefBox.checked === false, "Checkbox is unchecked by default");
+
+  // 2. Toggle to true persists and updates UI
+  toggleAutoStartSetPref(true);
+  assert(isAutoStartSetEnabled() === true, "isAutoStartSetEnabled is true after toggle");
+  assert(localStorage.getItem('showUp_auto_start_set') === 'true', "Persisted as 'true' in localStorage");
+  assert(prefBox.checked === true, "Checkbox is checked");
+
+  // 3. Toggle to false persists and updates UI
+  toggleAutoStartSetPref(false);
+  assert(isAutoStartSetEnabled() === false, "isAutoStartSetEnabled is false after toggle");
+  assert(localStorage.getItem('showUp_auto_start_set') === 'false', "Persisted as 'false' in localStorage");
+  assert(prefBox.checked === false, "Checkbox is unchecked");
+
+  // 4. Test rest recovery auto-trigger:
+  // When disabled (default): rest timer reaches target, recovery alert triggers but startSet is NOT called
+  currentSessionSets.length = 0;
+  isSetInProgress = false;
+  isRestTimerRunning = true;
+  hasTriggeredRestRecoveryAlert = false;
+  currentSessionRestTarget = 60;
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(hasTriggeredRestRecoveryAlert === true, "Recovery alert triggered");
+  assert(isSetInProgress === false, "Active set is NOT auto-started when preference is disabled");
+
+  // When enabled: rest timer reaches target, recovery alert triggers AND startSet IS auto-called
+  setAutoStartSetEnabled(true);
+  isSetInProgress = false;
+  isRestTimerRunning = true;
+  hasTriggeredRestRecoveryAlert = false;
+  currentSessionRestTarget = 60;
+  restTimerSeconds = 60;
+  checkRestRecoveryThreshold();
+  assert(isSetInProgress === true, "Active set timer auto-started when preference is enabled");
+  assert(isRestTimerRunning === false, "Rest timer stopped upon auto-starting set");
+  assert(currentPendingRestPeriod >= 1, "Rest duration was cleanly recorded into currentPendingRestPeriod");
+
+  // Clean up
+  if (activeSetTimerInterval) clearInterval(activeSetTimerInterval);
+  isSetInProgress = false;
+  setAutoStartSetEnabled(false);
 });
 
 print("\\n============================================================");

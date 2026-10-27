@@ -165,6 +165,10 @@
       if (typeof applyMusclesEngagedEnabledUI === 'function') {
         applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : true);
       }
+
+      if (typeof applyAutoStartSetUI === 'function') {
+        applyAutoStartSetUI(typeof isAutoStartSetEnabled === 'function' ? isAutoStartSetEnabled() : false);
+      }
     }
 
 
