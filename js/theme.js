@@ -65,8 +65,8 @@
     });
 
     const THEME_ALIASES = {
-      'lime': 'india',
-      'emerald': 'india',
+      'lime': 'emerald',
+      'hyper-emerald': 'emerald',
       'blue-india': 'india',
       'amoled': 'obsidian',
       'slate': 'obsidian',
@@ -75,7 +75,7 @@
     };
 
     function setThemePalette(themeKey) {
-      if (!themeKey) themeKey = 'orange';
+      if (!themeKey) themeKey = 'emerald';
       const canonical = THEME_ALIASES[themeKey] || themeKey;
       const body = document.getElementById('app-body');
       if (body) {

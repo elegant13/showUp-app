@@ -125,6 +125,17 @@ globalThis.navigator = {
   userAgent: 'Mozilla/5.0 Mac',
   onLine: true,
   geolocation: { getCurrentPosition: (success, error) => {} },
+  wakeLock: {
+    request: async (type) => {
+      globalThis.__wakeLockRequested = type;
+      return {
+        type: type,
+        released: false,
+        release: async function() { this.released = true; globalThis.__wakeLockReleased = true; },
+        addEventListener: (ev, fn) => {}
+      };
+    }
+  },
   vibrate: (pattern) => {
     globalThis.__lastVibrate = pattern;
     return true;
@@ -2865,8 +2876,8 @@ if (typeof window !== 'undefined') {
     });
 
     const THEME_ALIASES = {
-      'lime': 'india',
-      'emerald': 'india',
+      'lime': 'emerald',
+      'hyper-emerald': 'emerald',
       'blue-india': 'india',
       'amoled': 'obsidian',
       'slate': 'obsidian',
@@ -2875,7 +2886,7 @@ if (typeof window !== 'undefined') {
     };
 
     function setThemePalette(themeKey) {
-      if (!themeKey) themeKey = 'orange';
+      if (!themeKey) themeKey = 'emerald';
       const canonical = THEME_ALIASES[themeKey] || themeKey;
       const body = document.getElementById('app-body');
       if (body) {
@@ -6360,6 +6371,447 @@ if (typeof window !== 'undefined') {
       });
     }
 
+    // =========================================================================
+    // SCREEN WAKE LOCK API (KEEP DISPLAY AWAKE DURING WORKOUT)
+    // =========================================================================
+    let screenWakeLockSentinel = null;
+
+    async function requestScreenWakeLock() {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && typeof navigator.wakeLock.request === 'function') {
+        try {
+          if (!screenWakeLockSentinel || screenWakeLockSentinel.released) {
+            screenWakeLockSentinel = await navigator.wakeLock.request('screen');
+            if (screenWakeLockSentinel) {
+              screenWakeLockSentinel.addEventListener('release', () => {
+                screenWakeLockSentinel = null;
+              });
+            }
+          }
+        } catch (err) {
+          // Wake lock request failed or unsupported
+        }
+      }
+    }
+
+    async function releaseScreenWakeLock() {
+      if (screenWakeLockSentinel) {
+        try {
+          if (typeof screenWakeLockSentinel.release === 'function') {
+            await screenWakeLockSentinel.release();
+          }
+        } catch (err) {}
+        screenWakeLockSentinel = null;
+      }
+    }
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && (workoutTimerState === 'running' || (Array.isArray(currentSessionSets) && currentSessionSets.length > 0))) {
+          requestScreenWakeLock();
+        }
+      });
+    }
+
+    // =========================================================================
+    // SET CLASSIFICATION CONTROLLER (NORMAL, WARMUP, DROP, FAILURE)
+    // =========================================================================
+    let currentSetType = 'normal';
+
+    function selectSetType(type) {
+      const allowed = ['normal', 'warmup', 'drop', 'failure'];
+      currentSetType = allowed.includes(type) ? type : 'normal';
+
+      if (typeof document !== 'undefined') {
+        allowed.forEach(t => {
+          const chip = document.getElementById(`set-type-${t}`);
+          if (!chip) return;
+          if (t === currentSetType) {
+            chip.className = 'set-type-chip px-2 py-0.5 rounded-lg transition-all font-black text-slate-950 bg-emerald-500 border border-emerald-500 shadow-sm';
+          } else {
+            chip.className = 'set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent';
+          }
+        });
+      }
+    }
+
+    // =========================================================================
+    // DIRECT DUAL-TARGET NUMERIC KEYPAD CONTROLLER
+    // =========================================================================
+    let numpadActiveTarget = 'weight';
+    let numpadIsFreshTargetInput = true;
+
+    function openDirectNumpad(target = 'weight') {
+      const modal = document.getElementById('direct-numpad-modal');
+      if (!modal) return;
+
+      const validTarget = (target === 'reps') ? 'reps' : 'weight';
+      setNumpadActiveTarget(validTarget);
+
+      const weightInput = document.getElementById('input-weight');
+      const repsInput = document.getElementById('input-reps');
+      const dispWeight = document.getElementById('numpad-display-weight');
+      const dispReps = document.getElementById('numpad-display-reps');
+
+      if (dispWeight && weightInput) dispWeight.innerText = weightInput.value || '0';
+      if (dispReps && repsInput) dispReps.innerText = repsInput.value || '10';
+
+      modal.classList.remove('hidden');
+      numpadIsFreshTargetInput = true;
+    }
+
+    function closeDirectNumpad() {
+      const modal = document.getElementById('direct-numpad-modal');
+      if (modal) modal.classList.add('hidden');
+      numpadIsFreshTargetInput = true;
+
+      const currentInputVal = document.getElementById('exercise-name-input')?.value?.trim();
+      if (currentInputVal && typeof updateExercisePreviousWorkoutMetric === 'function') {
+        updateExercisePreviousWorkoutMetric(currentInputVal);
+      }
+    }
+
+    function setNumpadActiveTarget(target) {
+      numpadActiveTarget = (target === 'reps') ? 'reps' : 'weight';
+      numpadIsFreshTargetInput = true;
+
+      const tabWeight = document.getElementById('numpad-tab-weight');
+      const tabReps = document.getElementById('numpad-tab-reps');
+      const dispWeight = document.getElementById('numpad-display-weight');
+      const dispReps = document.getElementById('numpad-display-reps');
+      const dotBtn = document.getElementById('numpad-btn-dot');
+
+      if (numpadActiveTarget === 'weight') {
+        if (tabWeight) {
+          tabWeight.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25';
+        }
+        if (tabReps) {
+          tabReps.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700';
+        }
+        if (dispWeight) {
+          dispWeight.className = 'text-3xl font-black font-mono text-[#00F59B] mt-0.5';
+        }
+        if (dispReps) {
+          dispReps.className = 'text-3xl font-black font-mono text-slate-300 mt-0.5';
+        }
+        if (dotBtn) {
+          dotBtn.disabled = false;
+          dotBtn.classList.remove('opacity-30', 'cursor-not-allowed');
+        }
+      } else {
+        if (tabReps) {
+          tabReps.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25';
+        }
+        if (tabWeight) {
+          tabWeight.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700';
+        }
+        if (dispReps) {
+          dispReps.className = 'text-3xl font-black font-mono text-[#00F59B] mt-0.5';
+        }
+        if (dispWeight) {
+          dispWeight.className = 'text-3xl font-black font-mono text-slate-300 mt-0.5';
+        }
+        if (dotBtn) {
+          dotBtn.disabled = true;
+          dotBtn.classList.add('opacity-30', 'cursor-not-allowed');
+        }
+      }
+    }
+
+    function handleNumpadDigit(digit) {
+      const isWeight = (numpadActiveTarget === 'weight');
+      const dispEl = isWeight
+        ? document.getElementById('numpad-display-weight')
+        : document.getElementById('numpad-display-reps');
+      const inputEl = isWeight
+        ? document.getElementById('input-weight')
+        : document.getElementById('input-reps');
+
+      if (!dispEl) return;
+
+      let current = dispEl.innerText.trim();
+      if (numpadIsFreshTargetInput || current === '0') {
+        current = String(digit);
+        numpadIsFreshTargetInput = false;
+      } else {
+        if (current.length < 6) {
+          current += String(digit);
+        }
+      }
+
+      dispEl.innerText = current;
+      if (inputEl) {
+        inputEl.value = current;
+        if (typeof Event === 'function') {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+
+    function handleNumpadDot() {
+      if (numpadActiveTarget !== 'weight') return;
+      const dispEl = document.getElementById('numpad-display-weight');
+      const inputEl = document.getElementById('input-weight');
+      if (!dispEl) return;
+
+      let current = dispEl.innerText.trim();
+      if (numpadIsFreshTargetInput) {
+        current = '0.';
+        numpadIsFreshTargetInput = false;
+      } else if (!current.includes('.')) {
+        current += '.';
+      }
+
+      dispEl.innerText = current;
+      if (inputEl) {
+        inputEl.value = current;
+        if (typeof Event === 'function') {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+
+    function handleNumpadBackspace() {
+      const isWeight = (numpadActiveTarget === 'weight');
+      const dispEl = isWeight
+        ? document.getElementById('numpad-display-weight')
+        : document.getElementById('numpad-display-reps');
+      const inputEl = isWeight
+        ? document.getElementById('input-weight')
+        : document.getElementById('input-reps');
+
+      if (!dispEl) return;
+
+      let current = dispEl.innerText.trim();
+      if (numpadIsFreshTargetInput || current.length <= 1) {
+        current = isWeight ? '0' : '1';
+        numpadIsFreshTargetInput = true;
+      } else {
+        current = current.slice(0, -1);
+        if (!current || current === '-') current = isWeight ? '0' : '1';
+      }
+
+      dispEl.innerText = current;
+      if (inputEl) {
+        inputEl.value = current;
+        if (typeof Event === 'function') {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+    }
+
+    function handleNumpadQuickAdd(amount) {
+      const isWeight = (numpadActiveTarget === 'weight');
+      const dispEl = isWeight
+        ? document.getElementById('numpad-display-weight')
+        : document.getElementById('numpad-display-reps');
+      const inputEl = isWeight
+        ? document.getElementById('input-weight')
+        : document.getElementById('input-reps');
+
+      if (!dispEl) return;
+
+      let val = isWeight ? parseFloat(dispEl.innerText) || 0 : parseInt(dispEl.innerText) || 0;
+      val = Math.max(0, val + amount);
+      const formatted = (isWeight && String(val).includes('.')) ? String(Math.round(val * 10) / 10) : String(val);
+
+      dispEl.innerText = formatted;
+      if (inputEl) {
+        inputEl.value = formatted;
+        if (typeof Event === 'function') {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+          inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      numpadIsFreshTargetInput = false;
+    }
+
+    function handleNumpadNextTarget() {
+      const nextTarget = (numpadActiveTarget === 'weight') ? 'reps' : 'weight';
+      setNumpadActiveTarget(nextTarget);
+    }
+
+    // =========================================================================
+    // PERSONAL RECORD (PR) RECOGNITION ENGINE & CELEBRATION
+    // =========================================================================
+    let prCelebrationTimer = null;
+
+    function playPRCelebrationSound() {
+      try {
+        if (typeof window === 'undefined') return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') {
+          ctx.resume();
+        }
+        const now = ctx.currentTime;
+
+        const notes = [
+          { f: 523.25, t: 0.00, d: 0.18 },
+          { f: 659.25, t: 0.12, d: 0.18 },
+          { f: 783.99, t: 0.24, d: 0.22 },
+          { f: 1046.50, t: 0.38, d: 0.60 }
+        ];
+
+        notes.forEach(n => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(n.f, now + n.t);
+          gain.gain.setValueAtTime(0.12, now + n.t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + n.t + n.d);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + n.t);
+          osc.stop(now + n.t + n.d);
+        });
+      } catch (err) {}
+    }
+
+    function showPRCelebration(label) {
+      if (typeof document === 'undefined') return;
+      const banner = document.getElementById('pr-celebration-banner');
+      const textEl = document.getElementById('pr-celebration-text');
+      if (textEl) {
+        textEl.innerText = label || 'New Personal Record!';
+      }
+
+      if (banner) {
+        banner.classList.remove('hidden');
+        banner.classList.add('animate-bounce');
+        setTimeout(() => {
+          banner.classList.remove('animate-bounce');
+        }, 1200);
+
+        if (prCelebrationTimer) clearTimeout(prCelebrationTimer);
+        prCelebrationTimer = setTimeout(() => {
+          banner.classList.add('hidden');
+          prCelebrationTimer = null;
+        }, 4500);
+      }
+
+      if (typeof triggerHaptic === 'function') {
+        triggerHaptic('heavy');
+        setTimeout(() => {
+          if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+        }, 200);
+      }
+
+      playPRCelebrationSound();
+
+      if (typeof showToast === 'function') {
+        showToast(`🏆 Personal Record Broken: ${label}`, 'success', 3500);
+      }
+    }
+
+    function evaluateSetForPR(exerciseName, weight, reps, implement, setType) {
+      if (setType === 'warmup' || !weight || weight <= 0 || !reps || reps <= 0) {
+        return { isPR: false };
+      }
+      const normEx = (exerciseName || '').trim().toLowerCase();
+      const normImp = (implement || '').trim().toLowerCase();
+      if (!normEx || normEx === 'custom exercise') return { isPR: false };
+
+      const currentEst1RM = weight * (1 + reps / 30);
+      const priorSets = [];
+
+      const history = (typeof completedWorkoutsHistory !== 'undefined' && Array.isArray(completedWorkoutsHistory))
+        ? completedWorkoutsHistory
+        : (() => {
+            try {
+              return JSON.parse(localStorage.getItem('showUp_synced_workouts') || '[]');
+            } catch (e) { return []; }
+          })();
+
+      if (Array.isArray(history)) {
+        history.forEach(w => {
+          if (w && Array.isArray(w.sets)) {
+            w.sets.forEach(s => {
+              if (s && s.setType !== 'warmup') {
+                const sEx = (s.exerciseName || s.exercise || '').trim().toLowerCase();
+                const sImp = (s.implement || '').trim().toLowerCase();
+                if (sEx === normEx && (!normImp || !sImp || sImp === normImp)) {
+                  const sw = parseFloat(s.weight) || 0;
+                  const sr = parseInt(s.reps) || 0;
+                  if (sw > 0 && sr > 0) {
+                    priorSets.push({ weight: sw, reps: sr, est1RM: sw * (1 + sr / 30) });
+                  }
+                }
+              }
+            });
+          }
+        });
+      }
+
+      if (Array.isArray(currentSessionSets)) {
+        currentSessionSets.forEach(s => {
+          if (s && s.setType !== 'warmup') {
+            const sEx = (s.exerciseName || s.exercise || '').trim().toLowerCase();
+            const sImp = (s.implement || '').trim().toLowerCase();
+            if (sEx === normEx && (!normImp || !sImp || sImp === normImp)) {
+              const sw = parseFloat(s.weight) || 0;
+              const sr = parseInt(s.reps) || 0;
+              if (sw > 0 && sr > 0) {
+                priorSets.push({ weight: sw, reps: sr, est1RM: sw * (1 + sr / 30) });
+              }
+            }
+          }
+        });
+      }
+
+      if (priorSets.length === 0) {
+        return {
+          isPR: true,
+          type: 'first',
+          label: `${weight} lbs × ${reps}`
+        };
+      }
+
+      let maxWeight = 0;
+      let maxEst1RM = 0;
+      let maxRepsAtWeight = 0;
+
+      priorSets.forEach(s => {
+        if (s.weight > maxWeight) maxWeight = s.weight;
+        if (s.est1RM > maxEst1RM) maxEst1RM = s.est1RM;
+        if (s.weight === weight && s.reps > maxRepsAtWeight) {
+          maxRepsAtWeight = s.reps;
+        }
+      });
+
+      if (weight > maxWeight) {
+        const diff = Math.round((weight - maxWeight) * 10) / 10;
+        return {
+          isPR: true,
+          type: 'weight',
+          label: `Heaviest: ${weight} lbs (+${diff} lbs)`
+        };
+      }
+
+      if (currentEst1RM > maxEst1RM * 1.01) {
+        const diff = Math.round((currentEst1RM - maxEst1RM) * 10) / 10;
+        return {
+          isPR: true,
+          type: '1rm',
+          label: `Est. 1RM: ${Math.round(currentEst1RM)} lbs (+${diff} lbs)`
+        };
+      }
+
+      if (reps > maxRepsAtWeight && maxRepsAtWeight > 0) {
+        const diff = reps - maxRepsAtWeight;
+        return {
+          isPR: true,
+          type: 'reps',
+          label: `Rep PR: ${reps} reps (+${diff}) @ ${weight} lbs`
+        };
+      }
+
+      return { isPR: false };
+    }
+
     function initTouchScrollerInputs() {
       if (typeof document === 'undefined') return;
 
@@ -6605,6 +7057,9 @@ if (typeof window !== 'undefined') {
       workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
       saveWorkoutTimerState();
       updateWorkoutTimerUI();
+      try {
+        requestScreenWakeLock();
+      } catch (e) {}
     }
 
     function pauseWorkoutTimer() {
@@ -6796,6 +7251,9 @@ if (typeof window !== 'undefined') {
         clearInterval(workoutTimerInterval);
         workoutTimerInterval = null;
       }
+      try {
+        releaseScreenWakeLock();
+      } catch (e) {}
       if (typeof updateWorkoutTimerUI === 'function') {
         updateWorkoutTimerUI();
       }
@@ -7298,6 +7756,7 @@ if (typeof window !== 'undefined') {
         implement,
         muscle,
         secondaryMuscles,
+        setType: currentSetType,
         rpe,
         weight,
         reps,
@@ -7317,10 +7776,36 @@ if (typeof window !== 'undefined') {
         restPeriod
       };
 
+      if (currentSetType !== 'warmup' && implement !== 'Running' && implement !== 'Row Erg' && implement !== 'Swimming' && !["Walking", "Hiking", "Biking"].includes(implement)) {
+        try {
+          const prResult = evaluateSetForPR(exerciseName, weight, reps, implement, currentSetType);
+          if (prResult && prResult.isPR) {
+            setObj.isPR = true;
+            setObj.prDetail = prResult.label || '';
+          }
+        } catch (err) {
+          console.warn('PR evaluation check failed:', err);
+        }
+      }
+
       currentSessionSets.push(setObj);
       try {
         localStorage.setItem('showUp_active_workout_sets', JSON.stringify(currentSessionSets));
       } catch (e) {}
+
+      if (setObj.isPR) {
+        try {
+          showPRCelebration(setObj.prDetail);
+        } catch (e) {}
+      }
+
+      try {
+        requestScreenWakeLock();
+      } catch (e) {}
+
+      if (currentSetType === 'drop' || currentSetType === 'failure') {
+        selectSetType('normal');
+      }
 
       try {
         renderLoggedSets();
@@ -7430,6 +7915,8 @@ if (typeof window !== 'undefined') {
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-xs font-black uppercase ${isLatest ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-500/40' : 'text-slate-400 bg-slate-900 border border-slate-800'} px-2.5 py-0.5 rounded-lg">Set #${setNumber}</span>
+                ${s.setType && s.setType !== 'normal' ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${s.setType === 'warmup' ? 'text-amber-400 bg-amber-950/60 border border-amber-500/40' : s.setType === 'drop' ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-500/40' : 'text-rose-400 bg-rose-950/60 border border-rose-500/40'}">${s.setType}</span>` : ''}
+                ${s.isPR ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md text-amber-300 bg-amber-500/20 border border-amber-500/50 flex items-center gap-1 shadow-sm"><i class="fa-solid fa-trophy text-amber-400 text-[10px]"></i>PR${s.prDetail ? ` · ${s.prDetail}` : ''}</span>` : ''}
                 <div class="text-sm sm:text-base font-black text-slate-100 truncate">${s.exerciseName}</div>
               </div>
 
@@ -7634,6 +8121,7 @@ if (typeof window !== 'undefined') {
       if (muscleSelect && set.muscle) muscleSelect.value = set.muscle;
       if (weightInput && typeof set.weight === 'number') weightInput.value = set.weight;
       if (repsInput && typeof set.reps === 'number') repsInput.value = set.reps;
+      if (set.setType && typeof selectSetType === 'function') selectSetType(set.setType);
       if (rpeSelect && set.rpe) rpeSelect.value = set.rpe;
       if (ergDistInput && set.ergDistance) ergDistInput.value = set.ergDistance;
       if (ergTimeInput && set.ergTime) ergTimeInput.value = set.ergTime;
@@ -8236,6 +8724,9 @@ if (typeof window !== 'undefined') {
       workoutTimerSeconds = 0;
       workoutTimerState = 'stopped';
       saveWorkoutTimerState();
+      try {
+        releaseScreenWakeLock();
+      } catch (e) {}
       updateWorkoutTimerUI();
       updateSetControlsUI();
       broadcastUserWorkoutEnded(workoutName, workoutObj);
@@ -8612,6 +9103,20 @@ if (typeof window !== 'undefined') {
       window.setCurrentSessionLogsCollapsed = setCurrentSessionLogsCollapsed;
       window.toggleCurrentSessionLogsCollapse = toggleCurrentSessionLogsCollapse;
       window.applyCurrentSessionLogsCollapseUI = applyCurrentSessionLogsCollapseUI;
+      window.selectSetType = selectSetType;
+      window.openDirectNumpad = openDirectNumpad;
+      window.closeDirectNumpad = closeDirectNumpad;
+      window.setNumpadActiveTarget = setNumpadActiveTarget;
+      window.handleNumpadDigit = handleNumpadDigit;
+      window.handleNumpadDot = handleNumpadDot;
+      window.handleNumpadBackspace = handleNumpadBackspace;
+      window.handleNumpadQuickAdd = handleNumpadQuickAdd;
+      window.handleNumpadNextTarget = handleNumpadNextTarget;
+      window.evaluateSetForPR = evaluateSetForPR;
+      window.showPRCelebration = showPRCelebration;
+      window.playPRCelebrationSound = playPRCelebrationSound;
+      window.requestScreenWakeLock = requestScreenWakeLock;
+      window.releaseScreenWakeLock = releaseScreenWakeLock;
     }
 
     if (typeof document !== 'undefined') {
@@ -20774,6 +21279,155 @@ runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Wo
   exerciseInput.value = "";
   logSet();
   assert(banner.classList.contains('hidden'), "Banner strictly hidden after logging a set without an exercise name");
+});
+
+// === SUITE: 36. Hyper-Emerald (#00F59B) Palette, Screen Wake Lock API & Compact Set Classification Chips ===
+runSuite("36. Hyper-Emerald Palette, Screen Wake Lock API & Compact Set Classification Chips", () => {
+  // 1. Hyper-Emerald Theme Check
+  assert(typeof setThemePalette === 'function', "setThemePalette is a defined function");
+  setThemePalette('emerald');
+  assert(localStorage.getItem('showUp_theme_accent') === 'emerald', "Theme palette persists emerald");
+  assert(document.documentElement.className.includes('theme-emerald'), "documentElement applies theme-emerald");
+  setThemePalette('hyper-emerald');
+  assert(localStorage.getItem('showUp_theme_accent') === 'hyper-emerald', "Theme palette persists hyper-emerald");
+  assert(document.documentElement.className.includes('theme-emerald'), "hyper-emerald maps canonical to theme-emerald");
+
+  // 2. Screen Wake Lock API
+  assert(typeof requestScreenWakeLock === 'function', "requestScreenWakeLock is defined");
+  assert(typeof releaseScreenWakeLock === 'function', "releaseScreenWakeLock is defined");
+  requestScreenWakeLock();
+  assert(globalThis.__wakeLockRequested === 'screen', "requestScreenWakeLock requests screen sentinel");
+  releaseScreenWakeLock();
+
+  // 3. Set Classification Chips
+  assert(typeof selectSetType === 'function', "selectSetType is defined");
+  selectSetType('warmup');
+  const warmupChip = document.getElementById('set-type-warmup');
+  assert(warmupChip.className.includes('bg-emerald-500'), "Warmup chip active class applied when selected");
+  selectSetType('drop');
+  const dropChip = document.getElementById('set-type-drop');
+  assert(dropChip.className.includes('bg-emerald-500'), "Drop chip active class applied when selected");
+  selectSetType('failure');
+  const failureChip = document.getElementById('set-type-failure');
+  assert(failureChip.className.includes('bg-emerald-500'), "Failure chip active class applied when selected");
+  selectSetType('normal');
+  const normalChip = document.getElementById('set-type-normal');
+  assert(normalChip.className.includes('bg-emerald-500'), "Normal chip active class applied when selected");
+});
+
+// === SUITE: 37. 1-Tap Direct Dual-Target Numeric Keypad ===
+runSuite("37. 1-Tap Direct Dual-Target Numeric Keypad", () => {
+  assert(typeof openDirectNumpad === 'function', "openDirectNumpad is defined");
+  assert(typeof closeDirectNumpad === 'function', "closeDirectNumpad is defined");
+  assert(typeof setNumpadActiveTarget === 'function', "setNumpadActiveTarget is defined");
+  assert(typeof handleNumpadDigit === 'function', "handleNumpadDigit is defined");
+  assert(typeof handleNumpadDot === 'function', "handleNumpadDot is defined");
+  assert(typeof handleNumpadBackspace === 'function', "handleNumpadBackspace is defined");
+  assert(typeof handleNumpadQuickAdd === 'function', "handleNumpadQuickAdd is defined");
+  assert(typeof handleNumpadNextTarget === 'function', "handleNumpadNextTarget is defined");
+
+  const weightInput = document.getElementById('input-weight');
+  const repsInput = document.getElementById('input-reps');
+  const numpadModal = document.getElementById('direct-numpad-modal');
+  const dispWeight = document.getElementById('numpad-display-weight');
+  const dispReps = document.getElementById('numpad-display-reps');
+
+  // Open with target weight
+  weightInput.value = "135";
+  repsInput.value = "8";
+  openDirectNumpad('weight');
+  assert(!numpadModal.classList.contains('hidden'), "Direct numpad modal opens without hidden class");
+  assert(dispWeight.innerText === "135", "Displays initial weight value");
+  assert(dispReps.innerText === "8", "Displays initial reps value simultaneously in view");
+
+  // Digit input on fresh target replaces value
+  handleNumpadDigit(2);
+  handleNumpadDigit(2);
+  handleNumpadDigit(5);
+  assert(dispWeight.innerText === "225", "Typing on fresh target enters 225 lbs");
+  assert(weightInput.value === "225", "Syncs 225 directly to underlying weight input");
+
+  // Switch target to reps while retaining numpad view without minimization
+  setNumpadActiveTarget('reps');
+  assert(!numpadModal.classList.contains('hidden'), "Modal stays open when switching targets");
+  handleNumpadDigit(1);
+  handleNumpadDigit(2);
+  assert(dispReps.innerText === "12", "Typing enters 12 reps on fresh target");
+  assert(repsInput.value === "12", "Syncs 12 directly to underlying reps input");
+  assert(dispWeight.innerText === "225", "Weight remains visible and intact in dual view");
+
+  // Quick +5 button
+  handleNumpadQuickAdd(5);
+  assert(dispReps.innerText === "17", "Quick +5 adds 5 to active target (12 -> 17)");
+  assert(repsInput.value === "17", "Syncs updated reps to input");
+
+  // Backspace
+  handleNumpadBackspace();
+  assert(dispReps.innerText === "1", "Backspace removes last digit (17 -> 1)");
+
+  // Next target switches back to weight
+  handleNumpadNextTarget();
+  handleNumpadDot();
+  handleNumpadDigit(5);
+  assert(dispWeight.innerText.includes('.5'), "Supports decimal dot for weight");
+
+  // Close numpad
+  closeDirectNumpad();
+  assert(numpadModal.classList.contains('hidden'), "closeDirectNumpad hides modal");
+});
+
+// === SUITE: 38. Personal Record (PR) Recognition Engine & Celebration ===
+runSuite("38. Personal Record (PR) Recognition Engine & Celebration", () => {
+  assert(typeof evaluateSetForPR === 'function', "evaluateSetForPR is defined");
+  assert(typeof showPRCelebration === 'function', "showPRCelebration is defined");
+
+  // Warmup sets must NEVER trigger PR
+  const warmupEval = evaluateSetForPR("Overhead Press", 135, 10, "Barbell", "warmup");
+  assert(warmupEval.isPR === false, "Warmup sets are excluded from PR recognition");
+
+  // Zero or invalid weight/reps
+  const zeroEval = evaluateSetForPR("Overhead Press", 0, 10, "Barbell", "normal");
+  assert(zeroEval.isPR === false, "Zero weight sets are excluded from PR recognition");
+
+  // Setup history with previous Overhead Press sets
+  completedWorkoutsHistory.length = 0;
+  completedWorkoutsHistory.push({
+    date: '2026-10-20',
+    sets: [
+      { exerciseName: 'Overhead Press', implement: 'Barbell', weight: 135, reps: 5, setType: 'normal' }
+    ]
+  });
+  currentSessionSets.length = 0;
+
+  // Set with heavier weight (145 > 135)
+  const heavyPREval = evaluateSetForPR("Overhead Press", 145, 5, "Barbell", "normal");
+  assert(heavyPREval.isPR === true, "Recognizes heavier weight as PR");
+  assert(heavyPREval.type === 'weight', "PR type is weight");
+  assert(heavyPREval.label.includes('145 lbs'), "PR label mentions new weight");
+
+  // Set with rep PR at existing weight (135 lbs x 8 reps > 5 reps)
+  const repPREval = evaluateSetForPR("Overhead Press", 135, 8, "Barbell", "normal");
+  assert(repPREval.isPR === true, "Recognizes rep PR at given weight");
+
+  // Logging set with PR attaches isPR and prDetail, and renders trophy badge
+  const exInput = document.getElementById('exercise-name-input');
+  const impSelect = document.getElementById('implement-select');
+  const weightInput = document.getElementById('input-weight');
+  const repsInput = document.getElementById('input-reps');
+
+  exInput.value = "Overhead Press";
+  impSelect.value = "Barbell";
+  weightInput.value = "155";
+  repsInput.value = "5";
+  selectSetType('normal');
+
+  logSet();
+  const loggedSet = currentSessionSets[currentSessionSets.length - 1];
+  assert(loggedSet.isPR === true, "Logged set is marked as isPR");
+  assert(loggedSet.prDetail.includes('155'), "Logged set stores PR detail");
+
+  const listContainer = document.getElementById('logged-sets-list');
+  assert(listContainer.innerHTML.includes('fa-trophy') || listContainer.innerHTML.includes('PR'), "Renders PR trophy badge in logged sets list");
 });
 
 print("\n============================================================");

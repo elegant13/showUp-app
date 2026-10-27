@@ -58,6 +58,20 @@
   <!-- TOAST NOTIFICATION CONTAINER (High z-index to display over active modals) -->
   <div id="toast-container" class="fixed top-16 right-4 z-[9999] flex flex-col gap-2 pointer-events-none max-w-sm w-full"></div>
 
+  <!-- CELEBRATORY PERSONAL RECORD (PR) BANNER -->
+  <div id="pr-celebration-banner" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-[9999] bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-slate-950 font-black px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-yellow-200 pointer-events-none transition-all duration-300 max-w-sm w-[90%] mx-auto">
+    <div class="w-10 h-10 rounded-xl bg-black/10 flex items-center justify-center text-xl shrink-0">
+      <i class="fa-solid fa-trophy text-amber-900"></i>
+    </div>
+    <div class="min-w-0 flex-1">
+      <div class="text-[10px] uppercase tracking-wider font-extrabold text-amber-950 flex items-center gap-1">
+        <span>Personal Record Broken!</span>
+        <i class="fa-solid fa-fire text-amber-700"></i>
+      </div>
+      <div id="pr-celebration-text" class="text-xs sm:text-sm font-black text-black truncate">New PR!</div>
+    </div>
+  </div>
+
   <!-- ================= HEADER & TOP CONTROLS ================= -->
   <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-lg w-full header-safe">
     <div class="max-w-3xl mx-auto w-full px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2">
@@ -746,19 +760,19 @@
               <span class="text-[9px] text-slate-500 font-mono">Tap color to apply</span>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="theme-palette-grid">
+              <button type="button" onclick="triggerHaptic('light'); setThemePalette('emerald')" data-theme="emerald" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Hyper-Emerald">
+                <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #00F59B !important;"></span>
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Hyper-Emerald</div>
+                  <div class="text-[9px] text-slate-400 truncate">Vibrant Athletic</div>
+                </div>
+              </button>
+
               <button type="button" onclick="triggerHaptic('light'); setThemePalette('orange')" data-theme="orange" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Hot Orange">
                 <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #f97316 !important;"></span>
                 <div class="min-w-0">
                   <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Hot Orange</div>
                   <div class="text-[9px] text-slate-400 truncate">Adrenaline</div>
-                </div>
-              </button>
-
-              <button type="button" onclick="triggerHaptic('light'); setThemePalette('teal')" data-theme="teal" class="p-2.5 rounded-2xl border border-slate-800 bg-slate-950/80 hover:border-slate-700 text-left transition active:scale-95 flex items-center gap-2.5 cursor-pointer group" title="Cyber Teal">
-                <span class="w-6 h-6 rounded-full shadow-sm shrink-0" style="background-color: #14b8a6 !important;"></span>
-                <div class="min-w-0">
-                  <div class="text-xs font-bold text-slate-200 group-hover:text-white truncate">Cyber Teal</div>
-                  <div class="text-[9px] text-slate-400 truncate">Focus & Clarity</div>
                 </div>
               </button>
 
@@ -1891,6 +1905,78 @@
     <span id="numpad-display-unit"></span>
   </div>
 
+  <!-- ================= DIRECT DUAL-TARGET NUMERIC KEYPAD ================= -->
+  <div id="direct-numpad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end transition-opacity duration-200" onclick="if(event.target === this) closeDirectNumpad()">
+    <!-- Sheet Container -->
+    <div class="m3-card rounded-t-3xl border-t border-slate-700/80 p-4 pb-8 w-full max-w-lg mx-auto shadow-2xl bg-slate-900/98 space-y-3" onclick="event.stopPropagation()">
+      <!-- Top Bar: Title & Close -->
+      <div class="flex items-center justify-between pb-1 border-b border-slate-800/80">
+        <span class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <i class="fa-solid fa-calculator text-[#00F59B]"></i>
+          <span>Direct Numeric Entry</span>
+        </span>
+        <button type="button" onclick="triggerHaptic('light'); closeDirectNumpad()" class="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition" title="Close Keypad" aria-label="Close Keypad">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- DUAL TARGET CARDS (PERSISTENT FOCUS - BOTH WEIGHT AND REPS ARE SIMULTANEOUSLY VISIBLE) -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <!-- WEIGHT TAB BUTTON -->
+        <button type="button" id="numpad-tab-weight" onclick="triggerHaptic('light'); setNumpadActiveTarget('weight')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25">
+          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+            <i class="fa-solid fa-weight-hanging text-xs text-[#00F59B]"></i> Weight (lbs/kg)
+          </span>
+          <span id="numpad-display-weight" class="text-3xl font-black font-mono text-[#00F59B] mt-0.5">0</span>
+        </button>
+
+        <!-- REPS TAB BUTTON -->
+        <button type="button" id="numpad-tab-reps" onclick="triggerHaptic('light'); setNumpadActiveTarget('reps')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700">
+          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
+            <i class="fa-solid fa-rotate text-xs text-slate-400"></i> Reps
+          </span>
+          <span id="numpad-display-reps" class="text-3xl font-black font-mono text-slate-300 mt-0.5">10</span>
+        </button>
+      </div>
+
+      <!-- KEYPAD GRID (1 to 9, ., 0, Backspace) -->
+      <div class="grid grid-cols-3 gap-2 pt-1 select-none">
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('1')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">1</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('2')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">2</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('3')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">3</button>
+
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('4')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">4</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('5')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">5</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('6')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">6</button>
+
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('7')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">7</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('8')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">8</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('9')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">9</button>
+
+        <button type="button" id="numpad-btn-dot" onclick="triggerHaptic('light'); handleNumpadDot()" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-black text-slate-300 font-mono shadow transition cursor-pointer">.</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('0')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">0</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadBackspace()" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-bold text-rose-400 shadow transition flex items-center justify-center cursor-pointer" aria-label="Backspace">
+          <i class="fa-solid fa-delete-left"></i>
+        </button>
+      </div>
+
+      <!-- BOTTOM CONTROL BAR: QUICK +5, SWITCH TARGET, AND DONE -->
+      <div class="grid grid-cols-3 gap-2 pt-1 select-none">
+        <button type="button" onclick="triggerHaptic('medium'); handleNumpadQuickAdd(5)" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-mono font-bold text-xs sm:text-sm border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1">
+          <span>+5</span>
+        </button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadNextTarget()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5">
+          <span>Next</span>
+          <i class="fa-solid fa-arrow-right text-[11px] text-[#00F59B]"></i>
+        </button>
+        <button type="button" onclick="triggerHaptic('medium'); closeDirectNumpad()" class="py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-check text-xs"></i>
+          <span>Done</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= LARGE LOGO PREVIEW MODAL ================= -->
   <div id="large-logo-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeLargeLogoModal()">
     <div class="m3-card relative rounded-3xl border border-slate-700/80 bg-slate-900/95 p-6 sm:p-7 w-full max-w-sm shadow-2xl flex flex-col items-center text-center space-y-4">
@@ -2358,6 +2444,14 @@
             </div>
             <h2 class="text-sm sm:text-base font-black text-slate-100">Log Exercise Set</h2>
           </div>
+
+          <!-- SET CLASSIFICATION CHIPS (COMPACT INLINE HEADER ROW - ZERO EXTRA VERTICAL SPACE) -->
+          <div id="set-classification-container" class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-xl border border-slate-800/80 text-[10px] font-bold">
+            <button type="button" id="set-type-normal" onclick="triggerHaptic('light'); selectSetType('normal')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all font-black text-slate-950 bg-emerald-500 border border-emerald-500 shadow-sm" data-type="normal" title="Normal Working Set">Normal</button>
+            <button type="button" id="set-type-warmup" onclick="triggerHaptic('light'); selectSetType('warmup')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent" data-type="warmup" title="Warmup Set">Warmup</button>
+            <button type="button" id="set-type-drop" onclick="triggerHaptic('light'); selectSetType('drop')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent" data-type="drop" title="Drop Set">Drop</button>
+            <button type="button" id="set-type-failure" onclick="triggerHaptic('light'); selectSetType('failure')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent" data-type="failure" title="Set to Failure">Failure</button>
+          </div>
         </div>
 
         <div id="historical-mode-banner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold px-2.5 py-1.5 rounded-xl flex items-center justify-between">
@@ -2515,7 +2609,7 @@
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-weight" value="0" min="0" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+                <input type="number" id="input-weight" value="0" min="0" step="1" onclick="triggerHaptic('light'); openDirectNumpad('weight')" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all" title="Tap to enter weight directly">
               </div>
 
               <button type="button" id="btn-weight-increment" aria-label="Increase weight" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
@@ -2557,7 +2651,7 @@
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-reps" value="10" min="1" step="1" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-ns-resize transition-all">
+                <input type="number" id="input-reps" value="10" min="1" step="1" onclick="triggerHaptic('light'); openDirectNumpad('reps')" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all" title="Tap to enter reps directly">
               </div>
 
               <button type="button" id="btn-reps-increment" aria-label="Increase reps" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">

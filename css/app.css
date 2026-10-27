@@ -26,6 +26,24 @@ body.font-mono {
    ========================================================================== */
 
 :root,
+.theme-emerald,
+.theme-hyper-emerald {
+  --m3-primary: #00F59B;
+  --m3-primary-rgb: 0, 245, 155;
+  --m3-primary-light: #5effba;
+  --m3-onPrimary: #020617;
+  --m3-primaryContainer: rgba(0, 245, 155, 0.16);
+  --m3-onPrimaryContainer: #00F59B;
+  --m3-secondary: #00d284;
+  --m3-secondaryContainer: #004d2c;
+  --m3-onSecondaryContainer: #d1fae5;
+  --m3-surface: #0a0e17;
+  --m3-surfaceVariant: #111726;
+  --m3-onSurface: #f8fafc;
+  --m3-onSurfaceVariant: #94a3b8;
+  --m3-outline: #1e293b;
+}
+
 .theme-orange {
   --m3-primary: #f97316;
   --m3-primary-rgb: 249, 115, 22;
@@ -62,9 +80,7 @@ body.font-mono {
 }
 
 .theme-india,
-.theme-blue-india,
-.theme-lime,
-.theme-emerald {
+.theme-blue-india {
   --m3-primary: #1e90ff;
   --m3-primary-rgb: 30, 144, 255;
   --m3-primary-light: #60a5fa;

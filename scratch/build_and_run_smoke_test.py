@@ -149,6 +149,22 @@ def generate_and_run_smoke_test():
         print("[FAIL] HRM/Muscles Engaged enable option, 3s pill copy, or Muscles Engaged opacity missing in HTML")
         return False
 
+    # 11. Check Hyper-Emerald palette option, PR celebration banner, Set Classification chips, and Direct Dual-Target Numpad in HTML
+    if ('id="pr-celebration-banner"' in html and
+        'id="set-classification-container"' in html and
+        'id="set-type-normal"' in html and
+        'id="set-type-warmup"' in html and
+        'id="set-type-drop"' in html and
+        'id="set-type-failure"' in html and
+        'id="direct-numpad-modal"' in html and
+        'id="numpad-tab-weight"' in html and
+        'id="numpad-tab-reps"' in html and
+        '#00F59B' in html):
+        print("[PASS] Hyper-Emerald palette, PR celebration banner, Set Classification chips, and Direct Dual-Target Keypad verified in HTML")
+    else:
+        print("[FAIL] PR banner, Set Classification chips, Direct Numpad, or Hyper-Emerald missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -277,6 +293,17 @@ globalThis.navigator = {
   userAgent: 'Mozilla/5.0 Mac',
   onLine: true,
   geolocation: { getCurrentPosition: (success, error) => {} },
+  wakeLock: {
+    request: async (type) => {
+      globalThis.__wakeLockRequested = type;
+      return {
+        type: type,
+        released: false,
+        release: async function() { this.released = true; globalThis.__wakeLockReleased = true; },
+        addEventListener: (ev, fn) => {}
+      };
+    }
+  },
   vibrate: (pattern) => {
     globalThis.__lastVibrate = pattern;
     return true;
@@ -3443,6 +3470,155 @@ runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Wo
   exerciseInput.value = "";
   logSet();
   assert(banner.classList.contains('hidden'), "Banner strictly hidden after logging a set without an exercise name");
+});
+
+// === SUITE: 36. Hyper-Emerald (#00F59B) Palette, Screen Wake Lock API & Compact Set Classification Chips ===
+runSuite("36. Hyper-Emerald Palette, Screen Wake Lock API & Compact Set Classification Chips", () => {
+  // 1. Hyper-Emerald Theme Check
+  assert(typeof setThemePalette === 'function', "setThemePalette is a defined function");
+  setThemePalette('emerald');
+  assert(localStorage.getItem('showUp_theme_accent') === 'emerald', "Theme palette persists emerald");
+  assert(document.documentElement.className.includes('theme-emerald'), "documentElement applies theme-emerald");
+  setThemePalette('hyper-emerald');
+  assert(localStorage.getItem('showUp_theme_accent') === 'hyper-emerald', "Theme palette persists hyper-emerald");
+  assert(document.documentElement.className.includes('theme-emerald'), "hyper-emerald maps canonical to theme-emerald");
+
+  // 2. Screen Wake Lock API
+  assert(typeof requestScreenWakeLock === 'function', "requestScreenWakeLock is defined");
+  assert(typeof releaseScreenWakeLock === 'function', "releaseScreenWakeLock is defined");
+  requestScreenWakeLock();
+  assert(globalThis.__wakeLockRequested === 'screen', "requestScreenWakeLock requests screen sentinel");
+  releaseScreenWakeLock();
+
+  // 3. Set Classification Chips
+  assert(typeof selectSetType === 'function', "selectSetType is defined");
+  selectSetType('warmup');
+  const warmupChip = document.getElementById('set-type-warmup');
+  assert(warmupChip.className.includes('bg-emerald-500'), "Warmup chip active class applied when selected");
+  selectSetType('drop');
+  const dropChip = document.getElementById('set-type-drop');
+  assert(dropChip.className.includes('bg-emerald-500'), "Drop chip active class applied when selected");
+  selectSetType('failure');
+  const failureChip = document.getElementById('set-type-failure');
+  assert(failureChip.className.includes('bg-emerald-500'), "Failure chip active class applied when selected");
+  selectSetType('normal');
+  const normalChip = document.getElementById('set-type-normal');
+  assert(normalChip.className.includes('bg-emerald-500'), "Normal chip active class applied when selected");
+});
+
+// === SUITE: 37. 1-Tap Direct Dual-Target Numeric Keypad ===
+runSuite("37. 1-Tap Direct Dual-Target Numeric Keypad", () => {
+  assert(typeof openDirectNumpad === 'function', "openDirectNumpad is defined");
+  assert(typeof closeDirectNumpad === 'function', "closeDirectNumpad is defined");
+  assert(typeof setNumpadActiveTarget === 'function', "setNumpadActiveTarget is defined");
+  assert(typeof handleNumpadDigit === 'function', "handleNumpadDigit is defined");
+  assert(typeof handleNumpadDot === 'function', "handleNumpadDot is defined");
+  assert(typeof handleNumpadBackspace === 'function', "handleNumpadBackspace is defined");
+  assert(typeof handleNumpadQuickAdd === 'function', "handleNumpadQuickAdd is defined");
+  assert(typeof handleNumpadNextTarget === 'function', "handleNumpadNextTarget is defined");
+
+  const weightInput = document.getElementById('input-weight');
+  const repsInput = document.getElementById('input-reps');
+  const numpadModal = document.getElementById('direct-numpad-modal');
+  const dispWeight = document.getElementById('numpad-display-weight');
+  const dispReps = document.getElementById('numpad-display-reps');
+
+  // Open with target weight
+  weightInput.value = "135";
+  repsInput.value = "8";
+  openDirectNumpad('weight');
+  assert(!numpadModal.classList.contains('hidden'), "Direct numpad modal opens without hidden class");
+  assert(dispWeight.innerText === "135", "Displays initial weight value");
+  assert(dispReps.innerText === "8", "Displays initial reps value simultaneously in view");
+
+  // Digit input on fresh target replaces value
+  handleNumpadDigit(2);
+  handleNumpadDigit(2);
+  handleNumpadDigit(5);
+  assert(dispWeight.innerText === "225", "Typing on fresh target enters 225 lbs");
+  assert(weightInput.value === "225", "Syncs 225 directly to underlying weight input");
+
+  // Switch target to reps while retaining numpad view without minimization
+  setNumpadActiveTarget('reps');
+  assert(!numpadModal.classList.contains('hidden'), "Modal stays open when switching targets");
+  handleNumpadDigit(1);
+  handleNumpadDigit(2);
+  assert(dispReps.innerText === "12", "Typing enters 12 reps on fresh target");
+  assert(repsInput.value === "12", "Syncs 12 directly to underlying reps input");
+  assert(dispWeight.innerText === "225", "Weight remains visible and intact in dual view");
+
+  // Quick +5 button
+  handleNumpadQuickAdd(5);
+  assert(dispReps.innerText === "17", "Quick +5 adds 5 to active target (12 -> 17)");
+  assert(repsInput.value === "17", "Syncs updated reps to input");
+
+  // Backspace
+  handleNumpadBackspace();
+  assert(dispReps.innerText === "1", "Backspace removes last digit (17 -> 1)");
+
+  // Next target switches back to weight
+  handleNumpadNextTarget();
+  handleNumpadDot();
+  handleNumpadDigit(5);
+  assert(dispWeight.innerText.includes('.5'), "Supports decimal dot for weight");
+
+  // Close numpad
+  closeDirectNumpad();
+  assert(numpadModal.classList.contains('hidden'), "closeDirectNumpad hides modal");
+});
+
+// === SUITE: 38. Personal Record (PR) Recognition Engine & Celebration ===
+runSuite("38. Personal Record (PR) Recognition Engine & Celebration", () => {
+  assert(typeof evaluateSetForPR === 'function', "evaluateSetForPR is defined");
+  assert(typeof showPRCelebration === 'function', "showPRCelebration is defined");
+
+  // Warmup sets must NEVER trigger PR
+  const warmupEval = evaluateSetForPR("Overhead Press", 135, 10, "Barbell", "warmup");
+  assert(warmupEval.isPR === false, "Warmup sets are excluded from PR recognition");
+
+  // Zero or invalid weight/reps
+  const zeroEval = evaluateSetForPR("Overhead Press", 0, 10, "Barbell", "normal");
+  assert(zeroEval.isPR === false, "Zero weight sets are excluded from PR recognition");
+
+  // Setup history with previous Overhead Press sets
+  completedWorkoutsHistory.length = 0;
+  completedWorkoutsHistory.push({
+    date: '2026-10-20',
+    sets: [
+      { exerciseName: 'Overhead Press', implement: 'Barbell', weight: 135, reps: 5, setType: 'normal' }
+    ]
+  });
+  currentSessionSets.length = 0;
+
+  // Set with heavier weight (145 > 135)
+  const heavyPREval = evaluateSetForPR("Overhead Press", 145, 5, "Barbell", "normal");
+  assert(heavyPREval.isPR === true, "Recognizes heavier weight as PR");
+  assert(heavyPREval.type === 'weight', "PR type is weight");
+  assert(heavyPREval.label.includes('145 lbs'), "PR label mentions new weight");
+
+  // Set with rep PR at existing weight (135 lbs x 8 reps > 5 reps)
+  const repPREval = evaluateSetForPR("Overhead Press", 135, 8, "Barbell", "normal");
+  assert(repPREval.isPR === true, "Recognizes rep PR at given weight");
+
+  // Logging set with PR attaches isPR and prDetail, and renders trophy badge
+  const exInput = document.getElementById('exercise-name-input');
+  const impSelect = document.getElementById('implement-select');
+  const weightInput = document.getElementById('input-weight');
+  const repsInput = document.getElementById('input-reps');
+
+  exInput.value = "Overhead Press";
+  impSelect.value = "Barbell";
+  weightInput.value = "155";
+  repsInput.value = "5";
+  selectSetType('normal');
+
+  logSet();
+  const loggedSet = currentSessionSets[currentSessionSets.length - 1];
+  assert(loggedSet.isPR === true, "Logged set is marked as isPR");
+  assert(loggedSet.prDetail.includes('155'), "Logged set stores PR detail");
+
+  const listContainer = document.getElementById('logged-sets-list');
+  assert(listContainer.innerHTML.includes('fa-trophy') || listContainer.innerHTML.includes('PR'), "Renders PR trophy badge in logged sets list");
 });
 
 print("\\n============================================================");
