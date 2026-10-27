@@ -877,18 +877,14 @@
 
             <div id="pref-hrm-enabled-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
-                <span class="text-xs text-slate-300 block">Enable Heart Rate Monitor</span>
-                <span class="text-[10px] text-slate-500">Enable Bluetooth HRM connectivity & telemetry card</span>
+                <span class="text-xs text-slate-300 block">Heart Rate Monitor</span>
+                <span class="text-[10px] text-slate-500">Display Heart Rate Monitor section & Bluetooth telemetry</span>
               </div>
               <input type="checkbox" id="pref-hrm-enabled" onchange="toggleHRMEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
             </div>
 
-            <div id="pref-hr-collapsed-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
-              <div>
-                <span class="text-xs text-slate-300 block">HR Telemetry Module</span>
-                <span class="text-[10px] text-slate-500">Keep HR card collapsed by default</span>
-              </div>
-              <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
+            <div id="pref-hr-collapsed-row" class="hidden" aria-hidden="true">
+              <input type="checkbox" id="pref-hr-collapsed" onchange="toggleHRCollapsePref(this.checked)">
             </div>
 
             <div id="pref-muscles-engaged-enabled-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
