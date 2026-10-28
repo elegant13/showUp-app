@@ -3867,6 +3867,57 @@ runSuite("42. Mobile-First Bottom Sheets, 1-Tap Match Last Set & Touch Swipe Ges
   assert(list.innerHTML.includes('logged-set-card'), "Logged sets list includes foreground swipeable card");
 });
 
+runSuite("43. Edit Set Modal Unified Steppers (+ / -) for Weight, Reps, and Rest", () => {
+  assert(typeof initEditModalSteppers === 'function', "initEditModalSteppers is a defined function");
+  assert(typeof adjustEditActiveSetWeight === 'function', "adjustEditActiveSetWeight is a defined function");
+  assert(typeof adjustEditActiveSetReps === 'function', "adjustEditActiveSetReps is a defined function");
+  assert(typeof adjustEditActiveSetRest === 'function', "adjustEditActiveSetRest is a defined function");
+
+  // Verify stepper DOM elements exist
+  const weightDec = getOrCreateElement('btn-edit-weight-decrement');
+  const weightInc = getOrCreateElement('btn-edit-weight-increment');
+  const weightInput = getOrCreateElement('edit-active-set-weight');
+
+  const repsDec = getOrCreateElement('btn-edit-reps-decrement');
+  const repsInc = getOrCreateElement('btn-edit-reps-increment');
+  const repsInput = getOrCreateElement('edit-active-set-reps');
+
+  const restDec = getOrCreateElement('btn-edit-rest-decrement');
+  const restInc = getOrCreateElement('btn-edit-rest-increment');
+  const restInput = getOrCreateElement('edit-active-set-rest');
+
+  assert(weightDec && weightInc && weightInput, "Weight stepper elements exist in edit set modal");
+  assert(repsDec && repsInc && repsInput, "Reps stepper elements exist in edit set modal");
+  assert(restDec && restInc && restInput, "Rest period stepper elements exist in edit set modal");
+
+  // Test weight stepper adjustment
+  weightInput.value = "100";
+  adjustEditActiveSetWeight(5);
+  assert(parseFloat(weightInput.value) === 105, "adjustEditActiveSetWeight(5) increases weight from 100 to 105");
+  adjustEditActiveSetWeight(-2.5);
+  assert(parseFloat(weightInput.value) === 102.5, "adjustEditActiveSetWeight(-2.5) decreases weight to 102.5");
+  adjustEditActiveSetWeight(-150);
+  assert(parseFloat(weightInput.value) === 0, "adjustEditActiveSetWeight clamps weight to minimum 0");
+
+  // Test reps stepper adjustment
+  repsInput.value = "10";
+  adjustEditActiveSetReps(1);
+  assert(parseInt(repsInput.value, 10) === 11, "adjustEditActiveSetReps(1) increases reps from 10 to 11");
+  adjustEditActiveSetReps(-2);
+  assert(parseInt(repsInput.value, 10) === 9, "adjustEditActiveSetReps(-2) decreases reps to 9");
+  adjustEditActiveSetReps(-50);
+  assert(parseInt(repsInput.value, 10) === 1, "adjustEditActiveSetReps clamps reps to minimum 1");
+
+  // Test rest period stepper adjustment
+  restInput.value = "60";
+  adjustEditActiveSetRest(15);
+  assert(parseInt(restInput.value, 10) === 75, "adjustEditActiveSetRest(15) increases rest period from 60 to 75");
+  adjustEditActiveSetRest(-30);
+  assert(parseInt(restInput.value, 10) === 45, "adjustEditActiveSetRest(-30) decreases rest period to 45");
+  adjustEditActiveSetRest(-100);
+  assert(parseInt(restInput.value, 10) === 0, "adjustEditActiveSetRest clamps rest period to minimum 0");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

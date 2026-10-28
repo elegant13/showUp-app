@@ -1381,6 +1381,12 @@
           adjustReps(amount * deltaSign);
         } else if (type === 'rest') {
           adjustRestTarget(amount * deltaSign);
+        } else if (type === 'edit-weight') {
+          adjustEditActiveSetWeight((amount === 1 ? 5 : amount) * deltaSign);
+        } else if (type === 'edit-reps') {
+          adjustEditActiveSetReps(amount * deltaSign);
+        } else if (type === 'edit-rest') {
+          adjustEditActiveSetRest((amount === 1 ? 15 : amount * 3) * deltaSign);
         }
       }
 
@@ -1975,6 +1981,8 @@
       if (repsInc) bindHoldStepper(repsInc, 'reps', 1);
       if (restDec) bindHoldStepper(restDec, 'rest', -1);
       if (restInc) bindHoldStepper(restInc, 'rest', 1);
+
+      initEditModalSteppers();
 
       // Support mouse wheel on inputs
       ['weight', 'reps'].forEach(type => {
@@ -3476,6 +3484,23 @@
       }
     }
 
+    function initEditModalSteppers() {
+      if (typeof document === 'undefined') return;
+      const editWeightDec = document.getElementById('btn-edit-weight-decrement');
+      const editWeightInc = document.getElementById('btn-edit-weight-increment');
+      const editRepsDec = document.getElementById('btn-edit-reps-decrement');
+      const editRepsInc = document.getElementById('btn-edit-reps-increment');
+      const editRestDec = document.getElementById('btn-edit-rest-decrement');
+      const editRestInc = document.getElementById('btn-edit-rest-increment');
+
+      if (editWeightDec) bindHoldStepper(editWeightDec, 'edit-weight', -1);
+      if (editWeightInc) bindHoldStepper(editWeightInc, 'edit-weight', 1);
+      if (editRepsDec) bindHoldStepper(editRepsDec, 'edit-reps', -1);
+      if (editRepsInc) bindHoldStepper(editRepsInc, 'edit-reps', 1);
+      if (editRestDec) bindHoldStepper(editRestDec, 'edit-rest', -1);
+      if (editRestInc) bindHoldStepper(editRestInc, 'edit-rest', 1);
+    }
+
     function openEditActiveSetModal(setId) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       const set = currentSessionSets.find(s => s.id === setId);
@@ -3526,6 +3551,7 @@
       if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
+      initEditModalSteppers();
       if (modal) modal.classList.remove('hidden');
     }
 
@@ -4446,6 +4472,7 @@
       window.matchLastSet = matchLastSet;
       window.updateMatchLastSetUI = updateMatchLastSetUI;
       window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
+      window.initEditModalSteppers = initEditModalSteppers;
     }
 
     if (typeof document !== 'undefined') {

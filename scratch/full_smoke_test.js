@@ -6418,6 +6418,12 @@ if (typeof window !== 'undefined') {
           adjustReps(amount * deltaSign);
         } else if (type === 'rest') {
           adjustRestTarget(amount * deltaSign);
+        } else if (type === 'edit-weight') {
+          adjustEditActiveSetWeight((amount === 1 ? 5 : amount) * deltaSign);
+        } else if (type === 'edit-reps') {
+          adjustEditActiveSetReps(amount * deltaSign);
+        } else if (type === 'edit-rest') {
+          adjustEditActiveSetRest((amount === 1 ? 15 : amount * 3) * deltaSign);
         }
       }
 
@@ -7012,6 +7018,8 @@ if (typeof window !== 'undefined') {
       if (repsInc) bindHoldStepper(repsInc, 'reps', 1);
       if (restDec) bindHoldStepper(restDec, 'rest', -1);
       if (restInc) bindHoldStepper(restInc, 'rest', 1);
+
+      initEditModalSteppers();
 
       // Support mouse wheel on inputs
       ['weight', 'reps'].forEach(type => {
@@ -8096,6 +8104,140 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function updateMatchLastSetUI() {
+      const btn = document.getElementById('btn-match-last-set');
+      const preview = document.getElementById('btn-match-last-set-preview');
+      if (!btn) return;
+
+      if (!currentSessionSets || currentSessionSets.length === 0) {
+        btn.classList.add('hidden');
+        return;
+      }
+
+      const lastSet = currentSessionSets[currentSessionSets.length - 1];
+      if (!lastSet) {
+        btn.classList.add('hidden');
+        return;
+      }
+
+      let summary = '';
+      if (lastSet.implement === "Running") {
+        summary = `${lastSet.runningDistance || 0} mi | ${lastSet.runningTime || '0:00'}`;
+      } else if (lastSet.implement === "Row Erg") {
+        summary = `${lastSet.ergDistance || 0}m | ${lastSet.ergTime || '0:00'}`;
+      } else if (lastSet.implement === "Swimming") {
+        summary = `${lastSet.swimDistance || 0} yds`;
+      } else if (["Walking", "Hiking", "Biking"].includes(lastSet.implement)) {
+        summary = `${lastSet.enduranceDistance || 0} mi`;
+      } else {
+        summary = `${lastSet.weight || 0} lbs × ${lastSet.reps || 0}`;
+      }
+
+      if (preview) {
+        preview.textContent = summary;
+      }
+      btn.classList.remove('hidden');
+    }
+
+    function matchLastSet() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      if (!currentSessionSets || currentSessionSets.length === 0) return;
+      const lastSet = currentSessionSets[currentSessionSets.length - 1];
+      if (!lastSet) return;
+
+      repeatSet(lastSet.id);
+
+      const btn = document.getElementById('btn-match-last-set');
+      if (btn) {
+        btn.classList.add('ring-2', 'ring-emerald-400');
+        setTimeout(() => {
+          btn.classList.remove('ring-2', 'ring-emerald-400');
+        }, 400);
+      }
+    }
+
+    function initLoggedSetSwipeGestures() {
+      if (typeof document === 'undefined') return;
+      const wrappers = document.querySelectorAll('.logged-set-swipe-wrapper');
+      wrappers.forEach(wrapper => {
+        const setId = Number(wrapper.getAttribute('data-set-id'));
+        const card = wrapper.querySelector('.logged-set-card');
+        const actLeft = wrapper.querySelector('.swipe-action-left');
+        const actRight = wrapper.querySelector('.swipe-action-right');
+        if (!card || !setId) return;
+
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let isSwiping = false;
+
+        card.addEventListener('touchstart', (e) => {
+          if (!e.touches || e.touches.length !== 1) return;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+          currentX = 0;
+          isSwiping = false;
+          card.style.transition = 'none';
+        }, { passive: true });
+
+        card.addEventListener('touchmove', (e) => {
+          if (!e.touches || e.touches.length !== 1) return;
+          const dx = e.touches[0].clientX - startX;
+          const dy = e.touches[0].clientY - startY;
+
+          if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+            isSwiping = true;
+            currentX = dx;
+            const clampedX = Math.max(-100, Math.min(100, dx));
+            card.style.transform = `translateX(${clampedX}px)`;
+
+            if (dx > 20) {
+              if (actLeft) actLeft.style.opacity = Math.min(1, (dx - 20) / 40);
+              if (actRight) actRight.style.opacity = '0';
+            } else if (dx < -20) {
+              if (actRight) actRight.style.opacity = Math.min(1, (-dx - 20) / 40);
+              if (actLeft) actLeft.style.opacity = '0';
+            } else {
+              if (actLeft) actLeft.style.opacity = '0';
+              if (actRight) actRight.style.opacity = '0';
+            }
+          }
+        }, { passive: true });
+
+        card.addEventListener('touchend', () => {
+          if (!isSwiping) return;
+          card.style.transition = 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)';
+          card.style.transform = 'translateX(0px)';
+          if (actLeft) actLeft.style.opacity = '0';
+          if (actRight) actRight.style.opacity = '0';
+
+          if (currentX > 55) {
+            if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+            repeatSet(setId);
+          } else if (currentX < -55) {
+            if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+            if (typeof showAppConfirm === 'function') {
+              showAppConfirm({
+                title: "Delete Set?",
+                message: "Remove this set from your active workout session?",
+                confirmText: "Delete Set",
+                cancelText: "Keep Set",
+                type: "danger",
+                icon: "fa-solid fa-trash-can"
+              }).then((confirmed) => {
+                if (confirmed) {
+                  deleteSet(setId);
+                }
+              });
+            } else {
+              deleteSet(setId);
+            }
+          }
+          isSwiping = false;
+        }, { passive: true });
+      });
+    }
+
     function renderLoggedSets() {
       const safe = (typeof escapeHtml === 'function') ? escapeHtml : (str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'));
       const container = document.getElementById('logged-sets-list');
@@ -8109,6 +8251,7 @@ if (typeof window !== 'undefined') {
       if (currentSessionSets.length === 0) {
         container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs sm:text-sm italic font-medium">No sets logged for this session yet. Pick an exercise above and hit "Log Set".</div>`;
         updateSetControlsUI();
+        updateMatchLastSetUI();
         return;
       }
 
@@ -8120,60 +8263,77 @@ if (typeof window !== 'undefined') {
         const isLatest = revIdx === 0;
 
         html += `
-          <div class="bg-slate-950 p-3.5 sm:p-4 rounded-2xl border ${isLatest ? 'border-emerald-500/50 bg-emerald-950/20 shadow-emerald-500/10' : 'border-slate-800'} shadow-md flex items-center justify-between gap-3 transition-all">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-xs font-black uppercase ${isLatest ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-500/40' : 'text-slate-400 bg-slate-900 border border-slate-800'} px-2.5 py-0.5 rounded-lg">Set #${setNumber}</span>
-                ${s.setType && s.setType !== 'normal' ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${s.setType === 'warmup' ? 'text-amber-400 bg-amber-950/60 border border-amber-500/40' : s.setType === 'drop' ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-500/40' : 'text-rose-400 bg-rose-950/60 border border-rose-500/40'}">${s.setType}</span>` : ''}
-                ${s.isPR ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md text-amber-300 bg-amber-500/20 border border-amber-500/50 flex items-center gap-1 shadow-sm"><i class="fa-solid fa-trophy text-amber-400 text-[10px]"></i>PR${s.prDetail ? ` · ${s.prDetail}` : ''}</span>` : ''}
-                <div class="text-sm sm:text-base font-black text-slate-100 truncate">${s.exerciseName}</div>
+          <div class="logged-set-swipe-wrapper relative overflow-hidden rounded-2xl select-none" data-set-id="${s.id}">
+            <!-- Background Actions revealed on swipe -->
+            <div class="absolute inset-0 flex items-center justify-between px-4 pointer-events-none rounded-2xl bg-slate-900/60">
+              <!-- Swipe Right Action: Repeat (Emerald) -->
+              <div class="swipe-action-left flex items-center gap-1.5 text-emerald-400 font-bold text-xs opacity-0 transition-opacity">
+                <i class="fa-solid fa-arrow-rotate-right text-sm"></i>
+                <span>Repeat</span>
               </div>
-
-              <div class="text-xs text-slate-300 gap-2 flex items-center flex-wrap mt-1.5">
-                <span class="bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-lg font-bold">${s.implement}</span>
-                ${s.implement === "Running" ? `<span class="font-bold text-slate-200">${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
-                  s.implement === "Row Erg" ? `<span class="font-bold text-slate-200">${s.ergDistance}m | ${s.ergTime}</span>` :
-                  s.implement === "Swimming" ? `<span class="font-bold text-slate-200">${s.swimDistance} yds | ${s.swimTime}</span>` :
-                  ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span class="font-bold text-slate-200">${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
-                  `<span class="font-black text-emerald-300 text-sm">${s.weight} lbs × ${s.reps} reps</span>`}
-                <span class="text-slate-400 font-semibold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">RPE ${s.rpe}</span>
-                ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
-                ${s.restPeriod && s.restPeriod > 0 ? `<span class="bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-400"></i>Rest: ${formatDurationSecs(s.restPeriod)}</span>` : ''}
-              </div>
-
-              <!-- Set Note Section -->
-              <div id="set-note-box-${s.id}" class="mt-2 text-xs">
-                ${s.notes && s.notes.trim() ? `
-                  <div class="inline-flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg max-w-full">
-                    <i class="fa-regular fa-note-sticky text-emerald-400 text-xs shrink-0"></i>
-                    <span class="truncate text-[11px] font-medium text-slate-200">${safe(s.notes)}</span>
-                    <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-slate-500 hover:text-emerald-400 p-0.5 ml-1 transition" title="Edit Note">
-                      <i class="fa-solid fa-pen text-[10px]"></i>
-                    </button>
-                    <button type="button" onclick="triggerHaptic('light'); deleteSetNote(${s.id})" class="text-slate-500 hover:text-rose-400 p-0.5 transition" title="Delete Note">
-                      <i class="fa-solid fa-xmark text-xs"></i>
-                    </button>
-                  </div>
-                ` : `
-                  <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-[11px] font-medium text-slate-500 hover:text-emerald-400 transition inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-slate-900/60 border border-transparent hover:border-slate-800">
-                    <i class="fa-regular fa-note-sticky text-[10px]"></i>
-                    <span>+ Note</span>
-                  </button>
-                `}
+              <!-- Swipe Left Action: Delete (Rose) -->
+              <div class="swipe-action-right flex items-center gap-1.5 text-rose-400 font-bold text-xs opacity-0 transition-opacity">
+                <span>Delete</span>
+                <i class="fa-solid fa-trash-can text-sm"></i>
               </div>
             </div>
 
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button onclick="triggerHaptic('medium'); repeatSet(${s.id})" class="text-xs font-black px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition active:scale-95 shadow-sm" title="Repeat this set in workout controls">
-                <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
-                <span class="hidden sm:inline">Repeat</span>
-              </button>
-              <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl hover:bg-slate-900 transition" title="Edit Set">
-                <i class="fa-solid fa-pen-to-square text-base"></i>
-              </button>
-              <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition" title="Delete Set">
-                <i class="fa-solid fa-trash-can text-base"></i>
-              </button>
+            <!-- Foreground Card -->
+            <div id="logged-set-item-${s.id}" class="logged-set-card relative z-10 bg-slate-950 p-3.5 sm:p-4 rounded-2xl border ${isLatest ? 'border-emerald-500/50 bg-emerald-950/20 shadow-emerald-500/10' : 'border-slate-800'} shadow-md flex items-center justify-between gap-3 transition-transform duration-150 will-change-transform">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-xs font-black uppercase ${isLatest ? 'text-emerald-400 bg-emerald-950/80 border border-emerald-500/40' : 'text-slate-400 bg-slate-900 border border-slate-800'} px-2.5 py-0.5 rounded-lg">Set #${setNumber}</span>
+                  ${s.setType && s.setType !== 'normal' ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${s.setType === 'warmup' ? 'text-amber-400 bg-amber-950/60 border border-amber-500/40' : s.setType === 'drop' ? 'text-cyan-400 bg-cyan-950/60 border border-cyan-500/40' : 'text-rose-400 bg-rose-950/60 border border-rose-500/40'}">${s.setType}</span>` : ''}
+                  ${s.isPR ? `<span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md text-amber-300 bg-amber-500/20 border border-amber-500/50 flex items-center gap-1 shadow-sm"><i class="fa-solid fa-trophy text-amber-400 text-[10px]"></i>PR${s.prDetail ? ` · ${s.prDetail}` : ''}</span>` : ''}
+                  <div class="text-sm sm:text-base font-black text-slate-100 truncate">${s.exerciseName}</div>
+                </div>
+
+                <div class="text-xs text-slate-300 gap-2 flex items-center flex-wrap mt-1.5">
+                  <span class="bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-lg font-bold">${s.implement}</span>
+                  ${s.implement === "Running" ? `<span class="font-bold text-slate-200">${s.runningDistance} mi | ${s.runningTime}${s.runningAvgHR ? ` | HR: ${s.runningAvgHR} avg` + (s.runningMaxHR ? ` / ${s.runningMaxHR} max` : '') : ''}</span>` :
+                    s.implement === "Row Erg" ? `<span class="font-bold text-slate-200">${s.ergDistance}m | ${s.ergTime}</span>` :
+                    s.implement === "Swimming" ? `<span class="font-bold text-slate-200">${s.swimDistance} yds | ${s.swimTime}</span>` :
+                    ["Walking", "Hiking", "Biking"].includes(s.implement) ? `<span class="font-bold text-slate-200">${s.enduranceDistance} mi | ${s.enduranceTime}</span>` :
+                    `<span class="font-black text-emerald-300 text-sm">${s.weight} lbs × ${s.reps} reps</span>`}
+                  <span class="text-slate-400 font-semibold bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">RPE ${s.rpe}</span>
+                  ${s.setDuration ? `<span class="bg-slate-900 text-slate-400 border border-slate-800 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-regular fa-clock mr-1 text-emerald-500"></i>Set: ${formatDurationSecs(s.setDuration)}</span>` : ''}
+                  ${s.restPeriod && s.restPeriod > 0 ? `<span class="bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-lg font-mono text-[11px]"><i class="fa-solid fa-hourglass-half mr-1 text-emerald-400"></i>Rest: ${formatDurationSecs(s.restPeriod)}</span>` : ''}
+                </div>
+
+                <!-- Set Note Section -->
+                <div id="set-note-box-${s.id}" class="mt-2 text-xs">
+                  ${s.notes && s.notes.trim() ? `
+                    <div class="inline-flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 text-slate-300 px-2.5 py-1 rounded-lg max-w-full">
+                      <i class="fa-regular fa-note-sticky text-emerald-400 text-xs shrink-0"></i>
+                      <span class="truncate text-[11px] font-medium text-slate-200">${safe(s.notes)}</span>
+                      <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-slate-500 hover:text-emerald-400 p-0.5 ml-1 transition" title="Edit Note">
+                        <i class="fa-solid fa-pen text-[10px]"></i>
+                      </button>
+                      <button type="button" onclick="triggerHaptic('light'); deleteSetNote(${s.id})" class="text-slate-500 hover:text-rose-400 p-0.5 transition" title="Delete Note">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                      </button>
+                    </div>
+                  ` : `
+                    <button type="button" onclick="triggerHaptic('light'); openInlineSetNoteInput(${s.id})" class="text-[11px] font-medium text-slate-500 hover:text-emerald-400 transition inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md hover:bg-slate-900/60 border border-transparent hover:border-slate-800">
+                      <i class="fa-regular fa-note-sticky text-[10px]"></i>
+                      <span>+ Note</span>
+                    </button>
+                  `}
+                </div>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="triggerHaptic('medium'); repeatSet(${s.id})" class="text-xs font-black px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 transition active:scale-95 shadow-sm min-w-[36px] min-h-[36px] justify-center" title="Repeat this set in workout controls">
+                  <i class="fa-solid fa-arrow-rotate-right text-xs"></i>
+                  <span class="hidden sm:inline">Repeat</span>
+                </button>
+                <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Edit Set">
+                  <i class="fa-solid fa-pen-to-square text-base"></i>
+                </button>
+                <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Set">
+                  <i class="fa-solid fa-trash-can text-base"></i>
+                </button>
+              </div>
             </div>
           </div>
         `;
@@ -8209,6 +8369,8 @@ if (typeof window !== 'undefined') {
 
       container.innerHTML = html;
       updateSetControlsUI();
+      updateMatchLastSetUI();
+      initLoggedSetSwipeGestures();
     }
 
     function deleteSet(id) {
@@ -8359,6 +8521,23 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function initEditModalSteppers() {
+      if (typeof document === 'undefined') return;
+      const editWeightDec = document.getElementById('btn-edit-weight-decrement');
+      const editWeightInc = document.getElementById('btn-edit-weight-increment');
+      const editRepsDec = document.getElementById('btn-edit-reps-decrement');
+      const editRepsInc = document.getElementById('btn-edit-reps-increment');
+      const editRestDec = document.getElementById('btn-edit-rest-decrement');
+      const editRestInc = document.getElementById('btn-edit-rest-increment');
+
+      if (editWeightDec) bindHoldStepper(editWeightDec, 'edit-weight', -1);
+      if (editWeightInc) bindHoldStepper(editWeightInc, 'edit-weight', 1);
+      if (editRepsDec) bindHoldStepper(editRepsDec, 'edit-reps', -1);
+      if (editRepsInc) bindHoldStepper(editRepsInc, 'edit-reps', 1);
+      if (editRestDec) bindHoldStepper(editRestDec, 'edit-rest', -1);
+      if (editRestInc) bindHoldStepper(editRestInc, 'edit-rest', 1);
+    }
+
     function openEditActiveSetModal(setId) {
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       const set = currentSessionSets.find(s => s.id === setId);
@@ -8409,6 +8588,7 @@ if (typeof window !== 'undefined') {
       if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
+      initEditModalSteppers();
       if (modal) modal.classList.remove('hidden');
     }
 
@@ -9326,12 +9506,18 @@ if (typeof window !== 'undefined') {
       window.playPRCelebrationSound = playPRCelebrationSound;
       window.requestScreenWakeLock = requestScreenWakeLock;
       window.releaseScreenWakeLock = releaseScreenWakeLock;
+      window.matchLastSet = matchLastSet;
+      window.updateMatchLastSetUI = updateMatchLastSetUI;
+      window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
+      window.initEditModalSteppers = initEditModalSteppers;
     }
 
     if (typeof document !== 'undefined') {
       if (document.readyState === 'complete' || document.readyState === 'interactive') {
         initTouchScrollerInputs();
         updateWorkoutSessionHUD();
+        updateMatchLastSetUI();
+        initLoggedSetSwipeGestures();
         applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
         applyMuscleMapCollapseUI(isMuscleMapCollapsed());
         applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
@@ -9340,6 +9526,8 @@ if (typeof window !== 'undefined') {
         document.addEventListener('DOMContentLoaded', () => {
           initTouchScrollerInputs();
           updateWorkoutSessionHUD();
+          updateMatchLastSetUI();
+          initLoggedSetSwipeGestures();
           applyAutoMusclesCollapseUI(isAutoMusclesCollapsed());
           applyMuscleMapCollapseUI(isMuscleMapCollapsed());
           applyCurrentSessionLogsCollapseUI(isCurrentSessionLogsCollapsed());
@@ -21931,6 +22119,105 @@ runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement
   showAppConfirm = originalShowAppConfirm;
   cancelWorkoutSession(true);
   assert(currentSessionSets.length === 0, "cancelWorkoutSession(true) forces immediate clear without modal");
+});
+
+runSuite("42. Mobile-First Bottom Sheets, 1-Tap Match Last Set & Touch Swipe Gestures", () => {
+  // 1. Verify 1-Tap Match Last Set UI and Function
+  assert(typeof updateMatchLastSetUI === 'function', "updateMatchLastSetUI is a defined function");
+  assert(typeof matchLastSet === 'function', "matchLastSet is a defined function");
+  assert(typeof initLoggedSetSwipeGestures === 'function', "initLoggedSetSwipeGestures is a defined function");
+
+  const matchBtn = getOrCreateElement('btn-match-last-set');
+  const preview = getOrCreateElement('btn-match-last-set-preview');
+  const weightInput = getOrCreateElement('input-weight');
+  const repsInput = getOrCreateElement('input-reps');
+  const exInput = getOrCreateElement('exercise-name-input');
+
+  // When no sets logged, match button is hidden
+  currentSessionSets = [];
+  updateMatchLastSetUI();
+  assert(matchBtn.classList.contains('hidden'), "Match last set button hidden when 0 sets in session");
+
+  // Add a set
+  currentSessionSets = [
+    { id: 101, exerciseName: 'Overhead Press', implement: 'Barbell', weight: 135, reps: 8, setType: 'normal', rpe: '8' }
+  ];
+  updateMatchLastSetUI();
+  assert(!matchBtn.classList.contains('hidden'), "Match last set button visible after set logged");
+  assert(preview.textContent === "135 lbs × 8", "Preview correctly displays weight and reps summary");
+
+  // Call matchLastSet
+  weightInput.value = 0;
+  repsInput.value = 0;
+  matchLastSet();
+  assert(weightInput.value === 135, "matchLastSet pre-fills weight to 135 lbs");
+  assert(repsInput.value === 8, "matchLastSet pre-fills reps to 8");
+
+  // Test endurance implement summary formatting
+  currentSessionSets.push({
+    id: 102, exerciseName: 'Outdoor Run', implement: 'Running', runningDistance: '3.1', runningTime: '24:30'
+  });
+  updateMatchLastSetUI();
+  assert(preview.textContent === "3.1 mi | 24:30", "Running implement formatted correctly in match last set preview");
+
+  // Test renderLoggedSets with swipe wrappers
+  renderLoggedSets();
+  const list = getOrCreateElement('logged-sets-list');
+  assert(list.innerHTML.includes('logged-set-swipe-wrapper'), "Logged sets list renders swipe wrapper containers");
+  assert(list.innerHTML.includes('swipe-action-left'), "Logged sets list includes swipe-action-left repeat indicator");
+  assert(list.innerHTML.includes('swipe-action-right'), "Logged sets list includes swipe-action-right delete indicator");
+  assert(list.innerHTML.includes('logged-set-card'), "Logged sets list includes foreground swipeable card");
+});
+
+runSuite("43. Edit Set Modal Unified Steppers (+ / -) for Weight, Reps, and Rest", () => {
+  assert(typeof initEditModalSteppers === 'function', "initEditModalSteppers is a defined function");
+  assert(typeof adjustEditActiveSetWeight === 'function', "adjustEditActiveSetWeight is a defined function");
+  assert(typeof adjustEditActiveSetReps === 'function', "adjustEditActiveSetReps is a defined function");
+  assert(typeof adjustEditActiveSetRest === 'function', "adjustEditActiveSetRest is a defined function");
+
+  // Verify stepper DOM elements exist
+  const weightDec = getOrCreateElement('btn-edit-weight-decrement');
+  const weightInc = getOrCreateElement('btn-edit-weight-increment');
+  const weightInput = getOrCreateElement('edit-active-set-weight');
+
+  const repsDec = getOrCreateElement('btn-edit-reps-decrement');
+  const repsInc = getOrCreateElement('btn-edit-reps-increment');
+  const repsInput = getOrCreateElement('edit-active-set-reps');
+
+  const restDec = getOrCreateElement('btn-edit-rest-decrement');
+  const restInc = getOrCreateElement('btn-edit-rest-increment');
+  const restInput = getOrCreateElement('edit-active-set-rest');
+
+  assert(weightDec && weightInc && weightInput, "Weight stepper elements exist in edit set modal");
+  assert(repsDec && repsInc && repsInput, "Reps stepper elements exist in edit set modal");
+  assert(restDec && restInc && restInput, "Rest period stepper elements exist in edit set modal");
+
+  // Test weight stepper adjustment
+  weightInput.value = "100";
+  adjustEditActiveSetWeight(5);
+  assert(parseFloat(weightInput.value) === 105, "adjustEditActiveSetWeight(5) increases weight from 100 to 105");
+  adjustEditActiveSetWeight(-2.5);
+  assert(parseFloat(weightInput.value) === 102.5, "adjustEditActiveSetWeight(-2.5) decreases weight to 102.5");
+  adjustEditActiveSetWeight(-150);
+  assert(parseFloat(weightInput.value) === 0, "adjustEditActiveSetWeight clamps weight to minimum 0");
+
+  // Test reps stepper adjustment
+  repsInput.value = "10";
+  adjustEditActiveSetReps(1);
+  assert(parseInt(repsInput.value, 10) === 11, "adjustEditActiveSetReps(1) increases reps from 10 to 11");
+  adjustEditActiveSetReps(-2);
+  assert(parseInt(repsInput.value, 10) === 9, "adjustEditActiveSetReps(-2) decreases reps to 9");
+  adjustEditActiveSetReps(-50);
+  assert(parseInt(repsInput.value, 10) === 1, "adjustEditActiveSetReps clamps reps to minimum 1");
+
+  // Test rest period stepper adjustment
+  restInput.value = "60";
+  adjustEditActiveSetRest(15);
+  assert(parseInt(restInput.value, 10) === 75, "adjustEditActiveSetRest(15) increases rest period from 60 to 75");
+  adjustEditActiveSetRest(-30);
+  assert(parseInt(restInput.value, 10) === 45, "adjustEditActiveSetRest(-30) decreases rest period to 45");
+  adjustEditActiveSetRest(-100);
+  assert(parseInt(restInput.value, 10) === 0, "adjustEditActiveSetRest clamps rest period to minimum 0");
 });
 
 print("\n============================================================");
