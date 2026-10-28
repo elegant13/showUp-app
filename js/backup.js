@@ -15,10 +15,7 @@
       if (status === 'syncing' || status === 'backing_up') {
         icon.className = "fa-solid fa-cloud-arrow-up text-sm sm:text-base text-amber-400 animate-pulse transition-all duration-300";
         if (check) check.classList.add('hidden');
-        if (badge) {
-          badge.classList.remove('hidden');
-          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 border border-slate-900 animate-ping";
-        }
+        if (badge) badge.classList.add('hidden');
         if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs animate-pulse text-amber-400";
         const tipText = message || "Backing up data...";
         btn.setAttribute('title', tipText);
@@ -26,10 +23,7 @@
       } else if (status === 'synced' || status === 'success') {
         icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
         if (check) check.classList.remove('hidden');
-        if (badge) {
-          badge.classList.remove('hidden');
-          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
-        }
+        if (badge) badge.classList.add('hidden');
         if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
         const tipText = message || "Data Backed Up";
         btn.setAttribute('title', tipText);
@@ -37,10 +31,7 @@
       } else if (status === 'error') {
         icon.className = "fa-solid fa-cloud text-sm sm:text-base text-rose-400 transition-all duration-300";
         if (check) check.classList.add('hidden');
-        if (badge) {
-          badge.classList.remove('hidden');
-          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-400 border border-slate-900 transition-colors";
-        }
+        if (badge) badge.classList.add('hidden');
         if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-rose-400";
         const tipText = message || "Backup notice (Tap to check)";
         btn.setAttribute('title', tipText);
@@ -50,10 +41,7 @@
         if (hasSync) {
           icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
           if (check) check.classList.remove('hidden');
-          if (badge) {
-            badge.classList.remove('hidden');
-            badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
-          }
+          if (badge) badge.classList.add('hidden');
           btn.setAttribute('title', "Data Backed Up");
           if (tooltip) tooltip.innerText = "Data Backed Up";
         } else {
