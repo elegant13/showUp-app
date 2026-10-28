@@ -1547,6 +1547,10 @@
     let numpadIsFreshTargetInput = true;
 
     function openDirectNumpad(target = 'weight') {
+      if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
       const modal = document.getElementById('direct-numpad-modal');
       if (!modal) return;
 
@@ -1557,15 +1561,25 @@
       const repsInput = document.getElementById('input-reps');
       const dispWeight = document.getElementById('numpad-display-weight');
       const dispReps = document.getElementById('numpad-display-reps');
+      const contextLabel = document.getElementById('numpad-context-label');
 
       if (dispWeight && weightInput) dispWeight.innerText = weightInput.value || '0';
       if (dispReps && repsInput) dispReps.innerText = repsInput.value || '10';
+
+      const currentEx = (document.getElementById('exercise-name-input')?.value || '').trim();
+      if (contextLabel) {
+        contextLabel.textContent = currentEx ? `${currentEx} • Numeric Entry` : 'Direct Numeric Entry';
+      }
 
       modal.classList.remove('hidden');
       numpadIsFreshTargetInput = true;
     }
 
     function closeDirectNumpad() {
+      if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
       const modal = document.getElementById('direct-numpad-modal');
       if (modal) modal.classList.add('hidden');
       numpadIsFreshTargetInput = true;
@@ -1584,41 +1598,68 @@
       const tabReps = document.getElementById('numpad-tab-reps');
       const dispWeight = document.getElementById('numpad-display-weight');
       const dispReps = document.getElementById('numpad-display-reps');
+      const badgeWeight = document.getElementById('numpad-badge-weight');
+      const badgeReps = document.getElementById('numpad-badge-reps');
       const dotBtn = document.getElementById('numpad-btn-dot');
+      const nextBtn = document.getElementById('numpad-btn-next');
 
       if (numpadActiveTarget === 'weight') {
         if (tabWeight) {
-          tabWeight.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25';
+          tabWeight.className = 'flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950 border-[#00F59B] shadow-lg shadow-[#00F59B]/10 ring-1 ring-[#00F59B]/30';
         }
         if (tabReps) {
-          tabReps.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700';
+          tabReps.className = 'flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/80 border-slate-800 hover:border-slate-700';
         }
         if (dispWeight) {
-          dispWeight.className = 'text-3xl font-black font-mono text-[#00F59B] mt-0.5';
+          dispWeight.className = 'text-3xl sm:text-4xl font-black font-mono text-[#00F59B] tracking-tight';
         }
         if (dispReps) {
-          dispReps.className = 'text-3xl font-black font-mono text-slate-300 mt-0.5';
+          dispReps.className = 'text-3xl sm:text-4xl font-black font-mono text-slate-400 tracking-tight';
+        }
+        if (badgeWeight) {
+          badgeWeight.className = 'text-[9px] font-black uppercase text-[#00F59B] bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded-md tracking-wider';
+          badgeWeight.textContent = 'EDITING';
+        }
+        if (badgeReps) {
+          badgeReps.className = 'text-[9px] font-bold uppercase text-slate-500 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded-md tracking-wider';
+          badgeReps.textContent = 'TAP';
         }
         if (dotBtn) {
           dotBtn.disabled = false;
           dotBtn.classList.remove('opacity-30', 'cursor-not-allowed');
         }
+        if (nextBtn) {
+          nextBtn.innerHTML = '<span>Reps</span> <i class="fa-solid fa-arrow-right text-[11px] text-[#00F59B]"></i>';
+          nextBtn.title = "Switch to Reps";
+        }
       } else {
         if (tabReps) {
-          tabReps.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25';
+          tabReps.className = 'flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950 border-[#00F59B] shadow-lg shadow-[#00F59B]/10 ring-1 ring-[#00F59B]/30';
         }
         if (tabWeight) {
-          tabWeight.className = 'flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700';
+          tabWeight.className = 'flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/80 border-slate-800 hover:border-slate-700';
         }
         if (dispReps) {
-          dispReps.className = 'text-3xl font-black font-mono text-[#00F59B] mt-0.5';
+          dispReps.className = 'text-3xl sm:text-4xl font-black font-mono text-[#00F59B] tracking-tight';
         }
         if (dispWeight) {
-          dispWeight.className = 'text-3xl font-black font-mono text-slate-300 mt-0.5';
+          dispWeight.className = 'text-3xl sm:text-4xl font-black font-mono text-slate-400 tracking-tight';
+        }
+        if (badgeReps) {
+          badgeReps.className = 'text-[9px] font-black uppercase text-[#00F59B] bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded-md tracking-wider';
+          badgeReps.textContent = 'EDITING';
+        }
+        if (badgeWeight) {
+          badgeWeight.className = 'text-[9px] font-bold uppercase text-slate-500 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded-md tracking-wider';
+          badgeWeight.textContent = 'TAP';
         }
         if (dotBtn) {
           dotBtn.disabled = true;
           dotBtn.classList.add('opacity-30', 'cursor-not-allowed');
+        }
+        if (nextBtn) {
+          nextBtn.innerHTML = '<i class="fa-solid fa-arrow-left text-[11px] text-[#00F59B]"></i> <span>Weight</span>';
+          nextBtn.title = "Switch to Weight";
         }
       }
     }

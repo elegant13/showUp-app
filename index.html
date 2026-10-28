@@ -1916,65 +1916,79 @@
   <!-- ================= DIRECT DUAL-TARGET NUMERIC KEYPAD ================= -->
   <div id="direct-numpad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end transition-opacity duration-200" onclick="if(event.target === this) closeDirectNumpad()">
     <!-- Sheet Container -->
-    <div class="m3-card rounded-t-3xl border-t border-slate-700/80 p-4 pb-8 w-full max-w-lg mx-auto shadow-2xl bg-slate-900/98 space-y-3" onclick="event.stopPropagation()">
+    <div class="m3-card rounded-t-3xl border-t border-slate-700/80 p-3.5 sm:p-4 pb-6 sm:pb-8 w-full max-w-md mx-auto shadow-2xl bg-slate-900/98 space-y-2.5 sm:space-y-3" onclick="event.stopPropagation()">
       <!-- Top Bar: Title & Close -->
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800/80">
-        <span class="text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-          <i class="fa-solid fa-calculator text-[#00F59B]"></i>
-          <span>Direct Numeric Entry</span>
-        </span>
-        <button type="button" onclick="triggerHaptic('light'); closeDirectNumpad()" class="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition" title="Close Keypad" aria-label="Close Keypad">
+      <div class="flex items-center justify-between pb-1.5 border-b border-slate-800/80">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-2 h-2 rounded-full bg-[#00F59B] animate-pulse shrink-0"></div>
+          <span id="numpad-context-label" class="text-xs font-bold text-slate-300 truncate">Direct Numeric Entry</span>
+        </div>
+        <button type="button" onclick="triggerHaptic('light'); closeDirectNumpad()" class="text-slate-400 hover:text-white p-1 rounded-xl hover:bg-slate-800 transition active:scale-95" title="Close Keypad" aria-label="Close Keypad">
           <i class="fa-solid fa-xmark text-base"></i>
         </button>
       </div>
 
-      <!-- DUAL TARGET CARDS (PERSISTENT FOCUS - BOTH WEIGHT AND REPS ARE SIMULTANEOUSLY VISIBLE) -->
-      <div class="grid grid-cols-2 gap-2.5">
+      <!-- DUAL TARGET DISPLAY CARDS (POSITIONED DIRECTLY ABOVE KEYPAD) -->
+      <div class="grid grid-cols-2 gap-2 select-none">
         <!-- WEIGHT TAB BUTTON -->
-        <button type="button" id="numpad-tab-weight" onclick="triggerHaptic('light'); setNumpadActiveTarget('weight')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-[#00F59B] ring-2 ring-[#00F59B]/25">
-          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-            <i class="fa-solid fa-weight-hanging text-xs text-[#00F59B]"></i> Weight (lbs/kg)
-          </span>
-          <span id="numpad-display-weight" class="text-3xl font-black font-mono text-[#00F59B] mt-0.5">0</span>
+        <button type="button" id="numpad-tab-weight" onclick="triggerHaptic('light'); setNumpadActiveTarget('weight')" class="flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950 border-[#00F59B] shadow-lg shadow-[#00F59B]/10 ring-1 ring-[#00F59B]/30" aria-label="Weight field">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-weight-hanging text-xs text-[#00F59B]"></i>
+              <span>Weight</span>
+            </span>
+            <span id="numpad-badge-weight" class="text-[9px] font-black uppercase text-[#00F59B] bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded-md tracking-wider">EDITING</span>
+          </div>
+          <div class="flex items-baseline justify-between mt-1 w-full">
+            <span id="numpad-display-weight" class="text-3xl sm:text-4xl font-black font-mono text-[#00F59B] tracking-tight">0</span>
+            <span class="text-[11px] font-bold text-slate-500 uppercase font-mono">lbs</span>
+          </div>
         </button>
 
         <!-- REPS TAB BUTTON -->
-        <button type="button" id="numpad-tab-reps" onclick="triggerHaptic('light'); setNumpadActiveTarget('reps')" class="flex flex-col items-center justify-center p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/90 border-slate-800 hover:border-slate-700">
-          <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1">
-            <i class="fa-solid fa-rotate text-xs text-slate-400"></i> Reps
-          </span>
-          <span id="numpad-display-reps" class="text-3xl font-black font-mono text-slate-300 mt-0.5">10</span>
+        <button type="button" id="numpad-tab-reps" onclick="triggerHaptic('light'); setNumpadActiveTarget('reps')" class="flex flex-col p-2.5 rounded-2xl border-2 transition-all cursor-pointer bg-slate-950/80 border-slate-800 hover:border-slate-700" aria-label="Reps field">
+          <div class="flex items-center justify-between w-full">
+            <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate text-xs text-slate-500"></i>
+              <span>Reps</span>
+            </span>
+            <span id="numpad-badge-reps" class="text-[9px] font-bold uppercase text-slate-500 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded-md tracking-wider">TAP</span>
+          </div>
+          <div class="flex items-baseline justify-between mt-1 w-full">
+            <span id="numpad-display-reps" class="text-3xl sm:text-4xl font-black font-mono text-slate-400 tracking-tight">10</span>
+            <span class="text-[11px] font-bold text-slate-500 uppercase font-mono">reps</span>
+          </div>
         </button>
       </div>
 
       <!-- KEYPAD GRID (1 to 9, ., 0, Backspace) -->
-      <div class="grid grid-cols-3 gap-2 pt-1 select-none">
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('1')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">1</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('2')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">2</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('3')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">3</button>
+      <div class="grid grid-cols-3 gap-2 pt-0.5 select-none">
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('1')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">1</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('2')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">2</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('3')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">3</button>
 
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('4')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">4</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('5')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">5</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('6')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">6</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('4')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">4</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('5')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">5</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('6')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">6</button>
 
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('7')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">7</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('8')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">8</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('9')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">9</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('7')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">7</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('8')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">8</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('9')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">9</button>
 
-        <button type="button" id="numpad-btn-dot" onclick="triggerHaptic('light'); handleNumpadDot()" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-black text-slate-300 font-mono shadow transition cursor-pointer">.</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('0')" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">0</button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadBackspace()" class="h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-bold text-rose-400 shadow transition flex items-center justify-center cursor-pointer" aria-label="Backspace">
+        <button type="button" id="numpad-btn-dot" onclick="triggerHaptic('light'); handleNumpadDot()" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-black text-slate-300 font-mono shadow transition cursor-pointer">.</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadDigit('0')" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-2xl font-black text-slate-100 font-mono shadow transition cursor-pointer">0</button>
+        <button type="button" onclick="triggerHaptic('light'); handleNumpadBackspace()" class="h-11 sm:h-12 bg-slate-950 hover:bg-slate-800 active:scale-95 border border-slate-800 rounded-2xl text-xl font-bold text-rose-400 shadow transition flex items-center justify-center cursor-pointer" aria-label="Backspace">
           <i class="fa-solid fa-delete-left"></i>
         </button>
       </div>
 
       <!-- BOTTOM CONTROL BAR: QUICK +5, SWITCH TARGET, AND DONE -->
-      <div class="grid grid-cols-3 gap-2 pt-1 select-none">
+      <div class="grid grid-cols-3 gap-2 pt-0.5 select-none">
         <button type="button" onclick="triggerHaptic('medium'); handleNumpadQuickAdd(5)" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-mono font-bold text-xs sm:text-sm border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1">
           <span>+5</span>
         </button>
-        <button type="button" onclick="triggerHaptic('light'); handleNumpadNextTarget()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5">
-          <span>Next</span>
+        <button type="button" id="numpad-btn-next" onclick="triggerHaptic('light'); handleNumpadNextTarget()" class="py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 font-bold text-xs sm:text-sm border border-slate-700 transition cursor-pointer flex items-center justify-center gap-1.5" title="Switch to Reps">
+          <span>Reps</span>
           <i class="fa-solid fa-arrow-right text-[11px] text-[#00F59B]"></i>
         </button>
         <button type="button" onclick="triggerHaptic('medium'); closeDirectNumpad()" class="py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center justify-center gap-1.5">
@@ -2617,7 +2631,7 @@
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-weight" value="0" min="0" step="1" onclick="triggerHaptic('light'); openDirectNumpad('weight')" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all" title="Tap to enter weight directly">
+                <input type="text" inputmode="none" readonly id="input-weight" value="0" onclick="triggerHaptic('light'); this.blur(); openDirectNumpad('weight')" onfocus="this.blur()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all select-none" title="Tap to enter weight directly">
               </div>
 
               <button type="button" id="btn-weight-increment" aria-label="Increase weight" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
@@ -2659,7 +2673,7 @@
               </button>
 
               <div class="flex-1 touch-scroller-display relative flex items-center justify-center min-w-0">
-                <input type="number" id="input-reps" value="10" min="1" step="1" onclick="triggerHaptic('light'); openDirectNumpad('reps')" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all" title="Tap to enter reps directly">
+                <input type="text" inputmode="none" readonly id="input-reps" value="10" onclick="triggerHaptic('light'); this.blur(); openDirectNumpad('reps')" onfocus="this.blur()" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl py-1.5 sm:py-2 text-center text-4xl sm:text-5xl font-black text-emerald-400 font-mono focus:outline-none focus:border-emerald-500 shadow-inner cursor-pointer transition-all select-none" title="Tap to enter reps directly">
               </div>
 
               <button type="button" id="btn-reps-increment" aria-label="Increase reps" class="stepper-btn stepper-btn-increment w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-xl sm:text-2xl z-20 transition-all shadow-md select-none touch-none shrink-0">
