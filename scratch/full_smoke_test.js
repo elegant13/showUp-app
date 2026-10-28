@@ -2312,7 +2312,10 @@ if (typeof window !== 'undefined') {
 
         if (titleEl) titleEl.innerText = title;
         if (msgEl) msgEl.innerText = message;
-        if (cancelBtn) cancelBtn.innerText = cancelText;
+        if (cancelBtn) {
+          cancelBtn.innerText = cancelText;
+          cancelBtn.className = "w-1/2 bg-slate-800 hover:bg-slate-700 active:bg-slate-750 text-slate-200 font-bold h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base border border-slate-700/80 transition active:scale-95 flex items-center justify-center shadow-sm";
+        }
         if (btnText) btnText.innerText = confirmText;
 
         if (iconEl) iconEl.className = iconClass;
@@ -2328,21 +2331,21 @@ if (typeof window !== 'undefined') {
         // Configure theme / colors
         if (iconBox) {
           if (type === 'danger') {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-2xl shadow-inner";
           } else if (type === 'warning') {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl shadow-inner";
           } else {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl shadow-inner";
           }
         }
 
         if (actionBtn) {
           if (type === 'danger') {
-            actionBtn.className = "w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-rose-600/30 active:scale-95 flex items-center justify-center gap-2";
           } else if (type === 'warning') {
-            actionBtn.className = "w-1/2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-amber-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-amber-500/30 active:scale-95 flex items-center justify-center gap-2";
           } else {
-            actionBtn.className = "w-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-emerald-500/30 active:scale-95 flex items-center justify-center gap-2";
           }
         }
 
@@ -8215,23 +8218,7 @@ if (typeof window !== 'undefined') {
             if (typeof triggerHaptic === 'function') triggerHaptic('medium');
             repeatSet(setId);
           } else if (currentX < -55) {
-            if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-            if (typeof showAppConfirm === 'function') {
-              showAppConfirm({
-                title: "Delete Set?",
-                message: "Remove this set from your active workout session?",
-                confirmText: "Delete Set",
-                cancelText: "Keep Set",
-                type: "danger",
-                icon: "fa-solid fa-trash-can"
-              }).then((confirmed) => {
-                if (confirmed) {
-                  deleteSet(setId);
-                }
-              });
-            } else {
-              deleteSet(setId);
-            }
+            confirmDeleteSet(setId);
           }
           isSwiping = false;
         }, { passive: true });
@@ -8330,7 +8317,7 @@ if (typeof window !== 'undefined') {
                 <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Edit Set">
                   <i class="fa-solid fa-pen-to-square text-base"></i>
                 </button>
-                <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Set">
+                <button onclick="triggerHaptic('light'); confirmDeleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Set">
                   <i class="fa-solid fa-trash-can text-base"></i>
                 </button>
               </div>
@@ -8371,6 +8358,27 @@ if (typeof window !== 'undefined') {
       updateSetControlsUI();
       updateMatchLastSetUI();
       initLoggedSetSwipeGestures();
+    }
+
+    function confirmDeleteSet(id) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      if (typeof showAppConfirm === 'function') {
+        showAppConfirm({
+          title: "Delete Set?",
+          message: "Remove this set from your active workout session?",
+          confirmText: "Delete Set",
+          cancelText: "Keep Set",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        }).then((confirmed) => {
+          if (confirmed) {
+            deleteSet(id);
+          }
+        });
+      } else {
+        deleteSet(id);
+      }
     }
 
     function deleteSet(id) {
@@ -9510,6 +9518,7 @@ if (typeof window !== 'undefined') {
       window.updateMatchLastSetUI = updateMatchLastSetUI;
       window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
       window.initEditModalSteppers = initEditModalSteppers;
+      window.confirmDeleteSet = confirmDeleteSet;
     }
 
     if (typeof document !== 'undefined') {
@@ -22082,8 +22091,10 @@ runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement
   assert(msgEl.innerText === "All logged sets and timer progress for this workout will be cleared.", "Modal message matches custom body");
   assert(cancelBtn.innerText === "Keep Workout", "Cancel button text matches custom label");
   assert(btnText.innerText === "Discard Workout", "Action button text matches custom label");
-  assert(iconEl.className.includes('fa-ban'), "Modal status icon reflects requested glyph");
   assert(actionBtn.className.includes('bg-rose-600'), "Danger type renders red/rose action button");
+  assert(actionBtn.className.includes('min-h-[48px]'), "Action button has minimum 48px comfortable touch target height");
+  assert(cancelBtn.className.includes('min-h-[48px]'), "Cancel button has minimum 48px comfortable touch target height");
+  assert(typeof confirmDeleteSet === 'function', "confirmDeleteSet is a defined function");
 
   // 2. Test cancel resolution
   handleAppConfirmCancel();

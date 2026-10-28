@@ -591,7 +591,10 @@
 
         if (titleEl) titleEl.innerText = title;
         if (msgEl) msgEl.innerText = message;
-        if (cancelBtn) cancelBtn.innerText = cancelText;
+        if (cancelBtn) {
+          cancelBtn.innerText = cancelText;
+          cancelBtn.className = "w-1/2 bg-slate-800 hover:bg-slate-700 active:bg-slate-750 text-slate-200 font-bold h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base border border-slate-700/80 transition active:scale-95 flex items-center justify-center shadow-sm";
+        }
         if (btnText) btnText.innerText = confirmText;
 
         if (iconEl) iconEl.className = iconClass;
@@ -607,21 +610,21 @@
         // Configure theme / colors
         if (iconBox) {
           if (type === 'danger') {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-2xl shadow-inner";
           } else if (type === 'warning') {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl shadow-inner";
           } else {
-            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl shadow-inner";
+            iconBox.className = "w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-2xl shadow-inner";
           }
         }
 
         if (actionBtn) {
           if (type === 'danger') {
-            actionBtn.className = "w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-rose-600/30 active:scale-95 flex items-center justify-center gap-2";
           } else if (type === 'warning') {
-            actionBtn.className = "w-1/2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-amber-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-slate-950 font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-amber-500/30 active:scale-95 flex items-center justify-center gap-2";
           } else {
-            actionBtn.className = "w-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+            actionBtn.className = "w-1/2 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-emerald-500/30 active:scale-95 flex items-center justify-center gap-2";
           }
         }
 

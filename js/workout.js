@@ -3178,23 +3178,7 @@
             if (typeof triggerHaptic === 'function') triggerHaptic('medium');
             repeatSet(setId);
           } else if (currentX < -55) {
-            if (typeof triggerHaptic === 'function') triggerHaptic('medium');
-            if (typeof showAppConfirm === 'function') {
-              showAppConfirm({
-                title: "Delete Set?",
-                message: "Remove this set from your active workout session?",
-                confirmText: "Delete Set",
-                cancelText: "Keep Set",
-                type: "danger",
-                icon: "fa-solid fa-trash-can"
-              }).then((confirmed) => {
-                if (confirmed) {
-                  deleteSet(setId);
-                }
-              });
-            } else {
-              deleteSet(setId);
-            }
+            confirmDeleteSet(setId);
           }
           isSwiping = false;
         }, { passive: true });
@@ -3293,7 +3277,7 @@
                 <button onclick="triggerHaptic('light'); openEditActiveSetModal(${s.id})" class="text-slate-400 hover:text-emerald-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Edit Set">
                   <i class="fa-solid fa-pen-to-square text-base"></i>
                 </button>
-                <button onclick="triggerHaptic('light'); deleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Set">
+                <button onclick="triggerHaptic('light'); confirmDeleteSet(${s.id})" class="text-slate-500 hover:text-rose-400 p-2 rounded-xl hover:bg-slate-900 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="Delete Set">
                   <i class="fa-solid fa-trash-can text-base"></i>
                 </button>
               </div>
@@ -3334,6 +3318,27 @@
       updateSetControlsUI();
       updateMatchLastSetUI();
       initLoggedSetSwipeGestures();
+    }
+
+    function confirmDeleteSet(id) {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      if (typeof showAppConfirm === 'function') {
+        showAppConfirm({
+          title: "Delete Set?",
+          message: "Remove this set from your active workout session?",
+          confirmText: "Delete Set",
+          cancelText: "Keep Set",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        }).then((confirmed) => {
+          if (confirmed) {
+            deleteSet(id);
+          }
+        });
+      } else {
+        deleteSet(id);
+      }
     }
 
     function deleteSet(id) {
@@ -4473,6 +4478,7 @@
       window.updateMatchLastSetUI = updateMatchLastSetUI;
       window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
       window.initEditModalSteppers = initEditModalSteppers;
+      window.confirmDeleteSet = confirmDeleteSet;
     }
 
     if (typeof document !== 'undefined') {

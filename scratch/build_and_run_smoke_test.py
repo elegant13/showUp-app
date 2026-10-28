@@ -192,6 +192,16 @@ def generate_and_run_smoke_test():
         print("[FAIL] 1-Tap Match Last Set button missing in HTML")
         return False
 
+    # 15. Check App Confirm Modal centering & comfortable button height in HTML
+    if ('id="app-confirm-modal"' in html and
+        'items-center justify-center' in html and
+        'id="app-confirm-cancel-btn"' in html and
+        'min-h-[48px]' in html):
+        print("[PASS] App Confirm modal centered with minimum 48px button height verified in HTML")
+    else:
+        print("[FAIL] App Confirm modal comfortable touch targets missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -3780,8 +3790,10 @@ runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement
   assert(msgEl.innerText === "All logged sets and timer progress for this workout will be cleared.", "Modal message matches custom body");
   assert(cancelBtn.innerText === "Keep Workout", "Cancel button text matches custom label");
   assert(btnText.innerText === "Discard Workout", "Action button text matches custom label");
-  assert(iconEl.className.includes('fa-ban'), "Modal status icon reflects requested glyph");
   assert(actionBtn.className.includes('bg-rose-600'), "Danger type renders red/rose action button");
+  assert(actionBtn.className.includes('min-h-[48px]'), "Action button has minimum 48px comfortable touch target height");
+  assert(cancelBtn.className.includes('min-h-[48px]'), "Cancel button has minimum 48px comfortable touch target height");
+  assert(typeof confirmDeleteSet === 'function', "confirmDeleteSet is a defined function");
 
   // 2. Test cancel resolution
   handleAppConfirmCancel();

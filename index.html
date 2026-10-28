@@ -1962,29 +1962,26 @@
   </div>
 
   <!-- ================= UNIFIED APP CONFIRMATION MODAL ================= -->
-  <div id="app-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) handleAppConfirmCancel()">
-    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 bg-slate-900/98 sm:bg-slate-900/95 p-6 w-full sm:max-w-sm shadow-2xl space-y-4 sm:space-y-5 text-center relative max-h-[85vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
-      <!-- Mobile Pull Handle -->
-      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-2 mb-2 sm:hidden pointer-events-none"></div>
-
+  <div id="app-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 transition-all duration-200" onclick="if(event.target === this) handleAppConfirmCancel()">
+    <div class="m3-card rounded-3xl border border-slate-800 bg-slate-900/98 p-6 sm:p-7 w-full max-w-sm shadow-2xl space-y-5 text-center relative max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
       <!-- Status Icon Badge -->
-      <div id="app-confirm-icon-box" class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner">
+      <div id="app-confirm-icon-box" class="w-16 h-16 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-2xl shadow-inner">
         <i id="app-confirm-icon" class="fa-solid fa-ban"></i>
       </div>
 
       <!-- Text Details -->
-      <div class="space-y-1.5">
-        <h3 id="app-confirm-title" class="text-base sm:text-lg font-black text-slate-100 tracking-tight">Cancel Workout Session?</h3>
-        <p id="app-confirm-message" class="text-xs sm:text-sm text-slate-300 leading-relaxed">All logged sets and progress for this workout will be cleared.</p>
+      <div class="space-y-2">
+        <h3 id="app-confirm-title" class="text-lg sm:text-xl font-black text-slate-100 tracking-tight">Cancel Workout Session?</h3>
+        <p id="app-confirm-message" class="text-sm text-slate-300 leading-relaxed">All logged sets and progress for this workout will be cleared.</p>
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5 pt-1">
-        <button id="app-confirm-cancel-btn" type="button" onclick="handleAppConfirmCancel()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm border border-slate-700 transition active:scale-95">
+      <div class="flex items-center gap-3 pt-2">
+        <button id="app-confirm-cancel-btn" type="button" onclick="handleAppConfirmCancel()" class="w-1/2 bg-slate-800 hover:bg-slate-700 active:bg-slate-750 text-slate-200 font-bold h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base border border-slate-700/80 transition active:scale-95 flex items-center justify-center shadow-sm">
           Keep Workout
         </button>
-        <button id="app-confirm-action-btn" type="button" onclick="handleAppConfirmAccept()" class="w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5">
-          <i id="app-confirm-btn-icon" class="fa-solid fa-trash-can text-xs"></i>
+        <button id="app-confirm-action-btn" type="button" onclick="handleAppConfirmAccept()" class="w-1/2 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-black h-12 sm:h-13 min-h-[48px] sm:min-h-[52px] py-3 sm:py-3.5 rounded-2xl text-sm sm:text-base transition shadow-lg shadow-rose-600/30 active:scale-95 flex items-center justify-center gap-2">
+          <i id="app-confirm-btn-icon" class="fa-solid fa-trash-can text-sm"></i>
           <span id="app-confirm-btn-text">Discard Workout</span>
         </button>
       </div>
