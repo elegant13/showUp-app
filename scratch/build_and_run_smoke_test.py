@@ -3686,6 +3686,48 @@ runSuite("39. Auto-Start Set on Rest Target Preference & Auto-Trigger", () => {
   setAutoStartSetEnabled(false);
 });
 
+runSuite("40. Cloud Backup Header Status Indicator & Quiet Auto-Sync Engine", () => {
+  assert(typeof setCloudBackupStatus === 'function', "setCloudBackupStatus is a defined function");
+  assert(typeof handleCloudSyncIconClick === 'function', "handleCloudSyncIconClick is a defined function");
+
+  const syncBtn = getOrCreateElement('header-cloud-sync-btn');
+  const syncIcon = getOrCreateElement('header-cloud-sync-icon');
+  const syncBadge = getOrCreateElement('header-cloud-sync-badge');
+  const syncTooltip = getOrCreateElement('header-cloud-sync-tooltip');
+
+  assert(syncBtn !== null, "header-cloud-sync-btn exists in header DOM");
+  assert(syncIcon !== null, "header-cloud-sync-icon exists in header DOM");
+
+  // 1. Test backing up / syncing state
+  setCloudBackupStatus('syncing', 'Backing up data...');
+  assert(syncIcon.className.includes('fa-cloud-arrow-up') && syncIcon.className.includes('animate-pulse'), "Syncing state displays animated cloud upload icon");
+  assert(syncIcon.className.includes('text-amber-400'), "Syncing state uses energetic amber-400 accent");
+  assert(syncBtn.getAttribute('title') === 'Backing up data...', "Syncing state sets informative title on button");
+  assert(syncTooltip.innerText === 'Backing up data...', "Syncing state updates hover tooltip");
+
+  // 2. Test backed up / success state
+  setCloudBackupStatus('synced', 'Data Backed Up');
+  assert(syncIcon.className.includes('fa-cloud-check'), "Synced state displays verified cloud check icon");
+  assert(syncIcon.className.includes('text-emerald-400'), "Synced state uses emerald-400 accent");
+  assert(syncBtn.getAttribute('title') === 'Data Backed Up', "Synced state sets verified title on button");
+  assert(syncTooltip.innerText === 'Data Backed Up', "Synced state updates hover tooltip");
+
+  // 3. Test error state
+  setCloudBackupStatus('error', 'Backup paused');
+  assert(syncIcon.className.includes('text-rose-400'), "Error state uses rose-400 accent");
+  assert(syncBtn.getAttribute('title') === 'Backup paused', "Error state sets paused title on button");
+
+  // 4. Test offline / idle state
+  localStorage.removeItem('showUp_last_drive_sync');
+  localStorage.removeItem('showUp_last_firestore_sync');
+  setCloudBackupStatus('offline');
+  assert(syncIcon.className.includes('text-slate-500'), "Offline state uses muted slate-500 accent");
+
+  // 5. Verify quiet defaults for syncToGoogleDrive and syncToFirestore (no toast spam)
+  assert(syncToGoogleDrive.toString().includes('isSilent = true'), "syncToGoogleDrive defaults to quiet silent mode");
+  assert(syncToFirestore.toString().includes('isSilent = true'), "syncToFirestore defaults to quiet silent mode");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

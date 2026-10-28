@@ -2,6 +2,84 @@
    showUp Backup & Multi-Tier Cloud Sync Engine: Offline JSON & Google Drive
    ========================================================================== */
 
+    function setCloudBackupStatus(status, message) {
+      const icon = document.getElementById('header-cloud-sync-icon');
+      const badge = document.getElementById('header-cloud-sync-badge');
+      const btn = document.getElementById('header-cloud-sync-btn');
+      const tooltip = document.getElementById('header-cloud-sync-tooltip');
+      const syncIcon = document.getElementById('sync-icon');
+
+      if (!icon || !btn) return;
+
+      if (status === 'syncing' || status === 'backing_up') {
+        icon.className = "fa-solid fa-cloud-arrow-up text-sm sm:text-base text-amber-400 animate-pulse transition-all duration-300";
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 border border-slate-900 animate-ping";
+        }
+        if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs animate-pulse text-amber-400";
+        const tipText = message || "Backing up data...";
+        btn.setAttribute('title', tipText);
+        if (tooltip) tooltip.innerText = tipText;
+      } else if (status === 'synced' || status === 'success') {
+        icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
+        }
+        if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
+        const tipText = message || "Data Backed Up";
+        btn.setAttribute('title', tipText);
+        if (tooltip) tooltip.innerText = tipText;
+      } else if (status === 'error') {
+        icon.className = "fa-solid fa-cloud text-sm sm:text-base text-rose-400 transition-all duration-300";
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-400 border border-slate-900 transition-colors";
+        }
+        if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-rose-400";
+        const tipText = message || "Backup notice (Tap to check)";
+        btn.setAttribute('title', tipText);
+        if (tooltip) tooltip.innerText = tipText;
+      } else {
+        const hasSync = !!(localStorage.getItem('showUp_last_drive_sync') || localStorage.getItem('showUp_last_firestore_sync'));
+        if (hasSync) {
+          icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+          if (badge) {
+            badge.classList.remove('hidden');
+            badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
+          }
+          btn.setAttribute('title', "Data Backed Up");
+          if (tooltip) tooltip.innerText = "Data Backed Up";
+        } else {
+          icon.className = "fa-solid fa-cloud text-sm sm:text-base text-slate-500 transition-all duration-300";
+          if (badge) badge.classList.add('hidden');
+          btn.setAttribute('title', "Cloud Backup (Tap to connect)");
+          if (tooltip) tooltip.innerText = "Cloud Backup";
+        }
+      }
+    }
+
+    function handleCloudSyncIconClick() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+
+      // If Google Drive token exists, open Google Drive modal
+      if (typeof googleAccessToken !== 'undefined' && googleAccessToken) {
+        if (typeof openGDriveBackupModal === 'function') {
+          openGDriveBackupModal();
+          return;
+        }
+      }
+
+      // Otherwise open Settings Modal and switch to Backup tab
+      if (typeof toggleSettingsModal === 'function') {
+        toggleSettingsModal();
+        if (typeof switchSettingsTab === 'function') {
+          switchSettingsTab('backup');
+        }
+      }
+    }
+
     function triggerManualFileRestore() {
       const fileInput = document.getElementById('manual-backup-file-input');
       if (fileInput) {
@@ -234,6 +312,8 @@
           gdrivePill.innerText = "Offline";
         }
       }
+
+      setCloudBackupStatus('idle');
     }
 
 
@@ -335,18 +415,17 @@
 
 
 
-    async function syncToGoogleDrive(isSilent = false) {
+    async function syncToGoogleDrive(isSilent = true) {
       if (!googleAccessToken) {
-        if (!isSilent) {
-          showToast("Authorizing Google Drive backup...", "info");
+        if (isSilent === false) {
           requestDriveAuthorization(true);
         }
         return;
       }
 
+      setCloudBackupStatus('syncing', 'Backing up data to Google Drive...');
       const syncIcon = document.getElementById('sync-icon');
       if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs animate-pulse text-amber-400";
-      if (!isSilent) showToast("Backing up workout data to Google Drive...", "info");
 
       let workoutsToSync = (Array.isArray(completedWorkoutsHistory) && completedWorkoutsHistory.length > 0)
         ? completedWorkoutsHistory
@@ -537,8 +616,8 @@
         const nowIso = new Date().toISOString();
         localStorage.setItem('showUp_last_drive_sync', nowIso);
 
+        setCloudBackupStatus('synced', 'Data backed up to Google Drive');
         if (syncIcon) syncIcon.className = "fa-solid fa-check text-xs text-emerald-400";
-        if (!isSilent) showToast("Successfully backed up workouts and squads to Google Drive!", "success");
 
         updateCloudBackupUI();
         const gdriveModal = document.getElementById('gdrive-backup-active-modal');
@@ -552,13 +631,13 @@
 
       } catch (err) {
         console.error("Google Drive sync error:", err);
+        setCloudBackupStatus('error', 'Google Drive sync paused');
         if (syncIcon) syncIcon.className = "fa-brands fa-google-drive text-xs text-rose-400";
         const errMsg = (err.message || '').toLowerCase();
         if (errMsg.includes('insufficient') || errMsg.includes('scope') || errMsg.includes('permission')) {
           googleAccessToken = null;
           localStorage.removeItem('showUp_google_token');
-          if (!isSilent) {
-            showToast("Google Drive backup permission needed. Opening authorization...", "info");
+          if (isSilent === false) {
             requestDriveAuthorization(true);
           }
         } else {
@@ -943,8 +1022,9 @@
       }
     }
 
-    async function syncToFirestore(isSilent = false) {
+    async function syncToFirestore(isSilent = true) {
       if (!isSilent) setFirestoreButtonLoading(true, true);
+      setCloudBackupStatus('syncing', 'Backing up data to Firebase Cloud...');
       try {
         if (typeof getFirestoreDb !== 'function') {
           if (!isSilent) showToast("Firebase Firestore service is not loaded.", "error");
@@ -1041,13 +1121,12 @@
         ]);
         localStorage.setItem('showUp_last_firestore_sync', payload.lastSyncedAt);
 
+        setCloudBackupStatus('synced', 'Data backed up to Firebase Cloud');
         updateCloudBackupUI();
-        if (!isSilent) {
-          showToast(`Backed up ${payload.workouts.length} workouts to Firebase Cloud!`, "success");
-        }
         return { success: true, count: payload.workouts.length };
       } catch (err) {
         console.error("Firebase sync error:", err);
+        setCloudBackupStatus('error', 'Firebase backup paused');
         if (!isSilent) {
           showToast(`Firebase Cloud backup error: ${err.message || 'Check network connection'}`, "error");
         }
