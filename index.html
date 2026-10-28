@@ -92,7 +92,10 @@
         <!-- Cloud Backup Status Indicator -->
         <div class="relative group">
           <button id="header-cloud-sync-btn" onclick="triggerHaptic('light'); handleCloudSyncIconClick()" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-emerald-400 flex items-center justify-center transition active:scale-95 shrink-0 shadow-sm relative" title="Data Backed Up" aria-label="Cloud Backup Status">
-            <i id="header-cloud-sync-icon" class="fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-colors"></i>
+            <div class="relative flex items-center justify-center pointer-events-none">
+              <i id="header-cloud-sync-icon" class="fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-colors"></i>
+              <i id="header-cloud-sync-check" class="fa-solid fa-check text-[8px] text-slate-950 font-black absolute inset-0 flex items-center justify-center pt-0.5"></i>
+            </div>
             <span id="header-cloud-sync-badge" class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors"></span>
           </button>
           <!-- Desktop Hover Tooltip -->
@@ -3799,7 +3802,7 @@
   <script defer src="js/squads.js?v=20261023k"></script>
   <script defer src="js/map.js?v=20261023k"></script>
   <script defer src="js/visitors.js?v=20261023k"></script>
-  <script defer src="js/backup.js?v=20261028a"></script>
+  <script defer src="js/backup.js?v=20261028b"></script>
   <script defer src="js/main.js?v=20261023k"></script>
 </body>
 </html>

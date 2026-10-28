@@ -3706,9 +3706,11 @@ runSuite("40. Cloud Backup Header Status Indicator & Quiet Auto-Sync Engine", ()
   assert(syncTooltip.innerText === 'Backing up data...', "Syncing state updates hover tooltip");
 
   // 2. Test backed up / success state
+  const syncCheck = getOrCreateElement('header-cloud-sync-check');
   setCloudBackupStatus('synced', 'Data Backed Up');
-  assert(syncIcon.className.includes('fa-cloud-check'), "Synced state displays verified cloud check icon");
+  assert(syncIcon.className.includes('fa-cloud'), "Synced state displays verified cloud icon");
   assert(syncIcon.className.includes('text-emerald-400'), "Synced state uses emerald-400 accent");
+  assert(!syncCheck.classList.contains('hidden'), "Synced state reveals embedded checkmark icon");
   assert(syncBtn.getAttribute('title') === 'Data Backed Up', "Synced state sets verified title on button");
   assert(syncTooltip.innerText === 'Data Backed Up', "Synced state updates hover tooltip");
 

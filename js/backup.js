@@ -4,6 +4,7 @@
 
     function setCloudBackupStatus(status, message) {
       const icon = document.getElementById('header-cloud-sync-icon');
+      const check = document.getElementById('header-cloud-sync-check');
       const badge = document.getElementById('header-cloud-sync-badge');
       const btn = document.getElementById('header-cloud-sync-btn');
       const tooltip = document.getElementById('header-cloud-sync-tooltip');
@@ -13,6 +14,7 @@
 
       if (status === 'syncing' || status === 'backing_up') {
         icon.className = "fa-solid fa-cloud-arrow-up text-sm sm:text-base text-amber-400 animate-pulse transition-all duration-300";
+        if (check) check.classList.add('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 border border-slate-900 animate-ping";
@@ -22,7 +24,8 @@
         btn.setAttribute('title', tipText);
         if (tooltip) tooltip.innerText = tipText;
       } else if (status === 'synced' || status === 'success') {
-        icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+        icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
+        if (check) check.classList.remove('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
@@ -33,6 +36,7 @@
         if (tooltip) tooltip.innerText = tipText;
       } else if (status === 'error') {
         icon.className = "fa-solid fa-cloud text-sm sm:text-base text-rose-400 transition-all duration-300";
+        if (check) check.classList.add('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-400 border border-slate-900 transition-colors";
@@ -44,7 +48,8 @@
       } else {
         const hasSync = !!(localStorage.getItem('showUp_last_drive_sync') || localStorage.getItem('showUp_last_firestore_sync'));
         if (hasSync) {
-          icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+          icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
+          if (check) check.classList.remove('hidden');
           if (badge) {
             badge.classList.remove('hidden');
             badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
@@ -53,6 +58,7 @@
           if (tooltip) tooltip.innerText = "Data Backed Up";
         } else {
           icon.className = "fa-solid fa-cloud text-sm sm:text-base text-slate-500 transition-all duration-300";
+          if (check) check.classList.add('hidden');
           if (badge) badge.classList.add('hidden');
           btn.setAttribute('title', "Cloud Backup (Tap to connect)");
           if (tooltip) tooltip.innerText = "Cloud Backup";

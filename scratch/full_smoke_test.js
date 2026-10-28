@@ -17092,6 +17092,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
 
     function setCloudBackupStatus(status, message) {
       const icon = document.getElementById('header-cloud-sync-icon');
+      const check = document.getElementById('header-cloud-sync-check');
       const badge = document.getElementById('header-cloud-sync-badge');
       const btn = document.getElementById('header-cloud-sync-btn');
       const tooltip = document.getElementById('header-cloud-sync-tooltip');
@@ -17101,6 +17102,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
 
       if (status === 'syncing' || status === 'backing_up') {
         icon.className = "fa-solid fa-cloud-arrow-up text-sm sm:text-base text-amber-400 animate-pulse transition-all duration-300";
+        if (check) check.classList.add('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400 border border-slate-900 animate-ping";
@@ -17110,7 +17112,8 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         btn.setAttribute('title', tipText);
         if (tooltip) tooltip.innerText = tipText;
       } else if (status === 'synced' || status === 'success') {
-        icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+        icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
+        if (check) check.classList.remove('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
@@ -17121,6 +17124,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         if (tooltip) tooltip.innerText = tipText;
       } else if (status === 'error') {
         icon.className = "fa-solid fa-cloud text-sm sm:text-base text-rose-400 transition-all duration-300";
+        if (check) check.classList.add('hidden');
         if (badge) {
           badge.classList.remove('hidden');
           badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-400 border border-slate-900 transition-colors";
@@ -17132,7 +17136,8 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
       } else {
         const hasSync = !!(localStorage.getItem('showUp_last_drive_sync') || localStorage.getItem('showUp_last_firestore_sync'));
         if (hasSync) {
-          icon.className = "fa-solid fa-cloud-check text-sm sm:text-base text-emerald-400 transition-all duration-300";
+          icon.className = "fa-solid fa-cloud text-sm sm:text-base text-emerald-400 transition-all duration-300";
+          if (check) check.classList.remove('hidden');
           if (badge) {
             badge.classList.remove('hidden');
             badge.className = "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-slate-900 transition-colors";
@@ -17141,6 +17146,7 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           if (tooltip) tooltip.innerText = "Data Backed Up";
         } else {
           icon.className = "fa-solid fa-cloud text-sm sm:text-base text-slate-500 transition-all duration-300";
+          if (check) check.classList.add('hidden');
           if (badge) badge.classList.add('hidden');
           btn.setAttribute('title', "Cloud Backup (Tap to connect)");
           if (tooltip) tooltip.innerText = "Cloud Backup";
@@ -21712,9 +21718,11 @@ runSuite("40. Cloud Backup Header Status Indicator & Quiet Auto-Sync Engine", ()
   assert(syncTooltip.innerText === 'Backing up data...', "Syncing state updates hover tooltip");
 
   // 2. Test backed up / success state
+  const syncCheck = getOrCreateElement('header-cloud-sync-check');
   setCloudBackupStatus('synced', 'Data Backed Up');
-  assert(syncIcon.className.includes('fa-cloud-check'), "Synced state displays verified cloud check icon");
+  assert(syncIcon.className.includes('fa-cloud'), "Synced state displays verified cloud icon");
   assert(syncIcon.className.includes('text-emerald-400'), "Synced state uses emerald-400 accent");
+  assert(!syncCheck.classList.contains('hidden'), "Synced state reveals embedded checkmark icon");
   assert(syncBtn.getAttribute('title') === 'Data Backed Up', "Synced state sets verified title on button");
   assert(syncTooltip.innerText === 'Data Backed Up', "Synced state updates hover tooltip");
 
