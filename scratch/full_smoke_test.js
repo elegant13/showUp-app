@@ -2277,6 +2277,103 @@ if (typeof window !== 'undefined') {
 
 
 
+    /* ==========================================================================
+       Unified App Confirmation Modal Engine (Replaces Vanilla Browser Confirm)
+       ========================================================================== */
+    let appConfirmResolve = null;
+
+    function showAppConfirm(options = {}) {
+      return new Promise((resolve) => {
+        appConfirmResolve = resolve;
+        const modal = document.getElementById('app-confirm-modal');
+        if (!modal) {
+          if (typeof confirm === 'function') {
+            const res = confirm(options.message || options.title || "Are you sure?");
+            return resolve(res);
+          }
+          return resolve(true);
+        }
+
+        const titleEl = document.getElementById('app-confirm-title');
+        const msgEl = document.getElementById('app-confirm-message');
+        const iconBox = document.getElementById('app-confirm-icon-box');
+        const iconEl = document.getElementById('app-confirm-icon');
+        const cancelBtn = document.getElementById('app-confirm-cancel-btn');
+        const actionBtn = document.getElementById('app-confirm-action-btn');
+        const btnIcon = document.getElementById('app-confirm-btn-icon');
+        const btnText = document.getElementById('app-confirm-btn-text');
+
+        const type = options.type || 'danger';
+        const title = options.title || 'Confirm Action';
+        const message = options.message || 'Are you sure you want to proceed?';
+        const confirmText = options.confirmText || 'Confirm';
+        const cancelText = options.cancelText || 'Cancel';
+        const iconClass = options.icon || (type === 'danger' ? 'fa-solid fa-ban' : 'fa-solid fa-circle-question');
+
+        if (titleEl) titleEl.innerText = title;
+        if (msgEl) msgEl.innerText = message;
+        if (cancelBtn) cancelBtn.innerText = cancelText;
+        if (btnText) btnText.innerText = confirmText;
+
+        if (iconEl) iconEl.className = iconClass;
+        if (btnIcon) {
+          if (options.btnIcon) {
+            btnIcon.className = options.btnIcon + " text-xs";
+            btnIcon.classList.remove('hidden');
+          } else {
+            btnIcon.classList.add('hidden');
+          }
+        }
+
+        // Configure theme / colors
+        if (iconBox) {
+          if (type === 'danger') {
+            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner";
+          } else if (type === 'warning') {
+            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl shadow-inner";
+          } else {
+            iconBox.className = "w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl shadow-inner";
+          }
+        }
+
+        if (actionBtn) {
+          if (type === 'danger') {
+            actionBtn.className = "w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5";
+          } else if (type === 'warning') {
+            actionBtn.className = "w-1/2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-amber-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+          } else {
+            actionBtn.className = "w-1/2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-emerald-500/25 active:scale-95 flex items-center justify-center gap-1.5";
+          }
+        }
+
+        modal.classList.remove('hidden');
+      });
+    }
+
+    function handleAppConfirmAccept() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('medium');
+      const modal = document.getElementById('app-confirm-modal');
+      if (modal) modal.classList.add('hidden');
+      if (appConfirmResolve) {
+        const resolve = appConfirmResolve;
+        appConfirmResolve = null;
+        resolve(true);
+      }
+    }
+
+    function handleAppConfirmCancel() {
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+      const modal = document.getElementById('app-confirm-modal');
+      if (modal) modal.classList.add('hidden');
+      if (appConfirmResolve) {
+        const resolve = appConfirmResolve;
+        appConfirmResolve = null;
+        resolve(false);
+      }
+    }
+
+
+
     function formatTimeAgo(isoStr) {
       if (!isoStr) return 'Recently';
       try {
@@ -7315,7 +7412,22 @@ if (typeof window !== 'undefined') {
 
     function cancelWorkoutSession(forceWithoutConfirm = false) {
       if (!forceWithoutConfirm && ((typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) || (typeof workoutTimerSeconds !== 'undefined' && workoutTimerSeconds > 0) || isSetInProgress || isRestTimerRunning)) {
-        if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
+        if (typeof showAppConfirm === 'function') {
+          showAppConfirm({
+            title: "Cancel Workout Session?",
+            message: "All logged sets and timer progress for this workout will be permanently cleared.",
+            confirmText: "Discard Workout",
+            cancelText: "Keep Workout",
+            type: "danger",
+            icon: "fa-solid fa-ban",
+            btnIcon: "fa-solid fa-trash-can"
+          }).then((confirmed) => {
+            if (confirmed) {
+              cancelWorkoutSession(true);
+            }
+          });
+          return;
+        } else if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
           return;
         }
       }
@@ -9879,7 +9991,27 @@ if (typeof window !== 'undefined') {
     }
 
     function deleteHistoricalWorkout(dateStr) {
+      if (typeof showAppConfirm === 'function') {
+        showAppConfirm({
+          title: "Delete Workout Entry?",
+          message: `Are you sure you want to delete the workout entry for ${dateStr}? This action cannot be undone.`,
+          confirmText: "Delete Entry",
+          cancelText: "Keep Entry",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        }).then((confirmed) => {
+          if (confirmed) {
+            executeDeleteHistoricalWorkout(dateStr);
+          }
+        });
+        return;
+      }
       if (!confirm(`Are you sure you want to delete the workout entry for ${dateStr}?`)) return;
+      executeDeleteHistoricalWorkout(dateStr);
+    }
+
+    function executeDeleteHistoricalWorkout(dateStr) {
 
       if (typeof AppStorage !== 'undefined' && typeof AppStorage.deleteWorkout === 'function') {
         AppStorage.deleteWorkout(dateStr);
@@ -21728,6 +21860,77 @@ runSuite("40. Cloud Backup Header Status Indicator & Quiet Auto-Sync Engine", ()
   // 5. Verify quiet defaults for syncToGoogleDrive and syncToFirestore (no toast spam)
   assert(syncToGoogleDrive.toString().includes('isSilent = true'), "syncToGoogleDrive defaults to quiet silent mode");
   assert(syncToFirestore.toString().includes('isSilent = true'), "syncToFirestore defaults to quiet silent mode");
+});
+
+runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement", () => {
+  assert(typeof showAppConfirm === 'function', "showAppConfirm is a defined function");
+  assert(typeof handleAppConfirmAccept === 'function', "handleAppConfirmAccept is a defined function");
+  assert(typeof handleAppConfirmCancel === 'function', "handleAppConfirmCancel is a defined function");
+
+  const modal = getOrCreateElement('app-confirm-modal');
+  const titleEl = getOrCreateElement('app-confirm-title');
+  const msgEl = getOrCreateElement('app-confirm-message');
+  const cancelBtn = getOrCreateElement('app-confirm-cancel-btn');
+  const actionBtn = getOrCreateElement('app-confirm-action-btn');
+  const iconEl = getOrCreateElement('app-confirm-icon');
+  const btnText = getOrCreateElement('app-confirm-btn-text');
+
+  assert(modal !== null, "app-confirm-modal exists in DOM");
+  assert(titleEl !== null, "app-confirm-title exists in DOM");
+  assert(msgEl !== null, "app-confirm-message exists in DOM");
+
+  // 1. Open confirmation modal and verify attributes
+  showAppConfirm({
+    title: "Cancel Workout Session?",
+    message: "All logged sets and timer progress for this workout will be cleared.",
+    confirmText: "Discard Workout",
+    cancelText: "Keep Workout",
+    type: "danger",
+    icon: "fa-solid fa-ban"
+  });
+
+  assert(!modal.classList.contains('hidden'), "showAppConfirm unhides modal");
+  assert(titleEl.innerText === "Cancel Workout Session?", "Modal title matches custom prompt");
+  assert(msgEl.innerText === "All logged sets and timer progress for this workout will be cleared.", "Modal message matches custom body");
+  assert(cancelBtn.innerText === "Keep Workout", "Cancel button text matches custom label");
+  assert(btnText.innerText === "Discard Workout", "Action button text matches custom label");
+  assert(iconEl.className.includes('fa-ban'), "Modal status icon reflects requested glyph");
+  assert(actionBtn.className.includes('bg-rose-600'), "Danger type renders red/rose action button");
+
+  // 2. Test cancel resolution
+  handleAppConfirmCancel();
+  assert(modal.classList.contains('hidden'), "handleAppConfirmCancel hides modal");
+
+  // 3. Test accept resolution
+  showAppConfirm({
+    title: "Confirm Action",
+    type: "primary",
+    confirmText: "Proceed"
+  });
+  assert(!modal.classList.contains('hidden'), "showAppConfirm opens for primary type");
+  assert(actionBtn.className.includes('bg-emerald-500'), "Primary type renders emerald action button");
+  handleAppConfirmAccept();
+  assert(modal.classList.contains('hidden'), "handleAppConfirmAccept hides modal");
+
+  // 4. Verify cancelWorkoutSession triggers showAppConfirm when progress exists
+  let interceptedConfirm = false;
+  const originalShowAppConfirm = showAppConfirm;
+  showAppConfirm = function(options) {
+    interceptedConfirm = true;
+    assert(options.title.includes("Cancel Workout"), "cancelWorkoutSession passes Cancel Workout title");
+    assert(options.confirmText === "Discard Workout", "cancelWorkoutSession requests Discard Workout button");
+    return Promise.resolve(false);
+  };
+
+  currentSessionSets = [{ id: 1, exercise: 'Squat', weight: 225, reps: 5 }];
+  cancelWorkoutSession(false);
+  assert(interceptedConfirm === true, "cancelWorkoutSession uses custom showAppConfirm dialog when progress exists");
+  assert(currentSessionSets.length === 1, "Workout is not cleared when confirmation is not accepted");
+
+  // Restore and test forced bypass
+  showAppConfirm = originalShowAppConfirm;
+  cancelWorkoutSession(true);
+  assert(currentSessionSets.length === 0, "cancelWorkoutSession(true) forces immediate clear without modal");
 });
 
 print("\n============================================================");

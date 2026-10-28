@@ -3730,6 +3730,77 @@ runSuite("40. Cloud Backup Header Status Indicator & Quiet Auto-Sync Engine", ()
   assert(syncToFirestore.toString().includes('isSilent = true'), "syncToFirestore defaults to quiet silent mode");
 });
 
+runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement", () => {
+  assert(typeof showAppConfirm === 'function', "showAppConfirm is a defined function");
+  assert(typeof handleAppConfirmAccept === 'function', "handleAppConfirmAccept is a defined function");
+  assert(typeof handleAppConfirmCancel === 'function', "handleAppConfirmCancel is a defined function");
+
+  const modal = getOrCreateElement('app-confirm-modal');
+  const titleEl = getOrCreateElement('app-confirm-title');
+  const msgEl = getOrCreateElement('app-confirm-message');
+  const cancelBtn = getOrCreateElement('app-confirm-cancel-btn');
+  const actionBtn = getOrCreateElement('app-confirm-action-btn');
+  const iconEl = getOrCreateElement('app-confirm-icon');
+  const btnText = getOrCreateElement('app-confirm-btn-text');
+
+  assert(modal !== null, "app-confirm-modal exists in DOM");
+  assert(titleEl !== null, "app-confirm-title exists in DOM");
+  assert(msgEl !== null, "app-confirm-message exists in DOM");
+
+  // 1. Open confirmation modal and verify attributes
+  showAppConfirm({
+    title: "Cancel Workout Session?",
+    message: "All logged sets and timer progress for this workout will be cleared.",
+    confirmText: "Discard Workout",
+    cancelText: "Keep Workout",
+    type: "danger",
+    icon: "fa-solid fa-ban"
+  });
+
+  assert(!modal.classList.contains('hidden'), "showAppConfirm unhides modal");
+  assert(titleEl.innerText === "Cancel Workout Session?", "Modal title matches custom prompt");
+  assert(msgEl.innerText === "All logged sets and timer progress for this workout will be cleared.", "Modal message matches custom body");
+  assert(cancelBtn.innerText === "Keep Workout", "Cancel button text matches custom label");
+  assert(btnText.innerText === "Discard Workout", "Action button text matches custom label");
+  assert(iconEl.className.includes('fa-ban'), "Modal status icon reflects requested glyph");
+  assert(actionBtn.className.includes('bg-rose-600'), "Danger type renders red/rose action button");
+
+  // 2. Test cancel resolution
+  handleAppConfirmCancel();
+  assert(modal.classList.contains('hidden'), "handleAppConfirmCancel hides modal");
+
+  // 3. Test accept resolution
+  showAppConfirm({
+    title: "Confirm Action",
+    type: "primary",
+    confirmText: "Proceed"
+  });
+  assert(!modal.classList.contains('hidden'), "showAppConfirm opens for primary type");
+  assert(actionBtn.className.includes('bg-emerald-500'), "Primary type renders emerald action button");
+  handleAppConfirmAccept();
+  assert(modal.classList.contains('hidden'), "handleAppConfirmAccept hides modal");
+
+  // 4. Verify cancelWorkoutSession triggers showAppConfirm when progress exists
+  let interceptedConfirm = false;
+  const originalShowAppConfirm = showAppConfirm;
+  showAppConfirm = function(options) {
+    interceptedConfirm = true;
+    assert(options.title.includes("Cancel Workout"), "cancelWorkoutSession passes Cancel Workout title");
+    assert(options.confirmText === "Discard Workout", "cancelWorkoutSession requests Discard Workout button");
+    return Promise.resolve(false);
+  };
+
+  currentSessionSets = [{ id: 1, exercise: 'Squat', weight: 225, reps: 5 }];
+  cancelWorkoutSession(false);
+  assert(interceptedConfirm === true, "cancelWorkoutSession uses custom showAppConfirm dialog when progress exists");
+  assert(currentSessionSets.length === 1, "Workout is not cleared when confirmation is not accepted");
+
+  // Restore and test forced bypass
+  showAppConfirm = originalShowAppConfirm;
+  cancelWorkoutSession(true);
+  assert(currentSessionSets.length === 0, "cancelWorkoutSession(true) forces immediate clear without modal");
+});
+
 print("\\n============================================================");
 print("TEST EXECUTION COMPLETED: " + testPassedCount + " PASSED, " + testFailedCount + " FAILED");
 print("============================================================");

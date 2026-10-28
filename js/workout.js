@@ -2375,7 +2375,22 @@
 
     function cancelWorkoutSession(forceWithoutConfirm = false) {
       if (!forceWithoutConfirm && ((typeof currentSessionSets !== 'undefined' && currentSessionSets.length > 0) || (typeof workoutTimerSeconds !== 'undefined' && workoutTimerSeconds > 0) || isSetInProgress || isRestTimerRunning)) {
-        if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
+        if (typeof showAppConfirm === 'function') {
+          showAppConfirm({
+            title: "Cancel Workout Session?",
+            message: "All logged sets and timer progress for this workout will be permanently cleared.",
+            confirmText: "Discard Workout",
+            cancelText: "Keep Workout",
+            type: "danger",
+            icon: "fa-solid fa-ban",
+            btnIcon: "fa-solid fa-trash-can"
+          }).then((confirmed) => {
+            if (confirmed) {
+              cancelWorkoutSession(true);
+            }
+          });
+          return;
+        } else if (typeof confirm === 'function' && !confirm("Are you sure you want to cancel this workout session? All logged sets and progress for this workout will be cleared.")) {
           return;
         }
       }

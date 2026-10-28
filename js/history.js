@@ -633,7 +633,27 @@
     }
 
     function deleteHistoricalWorkout(dateStr) {
+      if (typeof showAppConfirm === 'function') {
+        showAppConfirm({
+          title: "Delete Workout Entry?",
+          message: `Are you sure you want to delete the workout entry for ${dateStr}? This action cannot be undone.`,
+          confirmText: "Delete Entry",
+          cancelText: "Keep Entry",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        }).then((confirmed) => {
+          if (confirmed) {
+            executeDeleteHistoricalWorkout(dateStr);
+          }
+        });
+        return;
+      }
       if (!confirm(`Are you sure you want to delete the workout entry for ${dateStr}?`)) return;
+      executeDeleteHistoricalWorkout(dateStr);
+    }
+
+    function executeDeleteHistoricalWorkout(dateStr) {
 
       if (typeof AppStorage !== 'undefined' && typeof AppStorage.deleteWorkout === 'function') {
         AppStorage.deleteWorkout(dateStr);

@@ -1927,6 +1927,33 @@
     <span id="numpad-display-unit"></span>
   </div>
 
+  <!-- ================= UNIFIED APP CONFIRMATION MODAL ================= -->
+  <div id="app-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) handleAppConfirmCancel()">
+    <div class="m3-card rounded-3xl border border-slate-800 bg-slate-900/95 p-6 w-full max-w-sm shadow-2xl space-y-5 text-center relative animate-in fade-in zoom-in-95 duration-150" onclick="event.stopPropagation()">
+      <!-- Status Icon Badge -->
+      <div id="app-confirm-icon-box" class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner">
+        <i id="app-confirm-icon" class="fa-solid fa-ban"></i>
+      </div>
+
+      <!-- Text Details -->
+      <div class="space-y-1.5">
+        <h3 id="app-confirm-title" class="text-base sm:text-lg font-black text-slate-100 tracking-tight">Cancel Workout Session?</h3>
+        <p id="app-confirm-message" class="text-xs sm:text-sm text-slate-300 leading-relaxed">All logged sets and progress for this workout will be cleared.</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2.5 pt-1">
+        <button id="app-confirm-cancel-btn" type="button" onclick="handleAppConfirmCancel()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm border border-slate-700 transition active:scale-95">
+          Keep Workout
+        </button>
+        <button id="app-confirm-action-btn" type="button" onclick="handleAppConfirmAccept()" class="w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm transition shadow-lg shadow-rose-600/25 active:scale-95 flex items-center justify-center gap-1.5">
+          <i id="app-confirm-btn-icon" class="fa-solid fa-trash-can text-xs"></i>
+          <span id="app-confirm-btn-text">Discard Workout</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= DIRECT DUAL-TARGET NUMERIC KEYPAD ================= -->
   <div id="direct-numpad-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex flex-col justify-end transition-opacity duration-200" onclick="if(event.target === this) closeDirectNumpad()">
     <!-- Sheet Container -->
@@ -3791,12 +3818,12 @@
   <!-- Application Modules (Ordered Classic Scripts) -->
   <script defer src="js/config.js?v=20261023k"></script>
   <script defer src="js/storage.js?v=20261023k"></script>
-  <script defer src="js/utils.js?v=20261023k"></script>
+  <script defer src="js/utils.js?v=20261028a"></script>
   <script defer src="js/native-bridge.js?v=20261026a"></script>
   <script defer src="js/theme.js?v=20261023k"></script>
   <script defer src="js/auth.js?v=20261023k"></script>
-  <script defer src="js/workout.js?v=20261023k"></script>
-  <script defer src="js/history.js?v=20261027v"></script>
+  <script defer src="js/workout.js?v=20261028a"></script>
+  <script defer src="js/history.js?v=20261028a"></script>
   <script defer src="js/progress.js?v=20261023k"></script>
   <script defer src="js/squads.js?v=20261023k"></script>
   <script defer src="js/map.js?v=20261023k"></script>
