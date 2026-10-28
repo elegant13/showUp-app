@@ -414,8 +414,11 @@
   </div>
 
   <!-- ================= EDIT ACTIVE WORKOUT SET MODAL ================= -->
-  <div id="edit-active-set-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeEditActiveSetModal()">
-    <div class="m3-card rounded-3xl border border-slate-800 p-5 sm:p-6 w-full max-w-lg shadow-2xl space-y-4 relative bg-slate-900/95 max-h-[90vh] flex flex-col">
+  <div id="edit-active-set-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) closeEditActiveSetModal()">
+    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl space-y-4 relative bg-slate-900/98 sm:bg-slate-900/95 max-h-[88vh] sm:max-h-[90vh] flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
+      <!-- Mobile Pull Handle -->
+      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-1 mb-2 sm:hidden pointer-events-none"></div>
+
       <!-- Hidden ID Field -->
       <input type="hidden" id="edit-active-set-id" value="">
 
@@ -630,8 +633,11 @@
   </div>
 
   <!-- ================= EDIT HISTORICAL WORKOUT MODAL ================= -->
-  <div id="edit-historical-workout-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeEditHistoricalWorkoutModal()">
-    <div class="m3-card rounded-3xl border border-slate-800 p-5 sm:p-6 w-full max-w-lg shadow-2xl space-y-4 relative bg-slate-900/95 max-h-[90vh] flex flex-col">
+  <div id="edit-historical-workout-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) closeEditHistoricalWorkoutModal()">
+    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 p-5 sm:p-6 w-full sm:max-w-lg shadow-2xl space-y-4 relative bg-slate-900/98 sm:bg-slate-900/95 max-h-[88vh] sm:max-h-[90vh] flex flex-col pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
+      <!-- Mobile Pull Handle -->
+      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-1 mb-2 sm:hidden pointer-events-none"></div>
+
       <!-- Modal Header -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-shrink-0">
         <div class="flex items-center gap-2.5">
@@ -720,8 +726,11 @@
   </div>
 
   <!-- ================= SETTINGS MODAL ================= -->
-  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) toggleSettingsModal()">
-    <div class="m3-card rounded-3xl border p-6 w-full max-w-md shadow-2xl space-y-4 relative max-h-[90vh] overflow-y-auto">
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) toggleSettingsModal()">
+    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 bg-slate-900/98 sm:bg-slate-900/95 p-5 sm:p-6 w-full sm:max-w-md shadow-2xl space-y-4 relative max-h-[88vh] sm:max-h-[90vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
+      <!-- Mobile Pull Handle -->
+      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-1 mb-2 sm:hidden pointer-events-none"></div>
+
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
         <h2 class="text-base font-bold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-gear text-emerald-400"></i>
@@ -1261,8 +1270,10 @@
   </div>
 
   <!-- ================= LOG HISTORICAL BODY WEIGHT MODAL ================= -->
-  <div id="log-weight-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) closeLogWeightModal()">
-    <div class="m3-card rounded-3xl border border-slate-800 p-5 sm:p-6 w-full max-w-sm shadow-2xl space-y-4 relative animate-in fade-in zoom-in-95 duration-200">
+  <div id="log-weight-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) closeLogWeightModal()">
+    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 bg-slate-900/98 sm:bg-slate-900/95 p-5 sm:p-6 w-full sm:max-w-sm shadow-2xl space-y-4 relative max-h-[88vh] sm:max-h-[90vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
+      <!-- Mobile Pull Handle -->
+      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-1 mb-2 sm:hidden pointer-events-none"></div>
       
       <!-- MODAL HEADER -->
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -1928,8 +1939,11 @@
   </div>
 
   <!-- ================= UNIFIED APP CONFIRMATION MODAL ================= -->
-  <div id="app-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-200" onclick="if(event.target === this) handleAppConfirmCancel()">
-    <div class="m3-card rounded-3xl border border-slate-800 bg-slate-900/95 p-6 w-full max-w-sm shadow-2xl space-y-5 text-center relative animate-in fade-in zoom-in-95 duration-150" onclick="event.stopPropagation()">
+  <div id="app-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-md flex flex-col justify-end sm:justify-center sm:items-center p-0 sm:p-4 transition-all duration-200" onclick="if(event.target === this) handleAppConfirmCancel()">
+    <div class="m3-card rounded-t-3xl sm:rounded-3xl border-t sm:border border-slate-800 bg-slate-900/98 sm:bg-slate-900/95 p-6 w-full sm:max-w-sm shadow-2xl space-y-4 sm:space-y-5 text-center relative max-h-[85vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))] mobile-bottom-sheet" onclick="event.stopPropagation()">
+      <!-- Mobile Pull Handle -->
+      <div class="w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto -mt-2 mb-2 sm:hidden pointer-events-none"></div>
+
       <!-- Status Icon Badge -->
       <div id="app-confirm-icon-box" class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl shadow-inner">
         <i id="app-confirm-icon" class="fa-solid fa-ban"></i>
@@ -2986,6 +3000,15 @@
 
         <!-- SET ACTION CONTROLS: PRIMARY LOG SET & PASSIVE START SET OPTION -->
         <div id="set-action-container" class="space-y-2 pt-1.5">
+          <!-- 1-TAP MATCH LAST SET BUTTON (Quick Repeat for seamless mobile workout flow) -->
+          <button id="btn-match-last-set" type="button" onclick="triggerHaptic('medium'); matchLastSet()" class="hidden w-full py-2 px-3.5 rounded-xl bg-emerald-950/40 hover:bg-emerald-950/70 text-emerald-400 border border-emerald-500/30 text-xs sm:text-sm font-bold transition active:scale-[0.99] flex items-center justify-between gap-2 shadow-sm" title="Match weight & reps from your last logged set">
+            <span class="flex items-center gap-1.5 min-w-0">
+              <i class="fa-solid fa-bolt text-emerald-400 text-xs shrink-0"></i>
+              <span class="truncate">Match Last Set: <strong id="btn-match-last-set-preview" class="text-white font-extrabold font-mono">--</strong></span>
+            </span>
+            <span class="text-[10px] uppercase font-black bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/40 shrink-0">1-Tap</span>
+          </button>
+
           <!-- PRIMARY CTA: LOG SET -->
           <button id="btn-log-set" type="button" onclick="triggerHaptic('heavy'); logSet()" class="w-full font-black py-3 sm:py-3.5 px-4 rounded-xl shadow-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-base sm:text-lg shadow-emerald-500/20 active:scale-[0.98] transition flex items-center justify-center gap-2">
             <i class="fa-solid fa-check text-base sm:text-lg"></i>

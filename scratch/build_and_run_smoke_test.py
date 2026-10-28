@@ -174,6 +174,24 @@ def generate_and_run_smoke_test():
         print("[FAIL] Auto-Start Set on Rest Target preference toggle missing in HTML")
         return False
 
+    # 13. Check Mobile-First Bottom Sheets in HTML
+    if ('mobile-bottom-sheet' in html and
+        'w-12 h-1.5 bg-slate-700/80 rounded-full mx-auto' in html and
+        'pb-[max(1.5rem,env(safe-area-inset-bottom))]' in html):
+        print("[PASS] Mobile-First sliding bottom sheets & pull handles verified in HTML")
+    else:
+        print("[FAIL] Mobile-First bottom sheets or pull handles missing in HTML")
+        return False
+
+    # 14. Check 1-Tap Match Last Set Button in HTML
+    if ('id="btn-match-last-set"' in html and
+        'id="btn-match-last-set-preview"' in html and
+        'Match Last Set:' in html):
+        print("[PASS] 1-Tap Match Last Set button verified in HTML")
+    else:
+        print("[FAIL] 1-Tap Match Last Set button missing in HTML")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -3799,6 +3817,54 @@ runSuite("41. Unified App Confirmation Modal Engine & Native Confirm Replacement
   showAppConfirm = originalShowAppConfirm;
   cancelWorkoutSession(true);
   assert(currentSessionSets.length === 0, "cancelWorkoutSession(true) forces immediate clear without modal");
+});
+
+runSuite("42. Mobile-First Bottom Sheets, 1-Tap Match Last Set & Touch Swipe Gestures", () => {
+  // 1. Verify 1-Tap Match Last Set UI and Function
+  assert(typeof updateMatchLastSetUI === 'function', "updateMatchLastSetUI is a defined function");
+  assert(typeof matchLastSet === 'function', "matchLastSet is a defined function");
+  assert(typeof initLoggedSetSwipeGestures === 'function', "initLoggedSetSwipeGestures is a defined function");
+
+  const matchBtn = getOrCreateElement('btn-match-last-set');
+  const preview = getOrCreateElement('btn-match-last-set-preview');
+  const weightInput = getOrCreateElement('input-weight');
+  const repsInput = getOrCreateElement('input-reps');
+  const exInput = getOrCreateElement('exercise-name-input');
+
+  // When no sets logged, match button is hidden
+  currentSessionSets = [];
+  updateMatchLastSetUI();
+  assert(matchBtn.classList.contains('hidden'), "Match last set button hidden when 0 sets in session");
+
+  // Add a set
+  currentSessionSets = [
+    { id: 101, exerciseName: 'Overhead Press', implement: 'Barbell', weight: 135, reps: 8, setType: 'normal', rpe: '8' }
+  ];
+  updateMatchLastSetUI();
+  assert(!matchBtn.classList.contains('hidden'), "Match last set button visible after set logged");
+  assert(preview.textContent === "135 lbs × 8", "Preview correctly displays weight and reps summary");
+
+  // Call matchLastSet
+  weightInput.value = 0;
+  repsInput.value = 0;
+  matchLastSet();
+  assert(weightInput.value === 135, "matchLastSet pre-fills weight to 135 lbs");
+  assert(repsInput.value === 8, "matchLastSet pre-fills reps to 8");
+
+  // Test endurance implement summary formatting
+  currentSessionSets.push({
+    id: 102, exerciseName: 'Outdoor Run', implement: 'Running', runningDistance: '3.1', runningTime: '24:30'
+  });
+  updateMatchLastSetUI();
+  assert(preview.textContent === "3.1 mi | 24:30", "Running implement formatted correctly in match last set preview");
+
+  // Test renderLoggedSets with swipe wrappers
+  renderLoggedSets();
+  const list = getOrCreateElement('logged-sets-list');
+  assert(list.innerHTML.includes('logged-set-swipe-wrapper'), "Logged sets list renders swipe wrapper containers");
+  assert(list.innerHTML.includes('swipe-action-left'), "Logged sets list includes swipe-action-left repeat indicator");
+  assert(list.innerHTML.includes('swipe-action-right'), "Logged sets list includes swipe-action-right delete indicator");
+  assert(list.innerHTML.includes('logged-set-card'), "Logged sets list includes foreground swipeable card");
 });
 
 print("\\n============================================================");
