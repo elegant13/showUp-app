@@ -782,26 +782,26 @@
       // Positive celebration outlook tier based on week progress
       let outlookTier = 'fresh';
       let outlookHeadline = 'A fresh week full of potential!';
-      let outlookMessage = 'Every week is a new canvas. Lock in your mindset, prioritize movement, and get ready to show up whenever you are ready.';
+      let outlookMessage = 'Lock in your mindset and show up whenever you are ready.';
       let outlookBadge = 'Fresh Week';
       let outlookIcon = 'fa-seedling text-emerald-400';
 
       if (daysCount >= 4) {
         outlookTier = 'champion';
-        outlookHeadline = "Outstanding dedication! You are dominating this week.";
-        outlookMessage = `You've logged ${daysCount} workouts and moved ${weekVolume.toLocaleString()} lbs across ${weekSetsCount} sets this week. That level of focus is rare and powerful. Celebrate what you've built!`;
+        outlookHeadline = "Outstanding dedication! Dominating this week.";
+        outlookMessage = `${daysCount} workouts • ${weekVolume.toLocaleString()} lbs • ${weekSetsCount} sets. Elite focus!`;
         outlookBadge = 'Unstoppable Flow';
         outlookIcon = 'fa-crown text-amber-400';
       } else if (daysCount >= 2) {
         outlookTier = 'momentum';
-        outlookHeadline = "Great consistency! Your weekly momentum is building strong.";
-        outlookMessage = `With ${daysCount} solid sessions locked in this week, your effort is compounding beautifully. Keep listening to your body and showing up!`;
+        outlookHeadline = "Great consistency! Weekly momentum building strong.";
+        outlookMessage = `${daysCount} solid sessions locked in. Effort is compounding!`;
         outlookBadge = 'Strong Momentum';
         outlookIcon = 'fa-fire text-amber-400';
       } else if (daysCount === 1) {
         outlookTier = 'starting';
-        outlookHeadline = "The hardest part is starting — and you're on the board!";
-        outlookMessage = `You've broken the barrier this week with a great session. Every workout adds up to long-term strength and vitality.`;
+        outlookHeadline = "On the board for this week!";
+        outlookMessage = "First workout crushed. Keep the momentum rolling!";
         outlookBadge = 'On The Board';
         outlookIcon = 'fa-bolt text-emerald-400';
       }
@@ -843,32 +843,32 @@
       }
 
       const workoutName = (typeof todayWorkout === 'object' && todayWorkout.workoutName) ? todayWorkout.workoutName : "Workout Session";
-      const setsCount = (typeof todayWorkout === 'object' && Array.isArray(todayWorkout.sets)) ? todayWorkout.sets.length : 1;
+      const setsCount = (typeof todayWorkout === 'object' && Array.isArray(todayWorkout.sets)) ? todayWorkout.sets.length : (todayWorkout.totalSets || 1);
       const vol = (typeof todayWorkout === 'object' && todayWorkout.totalVolume) ? `${todayWorkout.totalVolume.toLocaleString()} lbs` : null;
       const cals = (typeof todayWorkout === 'object' && todayWorkout.caloriesBurned) ? `${todayWorkout.caloriesBurned} kcal` : null;
-      const timeStr = (typeof todayWorkout === 'object' && todayWorkout.totalWorkoutTimeFormatted) ? todayWorkout.totalWorkoutTimeFormatted : null;
+      const timeStr = (typeof todayWorkout === 'object' && todayWorkout.totalWorkoutTimeFormatted) ? todayWorkout.totalWorkoutTimeFormatted : (todayWorkout.durationFormatted || null);
 
       // Casual congratulatory messages
       const casualMessages = [
         {
           kicker: "Hell yeah! 💥",
           headline: "You showed up today and put in the work.",
-          subtext: "Consistency wins every single time. That sweat equity is officially in the bank. Take a breather, hydrate, and celebrate your effort!"
+          subtext: "Consistency wins every time. Sweat equity in the bank!"
         },
         {
           kicker: "Boom! 🏆",
           headline: "Today's workout is crushed and in the books.",
-          subtext: "Another day, another victory logged. You chose effort over excuses, and your future self is thanking you."
+          subtext: "Effort logged. Future self is thanking you."
         },
         {
           kicker: "Massive respect! 💪",
           headline: "Discipline beats motivation every day of the week.",
-          subtext: "You got after it today and made it happen. Rest up, champion — you earned every bit of today's progress."
+          subtext: "Rest up, champion — earned every bit of today."
         },
         {
           kicker: "Work done! ⚡",
           headline: "Today's session is locked in.",
-          subtext: "Great energy and execution. Proud of you for staying committed to your journey."
+          subtext: "Great energy and execution on your journey."
         }
       ];
 
@@ -887,6 +887,7 @@
         kicker: selected.kicker,
         headline: selected.headline,
         subtext: selected.subtext,
+        completedDate: (typeof todayWorkout === 'object' && todayWorkout.date) ? todayWorkout.date : todayKey,
         todayKey
       };
     }
@@ -928,11 +929,17 @@
       if (todayCard) {
         if (dailyStatus.completed) {
           todayCard.classList.remove('hidden');
-          todayCard.className = "hero-victory-card rounded-2xl p-4 border border-emerald-500/40 shadow-xl space-y-2.5 transition-all";
+          todayCard.className = "hero-victory-card rounded-2xl p-4 border border-emerald-500/40 shadow-xl space-y-3 transition-all";
           const safeKicker = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.kicker) : dailyStatus.kicker;
           const safeHeadline = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.headline) : dailyStatus.headline;
           const safeSubtext = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.subtext) : dailyStatus.subtext;
           const safeWorkoutName = (typeof escapeHtml === 'function') ? escapeHtml(dailyStatus.workoutName) : dailyStatus.workoutName;
+          const completedDate = dailyStatus.completedDate || (typeof getEasternTimeDateKey === 'function' ? getEasternTimeDateKey() : (typeof getLocalDateKey === 'function' ? getLocalDateKey() : new Date().toISOString().slice(0, 10)));
+
+          const stat2Label = dailyStatus.vol ? 'Volume' : (dailyStatus.cals ? 'Energy' : 'Activity');
+          const stat2Val = dailyStatus.vol || dailyStatus.cals || 'Completed';
+          const stat3Label = dailyStatus.timeStr ? 'Duration' : (dailyStatus.cals && dailyStatus.vol ? 'Calories' : 'Status');
+          const stat3Val = dailyStatus.timeStr || dailyStatus.cals || 'Logged';
 
           todayCard.innerHTML = `
             <div class="flex items-center justify-between gap-2 border-b border-emerald-500/20 pb-2">
@@ -941,21 +948,32 @@
               </span>
               <div class="flex items-center gap-1.5">
                 <span class="text-xs font-bold text-emerald-400 font-mono">${safeWorkoutName}</span>
-                <button type="button" onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${dailyStatus.completedDate || (typeof getEasternTimeDateKey === 'function' ? getEasternTimeDateKey() : new Date().toISOString().slice(0, 10))}')" class="text-slate-400 hover:text-amber-400 p-1 rounded-lg transition" title="Edit Today's Workout">
+                <button type="button" onclick="triggerHaptic('medium'); openEditHistoricalWorkoutModal('${completedDate}')" class="text-slate-400 hover:text-amber-400 p-1 rounded-lg transition" title="Edit Today's Workout">
                   <i class="fa-solid fa-pencil text-xs"></i>
                 </button>
               </div>
             </div>
-            <h3 class="text-sm font-black text-slate-100">
-              ${safeHeadline}
-            </h3>
-            <p class="text-xs text-slate-300 leading-relaxed italic bg-slate-950/70 p-2.5 rounded-xl border border-emerald-500/20">
-              "${safeSubtext}"
-            </p>
-            <div class="text-[10px] text-slate-400 flex items-center gap-2 pt-0.5">
-              <span>${dailyStatus.setsCount} sets logged</span>
-              ${dailyStatus.vol ? `<span>• ${dailyStatus.vol}</span>` : ''}
-              ${dailyStatus.timeStr ? `<span>• ${dailyStatus.timeStr}</span>` : ''}
+            <div class="space-y-0.5">
+              <h3 class="text-sm font-black text-slate-100">
+                ${safeHeadline}
+              </h3>
+              <p class="text-xs text-emerald-400/90 font-medium">
+                ${safeSubtext}
+              </p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 pt-0.5">
+              <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl py-2 px-1.5 text-center">
+                <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">Sets</span>
+                <span class="text-xs sm:text-sm font-black text-emerald-400 font-mono">${dailyStatus.setsCount}</span>
+              </div>
+              <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl py-2 px-1.5 text-center">
+                <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">${stat2Label}</span>
+                <span class="text-xs sm:text-sm font-black text-slate-100 font-mono truncate block">${stat2Val}</span>
+              </div>
+              <div class="bg-slate-950/70 border border-emerald-500/20 rounded-xl py-2 px-1.5 text-center">
+                <span class="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">${stat3Label}</span>
+                <span class="text-xs sm:text-sm font-black text-slate-100 font-mono truncate block">${stat3Val}</span>
+              </div>
             </div>
           `;
         } else {
@@ -1009,25 +1027,37 @@
       // 4. Render Celebration Banner (Requirement 1)
       const bannerEl = document.getElementById('home-week-celebration-banner');
       if (bannerEl) {
-        const isHighTier = weekStats.daysCount >= 2;
-        bannerEl.className = isHighTier
-          ? "rounded-2xl p-4 bg-gradient-to-r from-emerald-950/50 to-slate-900/90 border border-emerald-500/30 text-slate-200 space-y-1.5 shadow-md"
-          : "rounded-2xl p-4 bg-slate-950/80 border border-slate-800 text-slate-300 space-y-1.5";
-
         const safeHeadline = (typeof escapeHtml === 'function') ? escapeHtml(weekStats.outlookHeadline) : weekStats.outlookHeadline;
         const safeMessage = (typeof escapeHtml === 'function') ? escapeHtml(weekStats.outlookMessage) : weekStats.outlookMessage;
 
-        bannerEl.innerHTML = `
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-black flex items-center gap-1.5 text-slate-100">
+        if (dailyStatus.completed) {
+          // When workout is completed today, keep weekly banner compact so today's victory card shines!
+          bannerEl.className = "flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs transition-all";
+          bannerEl.innerHTML = `
+            <span class="text-xs font-bold flex items-center gap-2 text-slate-200">
               <i class="fa-solid ${weekStats.outlookIcon}"></i>
               ${safeHeadline}
             </span>
-          </div>
-          <p class="text-xs text-slate-300/90 leading-relaxed">
-            ${safeMessage}
-          </p>
-        `;
+            <span class="text-[11px] font-semibold text-emerald-400 font-mono tracking-tight">${weekStats.daysCount} of 7 Logged</span>
+          `;
+        } else {
+          const isHighTier = weekStats.daysCount >= 2;
+          bannerEl.className = isHighTier
+            ? "rounded-2xl p-3.5 bg-gradient-to-r from-emerald-950/40 to-slate-900/90 border border-emerald-500/30 text-slate-200 space-y-1 shadow-md transition-all"
+            : "rounded-2xl p-3.5 bg-slate-950/80 border border-slate-800 text-slate-300 space-y-1 transition-all";
+
+          bannerEl.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold flex items-center gap-1.5 text-slate-100">
+                <i class="fa-solid ${weekStats.outlookIcon}"></i>
+                ${safeHeadline}
+              </span>
+            </div>
+            <p class="text-xs text-slate-400 leading-normal">
+              ${safeMessage}
+            </p>
+          `;
+        }
       }
 
       // 5. Render Metric Cards
