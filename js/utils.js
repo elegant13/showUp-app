@@ -54,10 +54,10 @@
     function isHRMEnabled() {
       try {
         const val = localStorage.getItem('showUp_hrm_enabled');
-        if (val === null) return true; // Enabled by default
+        if (val === null) return false; // Disabled by default
         return val === 'true';
       } catch (e) {
-        return true;
+        return false;
       }
     }
 
@@ -139,10 +139,10 @@
     function isMusclesEngagedEnabled() {
       try {
         const val = localStorage.getItem('showUp_muscles_engaged_enabled');
-        if (val === null) return true; // Enabled by default
+        if (val === null) return false; // Disabled by default
         return val === 'true';
       } catch (e) {
-        return true;
+        return false;
       }
     }
 
@@ -188,6 +188,48 @@
         if (typeof showToast === 'function') showToast("Muscles Engaged enabled", "success");
       } else {
         if (typeof showToast === 'function') showToast("Muscles Engaged disabled", "info");
+      }
+    }
+
+    function isSetTypesEnabled() {
+      try {
+        const val = localStorage.getItem('showUp_set_types_enabled');
+        if (val === null) return false; // Disabled by default
+        return val === 'true';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function applySetTypesEnabledUI(enabled) {
+      const isEnabled = enabled !== undefined ? !!enabled : isSetTypesEnabled();
+      const prefCheckbox = document.getElementById('pref-set-types-enabled');
+      if (prefCheckbox) prefCheckbox.checked = isEnabled;
+
+      const setClassificationContainer = document.getElementById('set-classification-container');
+      if (setClassificationContainer) {
+        if (isEnabled) {
+          setClassificationContainer.classList.remove('hidden');
+        } else {
+          setClassificationContainer.classList.add('hidden');
+        }
+      }
+
+      // If disabled, ensure active set type is reset to normal
+      if (!isEnabled && typeof selectSetType === 'function') {
+        try { selectSetType('normal'); } catch (e) {}
+      }
+    }
+
+    function toggleSetTypesEnabledPref(checked) {
+      try {
+        localStorage.setItem('showUp_set_types_enabled', String(checked));
+      } catch (e) {}
+      applySetTypesEnabledUI(checked);
+      if (checked) {
+        if (typeof showToast === 'function') showToast("Set Types enabled", "success");
+      } else {
+        if (typeof showToast === 'function') showToast("Set Types disabled", "info");
       }
     }
 
@@ -1241,5 +1283,8 @@
       window.setAutoStartSetEnabled = setAutoStartSetEnabled;
       window.applyAutoStartSetUI = applyAutoStartSetUI;
       window.toggleAutoStartSetPref = toggleAutoStartSetPref;
+      window.isSetTypesEnabled = isSetTypesEnabled;
+      window.applySetTypesEnabledUI = applySetTypesEnabledUI;
+      window.toggleSetTypesEnabledPref = toggleSetTypesEnabledPref;
     }
 

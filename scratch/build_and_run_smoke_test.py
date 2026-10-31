@@ -215,6 +215,26 @@ def generate_and_run_smoke_test():
         print("[FAIL] Delete Account Danger Zone missing in Settings Backup")
         return False
 
+    # 17. Verify Enable Set Types, HRM, Muscles Engaged, and Squads are disabled by default in HTML
+    if 'id="pref-set-types-enabled"' in html and 'id="set-classification-container" class="hidden' in html:
+        print("[PASS] Enable Set Types toggle and hidden-by-default set-classification-container present in HTML")
+    else:
+        print("[FAIL] Enable Set Types toggle or hidden container missing in HTML")
+        return False
+
+    if 'id="pref-hrm-enabled" onchange="toggleHRMEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked' in html:
+        print("[FAIL] Heart Rate Monitor toggle must not be checked by default in HTML")
+        return False
+
+    if 'id="pref-muscles-engaged-enabled" onchange="toggleMusclesEngagedEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked' in html:
+        print("[FAIL] Enable Muscles Engaged toggle must not be checked by default in HTML")
+        return False
+
+    if 'id="pref-squads-enabled" onchange="toggleSquadsEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked' in html:
+        print("[FAIL] Enable Squads toggle must not be checked by default in HTML")
+        return False
+    print("[PASS] Enable Set Types, HRM, Muscles Engaged, and Squads all confirmed disabled by default in HTML")
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -2087,6 +2107,7 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(saCleanProfile.primary === "Full Body", "SA KB Clean and Press auto resolves to Full Body");
 
   // 4. Test handleExerciseInput automatic DOM updates
+  toggleMusclesEngagedEnabledPref(true);
   const exInput = getOrCreateElement('exercise-name-input');
   const impSelect = getOrCreateElement('implement-select');
   const musSelect = getOrCreateElement('muscle-group-select');
@@ -3358,12 +3379,20 @@ runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscl
   const hrPrefCheckbox = getOrCreateElement('pref-hrm-enabled');
   const runningHrmBtn = getOrCreateElement('running-hrm-connect-btn');
 
-  // Verify default state is enabled (true)
+  // Verify default state is disabled (false)
   localStorage.removeItem('showUp_hrm_enabled');
-  assert(isHRMEnabled() === true, "HRM defaults to enabled for athletes");
-  applyHRMEnabledUI(true);
-  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill is visible by default when HRM is enabled");
-  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is fully interactive when HRM is enabled");
+  assert(isHRMEnabled() === false, "HRM defaults to disabled for athletes");
+  applyHRMEnabledUI(false);
+  assert(hrPill.classList.contains('hidden'), "HR minimalist pill is hidden by default when HRM is disabled");
+  assert(hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is dimmed when HRM is disabled");
+
+  // Enable HRM
+  toggleHRMEnabledPref(true);
+  assert(isHRMEnabled() === true, "toggleHRMEnabledPref(true) sets HRM state to enabled");
+  assert(localStorage.getItem('showUp_hrm_enabled') === 'true', "HRM enabled state persists in localStorage");
+  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill returns to visible state");
+  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is restored to active interactive state");
+  assert(!runningHrmBtn.classList.contains('hidden'), "Running HRM connect button restored");
 
   // Disable HRM
   toggleHRMEnabledPref(false);
@@ -3375,13 +3404,6 @@ runSuite("33. HRM Enabling Option in Defaults, 3s Pill Hang Time & Reduced Muscl
   assert(hrPrefRow.classList.contains('pointer-events-none'), "HR collapsed preference row is disabled when HRM is disabled");
   assert(runningHrmBtn.classList.contains('hidden'), "Running HRM connect button is hidden when HRM is disabled");
 
-  // Re-enable HRM
-  toggleHRMEnabledPref(true);
-  assert(isHRMEnabled() === true, "toggleHRMEnabledPref(true) re-enables HRM");
-  assert(localStorage.getItem('showUp_hrm_enabled') === 'true', "HRM enabled state persists in localStorage");
-  assert(!hrPill.classList.contains('hidden'), "HR minimalist pill returns to visible state");
-  assert(!hrPrefRow.classList.contains('opacity-40'), "HR collapsed preference row is restored to active interactive state");
-  assert(!runningHrmBtn.classList.contains('hidden'), "Running HRM connect button restored");
 
   // 2. Confirmation Pill / Notification Hang Time
   assert(typeof showToast === 'function', "showToast is defined");
@@ -3408,12 +3430,23 @@ runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
   const muscleMapCard = getOrCreateElement('muscle-map-container');
   const prefCheckbox = getOrCreateElement('pref-muscles-engaged-enabled');
 
-  // Verify default state is enabled (true)
+  // Verify default state is disabled (false)
   localStorage.removeItem('showUp_muscles_engaged_enabled');
-  assert(isMusclesEngagedEnabled() === true, "Muscles Engaged defaults to enabled");
-  applyMusclesEngagedEnabledUI(true);
-  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button visible by default");
-  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container visible by default");
+  assert(isMusclesEngagedEnabled() === false, "Muscles Engaged defaults to disabled");
+  applyMusclesEngagedEnabledUI(false);
+  assert(summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button hidden by default");
+  assert(muscleMapCard.classList.contains('hidden'), "Muscle Map card container hidden by default");
+
+  // Typing an exercise keeps auto muscles pill hidden when disabled
+  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
+  assert(autoPill.classList.contains('hidden'), "Auto muscles pill remains hidden on exercise input when disabled");
+
+  // Enable Muscles Engaged
+  toggleMusclesEngagedEnabledPref(true);
+  assert(isMusclesEngagedEnabled() === true, "toggleMusclesEngagedEnabledPref(true) enables Muscles Engaged");
+  assert(localStorage.getItem('showUp_muscles_engaged_enabled') === 'true', "Enabled state persists in localStorage");
+  assert(!summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button visible when enabled");
+  assert(!muscleMapCard.classList.contains('hidden'), "Muscle Map card container visible when enabled");
 
   // Exercise indicator updates normally when enabled
   updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps", "Shoulders"] });
@@ -3427,10 +3460,6 @@ runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
   assert(summaryMusclesBtn.classList.contains('hidden'), "Summary Muscles tab button is hidden when disabled");
   assert(summaryMusclesPane.classList.contains('hidden'), "Summary Muscles pane is hidden when disabled");
   assert(muscleMapCard.classList.contains('hidden'), "Muscle Map card container is hidden when disabled");
-
-  // Typing an exercise keeps auto muscles pill hidden when disabled
-  updateAutoMusclesIndicator("Barbell Bench Press", { primary: "Chest", secondary: ["Triceps"] });
-  assert(autoPill.classList.contains('hidden'), "Auto muscles pill remains hidden on exercise input when disabled");
 
   // Switching to 'muscles' summary tab redirects to 'overview' when disabled
   switchSummaryTab('muscles');
@@ -4089,6 +4118,51 @@ runSuite("44. Athlete Account Deletion from Backend Database & Google Account Hi
   assert(!mockDbStorage.has('user_backups/sarah@gmail.com'), "Firestore user_backups record deleted for Google user");
   assert(driveFileDeleted === false, "Google Drive exercise history remains completely untouched and preserved");
   assert(localStorage.getItem('showUp_user_profile') === null, "Google profile purged locally from app");
+});
+
+runSuite("45. Enable Set Types & Disabled-by-Default Settings (Set Types, HRM, Muscles Engaged, Squads)", () => {
+  assert(typeof isSetTypesEnabled === 'function', "isSetTypesEnabled is a defined function");
+  assert(typeof applySetTypesEnabledUI === 'function', "applySetTypesEnabledUI is a defined function");
+  assert(typeof toggleSetTypesEnabledPref === 'function', "toggleSetTypesEnabledPref is a defined function");
+
+  // 1. Verify all 4 required features are disabled by default
+  localStorage.removeItem('showUp_set_types_enabled');
+  localStorage.removeItem('showUp_hrm_enabled');
+  localStorage.removeItem('showUp_muscles_engaged_enabled');
+  localStorage.removeItem('showUp_squads_enabled');
+
+  assert(isSetTypesEnabled() === false, "Enable Set Types is disabled by default");
+  assert(isHRMEnabled() === false, "HR Monitor is disabled by default");
+  assert(isMusclesEngagedEnabled() === false, "Enable Muscles Engaged is disabled by default");
+  assert(isSquadsEnabled() === false, "Enable Squads is disabled by default");
+
+  // 2. Verify Set Types UI behavior
+  const setTypesContainer = getOrCreateElement('set-classification-container');
+  const setTypesCheckbox = getOrCreateElement('pref-set-types-enabled');
+
+  applySetTypesEnabledUI(false);
+  assert(setTypesContainer.classList.contains('hidden'), "Set classification chips container is hidden when disabled");
+  assert(setTypesCheckbox.checked === false, "Enable Set Types checkbox is unchecked");
+
+  // 3. Enabling Set Types
+  toggleSetTypesEnabledPref(true);
+  assert(isSetTypesEnabled() === true, "toggleSetTypesEnabledPref(true) enables Set Types");
+  assert(localStorage.getItem('showUp_set_types_enabled') === 'true', "Set Types enabled state persisted in localStorage");
+  assert(!setTypesContainer.classList.contains('hidden'), "Set classification chips visible when enabled");
+  assert(setTypesCheckbox.checked === true, "Enable Set Types checkbox is checked");
+
+  // Selecting warmup set while enabled
+  selectSetType('warmup');
+  const warmupChip = getOrCreateElement('set-type-warmup');
+  assert(warmupChip.className.includes('bg-emerald-500'), "Warmup chip active when selected while enabled");
+
+  // 4. Disabling Set Types resets to normal
+  toggleSetTypesEnabledPref(false);
+  assert(isSetTypesEnabled() === false, "toggleSetTypesEnabledPref(false) disables Set Types");
+  assert(setTypesContainer.classList.contains('hidden'), "Set classification chips container hidden when disabled");
+  assert(setTypesCheckbox.checked === false, "Enable Set Types checkbox is unchecked");
+  const normalChip = getOrCreateElement('set-type-normal');
+  assert(normalChip.className.includes('bg-emerald-500'), "Reset to normal set type when Set Types disabled");
 });
 
 print("\\n============================================================");

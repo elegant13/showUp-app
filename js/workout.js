@@ -2940,7 +2940,7 @@
         implement,
         muscle,
         secondaryMuscles,
-        setType: currentSetType,
+        setType: (typeof isSetTypesEnabled === 'function' && !isSetTypesEnabled()) ? 'normal' : currentSetType,
         rpe,
         weight,
         reps,
@@ -3464,7 +3464,11 @@
       if (muscleSelect && set.muscle) muscleSelect.value = set.muscle;
       if (weightInput && typeof set.weight === 'number') weightInput.value = set.weight;
       if (repsInput && typeof set.reps === 'number') repsInput.value = set.reps;
-      if (set.setType && typeof selectSetType === 'function') selectSetType(set.setType);
+      if (typeof isSetTypesEnabled === 'function' && !isSetTypesEnabled()) {
+        if (typeof selectSetType === 'function') selectSetType('normal');
+      } else if (set.setType && typeof selectSetType === 'function') {
+        selectSetType(set.setType);
+      }
       if (rpeSelect && set.rpe) rpeSelect.value = set.rpe;
       if (ergDistInput && set.ergDistance) ergDistInput.value = set.ergDistance;
       if (ergTimeInput && set.ergTime) ergTimeInput.value = set.ergTime;

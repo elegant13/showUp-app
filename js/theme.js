@@ -169,11 +169,15 @@
       }
 
       if (typeof applyHRMEnabledUI === 'function') {
-        applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : true);
+        applyHRMEnabledUI(typeof isHRMEnabled === 'function' ? isHRMEnabled() : false);
       }
 
       if (typeof applyMusclesEngagedEnabledUI === 'function') {
-        applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : true);
+        applyMusclesEngagedEnabledUI(typeof isMusclesEngagedEnabled === 'function' ? isMusclesEngagedEnabled() : false);
+      }
+
+      if (typeof applySetTypesEnabledUI === 'function') {
+        applySetTypesEnabledUI(typeof isSetTypesEnabled === 'function' ? isSetTypesEnabled() : false);
       }
 
       if (typeof applyAutoStartSetUI === 'function') {

@@ -971,12 +971,20 @@
               <input type="checkbox" id="pref-auto-start-set" onchange="toggleAutoStartSetPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
             </div>
 
+            <div id="pref-set-types-enabled-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
+              <div>
+                <span class="text-xs text-slate-300 block">Enable Set Types</span>
+                <span class="text-[10px] text-slate-500">Show Warmup, Normal, Drop, and Failure set classification tags</span>
+              </div>
+              <input type="checkbox" id="pref-set-types-enabled" onchange="toggleSetTypesEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
+            </div>
+
             <div id="pref-hrm-enabled-row" class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
                 <span class="text-xs text-slate-300 block">Heart Rate Monitor</span>
                 <span class="text-[10px] text-slate-500">Display Heart Rate Monitor section & Bluetooth telemetry</span>
               </div>
-              <input type="checkbox" id="pref-hrm-enabled" onchange="toggleHRMEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
+              <input type="checkbox" id="pref-hrm-enabled" onchange="toggleHRMEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
             </div>
 
             <div id="pref-hr-collapsed-row" class="hidden" aria-hidden="true">
@@ -988,7 +996,7 @@
                 <span class="text-xs text-slate-300 block">Enable Muscles Engaged</span>
                 <span class="text-[10px] text-slate-500">Show auto-established muscle impact & targeted anatomy map</span>
               </div>
-              <input type="checkbox" id="pref-muscles-engaged-enabled" onchange="toggleMusclesEngagedEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer" checked>
+              <input type="checkbox" id="pref-muscles-engaged-enabled" onchange="toggleMusclesEngagedEnabledPref(this.checked)" class="w-4 h-4 accent-emerald-500 cursor-pointer">
             </div>
 
             <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
@@ -2604,7 +2612,7 @@
           </div>
 
           <!-- SET CLASSIFICATION CHIPS (COMPACT INLINE HEADER ROW - ZERO EXTRA VERTICAL SPACE) -->
-          <div id="set-classification-container" class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-xl border border-slate-800/80 text-[10px] font-bold">
+          <div id="set-classification-container" class="hidden flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-xl border border-slate-800/80 text-[10px] font-bold">
             <button type="button" id="set-type-normal" onclick="triggerHaptic('light'); selectSetType('normal')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all font-black text-slate-950 bg-emerald-500 border border-emerald-500 shadow-sm" data-type="normal" title="Normal Working Set">Normal</button>
             <button type="button" id="set-type-warmup" onclick="triggerHaptic('light'); selectSetType('warmup')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent" data-type="warmup" title="Warmup Set">Warmup</button>
             <button type="button" id="set-type-drop" onclick="triggerHaptic('light'); selectSetType('drop')" class="set-type-chip px-2 py-0.5 rounded-lg transition-all text-slate-400 hover:text-slate-200 border border-transparent" data-type="drop" title="Drop Set">Drop</button>
