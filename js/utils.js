@@ -734,34 +734,50 @@
     }
 
     /**
-     * Synthesizes an acoustic strike of a heavy cast bronze boxing arena ringside bell.
-     * Incorporates authentic bell metal acoustics: deep hum tone (~218 Hz),
-     * strike tone fundamental (A4 436 Hz), detuned bronze beating chorusing (~439 Hz),
-     * minor third tierce (~528 Hz), quint (~662 Hz), nominal octave (~872 Hz),
-     * decime clang (~1203 Hz), high arena shimmer, and a sharp metallic hammer impact transient.
+     * Synthesizes an authentic acoustic strike of a heavy cast bronze/brass boxing arena ringside bell.
+     * Incorporates true shallow saucer dome acoustics: rim undertone (~458 Hz),
+     * piercing strike fundamental (~740 Hz), acoustic beating doublet (~742.8 Hz producing a 2.8 Hz
+     * vibrating metallic shimmer), inharmonic dome flexure modes (~1095 Hz, ~1568 Hz, ~2116 Hz, ~2752 Hz, ~3463 Hz),
+     * plus a punchy dual-layer steel clapper hammer impact transient with dynamics compression for maximum volume.
      */
-    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.35) {
+    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.88) {
       if (!ctx || !destination) return;
-      // Master strike gain envelope
+
+      // Dynamics compression limiter to maximize loudness and punch on phone speakers without digital clipping
+      let strikeTarget = destination;
+      if (typeof ctx.createDynamicsCompressor === 'function') {
+        try {
+          const compressor = ctx.createDynamicsCompressor();
+          compressor.threshold.setValueAtTime(-6, startTime);
+          compressor.knee.setValueAtTime(3, startTime);
+          compressor.ratio.setValueAtTime(12, startTime);
+          compressor.attack.setValueAtTime(0.003, startTime);
+          compressor.release.setValueAtTime(0.20, startTime);
+          compressor.connect(destination);
+          strikeTarget = compressor;
+        } catch (e) {
+          strikeTarget = destination;
+        }
+      }
+
+      // Master strike gain envelope (loud and penetrating: default strikeLevel 0.88)
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(strikeLevel, startTime);
       masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-      masterGain.connect(destination);
+      masterGain.connect(strikeTarget);
 
-      // Authentic cast arena bell partials: [multiplier, relativeGain, decayRatio, type]
+      // Shallow cast brass ringside bell saucer dome modes (fundamental ~740 Hz)
+      const baseFreq = 740;
       const bellPartials = [
-        { mult: 0.5, gain: 0.40, decay: 0.95, type: 'sine' },      // Deep hum tone (~218 Hz)
-        { mult: 1.0, gain: 0.85, decay: 1.00, type: 'sine' },      // Strike tone fundamental (~436 Hz)
-        { mult: 1.006, gain: 0.70, decay: 0.95, type: 'sine' },    // Detuned beating chorus (vibrating bronze)
-        { mult: 1.21, gain: 0.45, decay: 0.80, type: 'sine' },     // Tierce (minor third ~528 Hz)
-        { mult: 1.52, gain: 0.40, decay: 0.75, type: 'sine' },     // Quint (~662 Hz)
-        { mult: 2.00, gain: 0.55, decay: 0.70, type: 'sine' },     // Nominal octave (~872 Hz)
-        { mult: 2.76, gain: 0.35, decay: 0.50, type: 'triangle' }, // Decime metallic gong ring (~1203 Hz)
-        { mult: 3.92, gain: 0.28, decay: 0.35, type: 'triangle' }, // High arena clang (~1709 Hz)
-        { mult: 5.40, gain: 0.18, decay: 0.20, type: 'triangle' }  // Sharp hammer strike overtone (~2354 Hz)
+        { mult: 0.62, gain: 0.45, decay: 0.85, type: 'sine' },      // Rim undertone (~458 Hz)
+        { mult: 1.00, gain: 1.00, decay: 1.00, type: 'sine' },      // Strike tone fundamental (740 Hz)
+        { mult: 1.0038, gain: 0.85, decay: 0.95, type: 'sine' },    // Doublet beating chorus (742.8 Hz ~ 2.8 Hz physical beating shimmer)
+        { mult: 1.48, gain: 0.70, decay: 0.70, type: 'triangle' },  // Dome mode (2,0) clang (~1095 Hz)
+        { mult: 2.12, gain: 0.60, decay: 0.55, type: 'triangle' },  // Dome mode (3,0) (~1568 Hz)
+        { mult: 2.86, gain: 0.50, decay: 0.40, type: 'triangle' },  // Dome mode (4,0) (~2116 Hz)
+        { mult: 3.72, gain: 0.40, decay: 0.30, type: 'triangle' },  // Mode (5,0) metallic bite (~2752 Hz)
+        { mult: 4.68, gain: 0.30, decay: 0.20, type: 'triangle' }   // Upper bronze ring (~3463 Hz)
       ];
-
-      const baseFreq = 436; // A4 standard boxing bout bell pitch
 
       bellPartials.forEach(p => {
         try {
@@ -781,19 +797,34 @@
         } catch (e) {}
       });
 
-      // Physical metallic hammer strike impact transient (official clapper strike)
+      // Layer 1: Steel hammer impact clapper transient (sharp metallic pitch drop 4200 Hz -> 700 Hz)
       try {
         const clickOsc = ctx.createOscillator();
         const clickGain = ctx.createGain();
         clickOsc.type = 'square';
-        clickOsc.frequency.setValueAtTime(1400, startTime);
-        clickOsc.frequency.exponentialRampToValueAtTime(140, startTime + 0.03);
-        clickGain.gain.setValueAtTime(0.35, startTime);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.03);
+        clickOsc.frequency.setValueAtTime(4200, startTime);
+        clickOsc.frequency.exponentialRampToValueAtTime(700, startTime + 0.024);
+        clickGain.gain.setValueAtTime(0.70, startTime);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.024);
         clickOsc.connect(clickGain);
         clickGain.connect(masterGain);
         clickOsc.start(startTime);
-        clickOsc.stop(startTime + 0.035);
+        clickOsc.stop(startTime + 0.028);
+      } catch (e) {}
+
+      // Layer 2: High rim snap/crack transient (5500 Hz -> 1400 Hz)
+      try {
+        const snapOsc = ctx.createOscillator();
+        const snapGain = ctx.createGain();
+        snapOsc.type = 'triangle';
+        snapOsc.frequency.setValueAtTime(5500, startTime);
+        snapOsc.frequency.exponentialRampToValueAtTime(1400, startTime + 0.016);
+        snapGain.gain.setValueAtTime(0.50, startTime);
+        snapGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.016);
+        snapOsc.connect(snapGain);
+        snapGain.connect(masterGain);
+        snapOsc.start(startTime);
+        snapOsc.stop(startTime + 0.020);
       } catch (e) {}
     }
 
@@ -802,20 +833,7 @@
      * alert when rest recovery target is reached.
      */
     function playDoubleBellRing() {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const ctx = new AudioContextClass();
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
-        const now = ctx.currentTime;
-        // Boxing round end: Rhythmic double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.1, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.28, 1.9, 0.44);
-      } catch (e) {
-        console.warn("Rest timer boxing bell alert warning:", e);
-      }
+      playDoubleDingChime();
     }
 
     /**
@@ -834,9 +852,9 @@
         const now = ctx.currentTime;
         const duration = 2.4;
 
-        // Master gain
+        // Master gain boosted for high loudness and powerful resonance
         const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.44, now);
+        masterGain.gain.setValueAtTime(0.88, now);
         masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
         masterGain.connect(ctx.destination);
 
@@ -875,7 +893,7 @@
           punchOsc.type = 'sine';
           punchOsc.frequency.setValueAtTime(160, now);
           punchOsc.frequency.exponentialRampToValueAtTime(45, now + 0.06);
-          punchGain.gain.setValueAtTime(0.42, now);
+          punchGain.gain.setValueAtTime(0.70, now);
           punchGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
           punchOsc.connect(punchGain);
           punchGain.connect(masterGain);
@@ -891,8 +909,8 @@
      * Synthesizes an authentic boxing arena ringside double bell ("CLANG! ... CLANG!").
      * Exact double ding version of a boxing arena's ringside bell used by officials to signal
      * the start and end of a boxing round.
-     * - First strike at 0.00s (duration ~1.1s, clean resonant bronze impact).
-     * - Second strike at 0.28s (duration ~1.9s, sustained exponential decay ringing out).
+     * - First strike at 0.00s (duration ~1.0s, sharp resonant brass impact).
+     * - Second strike at 0.22s (duration ~2.7s, sustained exponential decay ringing out freely).
      */
     function playDoubleDingChime() {
       try {
@@ -903,9 +921,9 @@
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Exact double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.1, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.28, 1.9, 0.44);
+        // Boxing arena ringside bell: Sharp double strike (CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, ctx.destination, now, 1.0, 0.88);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.22, 2.7, 0.96);
       } catch (e) {
         console.warn("Rest timer boxing bell double ding alert warning:", e);
       }
@@ -915,8 +933,8 @@
      * Synthesizes an authentic boxing arena ringside triple bell ("CLANG! ... CLANG! ... CLANG!").
      * Exact triple ding version of a boxing arena's ringside bell used by officials to signal
      * round start, round warnings, or round end.
-     * - Three strikes spaced ~260ms apart (0.00s, 0.26s, 0.52s).
-     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for 2.0s.
+     * - Three strikes spaced ~200ms apart (0.00s, 0.20s, 0.40s).
+     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~2.8s.
      */
     function playTripleDingChime() {
       try {
@@ -927,10 +945,10 @@
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Exact triple strike (CLANG! ... CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.36);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.26, 0.9, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.52, 2.0, 0.45);
+        // Boxing arena ringside bell: Rapid triple strike (CLANG! ... CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.85);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.20, 0.9, 0.88);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.40, 2.8, 0.98);
       } catch (e) {
         console.warn("Rest timer boxing bell triple ding alert warning:", e);
       }

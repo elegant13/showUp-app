@@ -146,7 +146,7 @@
             </div>
 
             <div class="py-1">
-              <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2">
+              <button onclick="triggerHaptic('medium'); handleLogout()" class="w-full text-left px-3.5 py-2 text-xs font-semibold text-rose-400 hover:bg-slate-800/80 hover:text-rose-300 transition flex items-center gap-2 cursor-pointer">
                 <i class="fa-solid fa-right-from-bracket text-xs"></i>
                 <span>Log out</span>
               </button>
@@ -504,6 +504,11 @@
                 <i class="fa-solid fa-weight-hanging text-emerald-400 text-xs"></i>
                 <span>Weight (lbs / kg)</span>
               </label>
+              <div id="edit-weight-step-pills" class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+                <button type="button" class="edit-step-pill text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" data-step="1" onclick="setEditWeightStep(1)">±1</button>
+                <button type="button" class="edit-step-pill text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all text-slate-400 hover:text-slate-200" data-step="2.5" onclick="setEditWeightStep(2.5)">±2.5</button>
+                <button type="button" class="edit-step-pill text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all text-slate-400 hover:text-slate-200" data-step="5" onclick="setEditWeightStep(5)">±5</button>
+              </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-2.5 w-full">
               <button type="button" id="btn-edit-weight-decrement" aria-label="Decrease weight" class="stepper-btn stepper-btn-decrement w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
@@ -525,6 +530,10 @@
                 <i class="fa-solid fa-rotate text-emerald-400 text-xs"></i>
                 <span>Reps</span>
               </label>
+              <div id="edit-reps-step-pills" class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+                <button type="button" class="edit-reps-step-pill text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all active bg-emerald-500/20 text-emerald-400 border border-emerald-500/40" data-step="1" onclick="setEditRepsStep(1)">±1</button>
+                <button type="button" class="edit-reps-step-pill text-[10px] font-bold px-1.5 py-0.5 rounded-md transition-all text-slate-400 hover:text-slate-200" data-step="5" onclick="setEditRepsStep(5)">±5</button>
+              </div>
             </div>
             <div class="flex items-center gap-2 sm:gap-2.5 w-full">
               <button type="button" id="btn-edit-reps-decrement" aria-label="Decrease reps" class="stepper-btn stepper-btn-decrement w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-emerald-400 hover:border-emerald-500/50 active:scale-95 flex items-center justify-center text-lg sm:text-xl z-20 transition-all shadow-md select-none touch-none shrink-0">
@@ -867,6 +876,25 @@
           <p class="text-[11px] text-slate-400">Sign in with your chosen email address and password, set up a new account, or reset your password.</p>
         </div>
 
+        <!-- ATHLETE ACCOUNT SIGNED IN CARD (Visible when logged in) -->
+        <div id="settings-athlete-account-active-card" class="hidden space-y-2.5 bg-slate-950 p-4 rounded-3xl border border-slate-800">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xs border border-emerald-500/20 shrink-0">
+                <i class="fa-solid fa-user-check"></i>
+              </div>
+              <div class="min-w-0">
+                <h3 class="text-xs font-bold text-slate-100 uppercase tracking-wider">Account Active</h3>
+                <p id="settings-active-account-email" class="text-[10px] text-slate-400 truncate">athlete@example.com</p>
+              </div>
+            </div>
+            <button type="button" onclick="triggerHaptic('medium'); handleLogout()" class="text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition active:scale-95 border border-slate-700 cursor-pointer">
+              Log out
+            </button>
+          </div>
+          <p class="text-[10px] text-slate-500">Manage cloud backups, device exports, and account deletion in the <button type="button" onclick="switchSettingsTab('backup')" class="text-emerald-400 underline hover:text-emerald-300 font-semibold cursor-pointer">Backup</button> tab.</p>
+        </div>
+
         <!-- PHYSICAL PROFILE -->
         <div class="space-y-3 bg-slate-950 p-4 rounded-3xl border border-slate-800">
           <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
@@ -1083,6 +1111,39 @@
               </button>
             </div>
             <input type="file" id="manual-backup-file-input" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+          </div>
+
+          <!-- 3. ACCOUNT DELETION (DANGER ZONE) -->
+          <div id="settings-delete-account-card" class="bg-slate-900/60 border border-slate-800 rounded-2xl p-3.5 space-y-2 shadow-sm">
+            <details class="group">
+              <summary class="flex items-center justify-between cursor-pointer list-none select-none">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-sm border border-rose-500/20 shrink-0">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <div class="min-w-0">
+                    <span class="text-xs font-bold text-slate-300 group-hover:text-rose-300 transition block">Danger Zone: Delete Account</span>
+                    <span class="text-[10px] text-slate-500 block mt-0.5">
+                      Permanently remove account & cloud data
+                    </span>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-500 group-open:rotate-180 transition-transform duration-200"></i>
+              </summary>
+              <div class="pt-3 mt-2 border-t border-slate-800/80 space-y-2.5">
+                <p class="text-[10px] text-slate-400 leading-relaxed">
+                  Permanently deletes your profile, cloud backups, and squad records from the backend database (Firestore & Firebase Auth).
+                </p>
+                <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-300 flex items-start gap-2">
+                  <i class="fa-brands fa-google-drive text-xs text-emerald-400 mt-0.5 shrink-0"></i>
+                  <span>If you logged in with Google, your exercise history stored in your Google Account (Google Drive) will remain untouched and safely preserved.</span>
+                </div>
+                <button type="button" id="btn-settings-delete-account" onclick="triggerHaptic('medium'); confirmDeleteAccount()" class="w-full bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 hover:text-rose-200 border border-rose-800/60 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 active:scale-[0.98] cursor-pointer" title="Permanently delete account from backend database">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                  <span>Delete Account from Database</span>
+                </button>
+              </div>
+            </details>
           </div>
         </div>
       </div>

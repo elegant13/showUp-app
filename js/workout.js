@@ -1382,9 +1382,13 @@
         } else if (type === 'rest') {
           adjustRestTarget(amount * deltaSign);
         } else if (type === 'edit-weight') {
-          adjustEditActiveSetWeight((amount === 1 ? 5 : amount) * deltaSign);
+          const currentStep = (typeof getEditWeightStep === 'function') ? getEditWeightStep() : 1;
+          const stepDelta = (amount === 1) ? currentStep : (currentStep >= 5 ? currentStep : 5);
+          adjustEditActiveSetWeight(stepDelta * deltaSign);
         } else if (type === 'edit-reps') {
-          adjustEditActiveSetReps(amount * deltaSign);
+          const currentStep = (typeof getEditRepsStep === 'function') ? getEditRepsStep() : 1;
+          const stepDelta = (amount === 1) ? currentStep : (currentStep >= 5 ? currentStep : 5);
+          adjustEditActiveSetReps(stepDelta * deltaSign);
         } else if (type === 'edit-rest') {
           adjustEditActiveSetRest((amount === 1 ? 15 : amount * 3) * deltaSign);
         }
@@ -3556,6 +3560,8 @@
       if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
+      setEditWeightStep(editWeightStep || 1);
+      setEditRepsStep(editRepsStep || 1);
       initEditModalSteppers();
       if (modal) modal.classList.remove('hidden');
     }
@@ -3612,6 +3618,59 @@
       } else {
         if (stdPanel) stdPanel.classList.remove('hidden');
       }
+    }
+
+    var editWeightStep = 1;
+    var editRepsStep = 1;
+
+    function getEditWeightStep() {
+      return (typeof window !== 'undefined' && window.editWeightStep !== undefined) ? window.editWeightStep : editWeightStep;
+    }
+
+    function setEditWeightStep(step) {
+      editWeightStep = Number(step) || 1;
+      if (typeof window !== 'undefined') {
+        window.editWeightStep = editWeightStep;
+      }
+      if (typeof document !== 'undefined') {
+        const pills = document.querySelectorAll('.edit-step-pill');
+        pills.forEach(pill => {
+          const pillStep = Number(pill.getAttribute('data-step'));
+          if (pillStep === editWeightStep) {
+            pill.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.remove('text-slate-400');
+          } else {
+            pill.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.add('text-slate-400');
+          }
+        });
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+    }
+
+    function getEditRepsStep() {
+      return (typeof window !== 'undefined' && window.editRepsStep !== undefined) ? window.editRepsStep : editRepsStep;
+    }
+
+    function setEditRepsStep(step) {
+      editRepsStep = Number(step) || 1;
+      if (typeof window !== 'undefined') {
+        window.editRepsStep = editRepsStep;
+      }
+      if (typeof document !== 'undefined') {
+        const pills = document.querySelectorAll('.edit-reps-step-pill');
+        pills.forEach(pill => {
+          const pillStep = Number(pill.getAttribute('data-step'));
+          if (pillStep === editRepsStep) {
+            pill.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.remove('text-slate-400');
+          } else {
+            pill.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.add('text-slate-400');
+          }
+        });
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
     }
 
     function adjustEditActiveSetWeight(delta) {
@@ -4478,6 +4537,13 @@
       window.updateMatchLastSetUI = updateMatchLastSetUI;
       window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
       window.initEditModalSteppers = initEditModalSteppers;
+      window.adjustEditActiveSetWeight = adjustEditActiveSetWeight;
+      window.adjustEditActiveSetReps = adjustEditActiveSetReps;
+      window.adjustEditActiveSetRest = adjustEditActiveSetRest;
+      window.setEditWeightStep = setEditWeightStep;
+      window.getEditWeightStep = getEditWeightStep;
+      window.setEditRepsStep = setEditRepsStep;
+      window.getEditRepsStep = getEditRepsStep;
       window.confirmDeleteSet = confirmDeleteSet;
     }
 

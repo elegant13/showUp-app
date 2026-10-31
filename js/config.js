@@ -103,6 +103,7 @@
       { name: "Back Extension (Machine)", implement: "Machine", muscle: "Back", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
       { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads","Core/Abs"] },
+      { name: "Bar Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
       { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps","Hamstrings/Glutes","Core/Abs"] },
@@ -166,13 +167,14 @@
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "Pull-ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps","Forearms","Core/Abs"] },
       { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Ring Archer Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
       { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring H_V Raises", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back","Core/Abs"] },
       { name: "Ring Pelican Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Chest","Shoulders","Forearms"] },
-      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Ring Push-ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps","Core/Abs","Shoulders"] },
       { name: "Ring SH Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
       { name: "Ring Tricep Extensions", implement: "Gymnastics Rings", muscle: "Triceps", secondary: ["Shoulders","Core/Abs"] },
@@ -186,6 +188,7 @@
       { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders","Hamstrings/Glutes","Back","Triceps","Core/Abs"] },
       { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes","Shoulders","Biceps","Core/Abs"] },
       { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back","Core/Abs","Shoulders"] },
+      { name: "SH KB Rows", implement: "Kettlebell", muscle: "Back", secondary: ["Biceps","Core/Abs","Shoulders"] },
       { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes","Back","Shoulders","Core/Abs"] },
       { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs","Shoulders"] },
       { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
@@ -354,7 +357,7 @@
         return 'Hiking';
       } else if (lower.includes('bike') || lower.includes('cycle')) {
         return 'Biking';
-      } else if (lower.includes('pushup') || lower.includes('pullup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
+      } else if (lower.includes('pushup') || lower.includes('push-up') || lower.includes('push up') || lower.includes('pullup') || lower.includes('pull-up') || lower.includes('pull up') || lower.includes('chin-up') || lower.includes('chinup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
         return 'Bodyweight';
       }
 

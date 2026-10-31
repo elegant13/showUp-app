@@ -157,6 +157,14 @@ globalThis.AudioContext = function() {
       gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
       connect: () => {}
     }),
+    createDynamicsCompressor: () => ({
+      threshold: { setValueAtTime: () => {} },
+      knee: { setValueAtTime: () => {} },
+      ratio: { setValueAtTime: () => {} },
+      attack: { setValueAtTime: () => {} },
+      release: { setValueAtTime: () => {} },
+      connect: () => {}
+    }),
     destination: {}
   };
 };
@@ -339,6 +347,7 @@ function runSuite(name, fn) {
       { name: "Back Extension (Machine)", implement: "Machine", muscle: "Back", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
       { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads","Core/Abs"] },
+      { name: "Bar Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Barbell Back Squat", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Barbell Bench Press", implement: "Barbell", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
       { name: "Barbell Bent-Over Row", implement: "Barbell", muscle: "Back", secondary: ["Biceps","Hamstrings/Glutes","Core/Abs"] },
@@ -402,13 +411,14 @@ function runSuite(name, fn) {
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
+      { name: "Pull-ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps","Forearms","Core/Abs"] },
       { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Ring Archer Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
       { name: "Ring Dips", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring H_V Raises", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back","Core/Abs"] },
       { name: "Ring Pelican Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Chest","Shoulders","Forearms"] },
-      { name: "Ring Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
+      { name: "Ring Push-ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring Rows", implement: "Gymnastics Rings", muscle: "Back", secondary: ["Biceps","Core/Abs","Shoulders"] },
       { name: "Ring SH Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
       { name: "Ring Tricep Extensions", implement: "Gymnastics Rings", muscle: "Triceps", secondary: ["Shoulders","Core/Abs"] },
@@ -422,6 +432,7 @@ function runSuite(name, fn) {
       { name: "SH KB Clean and Press", implement: "Kettlebell", muscle: "Full Body", secondary: ["Shoulders","Hamstrings/Glutes","Back","Triceps","Core/Abs"] },
       { name: "SH KB High Pull", implement: "Kettlebell", muscle: "Back", secondary: ["Hamstrings/Glutes","Shoulders","Biceps","Core/Abs"] },
       { name: "SH KB Romanian Dead Lift", implement: "Kettlebell", muscle: "Hamstrings/Glutes", secondary: ["Back","Core/Abs","Shoulders"] },
+      { name: "SH KB Rows", implement: "Kettlebell", muscle: "Back", secondary: ["Biceps","Core/Abs","Shoulders"] },
       { name: "SH KB Snatch", implement: "Kettlebell", muscle: "Full Body", secondary: ["Hamstrings/Glutes","Back","Shoulders","Core/Abs"] },
       { name: "SH KB Squat", implement: "Kettlebell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs","Shoulders"] },
       { name: "SH KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
@@ -590,7 +601,7 @@ function runSuite(name, fn) {
         return 'Hiking';
       } else if (lower.includes('bike') || lower.includes('cycle')) {
         return 'Biking';
-      } else if (lower.includes('pushup') || lower.includes('pullup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
+      } else if (lower.includes('pushup') || lower.includes('push-up') || lower.includes('push up') || lower.includes('pullup') || lower.includes('pull-up') || lower.includes('pull up') || lower.includes('chin-up') || lower.includes('chinup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
         return 'Bodyweight';
       }
 
@@ -2455,34 +2466,50 @@ if (typeof window !== 'undefined') {
     }
 
     /**
-     * Synthesizes an acoustic strike of a heavy cast bronze boxing arena ringside bell.
-     * Incorporates authentic bell metal acoustics: deep hum tone (~218 Hz),
-     * strike tone fundamental (A4 436 Hz), detuned bronze beating chorusing (~439 Hz),
-     * minor third tierce (~528 Hz), quint (~662 Hz), nominal octave (~872 Hz),
-     * decime clang (~1203 Hz), high arena shimmer, and a sharp metallic hammer impact transient.
+     * Synthesizes an authentic acoustic strike of a heavy cast bronze/brass boxing arena ringside bell.
+     * Incorporates true shallow saucer dome acoustics: rim undertone (~458 Hz),
+     * piercing strike fundamental (~740 Hz), acoustic beating doublet (~742.8 Hz producing a 2.8 Hz
+     * vibrating metallic shimmer), inharmonic dome flexure modes (~1095 Hz, ~1568 Hz, ~2116 Hz, ~2752 Hz, ~3463 Hz),
+     * plus a punchy dual-layer steel clapper hammer impact transient with dynamics compression for maximum volume.
      */
-    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.35) {
+    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.88) {
       if (!ctx || !destination) return;
-      // Master strike gain envelope
+
+      // Dynamics compression limiter to maximize loudness and punch on phone speakers without digital clipping
+      let strikeTarget = destination;
+      if (typeof ctx.createDynamicsCompressor === 'function') {
+        try {
+          const compressor = ctx.createDynamicsCompressor();
+          compressor.threshold.setValueAtTime(-6, startTime);
+          compressor.knee.setValueAtTime(3, startTime);
+          compressor.ratio.setValueAtTime(12, startTime);
+          compressor.attack.setValueAtTime(0.003, startTime);
+          compressor.release.setValueAtTime(0.20, startTime);
+          compressor.connect(destination);
+          strikeTarget = compressor;
+        } catch (e) {
+          strikeTarget = destination;
+        }
+      }
+
+      // Master strike gain envelope (loud and penetrating: default strikeLevel 0.88)
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(strikeLevel, startTime);
       masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-      masterGain.connect(destination);
+      masterGain.connect(strikeTarget);
 
-      // Authentic cast arena bell partials: [multiplier, relativeGain, decayRatio, type]
+      // Shallow cast brass ringside bell saucer dome modes (fundamental ~740 Hz)
+      const baseFreq = 740;
       const bellPartials = [
-        { mult: 0.5, gain: 0.40, decay: 0.95, type: 'sine' },      // Deep hum tone (~218 Hz)
-        { mult: 1.0, gain: 0.85, decay: 1.00, type: 'sine' },      // Strike tone fundamental (~436 Hz)
-        { mult: 1.006, gain: 0.70, decay: 0.95, type: 'sine' },    // Detuned beating chorus (vibrating bronze)
-        { mult: 1.21, gain: 0.45, decay: 0.80, type: 'sine' },     // Tierce (minor third ~528 Hz)
-        { mult: 1.52, gain: 0.40, decay: 0.75, type: 'sine' },     // Quint (~662 Hz)
-        { mult: 2.00, gain: 0.55, decay: 0.70, type: 'sine' },     // Nominal octave (~872 Hz)
-        { mult: 2.76, gain: 0.35, decay: 0.50, type: 'triangle' }, // Decime metallic gong ring (~1203 Hz)
-        { mult: 3.92, gain: 0.28, decay: 0.35, type: 'triangle' }, // High arena clang (~1709 Hz)
-        { mult: 5.40, gain: 0.18, decay: 0.20, type: 'triangle' }  // Sharp hammer strike overtone (~2354 Hz)
+        { mult: 0.62, gain: 0.45, decay: 0.85, type: 'sine' },      // Rim undertone (~458 Hz)
+        { mult: 1.00, gain: 1.00, decay: 1.00, type: 'sine' },      // Strike tone fundamental (740 Hz)
+        { mult: 1.0038, gain: 0.85, decay: 0.95, type: 'sine' },    // Doublet beating chorus (742.8 Hz ~ 2.8 Hz physical beating shimmer)
+        { mult: 1.48, gain: 0.70, decay: 0.70, type: 'triangle' },  // Dome mode (2,0) clang (~1095 Hz)
+        { mult: 2.12, gain: 0.60, decay: 0.55, type: 'triangle' },  // Dome mode (3,0) (~1568 Hz)
+        { mult: 2.86, gain: 0.50, decay: 0.40, type: 'triangle' },  // Dome mode (4,0) (~2116 Hz)
+        { mult: 3.72, gain: 0.40, decay: 0.30, type: 'triangle' },  // Mode (5,0) metallic bite (~2752 Hz)
+        { mult: 4.68, gain: 0.30, decay: 0.20, type: 'triangle' }   // Upper bronze ring (~3463 Hz)
       ];
-
-      const baseFreq = 436; // A4 standard boxing bout bell pitch
 
       bellPartials.forEach(p => {
         try {
@@ -2502,19 +2529,34 @@ if (typeof window !== 'undefined') {
         } catch (e) {}
       });
 
-      // Physical metallic hammer strike impact transient (official clapper strike)
+      // Layer 1: Steel hammer impact clapper transient (sharp metallic pitch drop 4200 Hz -> 700 Hz)
       try {
         const clickOsc = ctx.createOscillator();
         const clickGain = ctx.createGain();
         clickOsc.type = 'square';
-        clickOsc.frequency.setValueAtTime(1400, startTime);
-        clickOsc.frequency.exponentialRampToValueAtTime(140, startTime + 0.03);
-        clickGain.gain.setValueAtTime(0.35, startTime);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.03);
+        clickOsc.frequency.setValueAtTime(4200, startTime);
+        clickOsc.frequency.exponentialRampToValueAtTime(700, startTime + 0.024);
+        clickGain.gain.setValueAtTime(0.70, startTime);
+        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.024);
         clickOsc.connect(clickGain);
         clickGain.connect(masterGain);
         clickOsc.start(startTime);
-        clickOsc.stop(startTime + 0.035);
+        clickOsc.stop(startTime + 0.028);
+      } catch (e) {}
+
+      // Layer 2: High rim snap/crack transient (5500 Hz -> 1400 Hz)
+      try {
+        const snapOsc = ctx.createOscillator();
+        const snapGain = ctx.createGain();
+        snapOsc.type = 'triangle';
+        snapOsc.frequency.setValueAtTime(5500, startTime);
+        snapOsc.frequency.exponentialRampToValueAtTime(1400, startTime + 0.016);
+        snapGain.gain.setValueAtTime(0.50, startTime);
+        snapGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.016);
+        snapOsc.connect(snapGain);
+        snapGain.connect(masterGain);
+        snapOsc.start(startTime);
+        snapOsc.stop(startTime + 0.020);
       } catch (e) {}
     }
 
@@ -2523,20 +2565,7 @@ if (typeof window !== 'undefined') {
      * alert when rest recovery target is reached.
      */
     function playDoubleBellRing() {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const ctx = new AudioContextClass();
-        if (ctx.state === 'suspended') {
-          ctx.resume();
-        }
-        const now = ctx.currentTime;
-        // Boxing round end: Rhythmic double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.1, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.28, 1.9, 0.44);
-      } catch (e) {
-        console.warn("Rest timer boxing bell alert warning:", e);
-      }
+      playDoubleDingChime();
     }
 
     /**
@@ -2555,9 +2584,9 @@ if (typeof window !== 'undefined') {
         const now = ctx.currentTime;
         const duration = 2.4;
 
-        // Master gain
+        // Master gain boosted for high loudness and powerful resonance
         const masterGain = ctx.createGain();
-        masterGain.gain.setValueAtTime(0.44, now);
+        masterGain.gain.setValueAtTime(0.88, now);
         masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
         masterGain.connect(ctx.destination);
 
@@ -2596,7 +2625,7 @@ if (typeof window !== 'undefined') {
           punchOsc.type = 'sine';
           punchOsc.frequency.setValueAtTime(160, now);
           punchOsc.frequency.exponentialRampToValueAtTime(45, now + 0.06);
-          punchGain.gain.setValueAtTime(0.42, now);
+          punchGain.gain.setValueAtTime(0.70, now);
           punchGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
           punchOsc.connect(punchGain);
           punchGain.connect(masterGain);
@@ -2612,8 +2641,8 @@ if (typeof window !== 'undefined') {
      * Synthesizes an authentic boxing arena ringside double bell ("CLANG! ... CLANG!").
      * Exact double ding version of a boxing arena's ringside bell used by officials to signal
      * the start and end of a boxing round.
-     * - First strike at 0.00s (duration ~1.1s, clean resonant bronze impact).
-     * - Second strike at 0.28s (duration ~1.9s, sustained exponential decay ringing out).
+     * - First strike at 0.00s (duration ~1.0s, sharp resonant brass impact).
+     * - Second strike at 0.22s (duration ~2.7s, sustained exponential decay ringing out freely).
      */
     function playDoubleDingChime() {
       try {
@@ -2624,9 +2653,9 @@ if (typeof window !== 'undefined') {
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Exact double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.1, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.28, 1.9, 0.44);
+        // Boxing arena ringside bell: Sharp double strike (CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, ctx.destination, now, 1.0, 0.88);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.22, 2.7, 0.96);
       } catch (e) {
         console.warn("Rest timer boxing bell double ding alert warning:", e);
       }
@@ -2636,8 +2665,8 @@ if (typeof window !== 'undefined') {
      * Synthesizes an authentic boxing arena ringside triple bell ("CLANG! ... CLANG! ... CLANG!").
      * Exact triple ding version of a boxing arena's ringside bell used by officials to signal
      * round start, round warnings, or round end.
-     * - Three strikes spaced ~260ms apart (0.00s, 0.26s, 0.52s).
-     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for 2.0s.
+     * - Three strikes spaced ~200ms apart (0.00s, 0.20s, 0.40s).
+     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~2.8s.
      */
     function playTripleDingChime() {
       try {
@@ -2648,10 +2677,10 @@ if (typeof window !== 'undefined') {
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Exact triple strike (CLANG! ... CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.36);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.26, 0.9, 0.38);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.52, 2.0, 0.45);
+        // Boxing arena ringside bell: Rapid triple strike (CLANG! ... CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.85);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.20, 0.9, 0.88);
+        createBoxingBellStrike(ctx, ctx.destination, now + 0.40, 2.8, 0.98);
       } catch (e) {
         console.warn("Rest timer boxing bell triple ding alert warning:", e);
       }
@@ -2989,9 +3018,19 @@ if (typeof window !== 'undefined') {
 
     function updateSettingsModalAuthVisibility() {
       const card = document.getElementById('settings-athlete-account-card');
+      const activeCard = document.getElementById('settings-athlete-account-active-card');
+      const activeEmail = document.getElementById('settings-active-account-email');
+      const loggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : false;
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+
       if (card) {
-        const loggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : false;
         card.classList.toggle('hidden', loggedIn);
+      }
+      if (activeCard) {
+        activeCard.classList.toggle('hidden', !loggedIn);
+      }
+      if (activeEmail && user?.email && user.email !== 'you@showup.app' && user.email !== 'user@showup.app') {
+        activeEmail.innerText = user.email;
       }
     }
 
@@ -3337,6 +3376,166 @@ if (typeof window !== 'undefined') {
 
       if (!isSilent) {
         showToast("Signed out. All personal data and squads cleared.", "info");
+      }
+    }
+
+    /**
+     * Prompts the athlete with a confirmation modal before permanently deleting their
+     * account from the backend database (Firestore / Firebase Auth).
+     * Clarifies that if they ever signed in with Google, their workout history in their Google Account
+     * (Google Drive) will remain untouched.
+     */
+    async function confirmDeleteAccount() {
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const isGoogle = !!(localStorage.getItem('showUp_google_token') || (typeof googleAccessToken !== 'undefined' && googleAccessToken));
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      const isGoogleUser = isGoogle || user?.authProvider === 'google' || (rawEmail && rawEmail.endsWith('@gmail.com'));
+
+      let message = "Are you sure you want to permanently delete your account from the backend database? Your profile, cloud backups, and squad records in the database will be deleted.";
+      if (isGoogleUser) {
+        message += " Your exercise history stored in your Google Account (Google Drive) will remain untouched and preserved.";
+      }
+
+      let confirmed = false;
+      if (typeof showAppConfirm === 'function') {
+        confirmed = await showAppConfirm({
+          title: "Delete Account",
+          message: message,
+          confirmText: "Delete Account",
+          cancelText: "Keep Account",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        });
+      } else if (typeof confirm === 'function') {
+        confirmed = confirm(message);
+      }
+
+      if (!confirmed) return false;
+
+      return await deleteAthleteAccount();
+    }
+
+    /**
+     * Permanently deletes the athlete's account from the backend database:
+     * 1. Deletes the user backup document from Firestore (`user_backups/{email}`).
+     * 2. Cleans up squad creator/membership records in Firestore.
+     * 3. Deletes the user from Firebase Auth (`currentUser.delete()`) if logged in.
+     * 4. Removes the account from local registered accounts (`showUp_registered_accounts`).
+     * 5. PRESERVES Google Account data: If the athlete logged in with Google, their exercise history
+     *    in their Google Account (Google Drive) is untouched.
+     * 6. Purges local active session and resets UI views.
+     */
+    async function deleteAthleteAccount() {
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      const isRealUser = Boolean(rawEmail && rawEmail !== 'you@showup.app' && rawEmail !== 'user@showup.app');
+      const isGoogle = !!(localStorage.getItem('showUp_google_token') || (typeof googleAccessToken !== 'undefined' && googleAccessToken) || user?.authProvider === 'google');
+
+      try {
+        // 1. Delete from Firestore backend database if connected
+        if (isRealUser && typeof getFirestoreDb === 'function') {
+          try {
+            const db = getFirestoreDb();
+            if (db) {
+              // 1a. Delete user backup document from user_backups collection
+              await db.collection('user_backups').doc(rawEmail).delete().catch(err => {
+                console.debug("Firestore user_backups delete notice:", err);
+              });
+
+              // 1b. Clean up squads where user is creator or member
+              try {
+                const squadsSnap = await db.collection('squads').get();
+                if (squadsSnap && !squadsSnap.empty) {
+                  const batch = typeof db.batch === 'function' ? db.batch() : null;
+                  squadsSnap.docs.forEach(doc => {
+                    const sq = doc.data();
+                    if (sq) {
+                      if (sq.creatorEmail === rawEmail || sq.creatorId === rawEmail || sq.creatorId === user?.id) {
+                        if (batch) batch.delete(doc.ref);
+                        else doc.ref.delete().catch(() => {});
+                      } else if (Array.isArray(sq.members) && sq.members.some(m => m.email === rawEmail || m.id === rawEmail)) {
+                        const newMembers = sq.members.filter(m => m.email !== rawEmail && m.id !== rawEmail);
+                        if (batch) batch.update(doc.ref, { members: newMembers });
+                        else doc.ref.update({ members: newMembers }).catch(() => {});
+                      }
+                    }
+                  });
+                  if (batch && typeof batch.commit === 'function') {
+                    await batch.commit().catch(e => console.debug("Squads batch cleanup notice:", e));
+                  }
+                }
+              } catch (sqErr) {
+                console.debug("Firestore squads cleanup notice:", sqErr);
+              }
+            }
+          } catch (dbErr) {
+            console.debug("Firestore deletion exception:", dbErr);
+          }
+        }
+
+        // 2. Delete user from Firebase Auth if currently signed in
+        try {
+          const fAuth = getFirebaseAuth();
+          if (fAuth && fAuth.currentUser) {
+            await fAuth.currentUser.delete().catch(err => {
+              console.debug("Firebase Auth currentUser.delete notice:", err);
+            });
+          }
+        } catch (authErr) {
+          console.debug("Firebase Auth deletion exception:", authErr);
+        }
+
+        // 3. Remove from local registered accounts registry
+        if (isRealUser && typeof getRegisteredAccounts === 'function' && typeof saveRegisteredAccounts === 'function') {
+          try {
+            const accounts = getRegisteredAccounts();
+            if (accounts && accounts[rawEmail]) {
+              delete accounts[rawEmail];
+              saveRegisteredAccounts(accounts);
+            }
+          } catch (accErr) {
+            console.debug("Registered accounts removal notice:", accErr);
+          }
+        }
+
+        // 4. IMPORTANT: DO NOT TOUCH GOOGLE DRIVE EXERCISE HISTORY!
+        // The athlete's exercise history stored in their Google Account remains untouched.
+        // We only revoke/clear the active local access token to disconnect the session:
+        if (typeof googleAccessToken !== 'undefined' && googleAccessToken && window.google?.accounts?.oauth2) {
+          try {
+            google.accounts.oauth2.revoke(googleAccessToken, () => {});
+          } catch (e) {}
+        }
+        if (typeof googleAccessToken !== 'undefined') {
+          googleAccessToken = null;
+        }
+
+        // 5. Purge local session & telemetry cleanly
+        handleLogout(true);
+
+        // Close any open modals
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) settingsModal.classList.add('hidden');
+        const profileDropdown = document.getElementById('profile-dropdown-menu');
+        if (profileDropdown) profileDropdown.classList.add('hidden');
+
+        if (typeof showToast === 'function') {
+          if (isGoogle) {
+            showToast("Account deleted from backend database. Your exercise history in your Google Account remains untouched.", "success");
+          } else {
+            showToast("Your account has been deleted from the backend database.", "success");
+          }
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting athlete account:", error);
+        handleLogout(true);
+        if (typeof showToast === 'function') {
+          showToast("Account data cleared from device.", "info");
+        }
+        return { success: false, error };
       }
     }
 
@@ -5038,6 +5237,11 @@ if (typeof window !== 'undefined') {
       updateGlobalVisitorTelemetryUI();
     }
 
+    if (typeof window !== 'undefined') {
+      window.confirmDeleteAccount = confirmDeleteAccount;
+      window.deleteAthleteAccount = deleteAthleteAccount;
+    }
+
 /* ==========================================================================
    showUp Workout Engine: Logging, Catalog, Tactile Numpad & Analytics
    ========================================================================== */
@@ -6422,9 +6626,13 @@ if (typeof window !== 'undefined') {
         } else if (type === 'rest') {
           adjustRestTarget(amount * deltaSign);
         } else if (type === 'edit-weight') {
-          adjustEditActiveSetWeight((amount === 1 ? 5 : amount) * deltaSign);
+          const currentStep = (typeof getEditWeightStep === 'function') ? getEditWeightStep() : 1;
+          const stepDelta = (amount === 1) ? currentStep : (currentStep >= 5 ? currentStep : 5);
+          adjustEditActiveSetWeight(stepDelta * deltaSign);
         } else if (type === 'edit-reps') {
-          adjustEditActiveSetReps(amount * deltaSign);
+          const currentStep = (typeof getEditRepsStep === 'function') ? getEditRepsStep() : 1;
+          const stepDelta = (amount === 1) ? currentStep : (currentStep >= 5 ? currentStep : 5);
+          adjustEditActiveSetReps(stepDelta * deltaSign);
         } else if (type === 'edit-rest') {
           adjustEditActiveSetRest((amount === 1 ? 15 : amount * 3) * deltaSign);
         }
@@ -8596,6 +8804,8 @@ if (typeof window !== 'undefined') {
       if (notesEl) notesEl.value = set.notes || '';
 
       handleEditActiveSetImplementChange(set.implement || 'Bodyweight');
+      setEditWeightStep(editWeightStep || 1);
+      setEditRepsStep(editRepsStep || 1);
       initEditModalSteppers();
       if (modal) modal.classList.remove('hidden');
     }
@@ -8652,6 +8862,59 @@ if (typeof window !== 'undefined') {
       } else {
         if (stdPanel) stdPanel.classList.remove('hidden');
       }
+    }
+
+    var editWeightStep = 1;
+    var editRepsStep = 1;
+
+    function getEditWeightStep() {
+      return (typeof window !== 'undefined' && window.editWeightStep !== undefined) ? window.editWeightStep : editWeightStep;
+    }
+
+    function setEditWeightStep(step) {
+      editWeightStep = Number(step) || 1;
+      if (typeof window !== 'undefined') {
+        window.editWeightStep = editWeightStep;
+      }
+      if (typeof document !== 'undefined') {
+        const pills = document.querySelectorAll('.edit-step-pill');
+        pills.forEach(pill => {
+          const pillStep = Number(pill.getAttribute('data-step'));
+          if (pillStep === editWeightStep) {
+            pill.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.remove('text-slate-400');
+          } else {
+            pill.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.add('text-slate-400');
+          }
+        });
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
+    }
+
+    function getEditRepsStep() {
+      return (typeof window !== 'undefined' && window.editRepsStep !== undefined) ? window.editRepsStep : editRepsStep;
+    }
+
+    function setEditRepsStep(step) {
+      editRepsStep = Number(step) || 1;
+      if (typeof window !== 'undefined') {
+        window.editRepsStep = editRepsStep;
+      }
+      if (typeof document !== 'undefined') {
+        const pills = document.querySelectorAll('.edit-reps-step-pill');
+        pills.forEach(pill => {
+          const pillStep = Number(pill.getAttribute('data-step'));
+          if (pillStep === editRepsStep) {
+            pill.classList.add('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.remove('text-slate-400');
+          } else {
+            pill.classList.remove('active', 'bg-emerald-500/20', 'text-emerald-400', 'border', 'border-emerald-500/40');
+            pill.classList.add('text-slate-400');
+          }
+        });
+      }
+      if (typeof triggerHaptic === 'function') triggerHaptic('light');
     }
 
     function adjustEditActiveSetWeight(delta) {
@@ -9518,6 +9781,13 @@ if (typeof window !== 'undefined') {
       window.updateMatchLastSetUI = updateMatchLastSetUI;
       window.initLoggedSetSwipeGestures = initLoggedSetSwipeGestures;
       window.initEditModalSteppers = initEditModalSteppers;
+      window.adjustEditActiveSetWeight = adjustEditActiveSetWeight;
+      window.adjustEditActiveSetReps = adjustEditActiveSetReps;
+      window.adjustEditActiveSetRest = adjustEditActiveSetRest;
+      window.setEditWeightStep = setEditWeightStep;
+      window.getEditWeightStep = getEditWeightStep;
+      window.setEditRepsStep = setEditRepsStep;
+      window.getEditRepsStep = getEditRepsStep;
       window.confirmDeleteSet = confirmDeleteSet;
     }
 
@@ -20222,8 +20492,15 @@ runSuite("18. Firebase Firestore Cloud Backup & Cross-Device Sync Engine", () =>
                 mockStorage.set(key, data);
               }
               return Promise.resolve();
+            },
+            delete: async function() {
+              mockStorage.delete(key);
+              return Promise.resolve();
             }
           };
+        },
+        get: async function() {
+          return Promise.resolve({ empty: true, docs: [] });
         }
       };
     }
@@ -20289,7 +20566,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Squat", implement: "Kettlebell", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
-    { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
+    { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
+    { name: "SH KB Rows", implement: "Kettlebell", primary: "Back", secondaries: ["Biceps", "Core/Abs", "Shoulders"] },
+    { name: "Bar Chest Dips", implement: "Bodyweight", primary: "Chest", secondaries: ["Triceps", "Shoulders", "Core/Abs"] },
+    { name: "Ring Push-ups", implement: "Gymnastics Rings", primary: "Chest", secondaries: ["Triceps", "Shoulders", "Core/Abs"] },
+    { name: "Pull-ups", implement: "Bodyweight", primary: "Back", secondaries: ["Biceps", "Forearms", "Core/Abs"] }
   ];
 
   requiredExercises.forEach(req => {
@@ -21752,6 +22033,15 @@ runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Wo
   }
   assert(tripleDingSuccess === true, "playTripleDingChime ringside bell triple strike executes cleanly");
 
+  let deepGongSuccess = false;
+  try {
+    playDeepGongChime();
+    deepGongSuccess = true;
+  } catch (e) {
+    deepGongSuccess = false;
+  }
+  assert(deepGongSuccess === true, "playDeepGongChime deep gong strike executes cleanly");
+
   // 2. Last Workout Reference Suppression When Exercise Name Empty or Custom Exercise
   const banner = getOrCreateElement('exercise-previous-workout-banner');
   const metricSpan = getOrCreateElement('exercise-previous-workout-metric');
@@ -22229,6 +22519,126 @@ runSuite("43. Edit Set Modal Unified Steppers (+ / -) for Weight, Reps, and Rest
   assert(parseInt(restInput.value, 10) === 45, "adjustEditActiveSetRest(-30) decreases rest period to 45");
   adjustEditActiveSetRest(-100);
   assert(parseInt(restInput.value, 10) === 0, "adjustEditActiveSetRest clamps rest period to minimum 0");
+
+  // Test dynamic step pill configuration (eliminating sticky 5-step locking)
+  assert(typeof setEditWeightStep === 'function', "setEditWeightStep is a defined function");
+  assert(typeof getEditWeightStep === 'function', "getEditWeightStep is a defined function");
+  assert(typeof setEditRepsStep === 'function', "setEditRepsStep is a defined function");
+  assert(typeof getEditRepsStep === 'function', "getEditRepsStep is a defined function");
+
+  const weightPills = getOrCreateElement('edit-weight-step-pills');
+  const repsPills = getOrCreateElement('edit-reps-step-pills');
+  assert(weightPills !== null, "edit-weight-step-pills exists in edit modal DOM");
+  assert(repsPills !== null, "edit-reps-step-pills exists in edit modal DOM");
+
+  setEditWeightStep(1);
+  assert(getEditWeightStep() === 1, "setEditWeightStep(1) sets edit weight step to 1 lb");
+  weightInput.value = "100";
+  adjustEditActiveSetWeight(getEditWeightStep());
+  assert(parseFloat(weightInput.value) === 101, "Tapping + with step 1 increments by 1 (100 -> 101), not locked to 5");
+
+  setEditWeightStep(2.5);
+  assert(getEditWeightStep() === 2.5, "setEditWeightStep(2.5) sets edit weight step to 2.5 lbs");
+  adjustEditActiveSetWeight(getEditWeightStep());
+  assert(parseFloat(weightInput.value) === 103.5, "Tapping + with step 2.5 increments by 2.5 (101 -> 103.5)");
+
+  setEditWeightStep(5);
+  assert(getEditWeightStep() === 5, "setEditWeightStep(5) sets edit weight step to 5 lbs");
+
+  setEditWeightStep(1);
+  assert(getEditWeightStep() === 1, "Restores edit weight step to default 1 lb");
+});
+
+runSuite("44. Athlete Account Deletion from Backend Database & Google Account History Preservation", async () => {
+  assert(typeof confirmDeleteAccount === 'function', "confirmDeleteAccount is a defined function");
+  assert(typeof deleteAthleteAccount === 'function', "deleteAthleteAccount is a defined function");
+
+  // Verify DOM elements - Delete Account is safely secluded in Settings Backup Danger Zone
+  const backupCard = getOrCreateElement('settings-delete-account-card');
+  const backupBtn = getOrCreateElement('btn-settings-delete-account');
+  const activeDefaultsCard = getOrCreateElement('settings-athlete-account-active-card');
+  const activeEmailEl = getOrCreateElement('settings-active-account-email');
+
+  assert(backupCard !== null, "settings-delete-account-card exists in settings backup pane");
+  assert(backupBtn !== null, "btn-settings-delete-account exists in settings backup pane");
+  assert(activeDefaultsCard !== null, "settings-athlete-account-active-card exists in settings defaults pane");
+  assert(activeEmailEl !== null, "settings-active-account-email exists in settings defaults pane");
+
+  // Verify updateSettingsModalAuthVisibility when not logged in
+  localStorage.removeItem('showUp_user_profile');
+  localStorage.removeItem('showUp_google_token');
+  updateSettingsModalAuthVisibility();
+  const signInCard = getOrCreateElement('settings-athlete-account-card');
+  assert(!signInCard.classList.contains('hidden'), "Sign-in card visible when not logged in");
+  assert(activeDefaultsCard.classList.contains('hidden'), "Active account card hidden when not logged in");
+
+  // Verify updateSettingsModalAuthVisibility when logged in
+  const testAthlete = {
+    firstName: "Marcus",
+    email: "marcus@showup.fit",
+    authProvider: "email_password"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(testAthlete));
+  updateSettingsModalAuthVisibility();
+  assert(signInCard.classList.contains('hidden'), "Sign-in card hidden when logged in");
+  assert(!activeDefaultsCard.classList.contains('hidden'), "Active account card visible when logged in");
+  assert(activeEmailEl.innerText === "marcus@showup.fit", "Active account email displays user email");
+
+  // Test account deletion from Firestore database
+  const mockDbStorage = new Map();
+  mockDbStorage.set('user_backups/marcus@showup.fit', { email: 'marcus@showup.fit', workouts: [{ id: 1 }] });
+  window.getFirestoreDb = function() {
+    return {
+      collection: function(colName) {
+        return {
+          doc: function(docId) {
+            const key = colName + '/' + docId;
+            return {
+              delete: async function() {
+                mockDbStorage.delete(key);
+                return Promise.resolve();
+              }
+            };
+          },
+          get: async function() {
+            return Promise.resolve({ empty: true, docs: [] });
+          }
+        };
+      }
+    };
+  };
+
+  // Seed local registered accounts
+  const accounts = { "marcus@showup.fit": { email: "marcus@showup.fit", password: "secret" } };
+  localStorage.setItem('showUp_registered_accounts', JSON.stringify(accounts));
+  assert(JSON.parse(localStorage.getItem('showUp_registered_accounts'))["marcus@showup.fit"] !== undefined, "Registered account seeded");
+
+  // Execute account deletion
+  const deleteResult = await deleteAthleteAccount();
+  assert(deleteResult.success === true, "deleteAthleteAccount returns success true");
+  assert(!mockDbStorage.has('user_backups/marcus@showup.fit'), "User document deleted from Firestore user_backups");
+  assert(JSON.parse(localStorage.getItem('showUp_registered_accounts') || "{}")["marcus@showup.fit"] === undefined, "Account deleted from registered accounts");
+  assert(localStorage.getItem('showUp_user_profile') === null, "Local user profile purged");
+  assert(localStorage.getItem('showUp_google_token') === null, "Local google token cleared");
+
+  // Test Google Login preservation: Google Drive backup is untouched
+  let driveFileDeleted = false;
+  window.deleteFileFromGoogleDrive = function() { driveFileDeleted = true; };
+  localStorage.setItem('showUp_last_drive_sync', '2026-10-30T22:00:00Z');
+  const googleProfile = {
+    firstName: "Sarah",
+    email: "sarah@gmail.com",
+    authProvider: "google"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(googleProfile));
+  localStorage.setItem('showUp_google_token', 'mock_google_token_123');
+  mockDbStorage.set('user_backups/sarah@gmail.com', { email: 'sarah@gmail.com', workouts: [] });
+
+  const googleDeleteRes = await deleteAthleteAccount();
+  assert(googleDeleteRes.success === true, "Google athlete account deletion succeeds");
+  assert(!mockDbStorage.has('user_backups/sarah@gmail.com'), "Firestore user_backups record deleted for Google user");
+  assert(driveFileDeleted === false, "Google Drive exercise history remains completely untouched and preserved");
+  assert(localStorage.getItem('showUp_user_profile') === null, "Google profile purged locally from app");
 });
 
 print("\n============================================================");

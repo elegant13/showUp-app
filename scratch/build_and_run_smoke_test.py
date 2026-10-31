@@ -202,6 +202,19 @@ def generate_and_run_smoke_test():
         print("[FAIL] App Confirm modal comfortable touch targets missing in HTML")
         return False
 
+    # 16. Verify Delete Account is NOT in profile dropdown (preventing accidental clicks under Log out)
+    if 'id="btn-dropdown-delete-account"' not in html:
+        print("[PASS] Delete Account safely excluded from profile dropdown (accidental clicks under Log out prevented)")
+    else:
+        print("[FAIL] Delete Account should not be directly under Log out in profile dropdown")
+        return False
+
+    if 'id="settings-delete-account-card"' in html and 'id="btn-settings-delete-account"' in html:
+        print("[PASS] Delete Account safely housed in Settings Backup Danger Zone")
+    else:
+        print("[FAIL] Delete Account Danger Zone missing in Settings Backup")
+        return False
+
     # Build the JSC Smoke Test JS File
     harness_code = """
 // ================= BROWSER ENVIRONMENT MOCKS =================
@@ -360,6 +373,14 @@ globalThis.AudioContext = function() {
     }),
     createGain: () => ({
       gain: { setValueAtTime: () => {}, exponentialRampToValueAtTime: () => {}, linearRampToValueAtTime: () => {} },
+      connect: () => {}
+    }),
+    createDynamicsCompressor: () => ({
+      threshold: { setValueAtTime: () => {} },
+      knee: { setValueAtTime: () => {} },
+      ratio: { setValueAtTime: () => {} },
+      attack: { setValueAtTime: () => {} },
+      release: { setValueAtTime: () => {} },
       connect: () => {}
     }),
     destination: {}
@@ -1921,8 +1942,15 @@ runSuite("18. Firebase Firestore Cloud Backup & Cross-Device Sync Engine", () =>
                 mockStorage.set(key, data);
               }
               return Promise.resolve();
+            },
+            delete: async function() {
+              mockStorage.delete(key);
+              return Promise.resolve();
             }
           };
+        },
+        get: async function() {
+          return Promise.resolve({ empty: true, docs: [] });
         }
       };
     }
@@ -1988,7 +2016,11 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
     { name: "KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Swings", implement: "Kettlebell", primary: "Hamstrings/Glutes", secondaries: ["Core/Abs", "Back", "Shoulders", "Quads"] },
     { name: "SH KB Squat", implement: "Kettlebell", primary: "Quads", secondaries: ["Hamstrings/Glutes", "Core/Abs", "Shoulders"] },
-    { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] }
+    { name: "SH KB Thruster", implement: "Kettlebell", primary: "Full Body", secondaries: ["Quads", "Shoulders", "Hamstrings/Glutes", "Triceps", "Core/Abs"] },
+    { name: "SH KB Rows", implement: "Kettlebell", primary: "Back", secondaries: ["Biceps", "Core/Abs", "Shoulders"] },
+    { name: "Bar Chest Dips", implement: "Bodyweight", primary: "Chest", secondaries: ["Triceps", "Shoulders", "Core/Abs"] },
+    { name: "Ring Push-ups", implement: "Gymnastics Rings", primary: "Chest", secondaries: ["Triceps", "Shoulders", "Core/Abs"] },
+    { name: "Pull-ups", implement: "Bodyweight", primary: "Back", secondaries: ["Biceps", "Forearms", "Core/Abs"] }
   ];
 
   requiredExercises.forEach(req => {
@@ -3451,6 +3483,15 @@ runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Wo
   }
   assert(tripleDingSuccess === true, "playTripleDingChime ringside bell triple strike executes cleanly");
 
+  let deepGongSuccess = false;
+  try {
+    playDeepGongChime();
+    deepGongSuccess = true;
+  } catch (e) {
+    deepGongSuccess = false;
+  }
+  assert(deepGongSuccess === true, "playDeepGongChime deep gong strike executes cleanly");
+
   // 2. Last Workout Reference Suppression When Exercise Name Empty or Custom Exercise
   const banner = getOrCreateElement('exercise-previous-workout-banner');
   const metricSpan = getOrCreateElement('exercise-previous-workout-metric');
@@ -3928,6 +3969,126 @@ runSuite("43. Edit Set Modal Unified Steppers (+ / -) for Weight, Reps, and Rest
   assert(parseInt(restInput.value, 10) === 45, "adjustEditActiveSetRest(-30) decreases rest period to 45");
   adjustEditActiveSetRest(-100);
   assert(parseInt(restInput.value, 10) === 0, "adjustEditActiveSetRest clamps rest period to minimum 0");
+
+  // Test dynamic step pill configuration (eliminating sticky 5-step locking)
+  assert(typeof setEditWeightStep === 'function', "setEditWeightStep is a defined function");
+  assert(typeof getEditWeightStep === 'function', "getEditWeightStep is a defined function");
+  assert(typeof setEditRepsStep === 'function', "setEditRepsStep is a defined function");
+  assert(typeof getEditRepsStep === 'function', "getEditRepsStep is a defined function");
+
+  const weightPills = getOrCreateElement('edit-weight-step-pills');
+  const repsPills = getOrCreateElement('edit-reps-step-pills');
+  assert(weightPills !== null, "edit-weight-step-pills exists in edit modal DOM");
+  assert(repsPills !== null, "edit-reps-step-pills exists in edit modal DOM");
+
+  setEditWeightStep(1);
+  assert(getEditWeightStep() === 1, "setEditWeightStep(1) sets edit weight step to 1 lb");
+  weightInput.value = "100";
+  adjustEditActiveSetWeight(getEditWeightStep());
+  assert(parseFloat(weightInput.value) === 101, "Tapping + with step 1 increments by 1 (100 -> 101), not locked to 5");
+
+  setEditWeightStep(2.5);
+  assert(getEditWeightStep() === 2.5, "setEditWeightStep(2.5) sets edit weight step to 2.5 lbs");
+  adjustEditActiveSetWeight(getEditWeightStep());
+  assert(parseFloat(weightInput.value) === 103.5, "Tapping + with step 2.5 increments by 2.5 (101 -> 103.5)");
+
+  setEditWeightStep(5);
+  assert(getEditWeightStep() === 5, "setEditWeightStep(5) sets edit weight step to 5 lbs");
+
+  setEditWeightStep(1);
+  assert(getEditWeightStep() === 1, "Restores edit weight step to default 1 lb");
+});
+
+runSuite("44. Athlete Account Deletion from Backend Database & Google Account History Preservation", async () => {
+  assert(typeof confirmDeleteAccount === 'function', "confirmDeleteAccount is a defined function");
+  assert(typeof deleteAthleteAccount === 'function', "deleteAthleteAccount is a defined function");
+
+  // Verify DOM elements - Delete Account is safely secluded in Settings Backup Danger Zone
+  const backupCard = getOrCreateElement('settings-delete-account-card');
+  const backupBtn = getOrCreateElement('btn-settings-delete-account');
+  const activeDefaultsCard = getOrCreateElement('settings-athlete-account-active-card');
+  const activeEmailEl = getOrCreateElement('settings-active-account-email');
+
+  assert(backupCard !== null, "settings-delete-account-card exists in settings backup pane");
+  assert(backupBtn !== null, "btn-settings-delete-account exists in settings backup pane");
+  assert(activeDefaultsCard !== null, "settings-athlete-account-active-card exists in settings defaults pane");
+  assert(activeEmailEl !== null, "settings-active-account-email exists in settings defaults pane");
+
+  // Verify updateSettingsModalAuthVisibility when not logged in
+  localStorage.removeItem('showUp_user_profile');
+  localStorage.removeItem('showUp_google_token');
+  updateSettingsModalAuthVisibility();
+  const signInCard = getOrCreateElement('settings-athlete-account-card');
+  assert(!signInCard.classList.contains('hidden'), "Sign-in card visible when not logged in");
+  assert(activeDefaultsCard.classList.contains('hidden'), "Active account card hidden when not logged in");
+
+  // Verify updateSettingsModalAuthVisibility when logged in
+  const testAthlete = {
+    firstName: "Marcus",
+    email: "marcus@showup.fit",
+    authProvider: "email_password"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(testAthlete));
+  updateSettingsModalAuthVisibility();
+  assert(signInCard.classList.contains('hidden'), "Sign-in card hidden when logged in");
+  assert(!activeDefaultsCard.classList.contains('hidden'), "Active account card visible when logged in");
+  assert(activeEmailEl.innerText === "marcus@showup.fit", "Active account email displays user email");
+
+  // Test account deletion from Firestore database
+  const mockDbStorage = new Map();
+  mockDbStorage.set('user_backups/marcus@showup.fit', { email: 'marcus@showup.fit', workouts: [{ id: 1 }] });
+  window.getFirestoreDb = function() {
+    return {
+      collection: function(colName) {
+        return {
+          doc: function(docId) {
+            const key = colName + '/' + docId;
+            return {
+              delete: async function() {
+                mockDbStorage.delete(key);
+                return Promise.resolve();
+              }
+            };
+          },
+          get: async function() {
+            return Promise.resolve({ empty: true, docs: [] });
+          }
+        };
+      }
+    };
+  };
+
+  // Seed local registered accounts
+  const accounts = { "marcus@showup.fit": { email: "marcus@showup.fit", password: "secret" } };
+  localStorage.setItem('showUp_registered_accounts', JSON.stringify(accounts));
+  assert(JSON.parse(localStorage.getItem('showUp_registered_accounts'))["marcus@showup.fit"] !== undefined, "Registered account seeded");
+
+  // Execute account deletion
+  const deleteResult = await deleteAthleteAccount();
+  assert(deleteResult.success === true, "deleteAthleteAccount returns success true");
+  assert(!mockDbStorage.has('user_backups/marcus@showup.fit'), "User document deleted from Firestore user_backups");
+  assert(JSON.parse(localStorage.getItem('showUp_registered_accounts') || "{}")["marcus@showup.fit"] === undefined, "Account deleted from registered accounts");
+  assert(localStorage.getItem('showUp_user_profile') === null, "Local user profile purged");
+  assert(localStorage.getItem('showUp_google_token') === null, "Local google token cleared");
+
+  // Test Google Login preservation: Google Drive backup is untouched
+  let driveFileDeleted = false;
+  window.deleteFileFromGoogleDrive = function() { driveFileDeleted = true; };
+  localStorage.setItem('showUp_last_drive_sync', '2026-10-30T22:00:00Z');
+  const googleProfile = {
+    firstName: "Sarah",
+    email: "sarah@gmail.com",
+    authProvider: "google"
+  };
+  localStorage.setItem('showUp_user_profile', JSON.stringify(googleProfile));
+  localStorage.setItem('showUp_google_token', 'mock_google_token_123');
+  mockDbStorage.set('user_backups/sarah@gmail.com', { email: 'sarah@gmail.com', workouts: [] });
+
+  const googleDeleteRes = await deleteAthleteAccount();
+  assert(googleDeleteRes.success === true, "Google athlete account deletion succeeds");
+  assert(!mockDbStorage.has('user_backups/sarah@gmail.com'), "Firestore user_backups record deleted for Google user");
+  assert(driveFileDeleted === false, "Google Drive exercise history remains completely untouched and preserved");
+  assert(localStorage.getItem('showUp_user_profile') === null, "Google profile purged locally from app");
 });
 
 print("\\n============================================================");

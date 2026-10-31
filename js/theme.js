@@ -40,9 +40,19 @@
 
     function updateSettingsModalAuthVisibility() {
       const card = document.getElementById('settings-athlete-account-card');
+      const activeCard = document.getElementById('settings-athlete-account-active-card');
+      const activeEmail = document.getElementById('settings-active-account-email');
+      const loggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : false;
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+
       if (card) {
-        const loggedIn = (typeof isCustomerLoggedIn === 'function') ? isCustomerLoggedIn() : false;
         card.classList.toggle('hidden', loggedIn);
+      }
+      if (activeCard) {
+        activeCard.classList.toggle('hidden', !loggedIn);
+      }
+      if (activeEmail && user?.email && user.email !== 'you@showup.app' && user.email !== 'user@showup.app') {
+        activeEmail.innerText = user.email;
       }
     }
 

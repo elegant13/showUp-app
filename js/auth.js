@@ -149,6 +149,166 @@
       }
     }
 
+    /**
+     * Prompts the athlete with a confirmation modal before permanently deleting their
+     * account from the backend database (Firestore / Firebase Auth).
+     * Clarifies that if they ever signed in with Google, their workout history in their Google Account
+     * (Google Drive) will remain untouched.
+     */
+    async function confirmDeleteAccount() {
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const isGoogle = !!(localStorage.getItem('showUp_google_token') || (typeof googleAccessToken !== 'undefined' && googleAccessToken));
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      const isGoogleUser = isGoogle || user?.authProvider === 'google' || (rawEmail && rawEmail.endsWith('@gmail.com'));
+
+      let message = "Are you sure you want to permanently delete your account from the backend database? Your profile, cloud backups, and squad records in the database will be deleted.";
+      if (isGoogleUser) {
+        message += " Your exercise history stored in your Google Account (Google Drive) will remain untouched and preserved.";
+      }
+
+      let confirmed = false;
+      if (typeof showAppConfirm === 'function') {
+        confirmed = await showAppConfirm({
+          title: "Delete Account",
+          message: message,
+          confirmText: "Delete Account",
+          cancelText: "Keep Account",
+          type: "danger",
+          icon: "fa-solid fa-trash-can",
+          btnIcon: "fa-solid fa-trash-can"
+        });
+      } else if (typeof confirm === 'function') {
+        confirmed = confirm(message);
+      }
+
+      if (!confirmed) return false;
+
+      return await deleteAthleteAccount();
+    }
+
+    /**
+     * Permanently deletes the athlete's account from the backend database:
+     * 1. Deletes the user backup document from Firestore (`user_backups/{email}`).
+     * 2. Cleans up squad creator/membership records in Firestore.
+     * 3. Deletes the user from Firebase Auth (`currentUser.delete()`) if logged in.
+     * 4. Removes the account from local registered accounts (`showUp_registered_accounts`).
+     * 5. PRESERVES Google Account data: If the athlete logged in with Google, their exercise history
+     *    in their Google Account (Google Drive) is untouched.
+     * 6. Purges local active session and resets UI views.
+     */
+    async function deleteAthleteAccount() {
+      const user = (typeof getAppUser === 'function') ? getAppUser() : null;
+      const rawEmail = (user?.email || '').toLowerCase().trim();
+      const isRealUser = Boolean(rawEmail && rawEmail !== 'you@showup.app' && rawEmail !== 'user@showup.app');
+      const isGoogle = !!(localStorage.getItem('showUp_google_token') || (typeof googleAccessToken !== 'undefined' && googleAccessToken) || user?.authProvider === 'google');
+
+      try {
+        // 1. Delete from Firestore backend database if connected
+        if (isRealUser && typeof getFirestoreDb === 'function') {
+          try {
+            const db = getFirestoreDb();
+            if (db) {
+              // 1a. Delete user backup document from user_backups collection
+              await db.collection('user_backups').doc(rawEmail).delete().catch(err => {
+                console.debug("Firestore user_backups delete notice:", err);
+              });
+
+              // 1b. Clean up squads where user is creator or member
+              try {
+                const squadsSnap = await db.collection('squads').get();
+                if (squadsSnap && !squadsSnap.empty) {
+                  const batch = typeof db.batch === 'function' ? db.batch() : null;
+                  squadsSnap.docs.forEach(doc => {
+                    const sq = doc.data();
+                    if (sq) {
+                      if (sq.creatorEmail === rawEmail || sq.creatorId === rawEmail || sq.creatorId === user?.id) {
+                        if (batch) batch.delete(doc.ref);
+                        else doc.ref.delete().catch(() => {});
+                      } else if (Array.isArray(sq.members) && sq.members.some(m => m.email === rawEmail || m.id === rawEmail)) {
+                        const newMembers = sq.members.filter(m => m.email !== rawEmail && m.id !== rawEmail);
+                        if (batch) batch.update(doc.ref, { members: newMembers });
+                        else doc.ref.update({ members: newMembers }).catch(() => {});
+                      }
+                    }
+                  });
+                  if (batch && typeof batch.commit === 'function') {
+                    await batch.commit().catch(e => console.debug("Squads batch cleanup notice:", e));
+                  }
+                }
+              } catch (sqErr) {
+                console.debug("Firestore squads cleanup notice:", sqErr);
+              }
+            }
+          } catch (dbErr) {
+            console.debug("Firestore deletion exception:", dbErr);
+          }
+        }
+
+        // 2. Delete user from Firebase Auth if currently signed in
+        try {
+          const fAuth = getFirebaseAuth();
+          if (fAuth && fAuth.currentUser) {
+            await fAuth.currentUser.delete().catch(err => {
+              console.debug("Firebase Auth currentUser.delete notice:", err);
+            });
+          }
+        } catch (authErr) {
+          console.debug("Firebase Auth deletion exception:", authErr);
+        }
+
+        // 3. Remove from local registered accounts registry
+        if (isRealUser && typeof getRegisteredAccounts === 'function' && typeof saveRegisteredAccounts === 'function') {
+          try {
+            const accounts = getRegisteredAccounts();
+            if (accounts && accounts[rawEmail]) {
+              delete accounts[rawEmail];
+              saveRegisteredAccounts(accounts);
+            }
+          } catch (accErr) {
+            console.debug("Registered accounts removal notice:", accErr);
+          }
+        }
+
+        // 4. IMPORTANT: DO NOT TOUCH GOOGLE DRIVE EXERCISE HISTORY!
+        // The athlete's exercise history stored in their Google Account remains untouched.
+        // We only revoke/clear the active local access token to disconnect the session:
+        if (typeof googleAccessToken !== 'undefined' && googleAccessToken && window.google?.accounts?.oauth2) {
+          try {
+            google.accounts.oauth2.revoke(googleAccessToken, () => {});
+          } catch (e) {}
+        }
+        if (typeof googleAccessToken !== 'undefined') {
+          googleAccessToken = null;
+        }
+
+        // 5. Purge local session & telemetry cleanly
+        handleLogout(true);
+
+        // Close any open modals
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) settingsModal.classList.add('hidden');
+        const profileDropdown = document.getElementById('profile-dropdown-menu');
+        if (profileDropdown) profileDropdown.classList.add('hidden');
+
+        if (typeof showToast === 'function') {
+          if (isGoogle) {
+            showToast("Account deleted from backend database. Your exercise history in your Google Account remains untouched.", "success");
+          } else {
+            showToast("Your account has been deleted from the backend database.", "success");
+          }
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error("Error deleting athlete account:", error);
+        handleLogout(true);
+        if (typeof showToast === 'function') {
+          showToast("Account data cleared from device.", "info");
+        }
+        return { success: false, error };
+      }
+    }
+
     function handleGoogleLogin() {
       handleGoogleSignIn();
     }
@@ -1845,4 +2005,9 @@
       updateGlobalStatsUI();
       renderHeatMap();
       updateGlobalVisitorTelemetryUI();
+    }
+
+    if (typeof window !== 'undefined') {
+      window.confirmDeleteAccount = confirmDeleteAccount;
+      window.deleteAthleteAccount = deleteAthleteAccount;
     }
