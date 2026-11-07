@@ -14,15 +14,50 @@
 
     let currentSettingsTab = 'styling';
 
+    function updateSettingsTelemetryVisibility() {
+      const isAllowed = typeof isTelemetryAllowed === 'function' ? isTelemetryAllowed() : false;
+      const tabBtn = document.getElementById('settings-tab-btn-telemetry');
+      const pane = document.getElementById('settings-pane-telemetry');
+
+      if (tabBtn) {
+        tabBtn.classList.toggle('hidden', !isAllowed);
+        tabBtn.style.display = isAllowed ? '' : 'none';
+      }
+      if (!isAllowed) {
+        if (pane) {
+          pane.classList.add('hidden');
+          pane.style.display = 'none';
+        }
+        if (currentSettingsTab === 'telemetry') {
+          switchSettingsTab('styling');
+        }
+      }
+    }
+
     function switchSettingsTab(tabName) {
+      if (tabName === 'telemetry') {
+        const isAllowed = typeof isTelemetryAllowed === 'function' ? isTelemetryAllowed() : false;
+        if (!isAllowed) {
+          const pane = document.getElementById('settings-pane-telemetry');
+          if (pane) {
+            pane.classList.add('hidden');
+            pane.style.display = 'none';
+          }
+          return;
+        }
+      }
       currentSettingsTab = tabName;
       const tabs = ['styling', 'defaults', 'backup', 'telemetry'];
       tabs.forEach(t => {
         const pane = document.getElementById('settings-pane-' + t);
         const btn = document.getElementById('settings-tab-btn-' + t);
         if (pane) {
-          if (t === tabName) pane.classList.remove('hidden');
-          else pane.classList.add('hidden');
+          if (t === tabName) {
+            pane.classList.remove('hidden');
+            pane.style.display = '';
+          } else {
+            pane.classList.add('hidden');
+          }
         }
         if (btn) {
           if (t === tabName) {
@@ -36,6 +71,7 @@
 
     if (typeof window !== 'undefined') {
       window.switchSettingsTab = switchSettingsTab;
+      window.updateSettingsTelemetryVisibility = updateSettingsTelemetryVisibility;
     }
 
     function updateSettingsModalAuthVisibility() {
@@ -54,6 +90,9 @@
       if (activeEmail && user?.email && user.email !== 'you@showup.app' && user.email !== 'user@showup.app') {
         activeEmail.innerText = user.email;
       }
+
+      // Restrict Telemetry section visibility to athletes in allowTelemetry
+      updateSettingsTelemetryVisibility();
     }
 
     function openLargeLogoModal() {

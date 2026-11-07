@@ -13,3 +13,8 @@ dist/
 *.log
 .gemini/
 .idea/
+
+# Keystores & credentials
+*.jks
+*.keystore
+key.properties

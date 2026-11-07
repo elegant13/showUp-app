@@ -82,7 +82,7 @@ function updateVisitorCounterUI(count) {
   if (settingsIdEl) settingsIdEl.innerText = localStorage.getItem(VISITOR_STORAGE_KEY) || 'Active';
 }
 
-// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO abhi13@gmail.com, hithesh@gmail.com) =================
+// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO allowTelemetry: abhi13@gmail.com, hithesh@gmail.com) =================
 
 let firestoreDb = null;
 let unsubscribeAdminTelemetry = null;
@@ -108,9 +108,15 @@ function getFirestoreDb() {
 }
 
 function isGlobalVisitorTelemetryAdmin() {
-  const user = getAppUser();
+  if (typeof isTelemetryAllowed === 'function') {
+    return isTelemetryAllowed();
+  }
+  const user = typeof getAppUser === 'function' ? getAppUser() : null;
   const email = (user && user.email ? user.email : '').toLowerCase().trim();
-  return email === 'abhi13@gmail.com' || email === 'hithesh@gmail.com';
+  const list = (typeof allowTelemetry !== 'undefined' && Array.isArray(allowTelemetry))
+    ? allowTelemetry
+    : ['abhi13@gmail.com', 'hithesh@gmail.com'];
+  return list.some(allowed => String(allowed || '').toLowerCase().trim() === email);
 }
 
 function initGlobalVisitorTelemetry() {
@@ -225,6 +231,9 @@ function recordCurrentVisitorLocation(loc) {
 }
 
 function openGlobalVisitorTelemetryModal() {
+  if (!isGlobalVisitorTelemetryAdmin()) {
+    return;
+  }
   const modal = document.getElementById('global-visitors-modal');
   const section = document.getElementById('admin-global-visitor-telemetry');
   if (modal) modal.classList.remove('hidden');
@@ -476,12 +485,15 @@ function updateGlobalVisitorTelemetryUI() {
       unsubscribeAdminTelemetry = null;
     }
     const modal = document.getElementById('global-visitors-modal');
-    const modalOpen = modal && !modal.classList.contains('hidden');
-    if (!modalOpen && section) {
+    if (modal) modal.classList.add('hidden');
+    if (section) {
       section.classList.add('hidden');
       section.style.display = 'none';
     }
     if (menuBadge) menuBadge.classList.add('hidden');
+    if (typeof updateSettingsTelemetryVisibility === 'function') {
+      updateSettingsTelemetryVisibility();
+    }
     return;
   }
 
@@ -490,6 +502,9 @@ function updateGlobalVisitorTelemetryUI() {
     section.style.display = 'block';
   }
   if (menuBadge) menuBadge.classList.remove('hidden');
+  if (typeof updateSettingsTelemetryVisibility === 'function') {
+    updateSettingsTelemetryVisibility();
+  }
 
   renderAdminGlobalVisitorTelemetry();
   subscribeAdminGlobalVisitorTelemetry();
@@ -546,9 +561,7 @@ function getTimeframeBucket(dateStr, mode) {
 }
 
 function renderAdminGlobalVisitorTelemetry(force = false) {
-  const modal = document.getElementById('global-visitors-modal');
-  const modalOpen = modal && !modal.classList.contains('hidden');
-  if (!isGlobalVisitorTelemetryAdmin() && !force && !modalOpen) return;
+  if (!isGlobalVisitorTelemetryAdmin()) return;
 
   const log = getGlobalVisitorsLog();
   const tfContainer = document.getElementById('admin-timeframe-groups-container');

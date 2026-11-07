@@ -13,6 +13,7 @@ public class GoogleAuth: CAPPlugin {
     var googleSignInConfiguration: GIDConfiguration!;
     var forceAuthCode: Bool = false;
     var additionalScopes: [String]!;
+    var observerAdded: Bool = false;
 
     func loadSignInClient (
         customClientId: String,
@@ -35,7 +36,10 @@ public class GoogleAuth: CAPPlugin {
             return !defaultGrantedScopes.contains($0);
         };
 
-        NotificationCenter.default.addObserver(self, selector: #selector(handleOpenUrl(_ :)), name: Notification.Name(Notification.Name.capacitorOpenURL.rawValue), object: nil);
+        if !observerAdded {
+            observerAdded = true
+            NotificationCenter.default.addObserver(self, selector: #selector(handleOpenUrl(_ :)), name: Notification.Name(Notification.Name.capacitorOpenURL.rawValue), object: nil);
+        }
     }
 
     
@@ -50,7 +54,7 @@ public class GoogleAuth: CAPPlugin {
     @objc
     func initialize(_ call: CAPPluginCall) {
         // get client id from initialize, with client id from config file as fallback
-        guard let clientId = call.getString("clientId") ?? getClientIdValue() as? String else {
+        guard let clientId = call.getString("clientId") ?? getClientIdValue() else {
             NSLog("no client id found in config");
             call.resolve();
             return;
@@ -96,11 +100,30 @@ public class GoogleAuth: CAPPlugin {
                     return;
                 }
                 
+                let requestedScopes = self.additionalScopes ?? []
                 NSLog("[GoogleAuth] Starting interactive Google Sign-In with clientID: %@", config.clientID);
-                googleSignIn.signIn(with: config, presenting: presentingVc, hint: nil, additionalScopes: self.additionalScopes ?? []) { user, error in
+                googleSignIn.signIn(with: config, presenting: presentingVc, hint: nil, additionalScopes: requestedScopes) { user, error in
                     if let error = error {
                         let nsErr = error as NSError
                         NSLog("[GoogleAuth] Native signIn failed: code=%ld, domain=%@, desc=%@", nsErr.code, nsErr.domain, error.localizedDescription);
+                        // Code -5 is kGIDSignInErrorCodeCanceled
+                        if nsErr.code != -5 && !requestedScopes.isEmpty {
+                            NSLog("[GoogleAuth] Retrying interactive sign-in with basic profile/email scopes only");
+                            let basicConfig = GIDConfiguration.init(clientID: config.clientID)
+                            googleSignIn.signIn(with: basicConfig, presenting: presentingVc) { fallbackUser, fallbackErr in
+                                if let fallbackErr = fallbackErr {
+                                    let fNsErr = fallbackErr as NSError
+                                    self.signInCall?.reject(fallbackErr.localizedDescription, "\(fNsErr.code)");
+                                    return;
+                                }
+                                guard let fallbackUser = fallbackUser else {
+                                    self.signInCall?.reject("User not found");
+                                    return;
+                                }
+                                self.resolveSignInCallWith(user: fallbackUser);
+                            }
+                            return;
+                        }
                         self.signInCall?.reject(error.localizedDescription, "\(nsErr.code)");
                         return;
                     }

@@ -143,10 +143,10 @@ def generate_and_run_smoke_test():
         'id="pref-muscles-engaged-enabled-row"' in html and
         'bg-slate-900/55' in html and
         'opacity-100' in html and
-        'app for 3 seconds without interrupting your session' in html):
-        print("[PASS] HRM & Muscles Engaged enable options in Defaults, 3s pill hang time copy, and reduced Muscles Engaged transparency verified in HTML")
+        'app for 2 seconds without interrupting your session' in html):
+        print("[PASS] HRM & Muscles Engaged enable options in Defaults, 2s pill hang time copy, and reduced Muscles Engaged transparency verified in HTML")
     else:
-        print("[FAIL] HRM/Muscles Engaged enable option, 3s pill copy, or Muscles Engaged opacity missing in HTML")
+        print("[FAIL] HRM/Muscles Engaged enable option, 2s pill copy, or Muscles Engaged opacity missing in HTML")
         return False
 
     # 11. Check Hyper-Emerald palette option, PR celebration banner, Set Classification chips, and Direct Dual-Target Numpad in HTML
@@ -486,6 +486,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
   globalThis._listeners['DOMContentLoaded'].forEach(fn => fn());
   assert(Array.isArray(defaultCatalog) && defaultCatalog.length > 0, "Catalog initialized with exercises (" + defaultCatalog.length + " found)");
   assert(defaultCatalog.some(e => e.name === "Barbell Back Squat"), "Barbell Back Squat present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Pike Pushups" && e.implement === "Bodyweight"), "Pike Pushups (Bodyweight) present in catalog");
   assert(defaultCatalog.some(e => e.implement === "Row Erg"), "Row Erg exercises present in catalog");
 });
 
@@ -770,7 +771,15 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   assert(headerCount === adminTotal, "Top level visitor count (" + headerCount + ") matches telemetry total visitors (" + adminTotal + ")");
   assert(headerCount === "1", "Visitor count reflects recorded visitor: " + headerCount);
   
-  // Verify Admin authorization
+  // Verify Admin authorization & allowTelemetry allow list
+  assert(Array.isArray(allowTelemetry), "allowTelemetry is an array allow list");
+  assert(allowTelemetry.includes("abhi13@gmail.com"), "allowTelemetry includes abhi13@gmail.com");
+  assert(allowTelemetry.includes("hithesh@gmail.com"), "allowTelemetry includes hithesh@gmail.com");
+  assert(typeof isTelemetryAllowed === "function", "isTelemetryAllowed is a function");
+  assert(isTelemetryAllowed("abhi13@gmail.com") === true, "isTelemetryAllowed returns true for abhi13@gmail.com");
+  assert(isTelemetryAllowed("hithesh@gmail.com") === true, "isTelemetryAllowed returns true for hithesh@gmail.com");
+  assert(isTelemetryAllowed("user@example.com") === false, "isTelemetryAllowed returns false for user@example.com");
+
   applyUserProfile({ firstName: "RegularUser", email: "user@example.com" });
   assert(isGlobalVisitorTelemetryAdmin() === false, "Regular user is NOT admin for visitor telemetry");
   
@@ -2399,8 +2408,19 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(!getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane visible when selected");
   assert(getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane hidden when backup selected");
 
+  // Non-allowed athlete cannot access or view telemetry section
+  applyUserProfile({ firstName: "Runner", email: "runner@showup.fit" });
+  updateSettingsModalAuthVisibility();
+  assert(getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Telemetry tab button hidden for non-allowed athlete");
   switchSettingsTab('telemetry');
-  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected");
+  assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane remains hidden for non-allowed athlete");
+
+  // Allowed athlete in allowTelemetry has full visibility and access to telemetry section
+  applyUserProfile({ firstName: "Abhi", email: "abhi13@gmail.com" });
+  updateSettingsModalAuthVisibility();
+  assert(!getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Telemetry tab button visible for allowTelemetry athlete");
+  switchSettingsTab('telemetry');
+  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected by allowTelemetry athlete");
   assert(getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane hidden when telemetry selected");
 
   switchSettingsTab('styling');
@@ -2882,54 +2902,53 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
 
   // 6. Chimes Definition & Synthesis execution
-  assert(REST_CHIMES.double_ding !== undefined, "REST_CHIMES defines double_ding (Boxing Bell Double Ding)");
-  assert(REST_CHIMES.double_ding.name === "Boxing Bell", "REST_CHIMES.double_ding is Boxing Bell");
-  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Boxing Bell Triple Ding)");
-  assert(REST_CHIMES.triple_ding.name === "Boxing Bell", "REST_CHIMES.triple_ding is Boxing Bell");
-  assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
+  assert(REST_CHIMES.piezo !== undefined && REST_CHIMES.piezo.name === "Piezo", "REST_CHIMES defines piezo (Piezo)");
+  assert(REST_CHIMES.whistle !== undefined && REST_CHIMES.whistle.name === "Whistle", "REST_CHIMES defines whistle (Whistle)");
+  assert(REST_CHIMES.ringer !== undefined && REST_CHIMES.ringer.name === "Ringer", "REST_CHIMES defines ringer (Ringer)");
+  assert(REST_CHIMES.chirp !== undefined && REST_CHIMES.chirp.name === "Chirp", "REST_CHIMES defines chirp (Chirp)");
+  assert(REST_CHIMES.ping !== undefined && REST_CHIMES.ping.name === "Ping", "REST_CHIMES defines ping (Ping)");
   assert(REST_CHIMES.crystal_harp === undefined, "Crystal Chime has been cleanly removed");
 
-  let audioDoubleDing = false;
-  let audioTripleDing = false;
-  let audioMasculine = false;
-  try {
-    playDoubleDingChime();
-    audioDoubleDing = true;
-  } catch (e) {
-    audioDoubleDing = false;
-  }
-  try {
-    playTripleDingChime();
-    audioTripleDing = true;
-  } catch (e) {
-    audioTripleDing = false;
-  }
-  try {
-    playDeepGongChime();
-    audioMasculine = true;
-  } catch (e) {
-    audioMasculine = false;
-  }
+  let audioPiezo = false;
+  let audioWhistle = false;
+  let audioRinger = false;
+  let audioChirp = false;
+  let audioPing = false;
+  try { playPiezoChime(); audioPiezo = true; } catch (e) {}
+  try { playWhistleChime(); audioWhistle = true; } catch (e) {}
+  try { playRingerChime(); audioRinger = true; } catch (e) {}
+  try { playChirpChime(); audioChirp = true; } catch (e) {}
+  try { playPingChime(); audioPing = true; } catch (e) {}
 
-  assert(audioDoubleDing === true, "playDoubleDingChime (boxing bell double ding) executes cleanly with Web Audio API");
-  assert(audioTripleDing === true, "playTripleDingChime (boxing bell triple ding) executes cleanly with Web Audio API");
-  assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
+  assert(audioPiezo === true, "playPiezoChime executes cleanly with Web Audio API");
+  assert(audioWhistle === true, "playWhistleChime executes cleanly with Web Audio API");
+  assert(audioRinger === true, "playRingerChime executes cleanly with Web Audio API");
+  assert(audioChirp === true, "playChirpChime executes cleanly with Web Audio API");
+  assert(audioPing === true, "playPingChime executes cleanly with Web Audio API");
 
-  // 7. Minimalistic Chime Cycling & Persistence
+  // 7. Minimalistic Chime Cycling & Persistence across all 5 options
   localStorage.removeItem('showUp_rest_chime_sound');
-  assert(getRestChimeSound() === 'double_ding', "Default chime sound is double_ding");
+  assert(getRestChimeSound() === 'piezo', "Default chime sound is piezo");
 
   const next1 = cycleRestChimeSound(false);
-  assert(next1 === 'triple_ding', "cycleRestChimeSound transitions double_ding -> triple_ding");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'triple_ding', "triple_ding persisted to localStorage");
+  assert(next1 === 'whistle', "cycleRestChimeSound transitions piezo -> whistle");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'whistle', "whistle persisted to localStorage");
 
   const next2 = cycleRestChimeSound(false);
-  assert(next2 === 'deep_gong', "cycleRestChimeSound transitions triple_ding -> deep_gong");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+  assert(next2 === 'ringer', "cycleRestChimeSound transitions whistle -> ringer");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'ringer', "ringer persisted to localStorage");
 
   const next3 = cycleRestChimeSound(false);
-  assert(next3 === 'double_ding', "cycleRestChimeSound transitions deep_gong -> double_ding");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'double_ding', "double_ding persisted to localStorage");
+  assert(next3 === 'chirp', "cycleRestChimeSound transitions ringer -> chirp");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'chirp', "chirp persisted to localStorage");
+
+  const next4 = cycleRestChimeSound(false);
+  assert(next4 === 'ping', "cycleRestChimeSound transitions chirp -> ping");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'ping', "ping persisted to localStorage");
+
+  const next5 = cycleRestChimeSound(false);
+  assert(next5 === 'piezo', "cycleRestChimeSound transitions ping -> piezo");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'piezo', "piezo persisted to localStorage");
 
   // 8. Haptic pattern for recovery
   globalThis.__lastVibrate = null;
@@ -3479,19 +3498,20 @@ runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
 });
 
 runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Workout Reference Suppression", () => {
-  // 1. Boxing Arena Bell Chime Synthesis and Metadata
+  // 1. 5 Shrill Chime Options Synthesis and Single-Word Metadata
+  assert(typeof createBoxingBellMasterBus === 'function', "createBoxingBellMasterBus is a defined function");
   assert(typeof createBoxingBellStrike === 'function', "createBoxingBellStrike is a defined function");
-  assert(typeof playDoubleDingChime === 'function', "playDoubleDingChime is a defined function");
-  assert(typeof playTripleDingChime === 'function', "playTripleDingChime is a defined function");
-  assert(REST_CHIMES.double_ding.name === 'Boxing Bell', "REST_CHIMES.double_ding name is 'Boxing Bell'");
-  assert(REST_CHIMES.double_ding.tag === 'Double Ding', "REST_CHIMES.double_ding tag is 'Double Ding'");
-  assert(REST_CHIMES.double_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.double_ding icon is bell");
-  assert(REST_CHIMES.double_ding.desc.includes('Boxing arena'), "REST_CHIMES.double_ding description specifies boxing arena ringside bell");
-
-  assert(REST_CHIMES.triple_ding.name === 'Boxing Bell', "REST_CHIMES.triple_ding name is 'Boxing Bell'");
-  assert(REST_CHIMES.triple_ding.tag === 'Triple Ding', "REST_CHIMES.triple_ding tag is 'Triple Ding'");
-  assert(REST_CHIMES.triple_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.triple_ding icon is bell");
-  assert(REST_CHIMES.triple_ding.desc.includes('Boxing arena'), "REST_CHIMES.triple_ding description specifies boxing arena ringside bell");
+  assert(typeof playPiezoChime === 'function', "playPiezoChime is a defined function");
+  assert(typeof playWhistleChime === 'function', "playWhistleChime is a defined function");
+  assert(typeof playRingerChime === 'function', "playRingerChime is a defined function");
+  assert(typeof playChirpChime === 'function', "playChirpChime is a defined function");
+  assert(typeof playPingChime === 'function', "playPingChime is a defined function");
+  assert(Array.isArray(REST_CHIME_KEYS) && REST_CHIME_KEYS.length === 5, "REST_CHIME_KEYS has all 5 options");
+  assert(REST_CHIMES.piezo.name === 'Piezo', "REST_CHIMES.piezo single-word title is 'Piezo'");
+  assert(REST_CHIMES.whistle.name === 'Whistle', "REST_CHIMES.whistle single-word title is 'Whistle'");
+  assert(REST_CHIMES.ringer.name === 'Ringer', "REST_CHIMES.ringer single-word title is 'Ringer'");
+  assert(REST_CHIMES.chirp.name === 'Chirp', "REST_CHIMES.chirp single-word title is 'Chirp'");
+  assert(REST_CHIMES.ping.name === 'Ping', "REST_CHIMES.ping single-word title is 'Ping'");
 
   // Verify Web Audio execution of double ding & triple ding
   let doubleDingSuccess = false;
@@ -4163,6 +4183,62 @@ runSuite("45. Enable Set Types & Disabled-by-Default Settings (Set Types, HRM, M
   assert(setTypesCheckbox.checked === false, "Enable Set Types checkbox is unchecked");
   const normalChip = getOrCreateElement('set-type-normal');
   assert(normalChip.className.includes('bg-emerald-500'), "Reset to normal set type when Set Types disabled");
+});
+
+runSuite("46. Telemetry Section Visibility & allowTelemetry Access Control", () => {
+  // 1. Verify allowTelemetry definition
+  assert(Array.isArray(allowTelemetry), "allowTelemetry is exported as an array");
+  assert(allowTelemetry.length >= 2, "allowTelemetry contains configured athletes");
+  assert(allowTelemetry.includes('abhi13@gmail.com'), "abhi13@gmail.com is in allowTelemetry");
+  assert(allowTelemetry.includes('hithesh@gmail.com'), "hithesh@gmail.com is in allowTelemetry");
+
+  // 2. Test non-allowed athletes
+  const nonAllowedEmails = ['random@athlete.com', 'user@showup.app', 'guest@gym.fit', 'hacker@test.com'];
+  nonAllowedEmails.forEach(email => {
+    applyUserProfile({ firstName: "TestUser", email: email });
+    updateSettingsModalAuthVisibility();
+    assert(isTelemetryAllowed(email) === false, "isTelemetryAllowed is false for " + email);
+    assert(isGlobalVisitorTelemetryAdmin() === false, "isGlobalVisitorTelemetryAdmin is false for " + email);
+    assert(getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Settings telemetry tab button hidden for " + email);
+    
+    // Attempt switching to telemetry
+    switchSettingsTab('telemetry');
+    assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Settings telemetry pane remains hidden when switching for " + email);
+    
+    // Attempt opening modal
+    closeGlobalVisitorTelemetryModal();
+    openGlobalVisitorTelemetryModal();
+    assert(getOrCreateElement('global-visitors-modal').classList.contains('hidden'), "Global visitor telemetry modal remains hidden for " + email);
+  });
+
+  // 3. Test allowed athletes: abhi13@gmail.com & hithesh@gmail.com
+  const allowedAthletes = [
+    { name: "Abhi", email: "abhi13@gmail.com" },
+    { name: "Hithesh", email: "hithesh@gmail.com" },
+    { name: "Abhi Upper", email: "ABHI13@GMAIL.COM" },
+    { name: "Hithesh Spaced", email: "  hithesh@gmail.com  " }
+  ];
+
+  allowedAthletes.forEach(athlete => {
+    applyUserProfile({ firstName: athlete.name, email: athlete.email });
+    updateSettingsModalAuthVisibility();
+    assert(isTelemetryAllowed(athlete.email) === true, "isTelemetryAllowed is true for " + athlete.email);
+    assert(isGlobalVisitorTelemetryAdmin() === true, "isGlobalVisitorTelemetryAdmin is true for " + athlete.email);
+    assert(!getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Settings telemetry tab button is visible for " + athlete.email);
+
+    // Switch to telemetry tab
+    switchSettingsTab('telemetry');
+    assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Settings telemetry pane is visible for " + athlete.email);
+
+    // Open telemetry modal
+    closeGlobalVisitorTelemetryModal();
+    openGlobalVisitorTelemetryModal();
+    assert(!getOrCreateElement('global-visitors-modal').classList.contains('hidden'), "Global visitor telemetry modal is visible for " + athlete.email);
+    closeGlobalVisitorTelemetryModal();
+  });
+
+  // Cleanup: Reset to normal styling tab
+  switchSettingsTab('styling');
 });
 
 print("\\n============================================================");

@@ -10,6 +10,7 @@
     "cap:copy": "npm run build && npx cap copy",
     "cap:ios": "npm run cap:sync && npx cap open ios",
     "cap:android": "npm run cap:sync && npx cap open android",
+    "bundle:android": "python3 scripts/build_web.py && python3 scripts/bump_android_version.py && cd android && ./gradlew bundleRelease",
     "test": "python3 scratch/build_and_run_smoke_test.py"
   },
   "keywords": [

@@ -1,0 +1,149 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: user_backups
+    // Document ID: {userEmail} (lowercase email address or auth UID)
+    // Fields:
+    //   - app: string (required) - Application identifier ("showUp")
+    //   - version: string (optional) - Schema version ("2.0")
+    //   - email: string (required) - Account email
+    //   - lastSyncedAt: string (required) - ISO timestamp of sync
+    //   - profile: map (optional) - User measurements and display name
+    //   - workouts: list (optional) - Completed workouts history
+    //   - weightHistory: list (optional) - Weight entries
+    //   - squads: list (optional) - Joined squads cache
+    //   - activeSession: list (optional) - Active in-progress sets
+    //
+    // Collection: squads
+    // Document ID: {squadId} (unique squad identifier)
+    // Fields:
+    //   - id: string (required) - Matches document ID
+    //   - name: string (required) - Squad name
+    //   - inviteCode: string (optional) - 6-character joining code
+    //   - creatorId: string (optional) - UID of creator
+    //   - creatorEmail: string (optional) - Email of creator
+    //   - members: list (optional) - List of member profiles
+    //   - workouts: list (optional) - Squad activity feed
+    //   - highFives: list/map (optional) - Social reactions
+    //   - updatedAt: string (optional) - ISO timestamp
+    //
+    // Collection: global_visitors
+    // Document ID: {visitorId} (anonymous client token)
+    // Fields:
+    //   - visitorId: string (required) - Matches document ID
+    //   - city: string (optional)
+    //   - state: string (optional)
+    //   - stateName: string (optional)
+    //   - zip: string (optional)
+    //   - country: string (optional)
+    //   - lat: number (optional)
+    //   - lng: number (optional)
+    //   - lastSeen: timestamp or string (optional)
+    //   - firstSeen: timestamp or string (optional)
+    //   - visitCount: number (optional)
+    //
+    // Collection: mail
+    // Document ID: {mailId} (auto-generated ID)
+    // Fields:
+    //   - to: string or list (required) - Recipient email
+    //   - message: map (required) - Contains subject, text, and html
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isEmailOwner(userEmail) {
+      return isAuthenticated() && (
+        (request.auth.token.email != null && request.auth.token.email == userEmail) ||
+        request.auth.uid == userEmail
+      );
+    }
+
+    // ===============================================================
+    // Collection: user_backups
+    // Private athlete data: workouts, weights, profile
+    // Only the authenticated account owner may read, write, or delete
+    // ===============================================================
+    match /user_backups/{userEmail} {
+      allow read, delete: if isEmailOwner(userEmail);
+
+      allow create, update: if isEmailOwner(userEmail)
+        && request.resource.data.keys().hasAll(['email'])
+        && request.resource.data.email is string
+        && (request.resource.data.email == userEmail || request.auth.uid == userEmail);
+    }
+
+    // ===============================================================
+    // Collection: squads
+    // Social fitness squads & invite code lookups
+    // Read: Allowed for authenticated athletes (queries by inviteCode, full list sync)
+    // Create/Update: Allowed for authenticated athletes syncing squad changes
+    // Delete: Allowed for creator or authenticated athlete
+    // ===============================================================
+    match /squads/{squadId} {
+      allow read: if isAuthenticated();
+
+      allow create: if isAuthenticated()
+        && request.resource.data.id == squadId;
+
+      allow update: if isAuthenticated()
+        && request.resource.data.id == squadId;
+
+      allow delete: if isAuthenticated()
+        && (
+          !('creatorId' in resource.data) ||
+          resource.data.creatorId == request.auth.uid ||
+          (request.auth.token.email != null && 'creatorEmail' in resource.data && resource.data.creatorEmail == request.auth.token.email) ||
+          (request.auth.token.email != null && request.auth.token.email == 'abhilashnama@gmail.com')
+        );
+    }
+
+    // ===============================================================
+    // Collection: global_visitors
+    // Anonymous public visitor counter & heatmap telemetry
+    // Read: Public (used on landing page counter & admin map)
+    // Write: Public (anonymized visitor presence logs)
+    // Delete: Denied (preserves telemetry integrity)
+    // ===============================================================
+    match /global_visitors/{visitorId} {
+      allow read: if true;
+
+      allow create, update: if request.resource.data.visitorId == visitorId
+        && request.resource.data.visitorId is string
+        && request.resource.data.visitorId.size() > 0
+        && request.resource.data.visitorId.size() <= 128;
+
+      allow delete: if false;
+    }
+
+    // ===============================================================
+    // Collection: mail
+    // Queued email triggers for password resets & account verification OTPs
+    // Create: Allowed for client authentication workflows
+    // Read/Update/Delete: Denied to prevent unauthorized inspection or tampering
+    // ===============================================================
+    match /mail/{mailId} {
+      allow create: if request.resource.data.keys().hasAll(['to', 'message'])
+        && (request.resource.data.to is string || request.resource.data.to is list)
+        && request.resource.data.message is map;
+
+      allow read, update, delete: if false;
+    }
+
+    // Default deny for any other collection
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

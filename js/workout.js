@@ -1860,7 +1860,7 @@
       playPRCelebrationSound();
 
       if (typeof showToast === 'function') {
-        showToast(`🏆 Personal Record Broken: ${label}`, 'success', 3500);
+        showToast(`🏆 Personal Record Broken: ${label}`, 'success', 2000);
       }
     }
 

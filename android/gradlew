@@ -119,6 +119,13 @@ CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
 
 # Determine the Java command to use to start the JVM.
+if [ -z "$JAVA_HOME" ] && [ -d "/Users/abhilashnama/Library/Java/JavaVirtualMachines/jbr-21.0.11/Contents/Home" ] ; then
+    JAVA_HOME="/Users/abhilashnama/Library/Java/JavaVirtualMachines/jbr-21.0.11/Contents/Home"
+    export JAVA_HOME
+elif [ -z "$JAVA_HOME" ] && [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ] ; then
+    JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+    export JAVA_HOME
+fi
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
         # IBM's JDK on AIX uses strange locations for the executables

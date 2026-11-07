@@ -8,6 +8,43 @@
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     /**
+     * Telemetry Section Authorization Allow List
+     * Athletes permitted to view and access the Telemetry section
+     */
+    const allowTelemetry = [
+      'abhi13@gmail.com',
+      'hithesh@gmail.com'
+    ];
+
+    /**
+     * Verifies if an athlete / email is in the allowTelemetry allow list
+     */
+    function isTelemetryAllowed(userOrEmail) {
+      let email = '';
+      if (typeof userOrEmail === 'string') {
+        email = userOrEmail;
+      } else if (userOrEmail && typeof userOrEmail === 'object' && userOrEmail.email) {
+        email = userOrEmail.email;
+      } else if (typeof getAppUser === 'function') {
+        const u = getAppUser();
+        email = u?.email || '';
+      }
+      email = String(email || '').toLowerCase().trim();
+      if (!email) return false;
+      const list = (typeof allowTelemetry !== 'undefined' && Array.isArray(allowTelemetry))
+        ? allowTelemetry
+        : (typeof window !== 'undefined' && Array.isArray(window.allowTelemetry))
+          ? window.allowTelemetry
+          : ['abhi13@gmail.com', 'hithesh@gmail.com'];
+      return list.some(allowed => String(allowed || '').toLowerCase().trim() === email);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.allowTelemetry = allowTelemetry;
+      window.isTelemetryAllowed = isTelemetryAllowed;
+    }
+
+    /**
      * Resolves the user's active local time zone, storing it in localStorage for continuous tracking
      */
     function getUserTimeZone() {
@@ -166,6 +203,7 @@
       { name: "Macebell 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
+      { name: "Pike Pushups", implement: "Bodyweight", muscle: "Shoulders", secondary: ["Triceps","Chest","Core/Abs"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "Pull-ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps","Forearms","Core/Abs"] },
       { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
@@ -403,7 +441,10 @@
       let implement = effectiveImplement;
 
       // Precise anatomical muscle mapping
-      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
+      if (lower.includes('pike push') || lower.includes('handstand push')) {
+        primary = 'Shoulders';
+        secondary = ['Triceps', 'Chest', 'Core/Abs'];
+      } else if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
         primary = 'Chest';
         secondary = ['Triceps', 'Shoulders', 'Core/Abs'];
       } else if (lower.includes('tricep') || lower.includes('skull crusher') || lower.includes('kickback')) {

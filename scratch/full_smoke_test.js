@@ -252,6 +252,43 @@ function runSuite(name, fn) {
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     /**
+     * Telemetry Section Authorization Allow List
+     * Athletes permitted to view and access the Telemetry section
+     */
+    const allowTelemetry = [
+      'abhi13@gmail.com',
+      'hithesh@gmail.com'
+    ];
+
+    /**
+     * Verifies if an athlete / email is in the allowTelemetry allow list
+     */
+    function isTelemetryAllowed(userOrEmail) {
+      let email = '';
+      if (typeof userOrEmail === 'string') {
+        email = userOrEmail;
+      } else if (userOrEmail && typeof userOrEmail === 'object' && userOrEmail.email) {
+        email = userOrEmail.email;
+      } else if (typeof getAppUser === 'function') {
+        const u = getAppUser();
+        email = u?.email || '';
+      }
+      email = String(email || '').toLowerCase().trim();
+      if (!email) return false;
+      const list = (typeof allowTelemetry !== 'undefined' && Array.isArray(allowTelemetry))
+        ? allowTelemetry
+        : (typeof window !== 'undefined' && Array.isArray(window.allowTelemetry))
+          ? window.allowTelemetry
+          : ['abhi13@gmail.com', 'hithesh@gmail.com'];
+      return list.some(allowed => String(allowed || '').toLowerCase().trim() === email);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.allowTelemetry = allowTelemetry;
+      window.isTelemetryAllowed = isTelemetryAllowed;
+    }
+
+    /**
      * Resolves the user's active local time zone, storing it in localStorage for continuous tracking
      */
     function getUserTimeZone() {
@@ -410,6 +447,7 @@ function runSuite(name, fn) {
       { name: "Macebell 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
+      { name: "Pike Pushups", implement: "Bodyweight", muscle: "Shoulders", secondary: ["Triceps","Chest","Core/Abs"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "Pull-ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps","Forearms","Core/Abs"] },
       { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
@@ -647,7 +685,10 @@ function runSuite(name, fn) {
       let implement = effectiveImplement;
 
       // Precise anatomical muscle mapping
-      if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
+      if (lower.includes('pike push') || lower.includes('handstand push')) {
+        primary = 'Shoulders';
+        secondary = ['Triceps', 'Chest', 'Core/Abs'];
+      } else if (lower.includes('chest dip') || lower.includes('cross over') || lower.includes('crossover') || lower.includes('pushup') || lower.includes('push-up') || lower.includes('bench press') || lower.includes('chest fly') || lower.includes('pec') || lower.includes('dip')) {
         primary = 'Chest';
         secondary = ['Triceps', 'Shoulders', 'Core/Abs'];
       } else if (lower.includes('tricep') || lower.includes('skull crusher') || lower.includes('kickback')) {
@@ -2296,7 +2337,7 @@ if (typeof window !== 'undefined') {
 
 
 
-    function showToast(message, type = 'info', duration = 3000) {
+    function showToast(message, type = 'info', duration = 2000) {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
@@ -2324,7 +2365,7 @@ if (typeof window !== 'undefined') {
       `;
 
       container.appendChild(toast);
-      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 3000;
+      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 2000;
       setTimeout(() => {
         toast.classList.add('opacity-0', '-translate-y-1');
         setTimeout(() => toast.remove(), 350);
@@ -2511,49 +2552,94 @@ if (typeof window !== 'undefined') {
     }
 
     /**
-     * Synthesizes an authentic acoustic strike of a heavy cast bronze/brass boxing arena ringside bell.
-     * Incorporates true shallow saucer dome acoustics: rim undertone (~458 Hz),
-     * piercing strike fundamental (~740 Hz), acoustic beating doublet (~742.8 Hz producing a 2.8 Hz
-     * vibrating metallic shimmer), inharmonic dome flexure modes (~1095 Hz, ~1568 Hz, ~2116 Hz, ~2752 Hz, ~3463 Hz),
-     * plus a punchy dual-layer steel clapper hammer impact transient with dynamics compression for maximum volume.
+     * Creates a high-headroom master dynamics bus with soft-knee harmonic saturation
+     * and brickwall peak limiting so boxing bell strikes cut through gym audio at maximum loudness.
      */
-    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.88) {
-      if (!ctx || !destination) return;
+    function createBoxingBellMasterBus(ctx, destination, startTime) {
+      if (!ctx || !destination) return destination;
+      let busInput = destination;
 
-      // Dynamics compression limiter to maximize loudness and punch on phone speakers without digital clipping
-      let strikeTarget = destination;
       if (typeof ctx.createDynamicsCompressor === 'function') {
         try {
-          const compressor = ctx.createDynamicsCompressor();
-          compressor.threshold.setValueAtTime(-6, startTime);
-          compressor.knee.setValueAtTime(3, startTime);
-          compressor.ratio.setValueAtTime(12, startTime);
-          compressor.attack.setValueAtTime(0.003, startTime);
-          compressor.release.setValueAtTime(0.20, startTime);
-          compressor.connect(destination);
-          strikeTarget = compressor;
+          const limiter = ctx.createDynamicsCompressor();
+          limiter.threshold.setValueAtTime(-1.5, startTime);
+          limiter.knee.setValueAtTime(2.0, startTime);
+          limiter.ratio.setValueAtTime(20.0, startTime);
+          limiter.attack.setValueAtTime(0.001, startTime);
+          limiter.release.setValueAtTime(0.08, startTime);
+          limiter.connect(destination);
+          busInput = limiter;
         } catch (e) {
-          strikeTarget = destination;
+          busInput = destination;
         }
       }
 
-      // Master strike gain envelope (loud and penetrating: default strikeLevel 0.88)
+      if (typeof ctx.createWaveShaper === 'function') {
+        try {
+          const shaper = ctx.createWaveShaper();
+          const samples = 1024;
+          const curve = new Float32Array(samples);
+          const drive = 2.4;
+          const norm = Math.tanh(drive);
+          for (let i = 0; i < samples; i++) {
+            const x = (i * 2) / (samples - 1) - 1;
+            curve[i] = Math.tanh(x * drive) / norm;
+          }
+          shaper.curve = curve;
+          shaper.oversample = '2x';
+          shaper.connect(busInput);
+          busInput = shaper;
+        } catch (e) {}
+      }
+
+      // High-output makeup pre-gain driving the saturator/limiter
+      try {
+        const preGain = ctx.createGain();
+        preGain.gain.setValueAtTime(2.2, startTime);
+        preGain.connect(busInput);
+        return preGain;
+      } catch (e) {
+        return busInput;
+      }
+    }
+
+    /**
+     * Synthesizes an authentic, ultra-loud acoustic strike of a heavy 10-inch cast brass boxing arena ringside bell.
+     * Models physical spun-brass saucer gong acoustics:
+     * - Axial mode doublets (paired closely-spaced partials across every radial mode that create the unmistakable
+     *   rapid metallic "wah-wah" shimmer of a real center-bolted brass boxing bell)
+     * - Initial impact pitch-glide (high-velocity steel hammer flexes the brass rim ~18 cents sharp for the first 35ms)
+     * - Broadband metallic hammer-on-brass clank noise burst + 14ms secondary spring-clapper micro-graze
+     * - Single-stage natural exponential partial decay (avoiding double-envelope attenuation so the bell rings out at full power)
+     */
+    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 1.0) {
+      if (!ctx || !destination) return;
+
+      // Constant-ceiling strike bus so individual partial decays are never squared/attenuated early
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(strikeLevel, startTime);
+      masterGain.gain.setValueAtTime(strikeLevel, startTime + Math.max(0.05, duration - 0.04));
       masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-      masterGain.connect(strikeTarget);
+      masterGain.connect(destination);
 
-      // Shallow cast brass ringside bell saucer dome modes (fundamental ~740 Hz)
-      const baseFreq = 740;
+      // Authentic 10" cast brass ringside gong modal spectrum (Strike note ~792 Hz G5)
+      // Each primary mode is paired with its axial doublet to produce authentic physical brass beating
+      const baseFreq = 792;
       const bellPartials = [
-        { mult: 0.62, gain: 0.45, decay: 0.85, type: 'sine' },      // Rim undertone (~458 Hz)
-        { mult: 1.00, gain: 1.00, decay: 1.00, type: 'sine' },      // Strike tone fundamental (740 Hz)
-        { mult: 1.0038, gain: 0.85, decay: 0.95, type: 'sine' },    // Doublet beating chorus (742.8 Hz ~ 2.8 Hz physical beating shimmer)
-        { mult: 1.48, gain: 0.70, decay: 0.70, type: 'triangle' },  // Dome mode (2,0) clang (~1095 Hz)
-        { mult: 2.12, gain: 0.60, decay: 0.55, type: 'triangle' },  // Dome mode (3,0) (~1568 Hz)
-        { mult: 2.86, gain: 0.50, decay: 0.40, type: 'triangle' },  // Dome mode (4,0) (~2116 Hz)
-        { mult: 3.72, gain: 0.40, decay: 0.30, type: 'triangle' },  // Mode (5,0) metallic bite (~2752 Hz)
-        { mult: 4.68, gain: 0.30, decay: 0.20, type: 'triangle' }   // Upper bronze ring (~3463 Hz)
+        { mult: 0.5000, gain: 0.52, decay: 0.92, type: 'sine', bend: 1.004 },     // Deep brass rim hum (396 Hz)
+        { mult: 0.5038, gain: 0.34, decay: 0.88, type: 'sine', bend: 1.004 },     // Rim hum doublet (399 Hz ~ 3 Hz throb)
+        { mult: 1.0000, gain: 1.00, decay: 1.00, type: 'sine', bend: 1.009 },     // Primary ringside strike tone (792 Hz)
+        { mult: 1.0045, gain: 0.90, decay: 0.96, type: 'sine', bend: 1.008 },     // Primary axial doublet (795.6 Hz ~ 3.6 Hz shimmer)
+        { mult: 1.4920, gain: 0.82, decay: 0.78, type: 'triangle', bend: 1.012 }, // Mode (2,1) brass clang (~1181.7 Hz)
+        { mult: 1.4995, gain: 0.68, decay: 0.74, type: 'sine', bend: 1.011 },     // Mode (2,1) doublet (~1187.6 Hz ~ 5.9 Hz beating)
+        { mult: 2.0350, gain: 0.74, decay: 0.62, type: 'triangle', bend: 1.014 }, // Mode (3,1) piercing ring (~1611.7 Hz)
+        { mult: 2.0440, gain: 0.56, decay: 0.58, type: 'sine', bend: 1.013 },     // Mode (3,1) doublet (~1618.8 Hz ~ 7.1 Hz beating)
+        { mult: 2.7550, gain: 0.68, decay: 0.46, type: 'triangle', bend: 1.016 }, // Mode (4,1) arena projection peak (~2182 Hz)
+        { mult: 2.7680, gain: 0.48, decay: 0.42, type: 'sine', bend: 1.015 },     // Mode (4,1) doublet (~2192 Hz ~ 10 Hz metallic sizzle)
+        { mult: 3.4100, gain: 0.58, decay: 0.34, type: 'sawtooth', bend: 1.018 }, // Mode (5,1) ear-sensitivity bite (~2701 Hz)
+        { mult: 4.2200, gain: 0.46, decay: 0.25, type: 'triangle', bend: 1.020 }, // Mode (6,1) upper brass brilliance (~3342 Hz)
+        { mult: 5.2100, gain: 0.34, decay: 0.16, type: 'triangle', bend: 1.022 }, // Mode (7,1) high metalliczing (~4126 Hz)
+        { mult: 6.3800, gain: 0.24, decay: 0.10, type: 'sine', bend: 1.025 }      // Initial anvil overtone (~5053 Hz)
       ];
 
       bellPartials.forEach(p => {
@@ -2561,7 +2647,10 @@ if (typeof window !== 'undefined') {
           const osc = ctx.createOscillator();
           const partGain = ctx.createGain();
           osc.type = p.type;
-          osc.frequency.setValueAtTime(baseFreq * p.mult, startTime);
+          const targetFreq = baseFreq * p.mult;
+          // Non-linear brass tension pitch-bend on hammer strike (drops to steady pitch in 32ms)
+          osc.frequency.setValueAtTime(targetFreq * (p.bend || 1.008), startTime);
+          osc.frequency.exponentialRampToValueAtTime(targetFreq, startTime + 0.032);
 
           const partDuration = Math.max(0.08, duration * p.decay);
           partGain.gain.setValueAtTime(p.gain, startTime);
@@ -2574,35 +2663,63 @@ if (typeof window !== 'undefined') {
         } catch (e) {}
       });
 
-      // Layer 1: Steel hammer impact clapper transient (sharp metallic pitch drop 4200 Hz -> 700 Hz)
+      // Layer 1: Steel spring-hammer clapper strike + 14ms secondary rim rebound micro-bounce
       try {
-        const clickOsc = ctx.createOscillator();
-        const clickGain = ctx.createGain();
-        clickOsc.type = 'square';
-        clickOsc.frequency.setValueAtTime(4200, startTime);
-        clickOsc.frequency.exponentialRampToValueAtTime(700, startTime + 0.024);
-        clickGain.gain.setValueAtTime(0.70, startTime);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.024);
-        clickOsc.connect(clickGain);
-        clickGain.connect(masterGain);
-        clickOsc.start(startTime);
-        clickOsc.stop(startTime + 0.028);
+        const clapperTimes = [
+          { offset: 0.000, startF: 4800, endF: 780, dur: 0.026, amp: 0.95 },
+          { offset: 0.014, startF: 3600, endF: 920, dur: 0.016, amp: 0.55 }
+        ];
+        clapperTimes.forEach(c => {
+          const t0 = startTime + c.offset;
+          const clickOsc = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+          clickOsc.type = 'square';
+          clickOsc.frequency.setValueAtTime(c.startF, t0);
+          clickOsc.frequency.exponentialRampToValueAtTime(c.endF, t0 + c.dur);
+          clickGain.gain.setValueAtTime(c.amp, t0);
+          clickGain.gain.exponentialRampToValueAtTime(0.0001, t0 + c.dur);
+          clickOsc.connect(clickGain);
+          clickGain.connect(masterGain);
+          clickOsc.start(t0);
+          clickOsc.stop(t0 + c.dur + 0.004);
+        });
       } catch (e) {}
 
-      // Layer 2: High rim snap/crack transient (5500 Hz -> 1400 Hz)
-      try {
-        const snapOsc = ctx.createOscillator();
-        const snapGain = ctx.createGain();
-        snapOsc.type = 'triangle';
-        snapOsc.frequency.setValueAtTime(5500, startTime);
-        snapOsc.frequency.exponentialRampToValueAtTime(1400, startTime + 0.016);
-        snapGain.gain.setValueAtTime(0.50, startTime);
-        snapGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.016);
-        snapOsc.connect(snapGain);
-        snapGain.connect(masterGain);
-        snapOsc.start(startTime);
-        snapOsc.stop(startTime + 0.020);
-      } catch (e) {}
+      // Layer 2: Broadband metallic hammer-on-brass impulse burst (filtered impact noise)
+      if (typeof ctx.createBuffer === 'function' && typeof ctx.createBufferSource === 'function') {
+        try {
+          const sampleRate = ctx.sampleRate || 44100;
+          const noiseDur = 0.035;
+          const frameCount = Math.max(64, Math.floor(sampleRate * noiseDur));
+          const noiseBuffer = ctx.createBuffer(1, frameCount, sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < frameCount; i++) {
+            const env = Math.pow(1 - i / frameCount, 2.2);
+            output[i] = (Math.random() * 2 - 1) * env;
+          }
+          const noiseSource = ctx.createBufferSource();
+          noiseSource.buffer = noiseBuffer;
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.90, startTime);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + noiseDur);
+
+          if (typeof ctx.createBiquadFilter === 'function') {
+            const bandpass = ctx.createBiquadFilter();
+            bandpass.type = 'bandpass';
+            bandpass.frequency.setValueAtTime(2850, startTime);
+            bandpass.Q.setValueAtTime(1.8, startTime);
+            noiseSource.connect(bandpass);
+            bandpass.connect(noiseGain);
+          } else {
+            noiseSource.connect(noiseGain);
+          }
+
+          noiseGain.connect(masterGain);
+          noiseSource.start(startTime);
+          noiseSource.stop(startTime + noiseDur);
+        } catch (e) {}
+      }
     }
 
     /**
@@ -2686,8 +2803,8 @@ if (typeof window !== 'undefined') {
      * Synthesizes an authentic boxing arena ringside double bell ("CLANG! ... CLANG!").
      * Exact double ding version of a boxing arena's ringside bell used by officials to signal
      * the start and end of a boxing round.
-     * - First strike at 0.00s (duration ~1.0s, sharp resonant brass impact).
-     * - Second strike at 0.22s (duration ~2.7s, sustained exponential decay ringing out freely).
+     * - First strike at 0.00s (duration ~1.2s, sharp resonant brass impact).
+     * - Second strike at 0.28s (duration ~3.0s, full sustained ringside brass decay).
      */
     function playDoubleDingChime() {
       try {
@@ -2698,9 +2815,10 @@ if (typeof window !== 'undefined') {
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Sharp double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.0, 0.88);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.22, 2.7, 0.96);
+        const masterBus = createBoxingBellMasterBus(ctx, ctx.destination, now);
+        // Boxing arena ringside bell: Authoritative double strike (CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, masterBus, now, 1.2, 0.95);
+        createBoxingBellStrike(ctx, masterBus, now + 0.28, 3.0, 1.00);
       } catch (e) {
         console.warn("Rest timer boxing bell double ding alert warning:", e);
       }
@@ -2710,8 +2828,8 @@ if (typeof window !== 'undefined') {
      * Synthesizes an authentic boxing arena ringside triple bell ("CLANG! ... CLANG! ... CLANG!").
      * Exact triple ding version of a boxing arena's ringside bell used by officials to signal
      * round start, round warnings, or round end.
-     * - Three strikes spaced ~200ms apart (0.00s, 0.20s, 0.40s).
-     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~2.8s.
+     * - Three strikes spaced ~280ms apart (0.00s, 0.28s, 0.56s).
+     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~3.2s.
      */
     function playTripleDingChime() {
       try {
@@ -2722,50 +2840,273 @@ if (typeof window !== 'undefined') {
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Rapid triple strike (CLANG! ... CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.85);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.20, 0.9, 0.88);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.40, 2.8, 0.98);
+        const masterBus = createBoxingBellMasterBus(ctx, ctx.destination, now);
+        // Boxing arena ringside bell: Authoritative triple strike (CLANG! ... CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, masterBus, now, 1.1, 0.92);
+        createBoxingBellStrike(ctx, masterBus, now + 0.28, 1.1, 0.96);
+        createBoxingBellStrike(ctx, masterBus, now + 0.56, 3.2, 1.00);
       } catch (e) {
         console.warn("Rest timer boxing bell triple ding alert warning:", e);
       }
     }
 
+    /**
+     * Option 1 (Piezo): Piercing 3.5 kHz commercial gym wall piezo tweeter double-beep (BEEP-BEEEEP!)
+     */
+    function playShrillPiezoTone(ctx, startTime, duration, freq = 3520) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.001, startTime);
+      master.gain.linearRampToValueAtTime(0.95, startTime + 0.003);
+      master.gain.setValueAtTime(0.95, startTime + Math.max(0.01, duration - 0.006));
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const osc1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(freq, startTime);
+      g1.gain.setValueAtTime(0.45, startTime);
+      osc1.connect(g1);
+      g1.connect(master);
+      osc1.start(startTime);
+      osc1.stop(startTime + duration);
+
+      const osc2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq, startTime);
+      g2.gain.setValueAtTime(0.75, startTime);
+      osc2.connect(g2);
+      g2.connect(master);
+      osc2.start(startTime);
+      osc2.stop(startTime + duration);
+    }
+
+    function playPiezoChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playShrillPiezoTone(ctx, now, 0.12, 3520);
+        playShrillPiezoTone(ctx, now + 0.18, 0.28, 3520);
+      } catch (e) {
+        console.warn("Rest timer piezo chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 2 (Whistle): Shrill 3.1 kHz dual-chamber coach/referee pea whistle double-blast (TWEET! — TWEEEEET!)
+     */
+    function playWhistleBlastTone(ctx, startTime, duration) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.001, startTime);
+      master.gain.linearRampToValueAtTime(0.95, startTime + 0.012);
+      master.gain.setValueAtTime(0.95, startTime + Math.max(0.02, duration - 0.025));
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(32, startTime);
+      lfoGain.gain.setValueAtTime(45, startTime);
+      lfo.connect(lfoGain);
+      lfo.start(startTime);
+      lfo.stop(startTime + duration);
+
+      [2980, 3165].forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f - 120, startTime);
+        osc.frequency.exponentialRampToValueAtTime(f, startTime + 0.022);
+        try { lfoGain.connect(osc.frequency); } catch (e) {}
+        g.gain.setValueAtTime(idx === 0 ? 0.65 : 0.55, startTime);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
+
+      if (typeof ctx.createBuffer === 'function' && typeof ctx.createBufferSource === 'function' && typeof ctx.createBiquadFilter === 'function') {
+        try {
+          const sr = ctx.sampleRate || 44100;
+          const frames = Math.max(64, Math.floor(sr * duration));
+          const buf = ctx.createBuffer(1, frames, sr);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < frames; i++) data[i] = (Math.random() * 2 - 1) * 0.18;
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const bp = ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(3100, startTime);
+          bp.Q.setValueAtTime(6.0, startTime);
+          src.connect(bp);
+          bp.connect(master);
+          src.start(startTime);
+          src.stop(startTime + duration);
+        } catch (e) {}
+      }
+    }
+
+    function playWhistleChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playWhistleBlastTone(ctx, now, 0.18);
+        playWhistleBlastTone(ctx, now + 0.24, 0.42);
+      } catch (e) {
+        console.warn("Rest timer whistle chime warning:", e);
+      }
+    }
+
+    /**
+     * High-tension shrill steel dome ping helper (used by Ringer and Ping)
+     */
+    function playSteelPingTone(ctx, startTime, duration, level = 0.95) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(level, startTime);
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const modes = [
+        { f: 1760, g: 0.45, d: 0.95 },
+        { f: 2680, g: 0.95, d: 1.00 },
+        { f: 2689, g: 0.80, d: 0.92 },
+        { f: 3890, g: 0.75, d: 0.65 },
+        { f: 5120, g: 0.50, d: 0.35 },
+        { f: 6480, g: 0.35, d: 0.18 }
+      ];
+      modes.forEach(m => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(m.f, startTime);
+        const dur = Math.max(0.04, duration * m.d);
+        g.gain.setValueAtTime(m.g, startTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(startTime);
+        osc.stop(startTime + dur);
+      });
+    }
+
+    /**
+     * Option 3 (Ringer): Motorized fight-gym wall alarm bell with rapid 24 Hz hammer rattle (BRRRING!)
+     */
+    function playRingerChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        const strikes = 12;
+        for (let i = 0; i < strikes; i++) {
+          const isLast = i === strikes - 1;
+          playSteelPingTone(ctx, now + i * 0.042, isLast ? 1.4 : 0.09, isLast ? 0.98 : 0.85);
+        }
+      } catch (e) {
+        console.warn("Rest timer ringer chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 4 (Chirp): 4.0 kHz shrill digital stopwatch double-chirp alarm (BEEP-BEEP ... BEEP-BEEP!)
+     */
+    function playChirpChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playShrillPiezoTone(ctx, now, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.095, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.28, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.375, 0.11, 4000);
+      } catch (e) {
+        console.warn("Rest timer chirp chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 5 (Ping): Bright, high-tension 2.7 kHz hardened steel ring-bell double-ping (TING! — TING!)
+     */
+    function playPingChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playSteelPingTone(ctx, now, 0.24, 0.95);
+        playSteelPingTone(ctx, now + 0.22, 1.6, 1.0);
+      } catch (e) {
+        console.warn("Rest timer ping chime warning:", e);
+      }
+    }
+
+    const REST_CHIME_KEYS = ['piezo', 'whistle', 'ringer', 'chirp', 'ping'];
+
     const REST_CHIMES = {
-      double_ding: {
-        id: 'double_ding',
-        name: 'Boxing Bell',
-        tag: 'Double Ding',
-        desc: "Boxing arena ringside bell: double strike (round start/end)",
+      piezo: {
+        id: 'piezo',
+        name: 'Piezo',
+        tag: 'Piezo',
+        desc: 'Piercing 3.5 kHz commercial gym wall piezo double-beep',
+        icon: 'fa-solid fa-wave-square'
+      },
+      whistle: {
+        id: 'whistle',
+        name: 'Whistle',
+        tag: 'Whistle',
+        desc: 'Shrill 3.1 kHz coach/referee pea whistle double-blast',
+        icon: 'fa-solid fa-bullhorn'
+      },
+      ringer: {
+        id: 'ringer',
+        name: 'Ringer',
+        tag: 'Ringer',
+        desc: 'Motorized fight-gym wall alarm bell rapid hammer rattle',
         icon: 'fa-solid fa-bell'
       },
-      triple_ding: {
-        id: 'triple_ding',
-        name: 'Boxing Bell',
-        tag: 'Triple Ding',
-        desc: "Boxing arena ringside bell: triple strike (round official bell)",
-        icon: 'fa-solid fa-bell'
+      chirp: {
+        id: 'chirp',
+        name: 'Chirp',
+        tag: 'Chirp',
+        desc: 'Ultra-shrill 4.0 kHz digital stopwatch double-chirp',
+        icon: 'fa-solid fa-stopwatch'
       },
-      deep_gong: {
-        id: 'deep_gong',
-        name: 'Deep Gong',
-        tag: 'Masculine',
-        desc: 'Definitively masculine: deep resonant brass gong',
-        icon: 'fa-solid fa-shield-halved'
+      ping: {
+        id: 'ping',
+        name: 'Ping',
+        tag: 'Ping',
+        desc: 'Bright 2.7 kHz hardened steel ring-bell double-ping',
+        icon: 'fa-solid fa-bell-concierge'
       }
     };
 
     function getRestChimeSound() {
       try {
         const val = localStorage.getItem('showUp_rest_chime_sound');
-        return REST_CHIMES[val] ? val : 'double_ding';
+        return REST_CHIMES[val] ? val : 'piezo';
       } catch (e) {
-        return 'double_ding';
+        return 'piezo';
       }
     }
 
     function setRestChimeSound(chimeId, preview = true) {
-      const valid = REST_CHIMES[chimeId] ? chimeId : 'double_ding';
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'piezo';
       try {
         localStorage.setItem('showUp_rest_chime_sound', valid);
       } catch (e) {}
@@ -2775,16 +3116,16 @@ if (typeof window !== 'undefined') {
       }
     }
 
-    function cycleRestChimeSound() {
+    function cycleRestChimeSound(preview = true) {
       const current = getRestChimeSound();
-      const keys = ['double_ding', 'triple_ding', 'deep_gong'];
-      const nextIndex = (keys.indexOf(current) + 1) % keys.length;
-      const nextChime = keys[nextIndex];
-      setRestChimeSound(nextChime, true);
+      const idx = REST_CHIME_KEYS.indexOf(current);
+      const nextIndex = (idx === -1 ? 0 : idx + 1) % REST_CHIME_KEYS.length;
+      const nextChime = REST_CHIME_KEYS[nextIndex];
+      setRestChimeSound(nextChime, preview);
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       const chimeMeta = REST_CHIMES[nextChime];
       if (typeof showToast === 'function') {
-        showToast(`Recovery Chime: ${chimeMeta.name} (${chimeMeta.tag})`, "info");
+        showToast(`Recovery Chime: ${chimeMeta.name}`, "info");
       }
       return nextChime;
     }
@@ -2792,12 +3133,23 @@ if (typeof window !== 'undefined') {
     function playRestChime(explicitChimeId = null) {
       if (!isRestSoundAlertEnabled()) return;
       const chime = explicitChimeId || getRestChimeSound();
-      if (chime === 'triple_ding') {
-        playTripleDingChime();
-      } else if (chime === 'deep_gong') {
-        playDeepGongChime();
-      } else {
-        playDoubleDingChime();
+      switch (chime) {
+        case 'whistle':
+          playWhistleChime();
+          break;
+        case 'ringer':
+          playRingerChime();
+          break;
+        case 'chirp':
+          playChirpChime();
+          break;
+        case 'ping':
+          playPingChime();
+          break;
+        case 'piezo':
+        default:
+          playPiezoChime();
+          break;
       }
     }
 
@@ -2825,7 +3177,7 @@ if (typeof window !== 'undefined') {
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
         showToast(next ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
@@ -2837,20 +3189,20 @@ if (typeof window !== 'undefined') {
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
         showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function updateRestChimeUI() {
       const chimeId = getRestChimeSound();
-      const meta = REST_CHIMES[chimeId] || REST_CHIMES.double_ding;
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.piezo;
 
       const chimeBtn = document.getElementById('btn-chime-cycle');
       const chimeIcon = document.getElementById('btn-chime-icon');
       const chimeLabel = document.getElementById('btn-chime-label');
       if (chimeBtn) {
-        chimeBtn.title = `Current chime: ${meta.name} (${meta.tag}) · Click to switch`;
+        chimeBtn.title = `Current chime: ${meta.name} · Click to switch`;
       }
       if (chimeIcon) {
         chimeIcon.className = `${meta.icon} text-emerald-400 text-xs`;
@@ -2869,7 +3221,7 @@ if (typeof window !== 'undefined') {
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
-      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
 
       if (bannerBtn && bannerIcon) {
         if (enabled) {
@@ -2992,11 +3344,18 @@ if (typeof window !== 'undefined') {
 
     if (typeof window !== 'undefined') {
       window.triggerHaptic = triggerHaptic;
+      window.createBoxingBellMasterBus = createBoxingBellMasterBus;
       window.createBoxingBellStrike = createBoxingBellStrike;
       window.playDoubleBellRing = playDoubleBellRing;
       window.playDeepGongChime = playDeepGongChime;
       window.playDoubleDingChime = playDoubleDingChime;
       window.playTripleDingChime = playTripleDingChime;
+      window.playPiezoChime = playPiezoChime;
+      window.playWhistleChime = playWhistleChime;
+      window.playRingerChime = playRingerChime;
+      window.playChirpChime = playChirpChime;
+      window.playPingChime = playPingChime;
+      window.REST_CHIME_KEYS = REST_CHIME_KEYS;
       window.REST_CHIMES = REST_CHIMES;
       window.playRestChime = playRestChime;
       window.getRestChimeSound = getRestChimeSound;
@@ -3040,15 +3399,50 @@ if (typeof window !== 'undefined') {
 
     let currentSettingsTab = 'styling';
 
+    function updateSettingsTelemetryVisibility() {
+      const isAllowed = typeof isTelemetryAllowed === 'function' ? isTelemetryAllowed() : false;
+      const tabBtn = document.getElementById('settings-tab-btn-telemetry');
+      const pane = document.getElementById('settings-pane-telemetry');
+
+      if (tabBtn) {
+        tabBtn.classList.toggle('hidden', !isAllowed);
+        tabBtn.style.display = isAllowed ? '' : 'none';
+      }
+      if (!isAllowed) {
+        if (pane) {
+          pane.classList.add('hidden');
+          pane.style.display = 'none';
+        }
+        if (currentSettingsTab === 'telemetry') {
+          switchSettingsTab('styling');
+        }
+      }
+    }
+
     function switchSettingsTab(tabName) {
+      if (tabName === 'telemetry') {
+        const isAllowed = typeof isTelemetryAllowed === 'function' ? isTelemetryAllowed() : false;
+        if (!isAllowed) {
+          const pane = document.getElementById('settings-pane-telemetry');
+          if (pane) {
+            pane.classList.add('hidden');
+            pane.style.display = 'none';
+          }
+          return;
+        }
+      }
       currentSettingsTab = tabName;
       const tabs = ['styling', 'defaults', 'backup', 'telemetry'];
       tabs.forEach(t => {
         const pane = document.getElementById('settings-pane-' + t);
         const btn = document.getElementById('settings-tab-btn-' + t);
         if (pane) {
-          if (t === tabName) pane.classList.remove('hidden');
-          else pane.classList.add('hidden');
+          if (t === tabName) {
+            pane.classList.remove('hidden');
+            pane.style.display = '';
+          } else {
+            pane.classList.add('hidden');
+          }
         }
         if (btn) {
           if (t === tabName) {
@@ -3062,6 +3456,7 @@ if (typeof window !== 'undefined') {
 
     if (typeof window !== 'undefined') {
       window.switchSettingsTab = switchSettingsTab;
+      window.updateSettingsTelemetryVisibility = updateSettingsTelemetryVisibility;
     }
 
     function updateSettingsModalAuthVisibility() {
@@ -3080,6 +3475,9 @@ if (typeof window !== 'undefined') {
       if (activeEmail && user?.email && user.email !== 'you@showup.app' && user.email !== 'user@showup.app') {
         activeEmail.innerText = user.email;
       }
+
+      // Restrict Telemetry section visibility to athletes in allowTelemetry
+      updateSettingsTelemetryVisibility();
     }
 
     function openLargeLogoModal() {
@@ -3349,6 +3747,12 @@ if (typeof window !== 'undefined') {
         }
       } catch (e) {}
 
+      try {
+        if (typeof window !== 'undefined' && window.NativeBridge && typeof window.NativeBridge.signOutNativeGoogle === 'function') {
+          window.NativeBridge.signOutNativeGoogle().catch(() => {});
+        }
+      } catch (e) {}
+
       // 2. Wipe personal physical measurements & geo telemetry (including IP location cache)
       localStorage.removeItem('showUp_user_height');
       localStorage.removeItem('showUp_user_weight');
@@ -3407,6 +3811,11 @@ if (typeof window !== 'undefined') {
       const wInput = document.getElementById('user-weight-input');
       if (hInput) hInput.value = '';
       if (wInput) wInput.value = '';
+
+      // Clear all auth form inputs & credentials so nothing lingers on shared / public machines
+      if (typeof clearAuthFormInputs === 'function') {
+        clearAuthFormInputs();
+      }
 
       // 7. Reset Map Telemetry & Zip Code Badges
       const zipDisplay = document.getElementById('display-user-zip');
@@ -3735,8 +4144,9 @@ if (typeof window !== 'undefined') {
                   const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
                   const userEmail = profile.email || '';
                   const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-                  const profileObj = { firstName, email: userEmail, picture };
+                  const profileObj = { firstName, email: userEmail, picture, authProvider: 'google' };
 
+                  syncFirebaseGoogleCredential(response.credential, null);
                   applyUserProfile(profileObj);
                   closeAuthLoginModal();
                   showToast(`Welcome back, ${firstName}!`, "success");
@@ -3785,7 +4195,61 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function clearAuthFormInputs() {
+      // 1. Reset all auth forms if present
+      const forms = ['auth-signin-view', 'auth-register-view', 'auth-reset-view'];
+      forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form && typeof form.reset === 'function') {
+          try { form.reset(); } catch (e) {}
+        }
+      });
+
+      // 2. Explicitly wipe all individual credential, password, and sensitive input values
+      const inputIds = [
+        'auth-signin-email',
+        'auth-signin-password',
+        'auth-register-name',
+        'auth-register-email',
+        'auth-register-password',
+        'auth-register-confirm-password',
+        'auth-register-zip',
+        'auth-register-otp-code',
+        'auth-reset-email',
+        'auth-reset-otp-code',
+        'auth-reset-password',
+        'auth-reset-confirm-password'
+      ];
+      inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = '';
+          // Ensure password inputs are never left in plain-text revealed state
+          if (id.includes('password') || id.includes('pass')) {
+            el.type = 'password';
+          }
+        }
+      });
+
+      // 3. Reset eye toggle icons to default hidden state
+      const toggleIcons = [
+        { id: 'auth-signin-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' },
+        { id: 'auth-register-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' },
+        { id: 'auth-register-confirm-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' }
+      ];
+      toggleIcons.forEach(item => {
+        const icon = document.getElementById(item.id);
+        if (icon) icon.className = item.defaultClass;
+      });
+
+      // 4. Reset status message banners & subviews
+      if (typeof setAuthStatusMessage === 'function') setAuthStatusMessage('', 'info');
+      if (typeof changeRegisterDetails === 'function') changeRegisterDetails();
+      if (typeof changeResetEmail === 'function') changeResetEmail();
+    }
+
     function openAuthLoginModal(defaultTab = 'signin') {
+      clearAuthFormInputs();
       const modal = document.getElementById('auth-login-modal');
       if (modal) {
         modal.classList.remove('hidden');
@@ -3797,9 +4261,7 @@ if (typeof window !== 'undefined') {
     function closeAuthLoginModal() {
       const modal = document.getElementById('auth-login-modal');
       if (modal) modal.classList.add('hidden');
-      setAuthStatusMessage('', 'info');
-      changeRegisterDetails();
-      changeResetEmail();
+      clearAuthFormInputs();
     }
 
     function handleAuthModalBackdropClick(event) {
@@ -5071,10 +5533,26 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function syncFirebaseGoogleCredential(idToken, accessToken) {
+      try {
+        if (!idToken && !accessToken) return;
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.GoogleAuthProvider) {
+          const credential = firebase.auth.GoogleAuthProvider.credential(idToken || null, accessToken || null);
+          fAuth.signInWithCredential(credential).catch(err => {
+            console.debug("Firebase GoogleAuthProvider signInWithCredential notice:", err?.message || err);
+          });
+        }
+      } catch (e) {
+        console.debug("Firebase Google credential sync notice:", e);
+      }
+    }
+
     async function handleSuccessfulOAuthToken(token) {
       googleAccessToken = token;
       localStorage.setItem('showUp_google_token', googleAccessToken);
       localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+      syncFirebaseGoogleCredential(null, googleAccessToken);
 
       // 1. Immediately activate logged-in UI
       document.getElementById('btn-google-login').classList.add('hidden');
@@ -5096,15 +5574,15 @@ if (typeof window !== 'undefined') {
           const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'Athlete');
           const userEmail = profile.email || '';
           const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-          applyUserProfile({ firstName, email: userEmail, picture });
+          applyUserProfile({ firstName, email: userEmail, picture, authProvider: 'google' });
           showToast(`Signed in as ${firstName}`, "success");
         } else {
-          applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+          applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c', authProvider: 'google' });
           showToast("Signed in successfully!", "success");
         }
       } catch (err) {
         console.warn("User info fetch notice:", err);
-        applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+        applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c', authProvider: 'google' });
         showToast("Signed in successfully!", "success");
       }
 
@@ -5112,7 +5590,9 @@ if (typeof window !== 'undefined') {
       // This ensures squads and activity from Google backup are instantly reflected upon login without tab hopping.
       setTimeout(async () => {
         try {
-          await restoreFromGoogleDrive(false);
+          if (googleAccessToken && typeof restoreFromGoogleDrive === 'function') {
+            await restoreFromGoogleDrive(true);
+          }
         } catch (driveErr) {
           console.warn("Auto-restore on login notice:", driveErr);
         }
@@ -5147,12 +5627,16 @@ if (typeof window !== 'undefined') {
               const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'Athlete');
               const userEmail = user.email || '';
               const picture = user.imageUrl || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-              const profileObj = { firstName, email: userEmail, picture };
+              const profileObj = { firstName, email: userEmail, picture, authProvider: 'google' };
 
-              if (user.authentication?.accessToken) {
-                googleAccessToken = user.authentication.accessToken;
+              const nativeAccessToken = user.authentication?.accessToken || '';
+              const nativeIdToken = user.idToken || user.authentication?.idToken || '';
+
+              if (nativeAccessToken) {
+                googleAccessToken = nativeAccessToken;
                 localStorage.setItem('showUp_google_token', googleAccessToken);
               }
+              syncFirebaseGoogleCredential(nativeIdToken, nativeAccessToken);
 
               // Apply profile, sync session, close modal, and refresh UI
               applyUserProfile(profileObj);
@@ -5162,8 +5646,8 @@ if (typeof window !== 'undefined') {
               // Immediately pull and restore historic cloud backup from Google Drive & Firestore
               setTimeout(async () => {
                 try {
-                  if (typeof restoreFromGoogleDrive === 'function') {
-                    await restoreFromGoogleDrive(false);
+                  if (googleAccessToken && typeof restoreFromGoogleDrive === 'function') {
+                    await restoreFromGoogleDrive(true);
                   }
                 } catch (driveErr) {
                   console.warn("[NativeAuth] Auto-restore from Drive notice:", driveErr);
@@ -5292,6 +5776,7 @@ if (typeof window !== 'undefined') {
     if (typeof window !== 'undefined') {
       window.confirmDeleteAccount = confirmDeleteAccount;
       window.deleteAthleteAccount = deleteAthleteAccount;
+      window.clearAuthFormInputs = clearAuthFormInputs;
     }
 
 /* ==========================================================================
@@ -7156,7 +7641,7 @@ if (typeof window !== 'undefined') {
       playPRCelebrationSound();
 
       if (typeof showToast === 'function') {
-        showToast(`🏆 Personal Record Broken: ${label}`, 'success', 3500);
+        showToast(`🏆 Personal Record Broken: ${label}`, 'success', 2000);
       }
     }
 
@@ -14767,7 +15252,7 @@ if (typeof window !== 'undefined') {
 
       activePillTimeout = setTimeout(() => {
         dismissSquadPill();
-      }, 3000);
+      }, 2000);
     }
 
     function dismissSquadPill() {
@@ -16903,7 +17388,7 @@ function updateVisitorCounterUI(count) {
   if (settingsIdEl) settingsIdEl.innerText = localStorage.getItem(VISITOR_STORAGE_KEY) || 'Active';
 }
 
-// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO abhi13@gmail.com, hithesh@gmail.com) =================
+// ================= ADMIN GLOBAL VISITOR TELEMETRY ENGINE (RESTRICTED TO allowTelemetry: abhi13@gmail.com, hithesh@gmail.com) =================
 
 let firestoreDb = null;
 let unsubscribeAdminTelemetry = null;
@@ -16929,9 +17414,15 @@ function getFirestoreDb() {
 }
 
 function isGlobalVisitorTelemetryAdmin() {
-  const user = getAppUser();
+  if (typeof isTelemetryAllowed === 'function') {
+    return isTelemetryAllowed();
+  }
+  const user = typeof getAppUser === 'function' ? getAppUser() : null;
   const email = (user && user.email ? user.email : '').toLowerCase().trim();
-  return email === 'abhi13@gmail.com' || email === 'hithesh@gmail.com';
+  const list = (typeof allowTelemetry !== 'undefined' && Array.isArray(allowTelemetry))
+    ? allowTelemetry
+    : ['abhi13@gmail.com', 'hithesh@gmail.com'];
+  return list.some(allowed => String(allowed || '').toLowerCase().trim() === email);
 }
 
 function initGlobalVisitorTelemetry() {
@@ -17046,6 +17537,9 @@ function recordCurrentVisitorLocation(loc) {
 }
 
 function openGlobalVisitorTelemetryModal() {
+  if (!isGlobalVisitorTelemetryAdmin()) {
+    return;
+  }
   const modal = document.getElementById('global-visitors-modal');
   const section = document.getElementById('admin-global-visitor-telemetry');
   if (modal) modal.classList.remove('hidden');
@@ -17297,12 +17791,15 @@ function updateGlobalVisitorTelemetryUI() {
       unsubscribeAdminTelemetry = null;
     }
     const modal = document.getElementById('global-visitors-modal');
-    const modalOpen = modal && !modal.classList.contains('hidden');
-    if (!modalOpen && section) {
+    if (modal) modal.classList.add('hidden');
+    if (section) {
       section.classList.add('hidden');
       section.style.display = 'none';
     }
     if (menuBadge) menuBadge.classList.add('hidden');
+    if (typeof updateSettingsTelemetryVisibility === 'function') {
+      updateSettingsTelemetryVisibility();
+    }
     return;
   }
 
@@ -17311,6 +17808,9 @@ function updateGlobalVisitorTelemetryUI() {
     section.style.display = 'block';
   }
   if (menuBadge) menuBadge.classList.remove('hidden');
+  if (typeof updateSettingsTelemetryVisibility === 'function') {
+    updateSettingsTelemetryVisibility();
+  }
 
   renderAdminGlobalVisitorTelemetry();
   subscribeAdminGlobalVisitorTelemetry();
@@ -17367,9 +17867,7 @@ function getTimeframeBucket(dateStr, mode) {
 }
 
 function renderAdminGlobalVisitorTelemetry(force = false) {
-  const modal = document.getElementById('global-visitors-modal');
-  const modalOpen = modal && !modal.classList.contains('hidden');
-  if (!isGlobalVisitorTelemetryAdmin() && !force && !modalOpen) return;
+  if (!isGlobalVisitorTelemetryAdmin()) return;
 
   const log = getGlobalVisitorsLog();
   const tfContainer = document.getElementById('admin-timeframe-groups-container');
@@ -19051,6 +19549,9 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
       initUniqueVisitorCounter();
       initGlobalVisitorTelemetry();
       updateGlobalVisitorTelemetryUI();
+      if (typeof updateSettingsModalAuthVisibility === 'function') {
+        updateSettingsModalAuthVisibility();
+      }
       if (typeof restoreActiveTab === 'function') {
         restoreActiveTab();
       } else if (typeof renderHomeTab === 'function') {
@@ -19072,6 +19573,7 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
   globalThis._listeners['DOMContentLoaded'].forEach(fn => fn());
   assert(Array.isArray(defaultCatalog) && defaultCatalog.length > 0, "Catalog initialized with exercises (" + defaultCatalog.length + " found)");
   assert(defaultCatalog.some(e => e.name === "Barbell Back Squat"), "Barbell Back Squat present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Pike Pushups" && e.implement === "Bodyweight"), "Pike Pushups (Bodyweight) present in catalog");
   assert(defaultCatalog.some(e => e.implement === "Row Erg"), "Row Erg exercises present in catalog");
 });
 
@@ -19356,7 +19858,15 @@ runSuite("8. Admin Telemetry & Zero Fake Seeds Verification", () => {
   assert(headerCount === adminTotal, "Top level visitor count (" + headerCount + ") matches telemetry total visitors (" + adminTotal + ")");
   assert(headerCount === "1", "Visitor count reflects recorded visitor: " + headerCount);
   
-  // Verify Admin authorization
+  // Verify Admin authorization & allowTelemetry allow list
+  assert(Array.isArray(allowTelemetry), "allowTelemetry is an array allow list");
+  assert(allowTelemetry.includes("abhi13@gmail.com"), "allowTelemetry includes abhi13@gmail.com");
+  assert(allowTelemetry.includes("hithesh@gmail.com"), "allowTelemetry includes hithesh@gmail.com");
+  assert(typeof isTelemetryAllowed === "function", "isTelemetryAllowed is a function");
+  assert(isTelemetryAllowed("abhi13@gmail.com") === true, "isTelemetryAllowed returns true for abhi13@gmail.com");
+  assert(isTelemetryAllowed("hithesh@gmail.com") === true, "isTelemetryAllowed returns true for hithesh@gmail.com");
+  assert(isTelemetryAllowed("user@example.com") === false, "isTelemetryAllowed returns false for user@example.com");
+
   applyUserProfile({ firstName: "RegularUser", email: "user@example.com" });
   assert(isGlobalVisitorTelemetryAdmin() === false, "Regular user is NOT admin for visitor telemetry");
   
@@ -20985,8 +21495,19 @@ runSuite("19. Exercise Catalog Abbreviations & Auto Muscle Impact Identification
   assert(!getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane visible when selected");
   assert(getOrCreateElement('settings-pane-defaults').classList.contains('hidden'), "Defaults pane hidden when backup selected");
 
+  // Non-allowed athlete cannot access or view telemetry section
+  applyUserProfile({ firstName: "Runner", email: "runner@showup.fit" });
+  updateSettingsModalAuthVisibility();
+  assert(getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Telemetry tab button hidden for non-allowed athlete");
   switchSettingsTab('telemetry');
-  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected");
+  assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane remains hidden for non-allowed athlete");
+
+  // Allowed athlete in allowTelemetry has full visibility and access to telemetry section
+  applyUserProfile({ firstName: "Abhi", email: "abhi13@gmail.com" });
+  updateSettingsModalAuthVisibility();
+  assert(!getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Telemetry tab button visible for allowTelemetry athlete");
+  switchSettingsTab('telemetry');
+  assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Telemetry pane visible when selected by allowTelemetry athlete");
   assert(getOrCreateElement('settings-pane-backup').classList.contains('hidden'), "Backup pane hidden when telemetry selected");
 
   switchSettingsTab('styling');
@@ -21468,54 +21989,53 @@ runSuite("28. Rest Recovery Haptic, 3 Chimes (Masculine/Feminine), Steppers & Mu
   assert(localStorage.getItem('showUp_default_rest_time') === '60', "Target rest is sticky in localStorage");
 
   // 6. Chimes Definition & Synthesis execution
-  assert(REST_CHIMES.double_ding !== undefined, "REST_CHIMES defines double_ding (Boxing Bell Double Ding)");
-  assert(REST_CHIMES.double_ding.name === "Boxing Bell", "REST_CHIMES.double_ding is Boxing Bell");
-  assert(REST_CHIMES.triple_ding !== undefined, "REST_CHIMES defines triple_ding (Boxing Bell Triple Ding)");
-  assert(REST_CHIMES.triple_ding.name === "Boxing Bell", "REST_CHIMES.triple_ding is Boxing Bell");
-  assert(REST_CHIMES.deep_gong !== undefined, "REST_CHIMES defines deep_gong (Definitively Masculine)");
+  assert(REST_CHIMES.piezo !== undefined && REST_CHIMES.piezo.name === "Piezo", "REST_CHIMES defines piezo (Piezo)");
+  assert(REST_CHIMES.whistle !== undefined && REST_CHIMES.whistle.name === "Whistle", "REST_CHIMES defines whistle (Whistle)");
+  assert(REST_CHIMES.ringer !== undefined && REST_CHIMES.ringer.name === "Ringer", "REST_CHIMES defines ringer (Ringer)");
+  assert(REST_CHIMES.chirp !== undefined && REST_CHIMES.chirp.name === "Chirp", "REST_CHIMES defines chirp (Chirp)");
+  assert(REST_CHIMES.ping !== undefined && REST_CHIMES.ping.name === "Ping", "REST_CHIMES defines ping (Ping)");
   assert(REST_CHIMES.crystal_harp === undefined, "Crystal Chime has been cleanly removed");
 
-  let audioDoubleDing = false;
-  let audioTripleDing = false;
-  let audioMasculine = false;
-  try {
-    playDoubleDingChime();
-    audioDoubleDing = true;
-  } catch (e) {
-    audioDoubleDing = false;
-  }
-  try {
-    playTripleDingChime();
-    audioTripleDing = true;
-  } catch (e) {
-    audioTripleDing = false;
-  }
-  try {
-    playDeepGongChime();
-    audioMasculine = true;
-  } catch (e) {
-    audioMasculine = false;
-  }
+  let audioPiezo = false;
+  let audioWhistle = false;
+  let audioRinger = false;
+  let audioChirp = false;
+  let audioPing = false;
+  try { playPiezoChime(); audioPiezo = true; } catch (e) {}
+  try { playWhistleChime(); audioWhistle = true; } catch (e) {}
+  try { playRingerChime(); audioRinger = true; } catch (e) {}
+  try { playChirpChime(); audioChirp = true; } catch (e) {}
+  try { playPingChime(); audioPing = true; } catch (e) {}
 
-  assert(audioDoubleDing === true, "playDoubleDingChime (boxing bell double ding) executes cleanly with Web Audio API");
-  assert(audioTripleDing === true, "playTripleDingChime (boxing bell triple ding) executes cleanly with Web Audio API");
-  assert(audioMasculine === true, "playDeepGongChime (masculine) executes cleanly with Web Audio API");
+  assert(audioPiezo === true, "playPiezoChime executes cleanly with Web Audio API");
+  assert(audioWhistle === true, "playWhistleChime executes cleanly with Web Audio API");
+  assert(audioRinger === true, "playRingerChime executes cleanly with Web Audio API");
+  assert(audioChirp === true, "playChirpChime executes cleanly with Web Audio API");
+  assert(audioPing === true, "playPingChime executes cleanly with Web Audio API");
 
-  // 7. Minimalistic Chime Cycling & Persistence
+  // 7. Minimalistic Chime Cycling & Persistence across all 5 options
   localStorage.removeItem('showUp_rest_chime_sound');
-  assert(getRestChimeSound() === 'double_ding', "Default chime sound is double_ding");
+  assert(getRestChimeSound() === 'piezo', "Default chime sound is piezo");
 
   const next1 = cycleRestChimeSound(false);
-  assert(next1 === 'triple_ding', "cycleRestChimeSound transitions double_ding -> triple_ding");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'triple_ding', "triple_ding persisted to localStorage");
+  assert(next1 === 'whistle', "cycleRestChimeSound transitions piezo -> whistle");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'whistle', "whistle persisted to localStorage");
 
   const next2 = cycleRestChimeSound(false);
-  assert(next2 === 'deep_gong', "cycleRestChimeSound transitions triple_ding -> deep_gong");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'deep_gong', "deep_gong persisted to localStorage");
+  assert(next2 === 'ringer', "cycleRestChimeSound transitions whistle -> ringer");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'ringer', "ringer persisted to localStorage");
 
   const next3 = cycleRestChimeSound(false);
-  assert(next3 === 'double_ding', "cycleRestChimeSound transitions deep_gong -> double_ding");
-  assert(localStorage.getItem('showUp_rest_chime_sound') === 'double_ding', "double_ding persisted to localStorage");
+  assert(next3 === 'chirp', "cycleRestChimeSound transitions ringer -> chirp");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'chirp', "chirp persisted to localStorage");
+
+  const next4 = cycleRestChimeSound(false);
+  assert(next4 === 'ping', "cycleRestChimeSound transitions chirp -> ping");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'ping', "ping persisted to localStorage");
+
+  const next5 = cycleRestChimeSound(false);
+  assert(next5 === 'piezo', "cycleRestChimeSound transitions ping -> piezo");
+  assert(localStorage.getItem('showUp_rest_chime_sound') === 'piezo', "piezo persisted to localStorage");
 
   // 8. Haptic pattern for recovery
   globalThis.__lastVibrate = null;
@@ -22065,19 +22585,20 @@ runSuite("34. Muscles Engaged Enabler/Disabler in Settings > Defaults", () => {
 });
 
 runSuite("35. Boxing Arena Ringside Bell Chimes (Double & Triple Ding) & Last Workout Reference Suppression", () => {
-  // 1. Boxing Arena Bell Chime Synthesis and Metadata
+  // 1. 5 Shrill Chime Options Synthesis and Single-Word Metadata
+  assert(typeof createBoxingBellMasterBus === 'function', "createBoxingBellMasterBus is a defined function");
   assert(typeof createBoxingBellStrike === 'function', "createBoxingBellStrike is a defined function");
-  assert(typeof playDoubleDingChime === 'function', "playDoubleDingChime is a defined function");
-  assert(typeof playTripleDingChime === 'function', "playTripleDingChime is a defined function");
-  assert(REST_CHIMES.double_ding.name === 'Boxing Bell', "REST_CHIMES.double_ding name is 'Boxing Bell'");
-  assert(REST_CHIMES.double_ding.tag === 'Double Ding', "REST_CHIMES.double_ding tag is 'Double Ding'");
-  assert(REST_CHIMES.double_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.double_ding icon is bell");
-  assert(REST_CHIMES.double_ding.desc.includes('Boxing arena'), "REST_CHIMES.double_ding description specifies boxing arena ringside bell");
-
-  assert(REST_CHIMES.triple_ding.name === 'Boxing Bell', "REST_CHIMES.triple_ding name is 'Boxing Bell'");
-  assert(REST_CHIMES.triple_ding.tag === 'Triple Ding', "REST_CHIMES.triple_ding tag is 'Triple Ding'");
-  assert(REST_CHIMES.triple_ding.icon === 'fa-solid fa-bell', "REST_CHIMES.triple_ding icon is bell");
-  assert(REST_CHIMES.triple_ding.desc.includes('Boxing arena'), "REST_CHIMES.triple_ding description specifies boxing arena ringside bell");
+  assert(typeof playPiezoChime === 'function', "playPiezoChime is a defined function");
+  assert(typeof playWhistleChime === 'function', "playWhistleChime is a defined function");
+  assert(typeof playRingerChime === 'function', "playRingerChime is a defined function");
+  assert(typeof playChirpChime === 'function', "playChirpChime is a defined function");
+  assert(typeof playPingChime === 'function', "playPingChime is a defined function");
+  assert(Array.isArray(REST_CHIME_KEYS) && REST_CHIME_KEYS.length === 5, "REST_CHIME_KEYS has all 5 options");
+  assert(REST_CHIMES.piezo.name === 'Piezo', "REST_CHIMES.piezo single-word title is 'Piezo'");
+  assert(REST_CHIMES.whistle.name === 'Whistle', "REST_CHIMES.whistle single-word title is 'Whistle'");
+  assert(REST_CHIMES.ringer.name === 'Ringer', "REST_CHIMES.ringer single-word title is 'Ringer'");
+  assert(REST_CHIMES.chirp.name === 'Chirp', "REST_CHIMES.chirp single-word title is 'Chirp'");
+  assert(REST_CHIMES.ping.name === 'Ping', "REST_CHIMES.ping single-word title is 'Ping'");
 
   // Verify Web Audio execution of double ding & triple ding
   let doubleDingSuccess = false;
@@ -22749,6 +23270,62 @@ runSuite("45. Enable Set Types & Disabled-by-Default Settings (Set Types, HRM, M
   assert(setTypesCheckbox.checked === false, "Enable Set Types checkbox is unchecked");
   const normalChip = getOrCreateElement('set-type-normal');
   assert(normalChip.className.includes('bg-emerald-500'), "Reset to normal set type when Set Types disabled");
+});
+
+runSuite("46. Telemetry Section Visibility & allowTelemetry Access Control", () => {
+  // 1. Verify allowTelemetry definition
+  assert(Array.isArray(allowTelemetry), "allowTelemetry is exported as an array");
+  assert(allowTelemetry.length >= 2, "allowTelemetry contains configured athletes");
+  assert(allowTelemetry.includes('abhi13@gmail.com'), "abhi13@gmail.com is in allowTelemetry");
+  assert(allowTelemetry.includes('hithesh@gmail.com'), "hithesh@gmail.com is in allowTelemetry");
+
+  // 2. Test non-allowed athletes
+  const nonAllowedEmails = ['random@athlete.com', 'user@showup.app', 'guest@gym.fit', 'hacker@test.com'];
+  nonAllowedEmails.forEach(email => {
+    applyUserProfile({ firstName: "TestUser", email: email });
+    updateSettingsModalAuthVisibility();
+    assert(isTelemetryAllowed(email) === false, "isTelemetryAllowed is false for " + email);
+    assert(isGlobalVisitorTelemetryAdmin() === false, "isGlobalVisitorTelemetryAdmin is false for " + email);
+    assert(getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Settings telemetry tab button hidden for " + email);
+    
+    // Attempt switching to telemetry
+    switchSettingsTab('telemetry');
+    assert(getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Settings telemetry pane remains hidden when switching for " + email);
+    
+    // Attempt opening modal
+    closeGlobalVisitorTelemetryModal();
+    openGlobalVisitorTelemetryModal();
+    assert(getOrCreateElement('global-visitors-modal').classList.contains('hidden'), "Global visitor telemetry modal remains hidden for " + email);
+  });
+
+  // 3. Test allowed athletes: abhi13@gmail.com & hithesh@gmail.com
+  const allowedAthletes = [
+    { name: "Abhi", email: "abhi13@gmail.com" },
+    { name: "Hithesh", email: "hithesh@gmail.com" },
+    { name: "Abhi Upper", email: "ABHI13@GMAIL.COM" },
+    { name: "Hithesh Spaced", email: "  hithesh@gmail.com  " }
+  ];
+
+  allowedAthletes.forEach(athlete => {
+    applyUserProfile({ firstName: athlete.name, email: athlete.email });
+    updateSettingsModalAuthVisibility();
+    assert(isTelemetryAllowed(athlete.email) === true, "isTelemetryAllowed is true for " + athlete.email);
+    assert(isGlobalVisitorTelemetryAdmin() === true, "isGlobalVisitorTelemetryAdmin is true for " + athlete.email);
+    assert(!getOrCreateElement('settings-tab-btn-telemetry').classList.contains('hidden'), "Settings telemetry tab button is visible for " + athlete.email);
+
+    // Switch to telemetry tab
+    switchSettingsTab('telemetry');
+    assert(!getOrCreateElement('settings-pane-telemetry').classList.contains('hidden'), "Settings telemetry pane is visible for " + athlete.email);
+
+    // Open telemetry modal
+    closeGlobalVisitorTelemetryModal();
+    openGlobalVisitorTelemetryModal();
+    assert(!getOrCreateElement('global-visitors-modal').classList.contains('hidden'), "Global visitor telemetry modal is visible for " + athlete.email);
+    closeGlobalVisitorTelemetryModal();
+  });
+
+  // Cleanup: Reset to normal styling tab
+  switchSettingsTab('styling');
 });
 
 print("\n============================================================");

@@ -561,7 +561,7 @@
 
 
 
-    function showToast(message, type = 'info', duration = 3000) {
+    function showToast(message, type = 'info', duration = 2000) {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
@@ -589,7 +589,7 @@
       `;
 
       container.appendChild(toast);
-      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 3000;
+      const hangDuration = (typeof duration === 'number' && duration > 0) ? duration : 2000;
       setTimeout(() => {
         toast.classList.add('opacity-0', '-translate-y-1');
         setTimeout(() => toast.remove(), 350);
@@ -776,49 +776,94 @@
     }
 
     /**
-     * Synthesizes an authentic acoustic strike of a heavy cast bronze/brass boxing arena ringside bell.
-     * Incorporates true shallow saucer dome acoustics: rim undertone (~458 Hz),
-     * piercing strike fundamental (~740 Hz), acoustic beating doublet (~742.8 Hz producing a 2.8 Hz
-     * vibrating metallic shimmer), inharmonic dome flexure modes (~1095 Hz, ~1568 Hz, ~2116 Hz, ~2752 Hz, ~3463 Hz),
-     * plus a punchy dual-layer steel clapper hammer impact transient with dynamics compression for maximum volume.
+     * Creates a high-headroom master dynamics bus with soft-knee harmonic saturation
+     * and brickwall peak limiting so boxing bell strikes cut through gym audio at maximum loudness.
      */
-    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 0.88) {
-      if (!ctx || !destination) return;
+    function createBoxingBellMasterBus(ctx, destination, startTime) {
+      if (!ctx || !destination) return destination;
+      let busInput = destination;
 
-      // Dynamics compression limiter to maximize loudness and punch on phone speakers without digital clipping
-      let strikeTarget = destination;
       if (typeof ctx.createDynamicsCompressor === 'function') {
         try {
-          const compressor = ctx.createDynamicsCompressor();
-          compressor.threshold.setValueAtTime(-6, startTime);
-          compressor.knee.setValueAtTime(3, startTime);
-          compressor.ratio.setValueAtTime(12, startTime);
-          compressor.attack.setValueAtTime(0.003, startTime);
-          compressor.release.setValueAtTime(0.20, startTime);
-          compressor.connect(destination);
-          strikeTarget = compressor;
+          const limiter = ctx.createDynamicsCompressor();
+          limiter.threshold.setValueAtTime(-1.5, startTime);
+          limiter.knee.setValueAtTime(2.0, startTime);
+          limiter.ratio.setValueAtTime(20.0, startTime);
+          limiter.attack.setValueAtTime(0.001, startTime);
+          limiter.release.setValueAtTime(0.08, startTime);
+          limiter.connect(destination);
+          busInput = limiter;
         } catch (e) {
-          strikeTarget = destination;
+          busInput = destination;
         }
       }
 
-      // Master strike gain envelope (loud and penetrating: default strikeLevel 0.88)
+      if (typeof ctx.createWaveShaper === 'function') {
+        try {
+          const shaper = ctx.createWaveShaper();
+          const samples = 1024;
+          const curve = new Float32Array(samples);
+          const drive = 2.4;
+          const norm = Math.tanh(drive);
+          for (let i = 0; i < samples; i++) {
+            const x = (i * 2) / (samples - 1) - 1;
+            curve[i] = Math.tanh(x * drive) / norm;
+          }
+          shaper.curve = curve;
+          shaper.oversample = '2x';
+          shaper.connect(busInput);
+          busInput = shaper;
+        } catch (e) {}
+      }
+
+      // High-output makeup pre-gain driving the saturator/limiter
+      try {
+        const preGain = ctx.createGain();
+        preGain.gain.setValueAtTime(2.2, startTime);
+        preGain.connect(busInput);
+        return preGain;
+      } catch (e) {
+        return busInput;
+      }
+    }
+
+    /**
+     * Synthesizes an authentic, ultra-loud acoustic strike of a heavy 10-inch cast brass boxing arena ringside bell.
+     * Models physical spun-brass saucer gong acoustics:
+     * - Axial mode doublets (paired closely-spaced partials across every radial mode that create the unmistakable
+     *   rapid metallic "wah-wah" shimmer of a real center-bolted brass boxing bell)
+     * - Initial impact pitch-glide (high-velocity steel hammer flexes the brass rim ~18 cents sharp for the first 35ms)
+     * - Broadband metallic hammer-on-brass clank noise burst + 14ms secondary spring-clapper micro-graze
+     * - Single-stage natural exponential partial decay (avoiding double-envelope attenuation so the bell rings out at full power)
+     */
+    function createBoxingBellStrike(ctx, destination, startTime, duration, strikeLevel = 1.0) {
+      if (!ctx || !destination) return;
+
+      // Constant-ceiling strike bus so individual partial decays are never squared/attenuated early
       const masterGain = ctx.createGain();
       masterGain.gain.setValueAtTime(strikeLevel, startTime);
+      masterGain.gain.setValueAtTime(strikeLevel, startTime + Math.max(0.05, duration - 0.04));
       masterGain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-      masterGain.connect(strikeTarget);
+      masterGain.connect(destination);
 
-      // Shallow cast brass ringside bell saucer dome modes (fundamental ~740 Hz)
-      const baseFreq = 740;
+      // Authentic 10" cast brass ringside gong modal spectrum (Strike note ~792 Hz G5)
+      // Each primary mode is paired with its axial doublet to produce authentic physical brass beating
+      const baseFreq = 792;
       const bellPartials = [
-        { mult: 0.62, gain: 0.45, decay: 0.85, type: 'sine' },      // Rim undertone (~458 Hz)
-        { mult: 1.00, gain: 1.00, decay: 1.00, type: 'sine' },      // Strike tone fundamental (740 Hz)
-        { mult: 1.0038, gain: 0.85, decay: 0.95, type: 'sine' },    // Doublet beating chorus (742.8 Hz ~ 2.8 Hz physical beating shimmer)
-        { mult: 1.48, gain: 0.70, decay: 0.70, type: 'triangle' },  // Dome mode (2,0) clang (~1095 Hz)
-        { mult: 2.12, gain: 0.60, decay: 0.55, type: 'triangle' },  // Dome mode (3,0) (~1568 Hz)
-        { mult: 2.86, gain: 0.50, decay: 0.40, type: 'triangle' },  // Dome mode (4,0) (~2116 Hz)
-        { mult: 3.72, gain: 0.40, decay: 0.30, type: 'triangle' },  // Mode (5,0) metallic bite (~2752 Hz)
-        { mult: 4.68, gain: 0.30, decay: 0.20, type: 'triangle' }   // Upper bronze ring (~3463 Hz)
+        { mult: 0.5000, gain: 0.52, decay: 0.92, type: 'sine', bend: 1.004 },     // Deep brass rim hum (396 Hz)
+        { mult: 0.5038, gain: 0.34, decay: 0.88, type: 'sine', bend: 1.004 },     // Rim hum doublet (399 Hz ~ 3 Hz throb)
+        { mult: 1.0000, gain: 1.00, decay: 1.00, type: 'sine', bend: 1.009 },     // Primary ringside strike tone (792 Hz)
+        { mult: 1.0045, gain: 0.90, decay: 0.96, type: 'sine', bend: 1.008 },     // Primary axial doublet (795.6 Hz ~ 3.6 Hz shimmer)
+        { mult: 1.4920, gain: 0.82, decay: 0.78, type: 'triangle', bend: 1.012 }, // Mode (2,1) brass clang (~1181.7 Hz)
+        { mult: 1.4995, gain: 0.68, decay: 0.74, type: 'sine', bend: 1.011 },     // Mode (2,1) doublet (~1187.6 Hz ~ 5.9 Hz beating)
+        { mult: 2.0350, gain: 0.74, decay: 0.62, type: 'triangle', bend: 1.014 }, // Mode (3,1) piercing ring (~1611.7 Hz)
+        { mult: 2.0440, gain: 0.56, decay: 0.58, type: 'sine', bend: 1.013 },     // Mode (3,1) doublet (~1618.8 Hz ~ 7.1 Hz beating)
+        { mult: 2.7550, gain: 0.68, decay: 0.46, type: 'triangle', bend: 1.016 }, // Mode (4,1) arena projection peak (~2182 Hz)
+        { mult: 2.7680, gain: 0.48, decay: 0.42, type: 'sine', bend: 1.015 },     // Mode (4,1) doublet (~2192 Hz ~ 10 Hz metallic sizzle)
+        { mult: 3.4100, gain: 0.58, decay: 0.34, type: 'sawtooth', bend: 1.018 }, // Mode (5,1) ear-sensitivity bite (~2701 Hz)
+        { mult: 4.2200, gain: 0.46, decay: 0.25, type: 'triangle', bend: 1.020 }, // Mode (6,1) upper brass brilliance (~3342 Hz)
+        { mult: 5.2100, gain: 0.34, decay: 0.16, type: 'triangle', bend: 1.022 }, // Mode (7,1) high metalliczing (~4126 Hz)
+        { mult: 6.3800, gain: 0.24, decay: 0.10, type: 'sine', bend: 1.025 }      // Initial anvil overtone (~5053 Hz)
       ];
 
       bellPartials.forEach(p => {
@@ -826,7 +871,10 @@
           const osc = ctx.createOscillator();
           const partGain = ctx.createGain();
           osc.type = p.type;
-          osc.frequency.setValueAtTime(baseFreq * p.mult, startTime);
+          const targetFreq = baseFreq * p.mult;
+          // Non-linear brass tension pitch-bend on hammer strike (drops to steady pitch in 32ms)
+          osc.frequency.setValueAtTime(targetFreq * (p.bend || 1.008), startTime);
+          osc.frequency.exponentialRampToValueAtTime(targetFreq, startTime + 0.032);
 
           const partDuration = Math.max(0.08, duration * p.decay);
           partGain.gain.setValueAtTime(p.gain, startTime);
@@ -839,35 +887,63 @@
         } catch (e) {}
       });
 
-      // Layer 1: Steel hammer impact clapper transient (sharp metallic pitch drop 4200 Hz -> 700 Hz)
+      // Layer 1: Steel spring-hammer clapper strike + 14ms secondary rim rebound micro-bounce
       try {
-        const clickOsc = ctx.createOscillator();
-        const clickGain = ctx.createGain();
-        clickOsc.type = 'square';
-        clickOsc.frequency.setValueAtTime(4200, startTime);
-        clickOsc.frequency.exponentialRampToValueAtTime(700, startTime + 0.024);
-        clickGain.gain.setValueAtTime(0.70, startTime);
-        clickGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.024);
-        clickOsc.connect(clickGain);
-        clickGain.connect(masterGain);
-        clickOsc.start(startTime);
-        clickOsc.stop(startTime + 0.028);
+        const clapperTimes = [
+          { offset: 0.000, startF: 4800, endF: 780, dur: 0.026, amp: 0.95 },
+          { offset: 0.014, startF: 3600, endF: 920, dur: 0.016, amp: 0.55 }
+        ];
+        clapperTimes.forEach(c => {
+          const t0 = startTime + c.offset;
+          const clickOsc = ctx.createOscillator();
+          const clickGain = ctx.createGain();
+          clickOsc.type = 'square';
+          clickOsc.frequency.setValueAtTime(c.startF, t0);
+          clickOsc.frequency.exponentialRampToValueAtTime(c.endF, t0 + c.dur);
+          clickGain.gain.setValueAtTime(c.amp, t0);
+          clickGain.gain.exponentialRampToValueAtTime(0.0001, t0 + c.dur);
+          clickOsc.connect(clickGain);
+          clickGain.connect(masterGain);
+          clickOsc.start(t0);
+          clickOsc.stop(t0 + c.dur + 0.004);
+        });
       } catch (e) {}
 
-      // Layer 2: High rim snap/crack transient (5500 Hz -> 1400 Hz)
-      try {
-        const snapOsc = ctx.createOscillator();
-        const snapGain = ctx.createGain();
-        snapOsc.type = 'triangle';
-        snapOsc.frequency.setValueAtTime(5500, startTime);
-        snapOsc.frequency.exponentialRampToValueAtTime(1400, startTime + 0.016);
-        snapGain.gain.setValueAtTime(0.50, startTime);
-        snapGain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.016);
-        snapOsc.connect(snapGain);
-        snapGain.connect(masterGain);
-        snapOsc.start(startTime);
-        snapOsc.stop(startTime + 0.020);
-      } catch (e) {}
+      // Layer 2: Broadband metallic hammer-on-brass impulse burst (filtered impact noise)
+      if (typeof ctx.createBuffer === 'function' && typeof ctx.createBufferSource === 'function') {
+        try {
+          const sampleRate = ctx.sampleRate || 44100;
+          const noiseDur = 0.035;
+          const frameCount = Math.max(64, Math.floor(sampleRate * noiseDur));
+          const noiseBuffer = ctx.createBuffer(1, frameCount, sampleRate);
+          const output = noiseBuffer.getChannelData(0);
+          for (let i = 0; i < frameCount; i++) {
+            const env = Math.pow(1 - i / frameCount, 2.2);
+            output[i] = (Math.random() * 2 - 1) * env;
+          }
+          const noiseSource = ctx.createBufferSource();
+          noiseSource.buffer = noiseBuffer;
+
+          const noiseGain = ctx.createGain();
+          noiseGain.gain.setValueAtTime(0.90, startTime);
+          noiseGain.gain.exponentialRampToValueAtTime(0.001, startTime + noiseDur);
+
+          if (typeof ctx.createBiquadFilter === 'function') {
+            const bandpass = ctx.createBiquadFilter();
+            bandpass.type = 'bandpass';
+            bandpass.frequency.setValueAtTime(2850, startTime);
+            bandpass.Q.setValueAtTime(1.8, startTime);
+            noiseSource.connect(bandpass);
+            bandpass.connect(noiseGain);
+          } else {
+            noiseSource.connect(noiseGain);
+          }
+
+          noiseGain.connect(masterGain);
+          noiseSource.start(startTime);
+          noiseSource.stop(startTime + noiseDur);
+        } catch (e) {}
+      }
     }
 
     /**
@@ -951,8 +1027,8 @@
      * Synthesizes an authentic boxing arena ringside double bell ("CLANG! ... CLANG!").
      * Exact double ding version of a boxing arena's ringside bell used by officials to signal
      * the start and end of a boxing round.
-     * - First strike at 0.00s (duration ~1.0s, sharp resonant brass impact).
-     * - Second strike at 0.22s (duration ~2.7s, sustained exponential decay ringing out freely).
+     * - First strike at 0.00s (duration ~1.2s, sharp resonant brass impact).
+     * - Second strike at 0.28s (duration ~3.0s, full sustained ringside brass decay).
      */
     function playDoubleDingChime() {
       try {
@@ -963,9 +1039,10 @@
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Sharp double strike (CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 1.0, 0.88);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.22, 2.7, 0.96);
+        const masterBus = createBoxingBellMasterBus(ctx, ctx.destination, now);
+        // Boxing arena ringside bell: Authoritative double strike (CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, masterBus, now, 1.2, 0.95);
+        createBoxingBellStrike(ctx, masterBus, now + 0.28, 3.0, 1.00);
       } catch (e) {
         console.warn("Rest timer boxing bell double ding alert warning:", e);
       }
@@ -975,8 +1052,8 @@
      * Synthesizes an authentic boxing arena ringside triple bell ("CLANG! ... CLANG! ... CLANG!").
      * Exact triple ding version of a boxing arena's ringside bell used by officials to signal
      * round start, round warnings, or round end.
-     * - Three strikes spaced ~200ms apart (0.00s, 0.20s, 0.40s).
-     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~2.8s.
+     * - Three strikes spaced ~280ms apart (0.00s, 0.28s, 0.56s).
+     * - Strikes 1 & 2 ring into subsequent strikes; strike 3 rings out completely for ~3.2s.
      */
     function playTripleDingChime() {
       try {
@@ -987,50 +1064,273 @@
           ctx.resume();
         }
         const now = ctx.currentTime;
-        // Boxing arena ringside bell: Rapid triple strike (CLANG! ... CLANG! ... CLANG!)
-        createBoxingBellStrike(ctx, ctx.destination, now, 0.9, 0.85);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.20, 0.9, 0.88);
-        createBoxingBellStrike(ctx, ctx.destination, now + 0.40, 2.8, 0.98);
+        const masterBus = createBoxingBellMasterBus(ctx, ctx.destination, now);
+        // Boxing arena ringside bell: Authoritative triple strike (CLANG! ... CLANG! ... CLANG!)
+        createBoxingBellStrike(ctx, masterBus, now, 1.1, 0.92);
+        createBoxingBellStrike(ctx, masterBus, now + 0.28, 1.1, 0.96);
+        createBoxingBellStrike(ctx, masterBus, now + 0.56, 3.2, 1.00);
       } catch (e) {
         console.warn("Rest timer boxing bell triple ding alert warning:", e);
       }
     }
 
+    /**
+     * Option 1 (Piezo): Piercing 3.5 kHz commercial gym wall piezo tweeter double-beep (BEEP-BEEEEP!)
+     */
+    function playShrillPiezoTone(ctx, startTime, duration, freq = 3520) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.001, startTime);
+      master.gain.linearRampToValueAtTime(0.95, startTime + 0.003);
+      master.gain.setValueAtTime(0.95, startTime + Math.max(0.01, duration - 0.006));
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const osc1 = ctx.createOscillator();
+      const g1 = ctx.createGain();
+      osc1.type = 'square';
+      osc1.frequency.setValueAtTime(freq, startTime);
+      g1.gain.setValueAtTime(0.45, startTime);
+      osc1.connect(g1);
+      g1.connect(master);
+      osc1.start(startTime);
+      osc1.stop(startTime + duration);
+
+      const osc2 = ctx.createOscillator();
+      const g2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(freq, startTime);
+      g2.gain.setValueAtTime(0.75, startTime);
+      osc2.connect(g2);
+      g2.connect(master);
+      osc2.start(startTime);
+      osc2.stop(startTime + duration);
+    }
+
+    function playPiezoChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playShrillPiezoTone(ctx, now, 0.12, 3520);
+        playShrillPiezoTone(ctx, now + 0.18, 0.28, 3520);
+      } catch (e) {
+        console.warn("Rest timer piezo chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 2 (Whistle): Shrill 3.1 kHz dual-chamber coach/referee pea whistle double-blast (TWEET! — TWEEEEET!)
+     */
+    function playWhistleBlastTone(ctx, startTime, duration) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.001, startTime);
+      master.gain.linearRampToValueAtTime(0.95, startTime + 0.012);
+      master.gain.setValueAtTime(0.95, startTime + Math.max(0.02, duration - 0.025));
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(32, startTime);
+      lfoGain.gain.setValueAtTime(45, startTime);
+      lfo.connect(lfoGain);
+      lfo.start(startTime);
+      lfo.stop(startTime + duration);
+
+      [2980, 3165].forEach((f, idx) => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f - 120, startTime);
+        osc.frequency.exponentialRampToValueAtTime(f, startTime + 0.022);
+        try { lfoGain.connect(osc.frequency); } catch (e) {}
+        g.gain.setValueAtTime(idx === 0 ? 0.65 : 0.55, startTime);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      });
+
+      if (typeof ctx.createBuffer === 'function' && typeof ctx.createBufferSource === 'function' && typeof ctx.createBiquadFilter === 'function') {
+        try {
+          const sr = ctx.sampleRate || 44100;
+          const frames = Math.max(64, Math.floor(sr * duration));
+          const buf = ctx.createBuffer(1, frames, sr);
+          const data = buf.getChannelData(0);
+          for (let i = 0; i < frames; i++) data[i] = (Math.random() * 2 - 1) * 0.18;
+          const src = ctx.createBufferSource();
+          src.buffer = buf;
+          const bp = ctx.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.frequency.setValueAtTime(3100, startTime);
+          bp.Q.setValueAtTime(6.0, startTime);
+          src.connect(bp);
+          bp.connect(master);
+          src.start(startTime);
+          src.stop(startTime + duration);
+        } catch (e) {}
+      }
+    }
+
+    function playWhistleChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playWhistleBlastTone(ctx, now, 0.18);
+        playWhistleBlastTone(ctx, now + 0.24, 0.42);
+      } catch (e) {
+        console.warn("Rest timer whistle chime warning:", e);
+      }
+    }
+
+    /**
+     * High-tension shrill steel dome ping helper (used by Ringer and Ping)
+     */
+    function playSteelPingTone(ctx, startTime, duration, level = 0.95) {
+      if (!ctx) return;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(level, startTime);
+      master.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      master.connect(ctx.destination);
+
+      const modes = [
+        { f: 1760, g: 0.45, d: 0.95 },
+        { f: 2680, g: 0.95, d: 1.00 },
+        { f: 2689, g: 0.80, d: 0.92 },
+        { f: 3890, g: 0.75, d: 0.65 },
+        { f: 5120, g: 0.50, d: 0.35 },
+        { f: 6480, g: 0.35, d: 0.18 }
+      ];
+      modes.forEach(m => {
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(m.f, startTime);
+        const dur = Math.max(0.04, duration * m.d);
+        g.gain.setValueAtTime(m.g, startTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, startTime + dur);
+        osc.connect(g);
+        g.connect(master);
+        osc.start(startTime);
+        osc.stop(startTime + dur);
+      });
+    }
+
+    /**
+     * Option 3 (Ringer): Motorized fight-gym wall alarm bell with rapid 24 Hz hammer rattle (BRRRING!)
+     */
+    function playRingerChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        const strikes = 12;
+        for (let i = 0; i < strikes; i++) {
+          const isLast = i === strikes - 1;
+          playSteelPingTone(ctx, now + i * 0.042, isLast ? 1.4 : 0.09, isLast ? 0.98 : 0.85);
+        }
+      } catch (e) {
+        console.warn("Rest timer ringer chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 4 (Chirp): 4.0 kHz shrill digital stopwatch double-chirp alarm (BEEP-BEEP ... BEEP-BEEP!)
+     */
+    function playChirpChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playShrillPiezoTone(ctx, now, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.095, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.28, 0.065, 4000);
+        playShrillPiezoTone(ctx, now + 0.375, 0.11, 4000);
+      } catch (e) {
+        console.warn("Rest timer chirp chime warning:", e);
+      }
+    }
+
+    /**
+     * Option 5 (Ping): Bright, high-tension 2.7 kHz hardened steel ring-bell double-ping (TING! — TING!)
+     */
+    function playPingChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime + 0.01;
+        playSteelPingTone(ctx, now, 0.24, 0.95);
+        playSteelPingTone(ctx, now + 0.22, 1.6, 1.0);
+      } catch (e) {
+        console.warn("Rest timer ping chime warning:", e);
+      }
+    }
+
+    const REST_CHIME_KEYS = ['piezo', 'whistle', 'ringer', 'chirp', 'ping'];
+
     const REST_CHIMES = {
-      double_ding: {
-        id: 'double_ding',
-        name: 'Boxing Bell',
-        tag: 'Double Ding',
-        desc: "Boxing arena ringside bell: double strike (round start/end)",
+      piezo: {
+        id: 'piezo',
+        name: 'Piezo',
+        tag: 'Piezo',
+        desc: 'Piercing 3.5 kHz commercial gym wall piezo double-beep',
+        icon: 'fa-solid fa-wave-square'
+      },
+      whistle: {
+        id: 'whistle',
+        name: 'Whistle',
+        tag: 'Whistle',
+        desc: 'Shrill 3.1 kHz coach/referee pea whistle double-blast',
+        icon: 'fa-solid fa-bullhorn'
+      },
+      ringer: {
+        id: 'ringer',
+        name: 'Ringer',
+        tag: 'Ringer',
+        desc: 'Motorized fight-gym wall alarm bell rapid hammer rattle',
         icon: 'fa-solid fa-bell'
       },
-      triple_ding: {
-        id: 'triple_ding',
-        name: 'Boxing Bell',
-        tag: 'Triple Ding',
-        desc: "Boxing arena ringside bell: triple strike (round official bell)",
-        icon: 'fa-solid fa-bell'
+      chirp: {
+        id: 'chirp',
+        name: 'Chirp',
+        tag: 'Chirp',
+        desc: 'Ultra-shrill 4.0 kHz digital stopwatch double-chirp',
+        icon: 'fa-solid fa-stopwatch'
       },
-      deep_gong: {
-        id: 'deep_gong',
-        name: 'Deep Gong',
-        tag: 'Masculine',
-        desc: 'Definitively masculine: deep resonant brass gong',
-        icon: 'fa-solid fa-shield-halved'
+      ping: {
+        id: 'ping',
+        name: 'Ping',
+        tag: 'Ping',
+        desc: 'Bright 2.7 kHz hardened steel ring-bell double-ping',
+        icon: 'fa-solid fa-bell-concierge'
       }
     };
 
     function getRestChimeSound() {
       try {
         const val = localStorage.getItem('showUp_rest_chime_sound');
-        return REST_CHIMES[val] ? val : 'double_ding';
+        return REST_CHIMES[val] ? val : 'piezo';
       } catch (e) {
-        return 'double_ding';
+        return 'piezo';
       }
     }
 
     function setRestChimeSound(chimeId, preview = true) {
-      const valid = REST_CHIMES[chimeId] ? chimeId : 'double_ding';
+      const valid = REST_CHIMES[chimeId] ? chimeId : 'piezo';
       try {
         localStorage.setItem('showUp_rest_chime_sound', valid);
       } catch (e) {}
@@ -1040,16 +1340,16 @@
       }
     }
 
-    function cycleRestChimeSound() {
+    function cycleRestChimeSound(preview = true) {
       const current = getRestChimeSound();
-      const keys = ['double_ding', 'triple_ding', 'deep_gong'];
-      const nextIndex = (keys.indexOf(current) + 1) % keys.length;
-      const nextChime = keys[nextIndex];
-      setRestChimeSound(nextChime, true);
+      const idx = REST_CHIME_KEYS.indexOf(current);
+      const nextIndex = (idx === -1 ? 0 : idx + 1) % REST_CHIME_KEYS.length;
+      const nextChime = REST_CHIME_KEYS[nextIndex];
+      setRestChimeSound(nextChime, preview);
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       const chimeMeta = REST_CHIMES[nextChime];
       if (typeof showToast === 'function') {
-        showToast(`Recovery Chime: ${chimeMeta.name} (${chimeMeta.tag})`, "info");
+        showToast(`Recovery Chime: ${chimeMeta.name}`, "info");
       }
       return nextChime;
     }
@@ -1057,12 +1357,23 @@
     function playRestChime(explicitChimeId = null) {
       if (!isRestSoundAlertEnabled()) return;
       const chime = explicitChimeId || getRestChimeSound();
-      if (chime === 'triple_ding') {
-        playTripleDingChime();
-      } else if (chime === 'deep_gong') {
-        playDeepGongChime();
-      } else {
-        playDoubleDingChime();
+      switch (chime) {
+        case 'whistle':
+          playWhistleChime();
+          break;
+        case 'ringer':
+          playRingerChime();
+          break;
+        case 'chirp':
+          playChirpChime();
+          break;
+        case 'ping':
+          playPingChime();
+          break;
+        case 'piezo':
+        default:
+          playPiezoChime();
+          break;
       }
     }
 
@@ -1090,7 +1401,7 @@
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.boxing_bell;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
         showToast(next ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
@@ -1102,20 +1413,20 @@
       }
       if (typeof triggerHaptic === 'function') triggerHaptic('light');
       if (typeof showToast === 'function') {
-        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
+        const meta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
         showToast(checked ? `Rest alert sound: On (${meta.name})` : "Rest alert sound: Muted", "info");
       }
     }
 
     function updateRestChimeUI() {
       const chimeId = getRestChimeSound();
-      const meta = REST_CHIMES[chimeId] || REST_CHIMES.double_ding;
+      const meta = REST_CHIMES[chimeId] || REST_CHIMES.piezo;
 
       const chimeBtn = document.getElementById('btn-chime-cycle');
       const chimeIcon = document.getElementById('btn-chime-icon');
       const chimeLabel = document.getElementById('btn-chime-label');
       if (chimeBtn) {
-        chimeBtn.title = `Current chime: ${meta.name} (${meta.tag}) · Click to switch`;
+        chimeBtn.title = `Current chime: ${meta.name} · Click to switch`;
       }
       if (chimeIcon) {
         chimeIcon.className = `${meta.icon} text-emerald-400 text-xs`;
@@ -1134,7 +1445,7 @@
       const enabled = isRestSoundAlertEnabled();
       const bannerBtn = document.getElementById('btn-toggle-rest-sound');
       const bannerIcon = document.getElementById('btn-toggle-rest-sound-icon');
-      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.double_ding;
+      const chimeMeta = REST_CHIMES[getRestChimeSound()] || REST_CHIMES.piezo;
 
       if (bannerBtn && bannerIcon) {
         if (enabled) {
@@ -1257,11 +1568,18 @@
 
     if (typeof window !== 'undefined') {
       window.triggerHaptic = triggerHaptic;
+      window.createBoxingBellMasterBus = createBoxingBellMasterBus;
       window.createBoxingBellStrike = createBoxingBellStrike;
       window.playDoubleBellRing = playDoubleBellRing;
       window.playDeepGongChime = playDeepGongChime;
       window.playDoubleDingChime = playDoubleDingChime;
       window.playTripleDingChime = playTripleDingChime;
+      window.playPiezoChime = playPiezoChime;
+      window.playWhistleChime = playWhistleChime;
+      window.playRingerChime = playRingerChime;
+      window.playChirpChime = playChirpChime;
+      window.playPingChime = playPingChime;
+      window.REST_CHIME_KEYS = REST_CHIME_KEYS;
       window.REST_CHIMES = REST_CHIMES;
       window.playRestChime = playRestChime;
       window.getRestChimeSound = getRestChimeSound;

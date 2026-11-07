@@ -67,6 +67,12 @@
         }
       } catch (e) {}
 
+      try {
+        if (typeof window !== 'undefined' && window.NativeBridge && typeof window.NativeBridge.signOutNativeGoogle === 'function') {
+          window.NativeBridge.signOutNativeGoogle().catch(() => {});
+        }
+      } catch (e) {}
+
       // 2. Wipe personal physical measurements & geo telemetry (including IP location cache)
       localStorage.removeItem('showUp_user_height');
       localStorage.removeItem('showUp_user_weight');
@@ -125,6 +131,11 @@
       const wInput = document.getElementById('user-weight-input');
       if (hInput) hInput.value = '';
       if (wInput) wInput.value = '';
+
+      // Clear all auth form inputs & credentials so nothing lingers on shared / public machines
+      if (typeof clearAuthFormInputs === 'function') {
+        clearAuthFormInputs();
+      }
 
       // 7. Reset Map Telemetry & Zip Code Badges
       const zipDisplay = document.getElementById('display-user-zip');
@@ -453,8 +464,9 @@
                   const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'User');
                   const userEmail = profile.email || '';
                   const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-                  const profileObj = { firstName, email: userEmail, picture };
+                  const profileObj = { firstName, email: userEmail, picture, authProvider: 'google' };
 
+                  syncFirebaseGoogleCredential(response.credential, null);
                   applyUserProfile(profileObj);
                   closeAuthLoginModal();
                   showToast(`Welcome back, ${firstName}!`, "success");
@@ -503,7 +515,61 @@
       }
     }
 
+    function clearAuthFormInputs() {
+      // 1. Reset all auth forms if present
+      const forms = ['auth-signin-view', 'auth-register-view', 'auth-reset-view'];
+      forms.forEach(formId => {
+        const form = document.getElementById(formId);
+        if (form && typeof form.reset === 'function') {
+          try { form.reset(); } catch (e) {}
+        }
+      });
+
+      // 2. Explicitly wipe all individual credential, password, and sensitive input values
+      const inputIds = [
+        'auth-signin-email',
+        'auth-signin-password',
+        'auth-register-name',
+        'auth-register-email',
+        'auth-register-password',
+        'auth-register-confirm-password',
+        'auth-register-zip',
+        'auth-register-otp-code',
+        'auth-reset-email',
+        'auth-reset-otp-code',
+        'auth-reset-password',
+        'auth-reset-confirm-password'
+      ];
+      inputIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = '';
+          // Ensure password inputs are never left in plain-text revealed state
+          if (id.includes('password') || id.includes('pass')) {
+            el.type = 'password';
+          }
+        }
+      });
+
+      // 3. Reset eye toggle icons to default hidden state
+      const toggleIcons = [
+        { id: 'auth-signin-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' },
+        { id: 'auth-register-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' },
+        { id: 'auth-register-confirm-pass-toggle-icon', defaultClass: 'fa-solid fa-eye text-xs' }
+      ];
+      toggleIcons.forEach(item => {
+        const icon = document.getElementById(item.id);
+        if (icon) icon.className = item.defaultClass;
+      });
+
+      // 4. Reset status message banners & subviews
+      if (typeof setAuthStatusMessage === 'function') setAuthStatusMessage('', 'info');
+      if (typeof changeRegisterDetails === 'function') changeRegisterDetails();
+      if (typeof changeResetEmail === 'function') changeResetEmail();
+    }
+
     function openAuthLoginModal(defaultTab = 'signin') {
+      clearAuthFormInputs();
       const modal = document.getElementById('auth-login-modal');
       if (modal) {
         modal.classList.remove('hidden');
@@ -515,9 +581,7 @@
     function closeAuthLoginModal() {
       const modal = document.getElementById('auth-login-modal');
       if (modal) modal.classList.add('hidden');
-      setAuthStatusMessage('', 'info');
-      changeRegisterDetails();
-      changeResetEmail();
+      clearAuthFormInputs();
     }
 
     function handleAuthModalBackdropClick(event) {
@@ -1789,10 +1853,26 @@
       }
     }
 
+    function syncFirebaseGoogleCredential(idToken, accessToken) {
+      try {
+        if (!idToken && !accessToken) return;
+        const fAuth = getFirebaseAuth();
+        if (fAuth && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.GoogleAuthProvider) {
+          const credential = firebase.auth.GoogleAuthProvider.credential(idToken || null, accessToken || null);
+          fAuth.signInWithCredential(credential).catch(err => {
+            console.debug("Firebase GoogleAuthProvider signInWithCredential notice:", err?.message || err);
+          });
+        }
+      } catch (e) {
+        console.debug("Firebase Google credential sync notice:", e);
+      }
+    }
+
     async function handleSuccessfulOAuthToken(token) {
       googleAccessToken = token;
       localStorage.setItem('showUp_google_token', googleAccessToken);
       localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+      syncFirebaseGoogleCredential(null, googleAccessToken);
 
       // 1. Immediately activate logged-in UI
       document.getElementById('btn-google-login').classList.add('hidden');
@@ -1814,15 +1894,15 @@
           const firstName = profile.given_name || (profile.name ? profile.name.split(' ')[0] : 'Athlete');
           const userEmail = profile.email || '';
           const picture = profile.picture || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-          applyUserProfile({ firstName, email: userEmail, picture });
+          applyUserProfile({ firstName, email: userEmail, picture, authProvider: 'google' });
           showToast(`Signed in as ${firstName}`, "success");
         } else {
-          applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+          applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c', authProvider: 'google' });
           showToast("Signed in successfully!", "success");
         }
       } catch (err) {
         console.warn("User info fetch notice:", err);
-        applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c' });
+        applyUserProfile({ firstName: 'Athlete', email: '', picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c', authProvider: 'google' });
         showToast("Signed in successfully!", "success");
       }
 
@@ -1830,7 +1910,9 @@
       // This ensures squads and activity from Google backup are instantly reflected upon login without tab hopping.
       setTimeout(async () => {
         try {
-          await restoreFromGoogleDrive(false);
+          if (googleAccessToken && typeof restoreFromGoogleDrive === 'function') {
+            await restoreFromGoogleDrive(true);
+          }
         } catch (driveErr) {
           console.warn("Auto-restore on login notice:", driveErr);
         }
@@ -1865,12 +1947,16 @@
               const firstName = user.givenName || (user.name ? user.name.split(' ')[0] : 'Athlete');
               const userEmail = user.email || '';
               const picture = user.imageUrl || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
-              const profileObj = { firstName, email: userEmail, picture };
+              const profileObj = { firstName, email: userEmail, picture, authProvider: 'google' };
 
-              if (user.authentication?.accessToken) {
-                googleAccessToken = user.authentication.accessToken;
+              const nativeAccessToken = user.authentication?.accessToken || '';
+              const nativeIdToken = user.idToken || user.authentication?.idToken || '';
+
+              if (nativeAccessToken) {
+                googleAccessToken = nativeAccessToken;
                 localStorage.setItem('showUp_google_token', googleAccessToken);
               }
+              syncFirebaseGoogleCredential(nativeIdToken, nativeAccessToken);
 
               // Apply profile, sync session, close modal, and refresh UI
               applyUserProfile(profileObj);
@@ -1880,8 +1966,8 @@
               // Immediately pull and restore historic cloud backup from Google Drive & Firestore
               setTimeout(async () => {
                 try {
-                  if (typeof restoreFromGoogleDrive === 'function') {
-                    await restoreFromGoogleDrive(false);
+                  if (googleAccessToken && typeof restoreFromGoogleDrive === 'function') {
+                    await restoreFromGoogleDrive(true);
                   }
                 } catch (driveErr) {
                   console.warn("[NativeAuth] Auto-restore from Drive notice:", driveErr);
@@ -2010,4 +2096,5 @@
     if (typeof window !== 'undefined') {
       window.confirmDeleteAccount = confirmDeleteAccount;
       window.deleteAthleteAccount = deleteAthleteAccount;
+      window.clearAuthFormInputs = clearAuthFormInputs;
     }

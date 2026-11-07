@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>showUp - Compound your progress</title>
+  <meta name="description" content="showUp - Privacy-first workout tracking and exercise telemetry. Compound your fitness progress with custom routines, live biometrics, PR tracking, and social squads.">
+  <link rel="canonical" href="https://trackshowup.app/">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -194,11 +196,11 @@
       <div id="auth-status-message" class="hidden"></div>
 
       <!-- VIEW 1: SIGN IN WITH EMAIL & PASSWORD -->
-      <form id="auth-signin-view" onsubmit="handleEmailPasswordSignIn(event)" class="space-y-3">
+      <form id="auth-signin-view" onsubmit="handleEmailPasswordSignIn(event)" autocomplete="off" class="space-y-3">
         <div>
           <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">Email Address</label>
           <div class="relative">
-            <input type="email" id="auth-signin-email" required placeholder="athlete@example.com" autocomplete="email" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+            <input type="email" id="auth-signin-email" required placeholder="athlete@example.com" autocomplete="off" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
           </div>
         </div>
 
@@ -210,7 +212,7 @@
             </button>
           </div>
           <div class="relative flex items-center">
-            <input type="password" id="auth-signin-password" required placeholder="Enter password" autocomplete="current-password" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 pr-10 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
+            <input type="password" id="auth-signin-password" required placeholder="Enter password" autocomplete="new-password" class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 pr-10 text-xs text-slate-100 placeholder-slate-600 focus:outline-none transition">
             <button type="button" onclick="togglePasswordVisibility('auth-signin-password', 'auth-signin-pass-toggle-icon')" class="absolute right-2.5 text-slate-500 hover:text-slate-300 p-1" title="Toggle password visibility">
               <i id="auth-signin-pass-toggle-icon" class="fa-solid fa-eye text-xs"></i>
             </button>
@@ -223,9 +225,8 @@
         </button>
       </form>
 
-      <!-- VIEW 2: SET UP NEW ACCOUNT (SIMPLE 3-STEP VERIFIED REGISTRATION) -->
       <!-- VIEW 2: SET UP NEW ACCOUNT (GENERIC VERIFIED REGISTRATION) -->
-      <form id="auth-register-view" onsubmit="handleEmailPasswordRegister(event)" class="hidden space-y-3">
+      <form id="auth-register-view" onsubmit="handleEmailPasswordRegister(event)" autocomplete="off" class="hidden space-y-3">
         <!-- STEP 1: Enter Name & Email Address -->
         <div id="auth-register-step-details" class="space-y-3">
           <div>
@@ -333,7 +334,7 @@
       </form>
 
       <!-- VIEW 3: RESET PASSWORD VIA EMAIL LINK -->
-      <form id="auth-reset-view" onsubmit="handleEmailPasswordReset(event)" class="hidden space-y-3">
+      <form id="auth-reset-view" onsubmit="handleEmailPasswordReset(event)" autocomplete="off" class="hidden space-y-3">
         <!-- STEP 1: Enter Email & Request Link -->
         <div id="auth-reset-step-email" class="space-y-3">
           <div>
@@ -784,7 +785,7 @@
         <button id="settings-tab-btn-backup" type="button" onclick="triggerHaptic('light'); switchSettingsTab('backup')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200">
           Backup
         </button>
-        <button id="settings-tab-btn-telemetry" type="button" onclick="triggerHaptic('light'); switchSettingsTab('telemetry')" class="flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200">
+        <button id="settings-tab-btn-telemetry" type="button" onclick="triggerHaptic('light'); switchSettingsTab('telemetry')" class="hidden flex-1 py-1.5 px-2 rounded-xl font-bold transition text-center text-slate-400 hover:text-slate-200" style="display:none">
           Telemetry
         </button>
       </div>
@@ -946,12 +947,14 @@
             <div class="flex items-center justify-between bg-slate-900/60 p-2.5 rounded-2xl border border-slate-800/80">
               <div>
                 <span class="text-xs text-slate-300 block">Recovery Chime Tone</span>
-                <span class="text-[10px] text-slate-500">Double Ding, Triple Ding, or Deep Gong</span>
+                <span class="text-[10px] text-slate-500">Piezo, Whistle, Ringer, Chirp, or Ping</span>
               </div>
               <select id="pref-rest-chime-select" onchange="setRestChimeSound(this.value)" class="bg-slate-900 border border-slate-700 rounded-xl px-2 py-1 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-500 cursor-pointer">
-                <option value="double_ding" selected>Boxing Bell (Double Ding)</option>
-                <option value="triple_ding">Boxing Bell (Triple Ding)</option>
-                <option value="deep_gong">Deep Gong (Masculine)</option>
+                <option value="piezo" selected>Piezo</option>
+                <option value="whistle">Whistle</option>
+                <option value="ringer">Ringer</option>
+                <option value="chirp">Chirp</option>
+                <option value="ping">Ping</option>
               </select>
             </div>
 
@@ -1784,7 +1787,7 @@
               </span>
               <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">Quiet</span>
             </div>
-            <p class="text-[11px] text-slate-400 mt-0.5">Gentle floating pill slides down at the top of the app for 3 seconds without interrupting your session.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Gentle floating pill slides down at the top of the app for 2 seconds without interrupting your session.</p>
           </div>
         </label>
 
@@ -3006,8 +3009,8 @@
             <div class="flex items-center gap-1 shrink-0">
               <!-- Minimalist Chime Cycle Button -->
               <button id="btn-chime-cycle" type="button" onclick="cycleRestChimeSound()" class="bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/80 text-[10px] font-bold px-2 py-0.5 rounded-lg transition active:scale-95 shadow flex items-center gap-1 select-none cursor-pointer" title="Switch recovery chime tone">
-                <i id="btn-chime-icon" class="fa-solid fa-bell text-emerald-400 text-[9px]"></i>
-                <span id="btn-chime-label" class="text-[9px] font-bold">Arena Bell</span>
+                <i id="btn-chime-icon" class="fa-solid fa-wave-square text-emerald-400 text-[9px]"></i>
+                <span id="btn-chime-label" class="text-[9px] font-bold">Piezo</span>
               </button>
 
               <!-- Mute / Unmute Bell Button -->
@@ -3920,16 +3923,16 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <!-- Application Modules (Ordered Classic Scripts) -->
-  <script defer src="js/config.js?v=20261023k"></script>
+  <script defer src="js/config.js?v=20261107b"></script>
   <script defer src="js/storage.js?v=20261023k"></script>
-  <script defer src="js/utils.js?v=20261028a"></script>
-  <script defer src="js/native-bridge.js?v=20261026a"></script>
+  <script defer src="js/utils.js?v=20261107b"></script>
+  <script defer src="js/native-bridge.js?v=20261105a"></script>
   <script defer src="js/theme.js?v=20261023k"></script>
-  <script defer src="js/auth.js?v=20261023k"></script>
-  <script defer src="js/workout.js?v=20261028a"></script>
+  <script defer src="js/auth.js?v=20261105a"></script>
+  <script defer src="js/workout.js?v=20261107a"></script>
   <script defer src="js/history.js?v=20261028a"></script>
   <script defer src="js/progress.js?v=20261023k"></script>
-  <script defer src="js/squads.js?v=20261023k"></script>
+  <script defer src="js/squads.js?v=20261107a"></script>
   <script defer src="js/map.js?v=20261023k"></script>
   <script defer src="js/visitors.js?v=20261023k"></script>
   <script defer src="js/backup.js?v=20261028c"></script>

@@ -54,7 +54,7 @@
 
     // 1e. Initialize native GoogleAuth plugin if present
     try {
-      const googleAuth = window.Capacitor.Plugins?.GoogleAuth || (typeof window.Capacitor.registerPlugin === 'function' ? window.Capacitor.registerPlugin('GoogleAuth') : null);
+      const googleAuth = getGoogleAuthPlugin();
       if (googleAuth && typeof googleAuth.initialize === 'function') {
         const isIos = window.Capacitor.getPlatform?.() === 'ios';
         const clientId = isIos
@@ -73,10 +73,29 @@
     }
   }
 
+  function getGoogleAuthPlugin() {
+    if (typeof window === 'undefined' || !window.Capacitor) return null;
+    if (window.Capacitor.Plugins && window.Capacitor.Plugins.GoogleAuth) {
+      return window.Capacitor.Plugins.GoogleAuth;
+    }
+    if (typeof window.Capacitor.registerPlugin === 'function') {
+      return window.Capacitor.registerPlugin('GoogleAuth');
+    }
+    if (typeof window.Capacitor.nativePromise === 'function') {
+      return {
+        initialize: (opts) => window.Capacitor.nativePromise('GoogleAuth', 'initialize', opts || {}),
+        signIn: (opts) => window.Capacitor.nativePromise('GoogleAuth', 'signIn', opts || {}),
+        refresh: (opts) => window.Capacitor.nativePromise('GoogleAuth', 'refresh', opts || {}),
+        signOut: (opts) => window.Capacitor.nativePromise('GoogleAuth', 'signOut', opts || {})
+      };
+    }
+    return null;
+  }
+
   // 1f. Perform Native Google Sign-In via ASWebAuthenticationSession / GIDSignIn / GoogleSignInClient
   async function signInNativeGoogle() {
     if (!isNative()) return null;
-    const googleAuth = window.Capacitor.Plugins?.GoogleAuth || (typeof window.Capacitor.registerPlugin === 'function' ? window.Capacitor.registerPlugin('GoogleAuth') : null);
+    const googleAuth = getGoogleAuthPlugin();
     if (!googleAuth || typeof googleAuth.signIn !== 'function') return null;
 
     const isIos = window.Capacitor.getPlatform?.() === 'ios';
@@ -94,6 +113,16 @@
     } catch (e) {}
 
     return await googleAuth.signIn();
+  }
+
+  async function signOutNativeGoogle() {
+    if (!isNative()) return;
+    const googleAuth = getGoogleAuthPlugin();
+    if (googleAuth && typeof googleAuth.signOut === 'function') {
+      try {
+        await googleAuth.signOut();
+      } catch (e) {}
+    }
   }
 
   // 2. Schedule Local Notification for Target Rest Recovery
@@ -180,7 +209,8 @@
     scheduleRestNotification: scheduleRestNotification,
     cancelRestNotification: cancelRestNotification,
     triggerNativeHaptic: triggerNativeHaptic,
-    signInNativeGoogle: signInNativeGoogle
+    signInNativeGoogle: signInNativeGoogle,
+    signOutNativeGoogle: signOutNativeGoogle
   };
 
   // Run on DOM ready, window load, deviceready, and short retry loop
