@@ -379,9 +379,12 @@ function runSuite(name, fn) {
 
     const defaultCatalog = [
 { name: "Abdominal Crunch (Machine)", implement: "Machine", muscle: "Core/Abs", secondary: [] },
+      { name: "Air Squats", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Archer Push-Ups", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Assisted Dip Machine", implement: "Machine", muscle: "Chest", secondary: ["Triceps","Shoulders"] },
       { name: "Assisted Pull-Up Machine", implement: "Machine", muscle: "Back", secondary: ["Biceps","Forearms"] },
       { name: "Back Extension (Machine)", implement: "Machine", muscle: "Back", secondary: ["Hamstrings/Glutes","Core/Abs"] },
+      { name: "Back Squats", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Banded KB Suitcase Carry", implement: "Kettlebell", muscle: "Core/Abs", secondary: ["Shoulders","Back","Quads","Hamstrings/Glutes"] },
       { name: "Banded Lateral Walk", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Quads","Core/Abs"] },
       { name: "Bar Chest Dips", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
@@ -420,6 +423,7 @@ function runSuite(name, fn) {
       { name: "EZ Bar Preacher Curls", implement: "Barbell", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "EZ Bar Tricep Pull Overs", implement: "Barbell", muscle: "Triceps", secondary: ["Back","Chest"] },
       { name: "Face Pull", implement: "Gymnastics Rings", muscle: "Shoulders", secondary: ["Back"] },
+      { name: "Front Squats", implement: "Barbell", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs","Back"] },
       { name: "Gada Swings (Mace 360)", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Biceps"] },
       { name: "Gadaa 360", implement: "Macebell (Gadaa)", muscle: "Shoulders", secondary: ["Back","Core/Abs","Forearms"] },
       { name: "Glute Bridge", implement: "Bodyweight", muscle: "Hamstrings/Glutes", secondary: ["Core/Abs","Quads"] },
@@ -448,8 +452,10 @@ function runSuite(name, fn) {
       { name: "Outdoor Biking / Cycling", implement: "Biking", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Pec Deck Fly (Machine)", implement: "Machine", muscle: "Chest", secondary: ["Shoulders"] },
       { name: "Pike Pushups", implement: "Bodyweight", muscle: "Shoulders", secondary: ["Triceps","Chest","Core/Abs"] },
+      { name: "Pistol Squats", implement: "Bodyweight", muscle: "Quads", secondary: ["Hamstrings/Glutes","Core/Abs"] },
       { name: "Preacher Curl (Machine)", implement: "Machine", muscle: "Biceps", secondary: ["Forearms"] },
       { name: "Pull-ups", implement: "Bodyweight", muscle: "Back", secondary: ["Biceps","Forearms","Core/Abs"] },
+      { name: "Push-Ups", implement: "Bodyweight", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Reverse Pec Deck (Rear Delt Fly)", implement: "Machine", muscle: "Shoulders", secondary: ["Back"] },
       { name: "Ring Archer Push-Ups", implement: "Gymnastics Rings", muscle: "Chest", secondary: ["Triceps","Shoulders","Core/Abs"] },
       { name: "Ring Bicep Curls", implement: "Gymnastics Rings", muscle: "Biceps", secondary: ["Forearms","Core/Abs"] },
@@ -538,10 +544,15 @@ function runSuite(name, fn) {
       let match = defaultCatalog.find(c => c.name.toLowerCase() === clean);
       if (match) return match;
 
-      // 2. Normalized abbreviation key match
+      // 2. Normalized abbreviation key match (including singular/plural variation)
       const normKey = normalizeExerciseLookupKey(clean);
       match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name) === normKey);
       if (match) return match;
+      const singularKey = normKey.replace(/s$/, '');
+      if (singularKey.length >= 4) {
+        match = defaultCatalog.find(c => normalizeExerciseLookupKey(c.name).replace(/s$/, '') === singularKey);
+        if (match) return match;
+      }
 
       // 2b. Cross-map Single Arm (SA) and Single Hand (SH)
       const saNormKey = normKey.replace(/^sa/, 'sh').replace(/sa/g, 'sh');
@@ -619,7 +630,7 @@ function runSuite(name, fn) {
         return 'Kettlebell';
       } else if (lower.includes('dumbell') || lower.includes('dumbbell') || /\bdb\b/i.test(trimmed)) {
         return 'Dumbbell';
-      } else if (lower.includes('barbell') || lower.includes('ez bar') || /\bbb\b/i.test(trimmed)) {
+      } else if (lower.includes('barbell') || lower.includes('ez bar') || lower.includes('back squat') || lower.includes('front squat') || /\bbb\b/i.test(trimmed)) {
         return 'Barbell';
       } else if (lower.includes('band')) {
         return 'Resistance Band';
@@ -639,7 +650,7 @@ function runSuite(name, fn) {
         return 'Hiking';
       } else if (lower.includes('bike') || lower.includes('cycle')) {
         return 'Biking';
-      } else if (lower.includes('pushup') || lower.includes('push-up') || lower.includes('push up') || lower.includes('pullup') || lower.includes('pull-up') || lower.includes('pull up') || lower.includes('chin-up') || lower.includes('chinup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand')) {
+      } else if (lower.includes('pushup') || lower.includes('push-up') || lower.includes('push up') || lower.includes('pullup') || lower.includes('pull-up') || lower.includes('pull up') || lower.includes('chin-up') || lower.includes('chinup') || lower.includes('dip') || lower.includes('bridge') || lower.includes('lunge') || lower.includes('burpee') || lower.includes('sapaate') || lower.includes('bethak') || lower.includes('dand') || lower.includes('air squat') || lower.includes('pistol squat')) {
         return 'Bodyweight';
       }
 
@@ -19574,6 +19585,12 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
   assert(Array.isArray(defaultCatalog) && defaultCatalog.length > 0, "Catalog initialized with exercises (" + defaultCatalog.length + " found)");
   assert(defaultCatalog.some(e => e.name === "Barbell Back Squat"), "Barbell Back Squat present in catalog");
   assert(defaultCatalog.some(e => e.name === "Pike Pushups" && e.implement === "Bodyweight"), "Pike Pushups (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Air Squats" && e.implement === "Bodyweight"), "Air Squats (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Back Squats" && e.implement === "Barbell"), "Back Squats (Barbell) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Front Squats" && e.implement === "Barbell"), "Front Squats (Barbell) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Pistol Squats" && e.implement === "Bodyweight"), "Pistol Squats (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Push-Ups" && e.implement === "Bodyweight"), "Push-Ups (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Archer Push-Ups" && e.implement === "Bodyweight"), "Archer Push-Ups (Bodyweight) present in catalog");
   assert(defaultCatalog.some(e => e.implement === "Row Erg"), "Row Erg exercises present in catalog");
 });
 

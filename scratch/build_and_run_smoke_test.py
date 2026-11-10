@@ -487,6 +487,12 @@ runSuite("1. App Initialization & DOMContentLoaded", () => {
   assert(Array.isArray(defaultCatalog) && defaultCatalog.length > 0, "Catalog initialized with exercises (" + defaultCatalog.length + " found)");
   assert(defaultCatalog.some(e => e.name === "Barbell Back Squat"), "Barbell Back Squat present in catalog");
   assert(defaultCatalog.some(e => e.name === "Pike Pushups" && e.implement === "Bodyweight"), "Pike Pushups (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Air Squats" && e.implement === "Bodyweight"), "Air Squats (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Back Squats" && e.implement === "Barbell"), "Back Squats (Barbell) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Front Squats" && e.implement === "Barbell"), "Front Squats (Barbell) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Pistol Squats" && e.implement === "Bodyweight"), "Pistol Squats (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Push-Ups" && e.implement === "Bodyweight"), "Push-Ups (Bodyweight) present in catalog");
+  assert(defaultCatalog.some(e => e.name === "Archer Push-Ups" && e.implement === "Bodyweight"), "Archer Push-Ups (Bodyweight) present in catalog");
   assert(defaultCatalog.some(e => e.implement === "Row Erg"), "Row Erg exercises present in catalog");
 });
 
