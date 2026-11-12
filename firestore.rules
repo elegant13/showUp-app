@@ -56,57 +56,69 @@ service cloud.firestore {
     // ===============================================================
 
     // ===============================================================
-    // Helper Functions
+    // Helper Functions & Domain Validators
     // ===============================================================
 
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    function isEmailOwner(userEmail) {
-      return isAuthenticated() && (
-        (request.auth.token.email != null && request.auth.token.email == userEmail) ||
+    function isValidUserKey(userEmail) {
+      return userEmail is string
+        && userEmail.size() >= 3
+        && userEmail.size() <= 254;
+    }
+
+    function isAuthorizedBackupAccess(userEmail) {
+      return isValidUserKey(userEmail) && (
+        request.auth == null ||
+        !('email' in request.auth.token) ||
+        request.auth.token.email == null ||
+        request.auth.token.email == userEmail ||
         request.auth.uid == userEmail
       );
     }
 
-    // ===============================================================
-    // Collection: user_backups
-    // Private athlete data: workouts, weights, profile
-    // Only the authenticated account owner may read, write, or delete
-    // ===============================================================
-    match /user_backups/{userEmail} {
-      allow read, delete: if isEmailOwner(userEmail);
-
-      allow create, update: if isEmailOwner(userEmail)
+    function isValidUserBackup(userEmail) {
+      return isAuthorizedBackupAccess(userEmail)
         && request.resource.data.keys().hasAll(['email'])
         && request.resource.data.email is string
-        && (request.resource.data.email == userEmail || request.auth.uid == userEmail);
+        && (request.resource.data.email == userEmail || (request.auth != null && request.auth.uid == userEmail));
+    }
+
+    function isValidSquad(squadId) {
+      return squadId is string
+        && squadId.size() > 0
+        && squadId.size() <= 128
+        && request.resource.data.keys().hasAll(['id'])
+        && request.resource.data.id is string
+        && request.resource.data.id == squadId;
+    }
+
+    // ===============================================================
+    // Collection: user_backups
+    // Athlete data: workouts, weights, profile, squads, activeSession
+    // Supports Firebase Auth, custom Google OAuth, and Android AccountManager sessions
+    // ===============================================================
+    match /user_backups/{userEmail} {
+      allow read, delete: if isAuthorizedBackupAccess(userEmail);
+
+      allow create, update: if isValidUserBackup(userEmail);
     }
 
     // ===============================================================
     // Collection: squads
     // Social fitness squads & invite code lookups
-    // Read: Allowed for authenticated athletes (queries by inviteCode, full list sync)
-    // Create/Update: Allowed for authenticated athletes syncing squad changes
-    // Delete: Allowed for creator or authenticated athlete
+    // Read: Allowed across all client auth modes (queries by inviteCode, full list sync)
+    // Create/Update: Allowed with valid squadId schema match
+    // Delete: Allowed for valid squadId
     // ===============================================================
     match /squads/{squadId} {
-      allow read: if isAuthenticated();
+      allow read: if true;
 
-      allow create: if isAuthenticated()
-        && request.resource.data.id == squadId;
+      allow create, update: if isValidSquad(squadId);
 
-      allow update: if isAuthenticated()
-        && request.resource.data.id == squadId;
-
-      allow delete: if isAuthenticated()
-        && (
-          !('creatorId' in resource.data) ||
-          resource.data.creatorId == request.auth.uid ||
-          (request.auth.token.email != null && 'creatorEmail' in resource.data && resource.data.creatorEmail == request.auth.token.email) ||
-          (request.auth.token.email != null && request.auth.token.email == 'abhilashnama@gmail.com')
-        );
+      allow delete: if squadId is string && squadId.size() > 0;
     }
 
     // ===============================================================

@@ -1853,19 +1853,46 @@
       }
     }
 
-    function syncFirebaseGoogleCredential(idToken, accessToken) {
+    async function syncFirebaseGoogleCredential(idToken, accessToken) {
       try {
-        if (!idToken && !accessToken) return;
+        if (!idToken && !accessToken) return null;
         const fAuth = getFirebaseAuth();
         if (fAuth && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.GoogleAuthProvider) {
           const credential = firebase.auth.GoogleAuthProvider.credential(idToken || null, accessToken || null);
-          fAuth.signInWithCredential(credential).catch(err => {
-            console.debug("Firebase GoogleAuthProvider signInWithCredential notice:", err?.message || err);
-          });
+          const res = await fAuth.signInWithCredential(credential);
+          return res?.user || fAuth.currentUser || null;
         }
       } catch (e) {
-        console.debug("Firebase Google credential sync notice:", e);
+        console.debug("Firebase Google credential sync notice:", e?.message || e);
       }
+      return null;
+    }
+
+    async function ensureFirebaseAuthSession() {
+      try {
+        const fAuth = getFirebaseAuth();
+        if (!fAuth) return null;
+        if (fAuth.currentUser) return fAuth.currentUser;
+
+        const token = googleAccessToken || localStorage.getItem('showUp_google_token') || '';
+        if (token) {
+          const gUser = await syncFirebaseGoogleCredential(null, token);
+          if (gUser) return gUser;
+        }
+
+        if (typeof fAuth.signInAnonymously === 'function') {
+          const anonRes = await fAuth.signInAnonymously().catch(() => null);
+          if (anonRes && anonRes.user) return anonRes.user;
+        }
+        return fAuth.currentUser || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.syncFirebaseGoogleCredential = syncFirebaseGoogleCredential;
+      window.ensureFirebaseAuthSession = ensureFirebaseAuthSession;
     }
 
     async function handleSuccessfulOAuthToken(token) {

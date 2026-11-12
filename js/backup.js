@@ -1046,6 +1046,9 @@
         }
 
         const normEmail = rawEmail;
+        if (typeof ensureFirebaseAuthSession === 'function') {
+          await ensureFirebaseAuthSession();
+        }
         let workoutsToSync = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
           ? AppStorage.getAthleteWorkouts()
           : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
@@ -1159,6 +1162,9 @@
         }
 
         const normEmail = rawEmail;
+        if (typeof ensureFirebaseAuthSession === 'function') {
+          await ensureFirebaseAuthSession();
+        }
 
         const docRef = db.collection('user_backups').doc(normEmail);
         const snap = await Promise.race([
