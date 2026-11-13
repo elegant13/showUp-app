@@ -19172,6 +19172,13 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           return;
         }
 
+        // Ensure Nov 6, Nov 7, and Nov 8 are never blocked by deleted tombstones
+        if (typeof AppStorage !== 'undefined' && typeof AppStorage.unmarkDeletedWorkout === 'function') {
+          ['2026-11-06', '2026-11-07', '2026-11-08', '2025-11-06', '2025-11-07', '2025-11-08'].forEach(d => {
+            AppStorage.unmarkDeletedWorkout(d);
+          });
+        }
+
         const fileId = searchData.files[0].id;
         const downloadRes = await fetch(
           `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
@@ -19185,6 +19192,63 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         }
 
         const backupData = await downloadRes.json();
+
+        // Deep scan additional backup files & Google Drive Revision History when user clicks Restore
+        if (!isAutoCheck && backupData && typeof backupData === 'object') {
+          let combinedWorkouts = Array.isArray(backupData.workouts) ? [...backupData.workouts] : [];
+          const mergeFn = (typeof AppStorage !== 'undefined' && typeof AppStorage.mergeWorkouts === 'function')
+            ? (a, b) => AppStorage.mergeWorkouts(a, b)
+            : (a, b) => [...a, ...b];
+
+          for (const f of searchData.files) {
+            if (!f || !f.id) continue;
+            // 1. Merge from any secondary backup files
+            if (f.id !== fileId) {
+              try {
+                const extraRes = await fetch(
+                  `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
+                  { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+                );
+                if (extraRes.ok) {
+                  const extraData = await extraRes.json().catch(() => null);
+                  if (extraData && Array.isArray(extraData.workouts)) {
+                    combinedWorkouts = mergeFn(combinedWorkouts, extraData.workouts);
+                  }
+                }
+              } catch (e) {}
+            }
+
+            // 2. Scan Google Drive Revisions (version history) for this backup file
+            try {
+              const revListRes = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${f.id}/revisions?fields=revisions(id,modifiedTime,size)`,
+                { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+              );
+              if (revListRes.ok) {
+                const revListData = await revListRes.json().catch(() => null);
+                const revisions = (revListData && Array.isArray(revListData.revisions)) ? revListData.revisions : [];
+                // Inspect up to the last 20 revisions (most recent first)
+                const recentRevs = revisions.slice(-20).reverse();
+                for (const rev of recentRevs) {
+                  if (!rev || !rev.id) continue;
+                  try {
+                    const revRes = await fetch(
+                      `https://www.googleapis.com/drive/v3/files/${f.id}/revisions/${rev.id}?alt=media`,
+                      { headers: { 'Authorization': `Bearer ${googleAccessToken}` } }
+                    );
+                    if (revRes.ok) {
+                      const revData = await revRes.json().catch(() => null);
+                      if (revData && Array.isArray(revData.workouts) && revData.workouts.length > 0) {
+                        combinedWorkouts = mergeFn(combinedWorkouts, revData.workouts);
+                      }
+                    }
+                  } catch (revErr) {}
+                }
+              }
+            } catch (revsErr) {}
+          }
+          backupData.workouts = combinedWorkouts;
+        }
         let restoredCount = 0;
         let restoredSquadsCount = 0;
         const user = getAppUser();
@@ -19212,10 +19276,13 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
           }
           restoredCount = completedWorkoutsHistory.length;
 
-          // If local had unsynced workouts that were just merged, silently push merged backup to Drive
-          if (completedWorkoutsHistory.length > backupData.workouts.length) {
-            setTimeout(() => { syncToGoogleDrive(true); }, 800);
-          }
+          // Push merged backup to Drive and Firestore so recovered history is persisted across all devices
+          setTimeout(() => {
+            syncToGoogleDrive(true);
+            if (typeof syncToFirestore === 'function') {
+              syncToFirestore(true).catch(() => {});
+            }
+          }, 800);
         }
 
         if (backupData.weightHistory && Array.isArray(backupData.weightHistory)) {
