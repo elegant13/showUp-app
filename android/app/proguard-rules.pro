@@ -5,13 +5,20 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Preserve line numbers for Crashlytics / Play Console deobfuscation
--keepattributes SourceFile,LineNumberTable
+# Preserve annotations, signatures, and line numbers for Capacitor reflection & Play Console deobfuscation
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Keep MainActivity and Capacitor BridgeActivity entrypoints
--keep class com.showup.fitness.MainActivity { *; }
--keep class com.getcapacitor.BridgeActivity { *; }
+# Keep AndroidX WebKit boundary interfaces used via dynamic Proxy reflection by WebViewCompat
+-keep interface org.chromium.support_lib_boundary.** { *; }
+-keep class org.chromium.support_lib_boundary.** { *; }
+-keep class androidx.webkit.** { *; }
+
+# Keep Capacitor core runtime, annotations, and plugins
+-keep @interface com.getcapacitor.** { *; }
+-keep class com.getcapacitor.** { *; }
+-keep class com.showup.fitness.** { *; }
+-keep class com.codetrixstudio.capacitor.GoogleAuth.** { *; }
 
 # Keep Capacitor plugins and their annotated plugin/callback methods
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * extends com.getcapacitor.Plugin {

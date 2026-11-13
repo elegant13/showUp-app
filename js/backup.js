@@ -313,7 +313,8 @@
 
 
     function requestDriveAuthorization(autoSyncAfter = true) {
-      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+      if ((typeof isNativeAppPlatform === 'function' && isNativeAppPlatform()) ||
+          (typeof window !== 'undefined' && ((window.NativeBridge && window.NativeBridge.isNative()) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())))) {
         if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
           (async () => {
             try {

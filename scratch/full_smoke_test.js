@@ -246,7 +246,7 @@ function runSuite(name, fn) {
    showUp Application Configuration & Shared State
    ========================================================================== */
 
-    const GOOGLE_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
     const GOOGLE_IOS_CLIENT_ID = "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com";
     const GOOGLE_ANDROID_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
     const FIREBASE_WEB_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
@@ -4063,7 +4063,52 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    function isNativeAppPlatform() {
+      if (typeof window === 'undefined') return false;
+      if (window.NativeBridge && typeof window.NativeBridge.isNative === 'function' && window.NativeBridge.isNative()) {
+        return true;
+      }
+      if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
+        return true;
+      }
+      if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+        const p = window.Capacitor.getPlatform();
+        if (p === 'android' || p === 'ios') return true;
+      }
+      if (window.androidBridge || (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge)) {
+        return true;
+      }
+      if (typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string' && /; wv\)|Capacitor/i.test(navigator.userAgent)) {
+        return true;
+      }
+      return false;
+    }
+
     function attemptSilentTokenRefresh() {
+      if (isNativeAppPlatform()) {
+        if (window.NativeBridge && typeof window.NativeBridge.refreshNativeGoogleToken === 'function') {
+          window.NativeBridge.refreshNativeGoogleToken().then(authObj => {
+            if (authObj && authObj.accessToken) {
+              googleAccessToken = authObj.accessToken;
+              localStorage.setItem('showUp_google_token', googleAccessToken);
+              localStorage.setItem('showUp_session_expiry', String(Date.now() + SESSION_DURATION_MS));
+              syncFirebaseGoogleCredential(authObj.idToken || null, googleAccessToken);
+              updateCloudBackupUI();
+              if (typeof restoreFromGoogleDrive === 'function') {
+                restoreFromGoogleDrive(true);
+              }
+            } else {
+              updateCloudBackupUI();
+            }
+          }).catch(() => {
+            updateCloudBackupUI();
+          });
+        } else {
+          updateCloudBackupUI();
+        }
+        return;
+      }
+
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
         setTimeout(() => {
           if (typeof google !== 'undefined' && google.accounts?.oauth2) {
@@ -4096,6 +4141,7 @@ if (typeof window !== 'undefined') {
     }
 
     function requestTokenSilently() {
+      if (isNativeAppPlatform()) return;
       if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) return;
       try {
         const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
@@ -4137,7 +4183,7 @@ if (typeof window !== 'undefined') {
 
     function tryGoogleOneTap() {
       if (window.location.protocol === 'file:') return;
-      if (typeof window !== 'undefined' && ((window.NativeBridge && window.NativeBridge.isNative()) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()))) {
+      if (isNativeAppPlatform()) {
         return;
       }
       const checkAndRun = () => {
@@ -5653,6 +5699,7 @@ if (typeof window !== 'undefined') {
     }
 
     async function signInWithFirebaseGooglePopup() {
+      if (isNativeAppPlatform()) return false;
       try {
         const fAuth = getFirebaseAuth();
         if (!fAuth || typeof fAuth.signInWithPopup !== 'function' || typeof firebase === 'undefined' || !firebase.auth?.GoogleAuthProvider) {
@@ -5724,6 +5771,7 @@ if (typeof window !== 'undefined') {
     }
 
     if (typeof window !== 'undefined') {
+      window.isNativeAppPlatform = isNativeAppPlatform;
       window.syncFirebaseGoogleCredential = syncFirebaseGoogleCredential;
       window.ensureFirebaseAuthSession = ensureFirebaseAuthSession;
     }
@@ -5797,7 +5845,7 @@ if (typeof window !== 'undefined') {
 
     async function handleGoogleSignIn() {
       // 1. Native Capacitor GoogleAuth support
-      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+      if (isNativeAppPlatform()) {
         if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
           setGoogleLoginLoading(true);
           try {
@@ -18744,7 +18792,8 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
 
 
     function requestDriveAuthorization(autoSyncAfter = true) {
-      if (typeof window !== 'undefined' && Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) {
+      if ((typeof isNativeAppPlatform === 'function' && isNativeAppPlatform()) ||
+          (typeof window !== 'undefined' && ((window.NativeBridge && window.NativeBridge.isNative()) || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())))) {
         if (window.NativeBridge && typeof window.NativeBridge.signInNativeGoogle === 'function') {
           (async () => {
             try {

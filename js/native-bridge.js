@@ -8,8 +8,21 @@
   const REST_NOTIFICATION_ID = 4201;
 
   function isNative() {
-    return typeof window !== 'undefined' &&
-           Boolean(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    if (typeof window === 'undefined') return false;
+    if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
+      return true;
+    }
+    if (window.Capacitor && typeof window.Capacitor.getPlatform === 'function') {
+      const p = window.Capacitor.getPlatform();
+      if (p === 'android' || p === 'ios') return true;
+    }
+    if (window.androidBridge || (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.bridge)) {
+      return true;
+    }
+    if (typeof navigator !== 'undefined' && typeof navigator.userAgent === 'string' && /; wv\)|Capacitor/i.test(navigator.userAgent)) {
+      return true;
+    }
+    return false;
   }
 
   function hideNativeSplash() {
@@ -115,6 +128,17 @@
     return await googleAuth.signIn();
   }
 
+  async function refreshNativeGoogleToken() {
+    if (!isNative()) return null;
+    const googleAuth = getGoogleAuthPlugin();
+    if (!googleAuth || typeof googleAuth.refresh !== 'function') return null;
+    try {
+      return await googleAuth.refresh();
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function signOutNativeGoogle() {
     if (!isNative()) return;
     const googleAuth = getGoogleAuthPlugin();
@@ -210,6 +234,7 @@
     cancelRestNotification: cancelRestNotification,
     triggerNativeHaptic: triggerNativeHaptic,
     signInNativeGoogle: signInNativeGoogle,
+    refreshNativeGoogleToken: refreshNativeGoogleToken,
     signOutNativeGoogle: signOutNativeGoogle
   };
 
