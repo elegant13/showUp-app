@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "489093591529",
+    "project_id": "showup-app-ca372",
+    "storage_bucket": "showup-app-ca372.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:489093591529:android:8abea1d15794f4caecdb78",
+        "android_client_info": {
+          "package_name": "com.showup.fitness"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCAA0sbMyo1y2YMrpvgWQU0BUVoMYrosdg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

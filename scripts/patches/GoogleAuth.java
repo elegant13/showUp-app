@@ -71,6 +71,10 @@ public class GoogleAuth extends Plugin {
         .requestEmail()
         .requestProfile();
 
+      if (clientId != null && !clientId.trim().isEmpty()) {
+        googleSignInBuilder.requestIdToken(clientId.trim());
+      }
+
       GoogleSignInOptions googleSignInOptions = googleSignInBuilder.build();
       googleSignInClient = GoogleSignIn.getClient(this.getContext(), googleSignInOptions);
     } catch (Exception e) {

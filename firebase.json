@@ -1,5 +1,20 @@
 {
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "showUp",
+        "supportEmail": "abhi13@gmail.com",
+        "authorizedRedirectUris": [
+          "https://showup-app-ca372.firebaseapp.com/__/auth/handler",
+          "https://trackshowup.app/__/auth/handler",
+          "http://localhost"
+        ]
+      }
+    }
   }
 }

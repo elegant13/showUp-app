@@ -59,11 +59,11 @@
         const isIos = window.Capacitor.getPlatform?.() === 'ios';
         const clientId = isIos
           ? '115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com'
-          : '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com';
+          : '489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com';
 
         googleAuth.initialize({
           clientId: clientId,
-          serverClientId: '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com',
+          serverClientId: '489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com',
           scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
           grantOfflineAccess: false
         }).catch(() => {});
@@ -101,12 +101,12 @@
     const isIos = window.Capacitor.getPlatform?.() === 'ios';
     const clientId = isIos
       ? '115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com'
-      : '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com';
+      : '489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com';
 
     try {
       await googleAuth.initialize({
         clientId: clientId,
-        serverClientId: '115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com',
+        serverClientId: '489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com',
         scopes: ['profile', 'email', 'https://www.googleapis.com/auth/drive.file'],
         grantOfflineAccess: false
       });

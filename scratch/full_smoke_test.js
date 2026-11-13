@@ -246,9 +246,10 @@ function runSuite(name, fn) {
    showUp Application Configuration & Shared State
    ========================================================================== */
 
-    const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
     const GOOGLE_IOS_CLIENT_ID = "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com";
-    const GOOGLE_ANDROID_CLIENT_ID = "115199141886-tj9e2vh8a8re1tga9vd3ddjnjoj0f3lv.apps.googleusercontent.com";
+    const GOOGLE_ANDROID_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
+    const FIREBASE_WEB_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
     const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 1 week active session (7 days)
 
     /**
@@ -4300,6 +4301,7 @@ if (typeof window !== 'undefined') {
     // ==========================================================================
 
     let firebaseAuthInstance = null;
+    let firebaseAuthListenerAttached = false;
     const activePasswordResetOTPs = {};
     let resetResendCooldownTimer = null;
     let resetResendSecondsLeft = 0;
@@ -4318,6 +4320,7 @@ if (typeof window !== 'undefined') {
           }
           if (firebase.apps && firebase.apps.length && typeof firebase.auth === 'function') {
             firebaseAuthInstance = firebase.auth();
+            initFirebaseAuthListener(firebaseAuthInstance);
             return firebaseAuthInstance;
           }
         }
@@ -4325,6 +4328,30 @@ if (typeof window !== 'undefined') {
         console.debug("Firebase Auth initialization notice:", err);
       }
       return null;
+    }
+
+    function initFirebaseAuthListener(authInst) {
+      if (firebaseAuthListenerAttached) return;
+      const fAuth = authInst || firebaseAuthInstance;
+      if (!fAuth || typeof fAuth.onAuthStateChanged !== 'function') return;
+      firebaseAuthListenerAttached = true;
+
+      try {
+        fAuth.onAuthStateChanged((user) => {
+          if (user && !user.isAnonymous && user.email) {
+            const savedProfile = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+            if (savedProfile && savedProfile.email && savedProfile.email.toLowerCase().trim() === user.email.toLowerCase().trim()) {
+              if (savedProfile.uid !== user.uid) {
+                savedProfile.uid = user.uid;
+                savedProfile.id = savedProfile.id || user.uid;
+                localStorage.setItem('showUp_user_profile', JSON.stringify(savedProfile));
+              }
+            }
+          }
+        });
+      } catch (e) {
+        console.debug("Firebase onAuthStateChanged notice:", e);
+      }
     }
 
     function getRegisteredAccounts() {
@@ -4485,19 +4512,48 @@ if (typeof window !== 'undefined') {
         showToast(`Account created! Welcome, ${athleteName}.`, 'success');
       }
 
-      // Sync with Firebase Auth in background if available
+      // Sync with Firebase Auth & Firestore in background if available
       try {
         const fAuth = getFirebaseAuth();
-        if (fAuth && typeof fAuth.createUserWithEmailAndPassword === 'function') {
-          fAuth.createUserWithEmailAndPassword(normEmail, password)
-            .then(cred => {
-              if (cred && cred.user && cred.user.updateProfile) {
-                cred.user.updateProfile({ displayName: athleteName });
+        if (fAuth) {
+          const syncFirebaseProfile = (fUser) => {
+            if (!fUser) return;
+            try {
+              if (typeof fUser.updateProfile === 'function') {
+                fUser.updateProfile({ displayName: athleteName }).catch(() => {});
               }
-            })
-            .catch(err => {
-              console.debug("Firebase Auth createUser notice:", err.message);
-            });
+              const currentSaved = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+              if (currentSaved && currentSaved.email === normEmail) {
+                currentSaved.uid = fUser.uid;
+                currentSaved.id = fUser.uid;
+                localStorage.setItem('showUp_user_profile', JSON.stringify(currentSaved));
+              }
+              if (typeof queueFirestoreAutoSync === 'function') {
+                queueFirestoreAutoSync();
+              }
+            } catch (e) {}
+          };
+
+          if (fAuth.currentUser && fAuth.currentUser.email && fAuth.currentUser.email.toLowerCase().trim() === normEmail) {
+            if (typeof fAuth.currentUser.updatePassword === 'function') {
+              fAuth.currentUser.updatePassword(password).catch(() => {});
+            }
+            syncFirebaseProfile(fAuth.currentUser);
+          } else if (typeof fAuth.createUserWithEmailAndPassword === 'function') {
+            fAuth.createUserWithEmailAndPassword(normEmail, password)
+              .then(cred => {
+                if (cred && cred.user) syncFirebaseProfile(cred.user);
+              })
+              .catch(err => {
+                if (err && err.code === 'auth/email-already-in-use' && typeof fAuth.signInWithEmailAndPassword === 'function') {
+                  fAuth.signInWithEmailAndPassword(normEmail, password)
+                    .then(cred => { if (cred && cred.user) syncFirebaseProfile(cred.user); })
+                    .catch(() => {});
+                } else {
+                  console.debug("Firebase Auth createUser notice:", err?.message || err);
+                }
+              });
+          }
         }
       } catch (e) {}
 
@@ -4541,13 +4597,31 @@ if (typeof window !== 'undefined') {
         showToast(`Welcome back, ${profile.firstName}!`, 'success');
       }
 
-      // Sync with Firebase Auth in background if available
+      // Authenticate with Firebase Auth & sync Firestore in background if available
       try {
         const fAuth = getFirebaseAuth();
         if (fAuth && typeof fAuth.signInWithEmailAndPassword === 'function') {
-          fAuth.signInWithEmailAndPassword(normEmail, password).catch(err => {
-            console.debug("Firebase Auth signIn notice:", err.message);
-          });
+          fAuth.signInWithEmailAndPassword(normEmail, password)
+            .then(cred => {
+              if (cred && cred.user) {
+                const currentSaved = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+                if (currentSaved && currentSaved.email === normEmail) {
+                  currentSaved.uid = cred.user.uid;
+                  currentSaved.id = cred.user.uid;
+                  localStorage.setItem('showUp_user_profile', JSON.stringify(currentSaved));
+                }
+                if (typeof syncOrRestoreFirestoreBackup === 'function') {
+                  syncOrRestoreFirestoreBackup(true).catch(() => {});
+                }
+              }
+            })
+            .catch(err => {
+              if (err && err.code === 'auth/user-not-found' && typeof fAuth.createUserWithEmailAndPassword === 'function') {
+                fAuth.createUserWithEmailAndPassword(normEmail, password).catch(() => {});
+              } else {
+                console.debug("Firebase Auth signIn notice:", err?.message || err);
+              }
+            });
         }
       } catch (e) {}
 
@@ -5544,19 +5618,114 @@ if (typeof window !== 'undefined') {
       }
     }
 
-    function syncFirebaseGoogleCredential(idToken, accessToken) {
+    async function syncFirebaseGoogleCredential(idToken, accessToken) {
       try {
-        if (!idToken && !accessToken) return;
+        if (!idToken && !accessToken) return null;
         const fAuth = getFirebaseAuth();
         if (fAuth && typeof firebase !== 'undefined' && firebase.auth && firebase.auth.GoogleAuthProvider) {
-          const credential = firebase.auth.GoogleAuthProvider.credential(idToken || null, accessToken || null);
-          fAuth.signInWithCredential(credential).catch(err => {
-            console.debug("Firebase GoogleAuthProvider signInWithCredential notice:", err?.message || err);
-          });
+          let res = null;
+          try {
+            const credential = firebase.auth.GoogleAuthProvider.credential(idToken || null, accessToken || null);
+            res = await fAuth.signInWithCredential(credential);
+          } catch (firstErr) {
+            if (idToken && accessToken) {
+              const fallbackCred = firebase.auth.GoogleAuthProvider.credential(null, accessToken);
+              res = await fAuth.signInWithCredential(fallbackCred);
+            } else {
+              throw firstErr;
+            }
+          }
+          const fUser = res?.user || fAuth.currentUser || null;
+          if (fUser && fUser.uid) {
+            const currentSaved = JSON.parse(localStorage.getItem('showUp_user_profile') || 'null');
+            if (currentSaved) {
+              currentSaved.uid = fUser.uid;
+              currentSaved.id = currentSaved.id || fUser.uid;
+              localStorage.setItem('showUp_user_profile', JSON.stringify(currentSaved));
+            }
+          }
+          return fUser;
         }
       } catch (e) {
-        console.debug("Firebase Google credential sync notice:", e);
+        console.debug("Firebase Google credential sync notice:", e?.message || e);
       }
+      return null;
+    }
+
+    async function signInWithFirebaseGooglePopup() {
+      try {
+        const fAuth = getFirebaseAuth();
+        if (!fAuth || typeof fAuth.signInWithPopup !== 'function' || typeof firebase === 'undefined' || !firebase.auth?.GoogleAuthProvider) {
+          return false;
+        }
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.addScope('https://www.googleapis.com/auth/drive.file');
+        provider.addScope('profile');
+        provider.addScope('email');
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        const result = await fAuth.signInWithPopup(provider);
+        if (!result || !result.user) return false;
+
+        let accessToken = '';
+        if (typeof firebase.auth.GoogleAuthProvider.credentialFromResult === 'function') {
+          const cred = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
+          accessToken = cred?.accessToken || '';
+        }
+        if (!accessToken && result.credential && result.credential.accessToken) {
+          accessToken = result.credential.accessToken;
+        }
+        if (accessToken) {
+          googleAccessToken = accessToken;
+          localStorage.setItem('showUp_google_token', googleAccessToken);
+        }
+
+        const fUser = result.user;
+        const firstName = (fUser.displayName ? fUser.displayName.split(' ')[0] : '') || (fUser.email ? fUser.email.split('@')[0] : 'Athlete');
+        const userEmail = fUser.email || '';
+        const picture = fUser.photoURL || 'https://lh3.googleusercontent.com/a/default-user=s96-c';
+        applyUserProfile({
+          id: fUser.uid,
+          uid: fUser.uid,
+          firstName,
+          email: userEmail,
+          picture,
+          authProvider: 'google'
+        });
+        closeAuthLoginModal();
+        showToast(`Signed in as ${firstName}`, "success");
+        return true;
+      } catch (err) {
+        console.debug("Firebase Google popup notice:", err?.code || err?.message || err);
+        return false;
+      }
+    }
+
+    async function ensureFirebaseAuthSession() {
+      try {
+        const fAuth = getFirebaseAuth();
+        if (!fAuth) return null;
+        if (fAuth.currentUser) return fAuth.currentUser;
+
+        const token = googleAccessToken || localStorage.getItem('showUp_google_token') || '';
+        if (token) {
+          const gUser = await syncFirebaseGoogleCredential(null, token);
+          if (gUser) return gUser;
+        }
+
+        if (typeof fAuth.signInAnonymously === 'function') {
+          const anonRes = await fAuth.signInAnonymously().catch(() => null);
+          if (anonRes && anonRes.user) return anonRes.user;
+        }
+        return fAuth.currentUser || null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      window.syncFirebaseGoogleCredential = syncFirebaseGoogleCredential;
+      window.ensureFirebaseAuthSession = ensureFirebaseAuthSession;
     }
 
     async function handleSuccessfulOAuthToken(token) {
@@ -5701,8 +5870,12 @@ if (typeof window !== 'undefined') {
         return;
       }
 
-      // 3. Web flow (Google Identity Services)
+      // 3. Web flow (Google Identity Services + Firebase Auth GoogleAuthProvider fallback)
       if (window.location.protocol === 'file:' || typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        if (window.location.protocol !== 'file:') {
+          const popupOk = await signInWithFirebaseGooglePopup();
+          if (popupOk) return;
+        }
         openAuthLoginModal();
         return;
       }
@@ -5734,8 +5907,11 @@ if (typeof window !== 'undefined') {
               } else if (response.error === 'access_denied') {
                 showToast("Access permission denied by user.", "warning");
               } else {
-                showToast("Google OAuth origin check: opening account login...", "info");
-                openAuthLoginModal();
+                const popupOk = await signInWithFirebaseGooglePopup();
+                if (!popupOk) {
+                  showToast("Google OAuth origin check: opening account login...", "info");
+                  openAuthLoginModal();
+                }
               }
               return;
             }
@@ -5744,11 +5920,14 @@ if (typeof window !== 'undefined') {
               await handleSuccessfulOAuthToken(response.access_token);
             }
           },
-          error_callback: (err) => {
+          error_callback: async (err) => {
             clearTimeout(safetyTimer);
             setGoogleLoginLoading(false);
             console.warn("Google OAuth error callback:", err);
-            openAuthLoginModal();
+            const popupOk = await signInWithFirebaseGooglePopup();
+            if (!popupOk) {
+              openAuthLoginModal();
+            }
           }
         };
 
@@ -19298,6 +19477,9 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         }
 
         const normEmail = rawEmail;
+        if (typeof ensureFirebaseAuthSession === 'function') {
+          await ensureFirebaseAuthSession();
+        }
         let workoutsToSync = (typeof AppStorage !== 'undefined' && typeof AppStorage.getAthleteWorkouts === 'function')
           ? AppStorage.getAthleteWorkouts()
           : (Array.isArray(completedWorkoutsHistory) ? completedWorkoutsHistory : []);
@@ -19411,6 +19593,9 @@ function renderAdminGlobalVisitorTelemetry(force = false) {
         }
 
         const normEmail = rawEmail;
+        if (typeof ensureFirebaseAuthSession === 'function') {
+          await ensureFirebaseAuthSession();
+        }
 
         const docRef = db.collection('user_backups').doc(normEmail);
         const snap = await Promise.race([
