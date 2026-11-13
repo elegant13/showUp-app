@@ -246,6 +246,8 @@ function runSuite(name, fn) {
    showUp Application Configuration & Shared State
    ========================================================================== */
 
+    const APP_VERSION_NAME = "1.0.8";
+    const APP_BUILD_NUMBER = 8;
     const GOOGLE_CLIENT_ID = "115199141886-1a64f9jbjrg9c09q97pgl01348ou7dvk.apps.googleusercontent.com";
     const GOOGLE_IOS_CLIENT_ID = "115199141886-99m5rosha76ftskaeknj2e757mn0sb0t.apps.googleusercontent.com";
     const GOOGLE_ANDROID_CLIENT_ID = "489093591529-0cepullrdv1684c6e0p545850rocunfk.apps.googleusercontent.com";
