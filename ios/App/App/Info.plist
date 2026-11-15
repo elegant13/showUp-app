@@ -39,6 +39,12 @@
 	<string>ShowUp connects to external Bluetooth heart rate monitors and fitness sensors during workouts.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>ShowUp uses your location to record workout routes and display nearby athletes on the squad radar.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ShowUp uses the camera if you choose to take a profile photo or scan workout equipment.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ShowUp accesses your photo library if you choose to select a profile picture or save a workout summary image.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ShowUp saves workout summary cards to your photo library when you tap share or save.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -64,7 +70,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
