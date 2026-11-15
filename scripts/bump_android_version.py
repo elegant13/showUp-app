@@ -67,6 +67,16 @@ def bump_version_code():
         with open(html_file, 'w', encoding='utf-8') as f:
             f.write(html)
 
+    # Sync iOS MARKETING_VERSION and CURRENT_PROJECT_VERSION
+    pbxproj_file = os.path.join(root, 'ios', 'App', 'App.xcodeproj', 'project.pbxproj')
+    if os.path.exists(pbxproj_file):
+        with open(pbxproj_file, 'r', encoding='utf-8') as f:
+            pbx = f.read()
+        pbx = re.sub(r'CURRENT_PROJECT_VERSION\s*=\s*\d+;', f'CURRENT_PROJECT_VERSION = {new_code};', pbx)
+        pbx = re.sub(r'MARKETING_VERSION\s*=\s*[^;]+;', f'MARKETING_VERSION = {new_version_name};', pbx)
+        with open(pbxproj_file, 'w', encoding='utf-8') as f:
+            f.write(pbx)
+
     print(f"Successfully bumped Android versionCode: {current_code} -> {new_code} (versionName: {new_version_name})")
     return new_code
 
