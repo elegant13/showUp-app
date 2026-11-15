@@ -11,7 +11,8 @@
     "CapacitorUpdater": {
       "autoUpdate": false,
       "channel": "production",
-      "resetWhenUpdate": false
+      "resetWhenUpdate": true,
+      "statsUrl": ""
     },
     "SplashScreen": {
       "launchShowDuration": 0,

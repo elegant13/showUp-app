@@ -19,6 +19,8 @@
 -keep class com.getcapacitor.** { *; }
 -keep class com.showup.fitness.** { *; }
 -keep class com.codetrixstudio.capacitor.GoogleAuth.** { *; }
+-keep class ee.forgr.capacitor_updater.** { *; }
+-dontwarn ee.forgr.capacitor_updater.**
 
 # Keep Capacitor plugins and their annotated plugin/callback methods
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * extends com.getcapacitor.Plugin {

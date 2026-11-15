@@ -48,11 +48,15 @@
       }
     } catch (e) {}
 
-    // 1c. Notify Capgo / OTA updater if present
+    // 1c. Notify Capgo / OTA updater if present & check for self-hosted OTA bundle updates
     try {
-      if (window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
-        window.Capacitor.Plugins.CapacitorUpdater.notifyAppReady().catch(() => {});
+      const updater = getCapacitorUpdaterPlugin();
+      if (updater && typeof updater.notifyAppReady === 'function') {
+        await updater.notifyAppReady().catch(() => {});
       }
+      setTimeout(() => {
+        checkAndApplyOTAUpdate().catch(() => {});
+      }, 1200);
     } catch (e) {}
 
     // 1d. Request notification permissions gracefully on native
@@ -84,6 +88,121 @@
     } catch (gErr) {
       console.warn("[NativeBridge] GoogleAuth setup notice:", gErr);
     }
+  }
+
+  const OTA_MANIFEST_URL = 'https://trackshowup.app/ota/version.json';
+  let otaCheckInFlight = false;
+  let lastOtaCheckAt = 0;
+
+  function getCapacitorUpdaterPlugin() {
+    if (typeof window === 'undefined' || !window.Capacitor) return null;
+    if (window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorUpdater) {
+      return window.Capacitor.Plugins.CapacitorUpdater;
+    }
+    if (typeof window.Capacitor.registerPlugin === 'function') {
+      return window.Capacitor.registerPlugin('CapacitorUpdater');
+    }
+    if (typeof window.Capacitor.nativePromise === 'function') {
+      return {
+        notifyAppReady: () => window.Capacitor.nativePromise('CapacitorUpdater', 'notifyAppReady', {}),
+        download: (opts) => window.Capacitor.nativePromise('CapacitorUpdater', 'download', opts || {}),
+        next: (opts) => window.Capacitor.nativePromise('CapacitorUpdater', 'next', opts || {}),
+        set: (opts) => window.Capacitor.nativePromise('CapacitorUpdater', 'set', opts || {}),
+        list: () => window.Capacitor.nativePromise('CapacitorUpdater', 'list', {}),
+        current: () => window.Capacitor.nativePromise('CapacitorUpdater', 'current', {})
+      };
+    }
+    return null;
+  }
+
+  function isWorkoutInProgress() {
+    try {
+      if (typeof isSetInProgress !== 'undefined' && isSetInProgress) return true;
+      if (typeof workoutTimerState !== 'undefined' && workoutTimerState && workoutTimerState !== 'stopped') return true;
+      if (typeof currentSessionSets !== 'undefined' && Array.isArray(currentSessionSets) && currentSessionSets.length > 0) return true;
+      const savedActive = localStorage.getItem('showUp_active_workout_sets');
+      if (savedActive) {
+        const parsed = JSON.parse(savedActive);
+        if (Array.isArray(parsed) && parsed.length > 0) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  async function checkAndApplyOTAUpdate(force = false) {
+    if (!isNative() || otaCheckInFlight) return false;
+    const now = Date.now();
+    if (!force && (now - lastOtaCheckAt) < 45000) return false;
+
+    const updater = getCapacitorUpdaterPlugin();
+    if (!updater || typeof updater.download !== 'function') return false;
+
+    otaCheckInFlight = true;
+    lastOtaCheckAt = now;
+    try {
+      const res = await fetch(`${OTA_MANIFEST_URL}?t=${now}`, { cache: 'no-store' });
+      if (!res.ok) return false;
+      const remote = await res.json();
+      if (!remote || !remote.url || !remote.checksum || !remote.version) return false;
+
+      const localBuild = (typeof APP_BUILD_NUMBER === 'number')
+        ? APP_BUILD_NUMBER
+        : (Number(window.APP_BUILD_NUMBER) || 0);
+      const localContentHash = (typeof APP_CONTENT_HASH === 'string')
+        ? APP_CONTENT_HASH
+        : (window.APP_CONTENT_HASH || '');
+
+      const remoteBuild = Number(remote.build) || 0;
+      if (remoteBuild > 0 && remoteBuild < localBuild) {
+        return false; // Never downgrade below the running build number
+      }
+
+      if (remote.contentHash && localContentHash && remote.contentHash === localContentHash) {
+        return false; // Running code is already byte-identical to remote OTA bundle
+      }
+
+      let targetBundle = null;
+      try {
+        if (typeof updater.list === 'function') {
+          const listRes = await updater.list();
+          const bundles = (listRes && Array.isArray(listRes.bundles)) ? listRes.bundles : [];
+          targetBundle = bundles.find(b => b && b.version === remote.version && b.status !== 'error' && b.status !== 'deleted') || null;
+        }
+      } catch (e) {}
+
+      if (!targetBundle || !targetBundle.id) {
+        console.log(`[NativeBridge] Downloading OTA update ${remote.version}...`);
+        targetBundle = await updater.download({
+          url: remote.url,
+          version: remote.version,
+          checksum: remote.checksum
+        });
+      }
+
+      if (targetBundle && targetBundle.id) {
+        try {
+          localStorage.setItem('showUp_ota_applied_checksum', remote.checksum);
+          localStorage.setItem('showUp_ota_applied_version', remote.version);
+        } catch (e) {}
+
+        if (typeof updater.next === 'function') {
+          await updater.next({ id: targetBundle.id }).catch(() => {});
+        }
+
+        if (!isWorkoutInProgress() && typeof updater.set === 'function') {
+          console.log(`[NativeBridge] Applying OTA bundle ${remote.version} immediately...`);
+          await updater.set({ id: targetBundle.id }).catch(() => {});
+        } else {
+          console.log(`[NativeBridge] Staged OTA bundle ${remote.version} for next launch.`);
+        }
+        return true;
+      }
+    } catch (err) {
+      console.warn('[NativeBridge] OTA update check notice:', err);
+    } finally {
+      otaCheckInFlight = false;
+    }
+    return false;
   }
 
   function getGoogleAuthPlugin() {
@@ -235,8 +354,15 @@
     triggerNativeHaptic: triggerNativeHaptic,
     signInNativeGoogle: signInNativeGoogle,
     refreshNativeGoogleToken: refreshNativeGoogleToken,
-    signOutNativeGoogle: signOutNativeGoogle
+    signOutNativeGoogle: signOutNativeGoogle,
+    checkAndApplyOTAUpdate: checkAndApplyOTAUpdate
   };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isNative()) {
+      checkAndApplyOTAUpdate().catch(() => {});
+    }
+  });
 
   // Run on DOM ready, window load, deviceready, and short retry loop
   let initialized = false;
